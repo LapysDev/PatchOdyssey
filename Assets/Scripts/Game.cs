@@ -33,7 +33,7 @@ public class Game : UnityEngine.MonoBehaviour {
 
     UnityEngine.Debug.Log("[Game::Play()]");
     /*  [0]: Blog update: Asset Loading, Code Style, File Structure, Settings */
-    /*  [0]: GitHub integration */
+    /*  [0]: GitHub integration `https://github.com/LapysDev/PatchOdyssey` */
     /*  [1]: `Game::LoadChunk(…)` the prototype testing chunk */
     /*  [2]: Relocate existing (set with the Inspector) `Player` object at the chunk's spawnpoint  */
     /*  [3]: Setup gameplay view (hint: consider `UnityEngine.Camera.main`) */
