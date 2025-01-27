@@ -2,7 +2,7 @@
 Dive headfirst into our vibrant world of roleplay adventure, where thrilling real-time battles await! </br>
 Assemble your team of dynamic & colorful creatures as you tame and strategize your way through the perilous wonders of Patchlantis. The journey is yours to conquer &mdash; are you ready to begin?
 
-[logo 🍃](./Assets/Patch%20Odyssey.png "Patch Odyssey")
+<img alt="logo 🍃" src="Assets/Patch Odyssey.png" title="Patch Odyssey"/>
 
 ## Build &#9989;
 Clone/ download the <abbr title=repository>repo.</abbr> files into your chosen file directory. </br>
