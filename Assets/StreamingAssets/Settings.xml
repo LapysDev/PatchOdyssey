@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding= "UTF-8"?>
+<Settings>
+  <Monsters>
+    <Monster>
+      <!-- <Kind>Borka</Kind> -->
+      <!-- <Name>…</Name> -->
+    </Monster>
+  </Monsters>
+
+  <Options>
+    <Sound>50</Sound>
+    <Volume>30</Volume>
+  </Options>
+</Settings>
