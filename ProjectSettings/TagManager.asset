@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - BackButton
+  - MenuButton
   - MenuStartButton
   - MenuQuitButton
   - MenuCreditsButton

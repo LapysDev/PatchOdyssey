@@ -1,10 +1,10 @@
 #nullable enable annotations
 
 namespace PatchOdyssey {
-  public class ReadOnlyAttribute : UnityEngine.PropertyAttribute {}
+  public class ReadOnlyInInspectorAttribute : UnityEngine.PropertyAttribute {}
 
-  [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ReadOnlyAttribute))]
-  public class ReadOnlyDrawer : UnityEditor.PropertyDrawer {
+  [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ReadOnlyInInspectorAttribute))]
+  public class ReadOnlyInInspectorDrawer : UnityEditor.PropertyDrawer {
     public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
       return UnityEditor.EditorGUI.GetPropertyHeight(property, label, true);
     }
@@ -17,7 +17,7 @@ namespace PatchOdyssey {
   }
 
   [System.AttributeUsage(System.AttributeTargets.All, AllowMultiple = false, Inherited = false)]
-  public sealed class ReadWriteAttribute : System.Attribute {}
+  public sealed class ReadWriteInInspectorAttribute : System.Attribute {}
 
   [System.Serializable]
   public class SerializedDictionary<TKey, TValue> : System.Collections.Generic.IDictionary<TKey, TValue> {
@@ -942,10 +942,6 @@ namespace PatchOdyssey {
       return Util.NormalizeURI(UnityEngine.Application.streamingAssetsPath);
     }
 
-    public static string GetDataPath() {
-      return Util.NormalizeURI(UnityEngine.Application.persistentDataPath);
-    }
-
     public static System.Collections.Generic.Dictionary<System.Type, System.Type[]> GetConvertibleImplicitTypes() {
       return new() {
         {typeof(byte),   new[] {typeof(decimal), typeof(double), typeof(float), typeof(int), typeof(long), typeof(nint), typeof(nuint), typeof(short), typeof(uint), typeof(ulong), typeof(ushort)}},
@@ -962,6 +958,10 @@ namespace PatchOdyssey {
       };
     }
 
+    public static string GetDataPath() {
+      return Util.NormalizeURI(UnityEngine.Application.persistentDataPath);
+    }
+
     public static UnityEngine.KeyCode[] GetKeyCodes() {
       return new[] {UnityEngine.KeyCode.A, UnityEngine.KeyCode.Alpha0, UnityEngine.KeyCode.Alpha1, UnityEngine.KeyCode.Alpha2, UnityEngine.KeyCode.Alpha3, UnityEngine.KeyCode.Alpha4, UnityEngine.KeyCode.Alpha5, UnityEngine.KeyCode.Alpha6, UnityEngine.KeyCode.Alpha7, UnityEngine.KeyCode.Alpha8, UnityEngine.KeyCode.Alpha9, UnityEngine.KeyCode.AltGr, UnityEngine.KeyCode.Ampersand, UnityEngine.KeyCode.Asterisk, UnityEngine.KeyCode.At, UnityEngine.KeyCode.B, UnityEngine.KeyCode.BackQuote, UnityEngine.KeyCode.Backslash, UnityEngine.KeyCode.Backspace, UnityEngine.KeyCode.Break, UnityEngine.KeyCode.C, UnityEngine.KeyCode.CapsLock, UnityEngine.KeyCode.Caret, UnityEngine.KeyCode.Clear, UnityEngine.KeyCode.Colon, UnityEngine.KeyCode.Comma, UnityEngine.KeyCode.D, UnityEngine.KeyCode.Delete, UnityEngine.KeyCode.Dollar, UnityEngine.KeyCode.DoubleQuote, UnityEngine.KeyCode.DownArrow, UnityEngine.KeyCode.E, UnityEngine.KeyCode.End, UnityEngine.KeyCode.Equals, UnityEngine.KeyCode.Escape, UnityEngine.KeyCode.Exclaim, UnityEngine.KeyCode.F, UnityEngine.KeyCode.F1, UnityEngine.KeyCode.F10, UnityEngine.KeyCode.F11, UnityEngine.KeyCode.F12, UnityEngine.KeyCode.F13, UnityEngine.KeyCode.F14, UnityEngine.KeyCode.F15, UnityEngine.KeyCode.F2, UnityEngine.KeyCode.F3, UnityEngine.KeyCode.F4, UnityEngine.KeyCode.F5, UnityEngine.KeyCode.F6, UnityEngine.KeyCode.F7, UnityEngine.KeyCode.F8, UnityEngine.KeyCode.F9, UnityEngine.KeyCode.G, UnityEngine.KeyCode.Greater, UnityEngine.KeyCode.H, UnityEngine.KeyCode.Hash, UnityEngine.KeyCode.Help, UnityEngine.KeyCode.Home, UnityEngine.KeyCode.I, UnityEngine.KeyCode.Insert, UnityEngine.KeyCode.J, UnityEngine.KeyCode.K, UnityEngine.KeyCode.Keypad0, UnityEngine.KeyCode.Keypad1, UnityEngine.KeyCode.Keypad2, UnityEngine.KeyCode.Keypad3, UnityEngine.KeyCode.Keypad4, UnityEngine.KeyCode.Keypad5, UnityEngine.KeyCode.Keypad6, UnityEngine.KeyCode.Keypad7, UnityEngine.KeyCode.Keypad8, UnityEngine.KeyCode.Keypad9, UnityEngine.KeyCode.KeypadDivide, UnityEngine.KeyCode.KeypadEnter, UnityEngine.KeyCode.KeypadEquals, UnityEngine.KeyCode.KeypadMinus, UnityEngine.KeyCode.KeypadMultiply, UnityEngine.KeyCode.KeypadPeriod, UnityEngine.KeyCode.KeypadPlus, UnityEngine.KeyCode.L, UnityEngine.KeyCode.LeftAlt, UnityEngine.KeyCode.LeftApple, UnityEngine.KeyCode.LeftArrow, UnityEngine.KeyCode.LeftBracket, UnityEngine.KeyCode.LeftCommand, UnityEngine.KeyCode.LeftControl, UnityEngine.KeyCode.LeftCurlyBracket, UnityEngine.KeyCode.LeftMeta, UnityEngine.KeyCode.LeftParen, UnityEngine.KeyCode.LeftShift, UnityEngine.KeyCode.LeftWindows, UnityEngine.KeyCode.Less, UnityEngine.KeyCode.M, UnityEngine.KeyCode.Menu, UnityEngine.KeyCode.Minus, UnityEngine.KeyCode.N, UnityEngine.KeyCode.Numlock, UnityEngine.KeyCode.O, UnityEngine.KeyCode.P, UnityEngine.KeyCode.PageDown, UnityEngine.KeyCode.PageUp, UnityEngine.KeyCode.Pause, UnityEngine.KeyCode.Percent, UnityEngine.KeyCode.Period, UnityEngine.KeyCode.Pipe, UnityEngine.KeyCode.Plus, UnityEngine.KeyCode.Print, UnityEngine.KeyCode.Q, UnityEngine.KeyCode.Question, UnityEngine.KeyCode.Quote, UnityEngine.KeyCode.R, UnityEngine.KeyCode.Return, UnityEngine.KeyCode.RightAlt, UnityEngine.KeyCode.RightApple, UnityEngine.KeyCode.RightArrow, UnityEngine.KeyCode.RightBracket, UnityEngine.KeyCode.RightCommand, UnityEngine.KeyCode.RightControl, UnityEngine.KeyCode.RightCurlyBracket, UnityEngine.KeyCode.RightMeta, UnityEngine.KeyCode.RightParen, UnityEngine.KeyCode.RightShift, UnityEngine.KeyCode.RightWindows, UnityEngine.KeyCode.S, UnityEngine.KeyCode.ScrollLock, UnityEngine.KeyCode.Semicolon, UnityEngine.KeyCode.Slash, UnityEngine.KeyCode.Space, UnityEngine.KeyCode.SysReq, UnityEngine.KeyCode.T, UnityEngine.KeyCode.Tab, UnityEngine.KeyCode.Tilde, UnityEngine.KeyCode.U, UnityEngine.KeyCode.Underscore, UnityEngine.KeyCode.UpArrow, UnityEngine.KeyCode.V, UnityEngine.KeyCode.W, UnityEngine.KeyCode.X, UnityEngine.KeyCode.Y, UnityEngine.KeyCode.Z};
     }
@@ -970,6 +970,143 @@ namespace PatchOdyssey {
       return new int[] {0x0, 0x1, 0x2};
     }
 
+    public static UnityEngine.Vector2    GetVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector2    axes) { return new(0.0f != axes.x ? vector.x : 0.0f, 0.0f != axes.y ? vector.y : 0.0f); }
+    public static UnityEngine.Vector2Int GetVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector2Int axes) { return new   (0 != axes.x ? vector.x : 0,       0 != axes.y ? vector.y : 0); }
+    public static UnityEngine.Vector3    GetVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector3    axes) { return new(0.0f != axes.x ? vector.x : 0.0f, 0.0f != axes.y ? vector.y : 0.0f, 0.0f != axes.z ? vector.z : 0.0f); }
+    public static UnityEngine.Vector3Int GetVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector3Int axes) { return new   (0 != axes.x ? vector.x : 0,       0 != axes.y ? vector.y : 0,       0 != axes.z ? vector.z : 0); }
+    public static UnityEngine.Vector4    GetVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector4    axes) { return new(0.0f != axes.x ? vector.x : 0.0f, 0.0f != axes.y ? vector.y : 0.0f, 0.0f != axes.z ? vector.z : 0.0f, 0.0f != axes.w ? vector.w : 0.0f); }
+      public static UnityEngine.Vector2    GetVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector2Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y)); }
+      public static UnityEngine.Vector2    GetVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector3    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y)); }
+      public static UnityEngine.Vector2    GetVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector3Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y)); }
+      public static UnityEngine.Vector2    GetVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector4    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y)); }
+      public static UnityEngine.Vector2Int GetVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector2    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y)); }
+      public static UnityEngine.Vector2Int GetVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector3    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y)); }
+      public static UnityEngine.Vector2Int GetVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector3Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y)); }
+      public static UnityEngine.Vector2Int GetVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector4    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y)); }
+      public static UnityEngine.Vector3    GetVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector2    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) 0.0f)); }
+      public static UnityEngine.Vector3    GetVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector2Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) 0.0f)); }
+      public static UnityEngine.Vector3    GetVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector3Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) axes.z)); }
+      public static UnityEngine.Vector3    GetVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector4    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) axes.z)); }
+      public static UnityEngine.Vector3Int GetVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector2    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   0)); }
+      public static UnityEngine.Vector3Int GetVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector2Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   0)); }
+      public static UnityEngine.Vector3Int GetVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector3    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   axes.z)); }
+      public static UnityEngine.Vector3Int GetVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector4    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   axes.z)); }
+      public static UnityEngine.Vector4    GetVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector2    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) 0.0f,   (float) 0.0f)); }
+      public static UnityEngine.Vector4    GetVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector2Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) 0.0f,   (float) 0.0f)); }
+      public static UnityEngine.Vector4    GetVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector3    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) axes.z, (float) 0.0f)); }
+      public static UnityEngine.Vector4    GetVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector3Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) axes.z, (float) 0.0f)); }
+
+    public static float GetVectorAxis(UnityEngine.Vector4 vector, UnityEngine.Vector4 axis) {
+      if (0.0f != axis.x) return vector.x;
+      if (0.0f != axis.y) return vector.y;
+      if (0.0f != axis.z) return vector.z;
+      if (0.0f != axis.w) return vector.w;
+
+      return float.NaN;
+    }
+      public static float GetVectorAxis(UnityEngine.Vector2    vector, UnityEngine.Vector2    axis) { return (float) Util.GetVectorAxis(new UnityEngine.Vector4((float) vector.x, (float) vector.y, (float) 0.0f,     (float) 0.0f), new UnityEngine.Vector4((float) axis.x, (float) axis.y, (float) 0.0f,   (float) 0.0f)); }
+      public static int   GetVectorAxis(UnityEngine.Vector2Int vector, UnityEngine.Vector2Int axis) { return (int)   Util.GetVectorAxis(new UnityEngine.Vector4((int)   vector.x, (int)   vector.y, (int)   0.0f,     (int)   0.0f), new UnityEngine.Vector4((int)   axis.x, (int)   axis.y, (int)   0.0f,   (int)   0.0f)); }
+      public static float GetVectorAxis(UnityEngine.Vector3    vector, UnityEngine.Vector3    axis) { return (float) Util.GetVectorAxis(new UnityEngine.Vector4((float) vector.x, (float) vector.y, (float) vector.z, (float) 0.0f), new UnityEngine.Vector4((float) axis.x, (float) axis.y, (float) axis.z, (float) 0.0f)); }
+      public static int   GetVectorAxis(UnityEngine.Vector3Int vector, UnityEngine.Vector3Int axis) { return (int)   Util.GetVectorAxis(new UnityEngine.Vector4((int)   vector.x, (int)   vector.y, (int)   vector.z, (int)   0.0f), new UnityEngine.Vector4((int)   axis.x, (int)   axis.y, (int)   axis.z, (int)   0.0f)); }
+
+      public static float GetVectorAxis(UnityEngine.Vector2    vector, UnityEngine.Vector2Int axis) { return (float) Util.GetVectorAxis(vector, new UnityEngine.Vector2   ((float) axis.x, (float) axis.y)); }
+      public static float GetVectorAxis(UnityEngine.Vector2    vector, UnityEngine.Vector3    axis) { return (float) Util.GetVectorAxis(vector, new UnityEngine.Vector2   ((float) axis.x, (float) axis.y)); }
+      public static float GetVectorAxis(UnityEngine.Vector2    vector, UnityEngine.Vector3Int axis) { return (float) Util.GetVectorAxis(vector, new UnityEngine.Vector2   ((float) axis.x, (float) axis.y)); }
+      public static float GetVectorAxis(UnityEngine.Vector2    vector, UnityEngine.Vector4    axis) { return (float) Util.GetVectorAxis(vector, new UnityEngine.Vector2   ((float) axis.x, (float) axis.y)); }
+      public static int   GetVectorAxis(UnityEngine.Vector2Int vector, UnityEngine.Vector2    axis) { return (int)   Util.GetVectorAxis(vector, new UnityEngine.Vector2Int((int)   axis.x, (int)   axis.y)); }
+      public static int   GetVectorAxis(UnityEngine.Vector2Int vector, UnityEngine.Vector3    axis) { return (int)   Util.GetVectorAxis(vector, new UnityEngine.Vector2Int((int)   axis.x, (int)   axis.y)); }
+      public static int   GetVectorAxis(UnityEngine.Vector2Int vector, UnityEngine.Vector3Int axis) { return (int)   Util.GetVectorAxis(vector, new UnityEngine.Vector2Int((int)   axis.x, (int)   axis.y)); }
+      public static int   GetVectorAxis(UnityEngine.Vector2Int vector, UnityEngine.Vector4    axis) { return (int)   Util.GetVectorAxis(vector, new UnityEngine.Vector2Int((int)   axis.x, (int)   axis.y)); }
+      public static float GetVectorAxis(UnityEngine.Vector3    vector, UnityEngine.Vector2    axis) { return (float) Util.GetVectorAxis(vector, new UnityEngine.Vector3   ((float) axis.x, (float) axis.y, (float) 0.0f)); }
+      public static float GetVectorAxis(UnityEngine.Vector3    vector, UnityEngine.Vector2Int axis) { return (float) Util.GetVectorAxis(vector, new UnityEngine.Vector3   ((float) axis.x, (float) axis.y, (float) 0.0f)); }
+      public static float GetVectorAxis(UnityEngine.Vector3    vector, UnityEngine.Vector3Int axis) { return (float) Util.GetVectorAxis(vector, new UnityEngine.Vector3   ((float) axis.x, (float) axis.y, (float) axis.z)); }
+      public static float GetVectorAxis(UnityEngine.Vector3    vector, UnityEngine.Vector4    axis) { return (float) Util.GetVectorAxis(vector, new UnityEngine.Vector3   ((float) axis.x, (float) axis.y, (float) axis.z)); }
+      public static int   GetVectorAxis(UnityEngine.Vector3Int vector, UnityEngine.Vector2    axis) { return (int)   Util.GetVectorAxis(vector, new UnityEngine.Vector3Int((int)   axis.x, (int)   axis.y, (int)   0.0f)); }
+      public static int   GetVectorAxis(UnityEngine.Vector3Int vector, UnityEngine.Vector2Int axis) { return (int)   Util.GetVectorAxis(vector, new UnityEngine.Vector3Int((int)   axis.x, (int)   axis.y, (int)   0.0f)); }
+      public static int   GetVectorAxis(UnityEngine.Vector3Int vector, UnityEngine.Vector3    axis) { return (int)   Util.GetVectorAxis(vector, new UnityEngine.Vector3Int((int)   axis.x, (int)   axis.y, (int)   axis.z)); }
+      public static int   GetVectorAxis(UnityEngine.Vector3Int vector, UnityEngine.Vector4    axis) { return (int)   Util.GetVectorAxis(vector, new UnityEngine.Vector3Int((int)   axis.x, (int)   axis.y, (int)   axis.z)); }
+      public static float GetVectorAxis(UnityEngine.Vector4    vector, UnityEngine.Vector2    axis) { return (float) Util.GetVectorAxis(vector, new UnityEngine.Vector4   ((float) axis.x, (float) axis.y, (float) 0.0f,   (float) 0.0f)); }
+      public static float GetVectorAxis(UnityEngine.Vector4    vector, UnityEngine.Vector2Int axis) { return (float) Util.GetVectorAxis(vector, new UnityEngine.Vector4   ((float) axis.x, (float) axis.y, (float) 0.0f,   (float) 0.0f)); }
+      public static float GetVectorAxis(UnityEngine.Vector4    vector, UnityEngine.Vector3    axis) { return (float) Util.GetVectorAxis(vector, new UnityEngine.Vector4   ((float) axis.x, (float) axis.y, (float) axis.z, (float) 0.0f)); }
+      public static float GetVectorAxis(UnityEngine.Vector4    vector, UnityEngine.Vector3Int axis) { return (float) Util.GetVectorAxis(vector, new UnityEngine.Vector4   ((float) axis.x, (float) axis.y, (float) axis.z, (float) 0.0f)); }
+
+      public static UnityEngine.Vector3    GetVectorBackAxes   (UnityEngine.Vector3    vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector3   .back); }
+      public static UnityEngine.Vector3Int GetVectorBackAxes   (UnityEngine.Vector3Int vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector3Int.back); }
+      public static float                  GetVectorBackAxis   (UnityEngine.Vector3    vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector3   .back); }
+      public static int                    GetVectorBackAxis   (UnityEngine.Vector3Int vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector3Int.back); }
+      public static UnityEngine.Vector2    GetVectorDownAxes   (UnityEngine.Vector2    vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector2   .down); }
+      public static UnityEngine.Vector2Int GetVectorDownAxes   (UnityEngine.Vector2Int vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector2Int.down); }
+      public static UnityEngine.Vector3    GetVectorDownAxes   (UnityEngine.Vector3    vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector3   .down); }
+      public static UnityEngine.Vector3Int GetVectorDownAxes   (UnityEngine.Vector3Int vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector3Int.down); }
+      public static float                  GetVectorDownAxis   (UnityEngine.Vector2    vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector2   .down); }
+      public static float                  GetVectorDownAxis   (UnityEngine.Vector3    vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector3   .down); }
+      public static int                    GetVectorDownAxis   (UnityEngine.Vector2Int vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector2Int.down); }
+      public static int                    GetVectorDownAxis   (UnityEngine.Vector3Int vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector3Int.down); }
+      public static UnityEngine.Vector3    GetVectorForwardAxes(UnityEngine.Vector3    vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector3   .forward); }
+      public static UnityEngine.Vector3Int GetVectorForwardAxes(UnityEngine.Vector3Int vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector3Int.forward); }
+      public static float                  GetVectorForwardAxis(UnityEngine.Vector3    vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector3   .forward); }
+      public static int                    GetVectorForwardAxis(UnityEngine.Vector3Int vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector3Int.forward); }
+      public static UnityEngine.Vector2    GetVectorLeftAxes   (UnityEngine.Vector2    vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector2   .left); }
+      public static UnityEngine.Vector2Int GetVectorLeftAxes   (UnityEngine.Vector2Int vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector2Int.left); }
+      public static UnityEngine.Vector3    GetVectorLeftAxes   (UnityEngine.Vector3    vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector3   .left); }
+      public static UnityEngine.Vector3Int GetVectorLeftAxes   (UnityEngine.Vector3Int vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector3Int.left); }
+      public static float                  GetVectorLeftAxis   (UnityEngine.Vector2    vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector2   .left); }
+      public static float                  GetVectorLeftAxis   (UnityEngine.Vector3    vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector3   .left); }
+      public static int                    GetVectorLeftAxis   (UnityEngine.Vector2Int vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector2Int.left); }
+      public static int                    GetVectorLeftAxis   (UnityEngine.Vector3Int vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector3Int.left); }
+      public static UnityEngine.Vector2    GetVectorRightAxes  (UnityEngine.Vector2    vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector2   .right); }
+      public static UnityEngine.Vector2Int GetVectorRightAxes  (UnityEngine.Vector2Int vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector2Int.right); }
+      public static UnityEngine.Vector3    GetVectorRightAxes  (UnityEngine.Vector3    vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector3   .right); }
+      public static UnityEngine.Vector3Int GetVectorRightAxes  (UnityEngine.Vector3Int vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector3Int.right); }
+      public static float                  GetVectorRightAxis  (UnityEngine.Vector2    vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector2   .right); }
+      public static float                  GetVectorRightAxis  (UnityEngine.Vector3    vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector3   .right); }
+      public static int                    GetVectorRightAxis  (UnityEngine.Vector2Int vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector2Int.right); }
+      public static int                    GetVectorRightAxis  (UnityEngine.Vector3Int vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector3Int.right); }
+      public static UnityEngine.Vector2    GetVectorUpAxes     (UnityEngine.Vector2    vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector2   .up); }
+      public static UnityEngine.Vector2Int GetVectorUpAxes     (UnityEngine.Vector2Int vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector2Int.up); }
+      public static UnityEngine.Vector3    GetVectorUpAxes     (UnityEngine.Vector3    vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector3   .up); }
+      public static UnityEngine.Vector3Int GetVectorUpAxes     (UnityEngine.Vector3Int vector) { return Util.GetVectorAxes(vector, UnityEngine.Vector3Int.up); }
+      public static float                  GetVectorUpAxis     (UnityEngine.Vector2    vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector2   .up); }
+      public static float                  GetVectorUpAxis     (UnityEngine.Vector3    vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector3   .up); }
+      public static int                    GetVectorUpAxis     (UnityEngine.Vector2Int vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector2Int.up); }
+      public static int                    GetVectorUpAxis     (UnityEngine.Vector3Int vector) { return Util.GetVectorAxis(vector, UnityEngine.Vector3Int.up); }
+
+      public static UnityEngine.Vector3    GetVectorDepthAxes (UnityEngine.Vector3    vector) { return Util.GetVectorForwardAxes(vector); }
+      public static UnityEngine.Vector3Int GetVectorDepthAxes (UnityEngine.Vector3Int vector) { return Util.GetVectorForwardAxes(vector); }
+      public static float                  GetVectorDepthAxis (UnityEngine.Vector3    vector) { return Util.GetVectorForwardAxis(vector); }
+      public static int                    GetVectorDepthAxis (UnityEngine.Vector3Int vector) { return Util.GetVectorForwardAxis(vector); }
+      public static UnityEngine.Vector2    GetVectorHeightAxes(UnityEngine.Vector2    vector) { return Util.GetVectorUpAxes     (vector); }
+      public static UnityEngine.Vector2Int GetVectorHeightAxes(UnityEngine.Vector2Int vector) { return Util.GetVectorUpAxes     (vector); }
+      public static UnityEngine.Vector3    GetVectorHeightAxes(UnityEngine.Vector3    vector) { return Util.GetVectorUpAxes     (vector); }
+      public static UnityEngine.Vector3Int GetVectorHeightAxes(UnityEngine.Vector3Int vector) { return Util.GetVectorUpAxes     (vector); }
+      public static float                  GetVectorHeightAxis(UnityEngine.Vector2    vector) { return Util.GetVectorUpAxis     (vector); }
+      public static float                  GetVectorHeightAxis(UnityEngine.Vector3    vector) { return Util.GetVectorUpAxis     (vector); }
+      public static int                    GetVectorHeightAxis(UnityEngine.Vector2Int vector) { return Util.GetVectorUpAxis     (vector); }
+      public static int                    GetVectorHeightAxis(UnityEngine.Vector3Int vector) { return Util.GetVectorUpAxis     (vector); }
+      public static UnityEngine.Vector2    GetVectorWidthAxes (UnityEngine.Vector2    vector) { return Util.GetVectorRightAxes  (vector); }
+      public static UnityEngine.Vector2Int GetVectorWidthAxes (UnityEngine.Vector2Int vector) { return Util.GetVectorRightAxes  (vector); }
+      public static UnityEngine.Vector3    GetVectorWidthAxes (UnityEngine.Vector3    vector) { return Util.GetVectorRightAxes  (vector); }
+      public static UnityEngine.Vector3Int GetVectorWidthAxes (UnityEngine.Vector3Int vector) { return Util.GetVectorRightAxes  (vector); }
+      public static float                  GetVectorWidthAxis (UnityEngine.Vector2    vector) { return Util.GetVectorRightAxis  (vector); }
+      public static float                  GetVectorWidthAxis (UnityEngine.Vector3    vector) { return Util.GetVectorRightAxis  (vector); }
+      public static int                    GetVectorWidthAxis (UnityEngine.Vector2Int vector) { return Util.GetVectorRightAxis  (vector); }
+      public static int                    GetVectorWidthAxis (UnityEngine.Vector3Int vector) { return Util.GetVectorRightAxis  (vector); }
+
+      public static UnityEngine.Vector2    GetVectorXAxes(UnityEngine.Vector2    vector) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2   ((float) 1.0f, (float) 0.0f)); }
+      public static UnityEngine.Vector2Int GetVectorXAxes(UnityEngine.Vector2Int vector) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int)   1,    (int)   0)); }
+      public static UnityEngine.Vector3    GetVectorXAxes(UnityEngine.Vector3    vector) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) 1.0f, (float) 0.0f, (float) 0.0f)); }
+      public static UnityEngine.Vector3Int GetVectorXAxes(UnityEngine.Vector3Int vector) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   1,    (int)   0,    (int)   0)); }
+      public static UnityEngine.Vector4    GetVectorXAxes(UnityEngine.Vector4    vector) { return Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) 1.0f, (float) 0.0f, (float) 0.0f, (float) 0.0f)); }
+      public static UnityEngine.Vector2    GetVectorYAxes(UnityEngine.Vector2    vector) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2   ((float) 0.0f, (float) 1.0f)); }
+      public static UnityEngine.Vector2Int GetVectorYAxes(UnityEngine.Vector2Int vector) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int)   0,    (int)   1)); }
+      public static UnityEngine.Vector3    GetVectorYAxes(UnityEngine.Vector3    vector) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) 0.0f, (float) 1.0f, (float) 0.0f)); }
+      public static UnityEngine.Vector3Int GetVectorYAxes(UnityEngine.Vector3Int vector) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   0,    (int)   1,    (int)   0)); }
+      public static UnityEngine.Vector4    GetVectorYAxes(UnityEngine.Vector4    vector) { return Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) 0.0f, (float) 1.0f, (float) 0.0f, (float) 0.0f)); }
+      public static UnityEngine.Vector3    GetVectorZAxes(UnityEngine.Vector3    vector) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) 0.0f, (float) 0.0f, (float) 1.0f)); }
+      public static UnityEngine.Vector3Int GetVectorZAxes(UnityEngine.Vector3Int vector) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   0,    (int)   0,    (int)   1)); }
+      public static UnityEngine.Vector4    GetVectorZAxes(UnityEngine.Vector4    vector) { return Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) 0.0f, (float) 0.0f, (float) 1.0f, (float) 0.0f)); }
+      public static UnityEngine.Vector4    GetVectorWAxes(UnityEngine.Vector4    vector) { return Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) 0.0f, (float) 0.0f, (float) 0.0f, (float) 1.0f)); }
+
     public static System.Func<T, T> IIFE<T>(System.Action<T> function) {
       return _ => { function(_); return _; };
     }
@@ -977,6 +1114,79 @@ namespace PatchOdyssey {
     public static System.Func<T, T> IIFE<T>(System.Func<T, T> function) /* → Immediately-Invoked Function Expression */ {
       return function;
     }
+
+    public static UnityEngine.Vector2    IgnoreVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector2    axes) { return new(axes.x != 1.0f ? vector.x : 0.0f, axes.y != 1.0f ? vector.y : 0.0f); }
+    public static UnityEngine.Vector2Int IgnoreVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector2Int axes) { return new(axes.x != 1    ? vector.x : 0,    axes.y != 1    ? vector.y : 0); }
+    public static UnityEngine.Vector3    IgnoreVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector3    axes) { return new(axes.x != 1.0f ? vector.x : 0.0f, axes.y != 1.0f ? vector.y : 0.0f, axes.z != 1.0f ? vector.z : 0.0f); }
+    public static UnityEngine.Vector3Int IgnoreVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector3Int axes) { return new(axes.x != 1    ? vector.x : 0,    axes.y != 1    ? vector.y : 0,    axes.z != 1    ? vector.z : 0); }
+    public static UnityEngine.Vector4    IgnoreVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector4    axes) { return new(axes.x != 1.0f ? vector.x : 0.0f, axes.y != 1.0f ? vector.y : 0.0f, axes.z != 1.0f ? vector.z : 0.0f, axes.w != 1.0f ? vector.w : 0.0f); }
+      public static UnityEngine.Vector2    IgnoreVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector2Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y)); }
+      public static UnityEngine.Vector2    IgnoreVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector3    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y)); }
+      public static UnityEngine.Vector2    IgnoreVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector3Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y)); }
+      public static UnityEngine.Vector2    IgnoreVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector4    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y)); }
+      public static UnityEngine.Vector2Int IgnoreVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector2    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y)); }
+      public static UnityEngine.Vector2Int IgnoreVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector3    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y)); }
+      public static UnityEngine.Vector2Int IgnoreVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector3Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y)); }
+      public static UnityEngine.Vector2Int IgnoreVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector4    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y)); }
+      public static UnityEngine.Vector3    IgnoreVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector2    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) 1.0f)); }
+      public static UnityEngine.Vector3    IgnoreVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector2Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) 1.0f)); }
+      public static UnityEngine.Vector3    IgnoreVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector3Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) axes.z)); }
+      public static UnityEngine.Vector3    IgnoreVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector4    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) axes.z)); }
+      public static UnityEngine.Vector3Int IgnoreVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector2    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   0)); }
+      public static UnityEngine.Vector3Int IgnoreVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector2Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   0)); }
+      public static UnityEngine.Vector3Int IgnoreVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector3    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   axes.z)); }
+      public static UnityEngine.Vector3Int IgnoreVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector4    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   axes.z)); }
+      public static UnityEngine.Vector4    IgnoreVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector2    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) 1.0f,   (float) 1.0f)); }
+      public static UnityEngine.Vector4    IgnoreVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector2Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) 1.0f,   (float) 1.0f)); }
+      public static UnityEngine.Vector4    IgnoreVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector3    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) axes.z, (float) 1.0f)); }
+      public static UnityEngine.Vector4    IgnoreVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector3Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) axes.z, (float) 1.0f)); }
+
+      public static UnityEngine.Vector3    IgnoreVectorBackAxes   (UnityEngine.Vector3    vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector3   .back); }
+      public static UnityEngine.Vector3Int IgnoreVectorBackAxes   (UnityEngine.Vector3Int vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector3Int.back); }
+      public static UnityEngine.Vector2    IgnoreVectorDownAxes   (UnityEngine.Vector2    vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector2   .down); }
+      public static UnityEngine.Vector2Int IgnoreVectorDownAxes   (UnityEngine.Vector2Int vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector2Int.down); }
+      public static UnityEngine.Vector3    IgnoreVectorDownAxes   (UnityEngine.Vector3    vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector3   .down); }
+      public static UnityEngine.Vector3Int IgnoreVectorDownAxes   (UnityEngine.Vector3Int vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector3Int.down); }
+      public static UnityEngine.Vector3    IgnoreVectorForwardAxes(UnityEngine.Vector3    vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector3   .forward); }
+      public static UnityEngine.Vector3Int IgnoreVectorForwardAxes(UnityEngine.Vector3Int vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector3Int.forward); }
+      public static UnityEngine.Vector2    IgnoreVectorLeftAxes   (UnityEngine.Vector2    vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector2   .left); }
+      public static UnityEngine.Vector2Int IgnoreVectorLeftAxes   (UnityEngine.Vector2Int vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector2Int.left); }
+      public static UnityEngine.Vector3    IgnoreVectorLeftAxes   (UnityEngine.Vector3    vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector3   .left); }
+      public static UnityEngine.Vector3Int IgnoreVectorLeftAxes   (UnityEngine.Vector3Int vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector3Int.left); }
+      public static UnityEngine.Vector2    IgnoreVectorRightAxes  (UnityEngine.Vector2    vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector2   .right); }
+      public static UnityEngine.Vector2Int IgnoreVectorRightAxes  (UnityEngine.Vector2Int vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector2Int.right); }
+      public static UnityEngine.Vector3    IgnoreVectorRightAxes  (UnityEngine.Vector3    vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector3   .right); }
+      public static UnityEngine.Vector3Int IgnoreVectorRightAxes  (UnityEngine.Vector3Int vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector3Int.right); }
+      public static UnityEngine.Vector2    IgnoreVectorUpAxes     (UnityEngine.Vector2    vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector2   .up); }
+      public static UnityEngine.Vector2Int IgnoreVectorUpAxes     (UnityEngine.Vector2Int vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector2Int.up); }
+      public static UnityEngine.Vector3    IgnoreVectorUpAxes     (UnityEngine.Vector3    vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector3   .up); }
+      public static UnityEngine.Vector3Int IgnoreVectorUpAxes     (UnityEngine.Vector3Int vector) { return Util.IgnoreVectorAxes(vector, UnityEngine.Vector3Int.up); }
+
+      public static UnityEngine.Vector3    IgnoreVectorDepthAxes (UnityEngine.Vector3    vector) { return Util.IgnoreVectorForwardAxes(vector); }
+      public static UnityEngine.Vector3Int IgnoreVectorDepthAxes (UnityEngine.Vector3Int vector) { return Util.IgnoreVectorForwardAxes(vector); }
+      public static UnityEngine.Vector2    IgnoreVectorHeightAxes(UnityEngine.Vector2    vector) { return Util.IgnoreVectorUpAxes     (vector); }
+      public static UnityEngine.Vector2Int IgnoreVectorHeightAxes(UnityEngine.Vector2Int vector) { return Util.IgnoreVectorUpAxes     (vector); }
+      public static UnityEngine.Vector3    IgnoreVectorHeightAxes(UnityEngine.Vector3    vector) { return Util.IgnoreVectorUpAxes     (vector); }
+      public static UnityEngine.Vector3Int IgnoreVectorHeightAxes(UnityEngine.Vector3Int vector) { return Util.IgnoreVectorUpAxes     (vector); }
+      public static UnityEngine.Vector2    IgnoreVectorWidthAxes (UnityEngine.Vector2    vector) { return Util.IgnoreVectorRightAxes  (vector); }
+      public static UnityEngine.Vector2Int IgnoreVectorWidthAxes (UnityEngine.Vector2Int vector) { return Util.IgnoreVectorRightAxes  (vector); }
+      public static UnityEngine.Vector3    IgnoreVectorWidthAxes (UnityEngine.Vector3    vector) { return Util.IgnoreVectorRightAxes  (vector); }
+      public static UnityEngine.Vector3Int IgnoreVectorWidthAxes (UnityEngine.Vector3Int vector) { return Util.IgnoreVectorRightAxes  (vector); }
+
+      public static UnityEngine.Vector2    IgnoreVectorXAxes(UnityEngine.Vector2    vector) { return Util.IgnoreVectorAxes(vector, new UnityEngine.Vector2   ((float) 1.0f, (float) 0.0f)); }
+      public static UnityEngine.Vector2Int IgnoreVectorXAxes(UnityEngine.Vector2Int vector) { return Util.IgnoreVectorAxes(vector, new UnityEngine.Vector2Int((int)   1,    (int)   0)); }
+      public static UnityEngine.Vector3    IgnoreVectorXAxes(UnityEngine.Vector3    vector) { return Util.IgnoreVectorAxes(vector, new UnityEngine.Vector3   ((float) 1.0f, (float) 0.0f, (float) 0.0f)); }
+      public static UnityEngine.Vector3Int IgnoreVectorXAxes(UnityEngine.Vector3Int vector) { return Util.IgnoreVectorAxes(vector, new UnityEngine.Vector3Int((int)   1,    (int)   0,    (int)   0)); }
+      public static UnityEngine.Vector4    IgnoreVectorXAxes(UnityEngine.Vector4    vector) { return Util.IgnoreVectorAxes(vector, new UnityEngine.Vector4   ((float) 1.0f, (float) 0.0f, (float) 0.0f, (float) 0.0f)); }
+      public static UnityEngine.Vector2    IgnoreVectorYAxes(UnityEngine.Vector2    vector) { return Util.IgnoreVectorAxes(vector, new UnityEngine.Vector2   ((float) 0.0f, (float) 1.0f)); }
+      public static UnityEngine.Vector2Int IgnoreVectorYAxes(UnityEngine.Vector2Int vector) { return Util.IgnoreVectorAxes(vector, new UnityEngine.Vector2Int((int)   0,    (int)   1)); }
+      public static UnityEngine.Vector3    IgnoreVectorYAxes(UnityEngine.Vector3    vector) { return Util.IgnoreVectorAxes(vector, new UnityEngine.Vector3   ((float) 0.0f, (float) 1.0f, (float) 0.0f)); }
+      public static UnityEngine.Vector3Int IgnoreVectorYAxes(UnityEngine.Vector3Int vector) { return Util.IgnoreVectorAxes(vector, new UnityEngine.Vector3Int((int)   0,    (int)   1,    (int)   0)); }
+      public static UnityEngine.Vector4    IgnoreVectorYAxes(UnityEngine.Vector4    vector) { return Util.IgnoreVectorAxes(vector, new UnityEngine.Vector4   ((float) 0.0f, (float) 1.0f, (float) 0.0f, (float) 0.0f)); }
+      public static UnityEngine.Vector3    IgnoreVectorZAxes(UnityEngine.Vector3    vector) { return Util.IgnoreVectorAxes(vector, new UnityEngine.Vector3   ((float) 0.0f, (float) 0.0f, (float) 1.0f)); }
+      public static UnityEngine.Vector3Int IgnoreVectorZAxes(UnityEngine.Vector3Int vector) { return Util.IgnoreVectorAxes(vector, new UnityEngine.Vector3Int((int)   0,    (int)   0,    (int)   1)); }
+      public static UnityEngine.Vector4    IgnoreVectorZAxes(UnityEngine.Vector4    vector) { return Util.IgnoreVectorAxes(vector, new UnityEngine.Vector4   ((float) 0.0f, (float) 0.0f, (float) 1.0f, (float) 0.0f)); }
+      public static UnityEngine.Vector4    IgnoreVectorWAxes(UnityEngine.Vector4    vector) { return Util.IgnoreVectorAxes(vector, new UnityEngine.Vector4   ((float) 0.0f, (float) 0.0f, (float) 0.0f, (float) 1.0f)); }
 
     public static bool IsConvertibleType(System.Type typeA, System.Type typeB) {
       if (null == typeA) return null == typeB;
@@ -1209,6 +1419,38 @@ namespace PatchOdyssey {
       return null == corners ? null : Util.RectFromCorners(corners);
     }
 
+    public static T Max<T>(params T[] values) where T : System.IComparable<T> {
+      return values.Max();
+    }
+
+    public static T Max<T>(this System.Collections.Generic.IEnumerable<T> enumerable) where T : System.IComparable<T> {
+      T[] maximum = null;
+
+      // …
+      foreach (T value in enumerable) {
+        if (null == maximum)                 maximum    = new T[] {value};
+        if (value.CompareTo(maximum[0]) > 0) maximum[0] = value;
+      }
+
+      return maximum[0]; // → `System.Exception`
+    }
+
+    public static T Min<T>(params T[] values) where T : System.IComparable<T> {
+      return values.Min();
+    }
+
+    public static T Min<T>(this System.Collections.Generic.IEnumerable<T> enumerable) where T : System.IComparable<T> {
+      T[] minimum = null;
+
+      // …
+      foreach (T value in enumerable) {
+        if (null == minimum)                 minimum    = new T[] {value};
+        if (value.CompareTo(minimum[0]) < 0) minimum[0] = value;
+      }
+
+      return minimum[0]; // → `System.Exception`
+    }
+
     private static string NormalizeURI(string path) {
       path = path.TrimEnd().Replace(System.IO.Path.AltDirectorySeparatorChar, System.IO.Path.DirectorySeparatorChar);
 
@@ -1240,6 +1482,98 @@ namespace PatchOdyssey {
       return new(corners[0].x, corners[0].y, corners[3].x - corners[0].x, corners[1].y - corners[0].y);
     }
 
+    public static UnityEngine.Vector2 SetVectorAxis(UnityEngine.Vector2 vector, UnityEngine.Vector2 axis, float value) {
+      if (0.0f != axis.x) vector.x = value;
+      if (0.0f != axis.y) vector.y = value;
+
+      return vector;
+    }
+
+    public static UnityEngine.Vector2Int SetVectorAxis(UnityEngine.Vector2Int vector, UnityEngine.Vector2Int axis, int value) {
+      if (0 != axis.x) vector.x = value;
+      if (0 != axis.y) vector.y = value;
+
+      return vector;
+    }
+
+    public static UnityEngine.Vector3 SetVectorAxis(UnityEngine.Vector3 vector, UnityEngine.Vector3 axis, float value) {
+      if (0.0f != axis.x) vector.x = value;
+      if (0.0f != axis.y) vector.y = value;
+      if (0.0f != axis.z) vector.z = value;
+
+      return vector;
+    }
+
+    public static UnityEngine.Vector3Int SetVectorAxis(UnityEngine.Vector3Int vector, UnityEngine.Vector3Int axis, int value) {
+      if (0 != axis.x) vector.x = value;
+      if (0 != axis.y) vector.y = value;
+      if (0 != axis.z) vector.z = value;
+
+      return vector;
+    }
+
+    public static UnityEngine.Vector4 SetVectorAxis(UnityEngine.Vector4 vector, UnityEngine.Vector4 axis, float value) {
+      if (0.0f != axis.x) vector.x = value;
+      if (0.0f != axis.y) vector.y = value;
+      if (0.0f != axis.z) vector.z = value;
+      if (0.0f != axis.w) vector.w = value;
+
+      return vector;
+    }
+
+      public static UnityEngine.Vector2    SetVectorAxis(UnityEngine.Vector2    vector, UnityEngine.Vector2Int axis, float value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector2   ((float) axis.x, (float) axis.y),                               value); }
+      public static UnityEngine.Vector2    SetVectorAxis(UnityEngine.Vector2    vector, UnityEngine.Vector3    axis, float value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector2   ((float) axis.x, (float) axis.y),                               value); }
+      public static UnityEngine.Vector2    SetVectorAxis(UnityEngine.Vector2    vector, UnityEngine.Vector3Int axis, float value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector2   ((float) axis.x, (float) axis.y),                               value); }
+      public static UnityEngine.Vector2    SetVectorAxis(UnityEngine.Vector2    vector, UnityEngine.Vector4    axis, float value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector2   ((float) axis.x, (float) axis.y),                               value); }
+      public static UnityEngine.Vector2Int SetVectorAxis(UnityEngine.Vector2Int vector, UnityEngine.Vector2    axis, int   value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector2Int((int)   axis.x, (int)   axis.y),                               value); }
+      public static UnityEngine.Vector2Int SetVectorAxis(UnityEngine.Vector2Int vector, UnityEngine.Vector3    axis, int   value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector2Int((int)   axis.x, (int)   axis.y),                               value); }
+      public static UnityEngine.Vector2Int SetVectorAxis(UnityEngine.Vector2Int vector, UnityEngine.Vector3Int axis, int   value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector2Int((int)   axis.x, (int)   axis.y),                               value); }
+      public static UnityEngine.Vector2Int SetVectorAxis(UnityEngine.Vector2Int vector, UnityEngine.Vector4    axis, int   value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector2Int((int)   axis.x, (int)   axis.y),                               value); }
+      public static UnityEngine.Vector3    SetVectorAxis(UnityEngine.Vector3    vector, UnityEngine.Vector2    axis, float value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector3   ((float) axis.x, (float) axis.y, (float) 0.0f),                 value); }
+      public static UnityEngine.Vector3    SetVectorAxis(UnityEngine.Vector3    vector, UnityEngine.Vector2Int axis, float value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector3   ((float) axis.x, (float) axis.y, (float) 0.0f),                 value); }
+      public static UnityEngine.Vector3    SetVectorAxis(UnityEngine.Vector3    vector, UnityEngine.Vector3Int axis, float value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector3   ((float) axis.x, (float) axis.y, (float) axis.z),               value); }
+      public static UnityEngine.Vector3    SetVectorAxis(UnityEngine.Vector3    vector, UnityEngine.Vector4    axis, float value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector3   ((float) axis.x, (float) axis.y, (float) axis.z),               value); }
+      public static UnityEngine.Vector3Int SetVectorAxis(UnityEngine.Vector3Int vector, UnityEngine.Vector2    axis, int   value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector3Int((int)   axis.x, (int)   axis.y, (int)   0.0f),                 value); }
+      public static UnityEngine.Vector3Int SetVectorAxis(UnityEngine.Vector3Int vector, UnityEngine.Vector2Int axis, int   value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector3Int((int)   axis.x, (int)   axis.y, (int)   0.0f),                 value); }
+      public static UnityEngine.Vector3Int SetVectorAxis(UnityEngine.Vector3Int vector, UnityEngine.Vector3    axis, int   value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector3Int((int)   axis.x, (int)   axis.y, (int)   axis.z),               value); }
+      public static UnityEngine.Vector3Int SetVectorAxis(UnityEngine.Vector3Int vector, UnityEngine.Vector4    axis, int   value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector3Int((int)   axis.x, (int)   axis.y, (int)   axis.z),               value); }
+      public static UnityEngine.Vector4    SetVectorAxis(UnityEngine.Vector4    vector, UnityEngine.Vector2    axis, float value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector4   ((float) axis.x, (float) axis.y, (float) 0.0f,   (float) 0.0f), value); }
+      public static UnityEngine.Vector4    SetVectorAxis(UnityEngine.Vector4    vector, UnityEngine.Vector2Int axis, float value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector4   ((float) axis.x, (float) axis.y, (float) 0.0f,   (float) 0.0f), value); }
+      public static UnityEngine.Vector4    SetVectorAxis(UnityEngine.Vector4    vector, UnityEngine.Vector3    axis, float value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector4   ((float) axis.x, (float) axis.y, (float) axis.z, (float) 0.0f), value); }
+      public static UnityEngine.Vector4    SetVectorAxis(UnityEngine.Vector4    vector, UnityEngine.Vector3Int axis, float value) { return Util.SetVectorAxis(vector, new UnityEngine.Vector4   ((float) axis.x, (float) axis.y, (float) axis.z, (float) 0.0f), value); }
+
+      public static UnityEngine.Vector3    SetVectorBackAxis   (UnityEngine.Vector3    vector, float value) { return Util.SetVectorAxis(vector, UnityEngine.Vector3   .back,    value); }
+      public static UnityEngine.Vector3Int SetVectorBackAxis   (UnityEngine.Vector3Int vector, int   value) { return Util.SetVectorAxis(vector, UnityEngine.Vector3Int.back,    value); }
+      public static UnityEngine.Vector2    SetVectorDownAxis   (UnityEngine.Vector2    vector, float value) { return Util.SetVectorAxis(vector, UnityEngine.Vector2   .down,    value); }
+      public static UnityEngine.Vector3    SetVectorDownAxis   (UnityEngine.Vector3    vector, float value) { return Util.SetVectorAxis(vector, UnityEngine.Vector3   .down,    value); }
+      public static UnityEngine.Vector2Int SetVectorDownAxis   (UnityEngine.Vector2Int vector, int   value) { return Util.SetVectorAxis(vector, UnityEngine.Vector2Int.down,    value); }
+      public static UnityEngine.Vector3Int SetVectorDownAxis   (UnityEngine.Vector3Int vector, int   value) { return Util.SetVectorAxis(vector, UnityEngine.Vector3Int.down,    value); }
+      public static UnityEngine.Vector3    SetVectorForwardAxis(UnityEngine.Vector3    vector, float value) { return Util.SetVectorAxis(vector, UnityEngine.Vector3   .forward, value); }
+      public static UnityEngine.Vector3Int SetVectorForwardAxis(UnityEngine.Vector3Int vector, int   value) { return Util.SetVectorAxis(vector, UnityEngine.Vector3Int.forward, value); }
+      public static UnityEngine.Vector2    SetVectorLeftAxis   (UnityEngine.Vector2    vector, float value) { return Util.SetVectorAxis(vector, UnityEngine.Vector2   .left,    value); }
+      public static UnityEngine.Vector3    SetVectorLeftAxis   (UnityEngine.Vector3    vector, float value) { return Util.SetVectorAxis(vector, UnityEngine.Vector3   .left,    value); }
+      public static UnityEngine.Vector2Int SetVectorLeftAxis   (UnityEngine.Vector2Int vector, int   value) { return Util.SetVectorAxis(vector, UnityEngine.Vector2Int.left,    value); }
+      public static UnityEngine.Vector3Int SetVectorLeftAxis   (UnityEngine.Vector3Int vector, int   value) { return Util.SetVectorAxis(vector, UnityEngine.Vector3Int.left,    value); }
+      public static UnityEngine.Vector2    SetVectorRightAxis  (UnityEngine.Vector2    vector, float value) { return Util.SetVectorAxis(vector, UnityEngine.Vector2   .right,   value); }
+      public static UnityEngine.Vector3    SetVectorRightAxis  (UnityEngine.Vector3    vector, float value) { return Util.SetVectorAxis(vector, UnityEngine.Vector3   .right,   value); }
+      public static UnityEngine.Vector2Int SetVectorRightAxis  (UnityEngine.Vector2Int vector, int   value) { return Util.SetVectorAxis(vector, UnityEngine.Vector2Int.right,   value); }
+      public static UnityEngine.Vector3Int SetVectorRightAxis  (UnityEngine.Vector3Int vector, int   value) { return Util.SetVectorAxis(vector, UnityEngine.Vector3Int.right,   value); }
+      public static UnityEngine.Vector2    SetVectorUpAxis     (UnityEngine.Vector2    vector, float value) { return Util.SetVectorAxis(vector, UnityEngine.Vector2   .up,      value); }
+      public static UnityEngine.Vector3    SetVectorUpAxis     (UnityEngine.Vector3    vector, float value) { return Util.SetVectorAxis(vector, UnityEngine.Vector3   .up,      value); }
+      public static UnityEngine.Vector2Int SetVectorUpAxis     (UnityEngine.Vector2Int vector, int   value) { return Util.SetVectorAxis(vector, UnityEngine.Vector2Int.up,      value); }
+      public static UnityEngine.Vector3Int SetVectorUpAxis     (UnityEngine.Vector3Int vector, int   value) { return Util.SetVectorAxis(vector, UnityEngine.Vector3Int.up,      value); }
+
+      public static UnityEngine.Vector3    SetVectorDepthAxis (UnityEngine.Vector3    vector, float value) { return Util.SetVectorForwardAxis(vector, value); }
+      public static UnityEngine.Vector3Int SetVectorDepthAxis (UnityEngine.Vector3Int vector, int   value) { return Util.SetVectorForwardAxis(vector, value); }
+      public static UnityEngine.Vector2    SetVectorHeightAxis(UnityEngine.Vector2    vector, float value) { return Util.SetVectorUpAxis     (vector, value); }
+      public static UnityEngine.Vector3    SetVectorHeightAxis(UnityEngine.Vector3    vector, float value) { return Util.SetVectorUpAxis     (vector, value); }
+      public static UnityEngine.Vector2Int SetVectorHeightAxis(UnityEngine.Vector2Int vector, int   value) { return Util.SetVectorUpAxis     (vector, value); }
+      public static UnityEngine.Vector3Int SetVectorHeightAxis(UnityEngine.Vector3Int vector, int   value) { return Util.SetVectorUpAxis     (vector, value); }
+      public static UnityEngine.Vector2    SetVectorWidthAxis (UnityEngine.Vector2    vector, float value) { return Util.SetVectorRightAxis  (vector, value); }
+      public static UnityEngine.Vector3    SetVectorWidthAxis (UnityEngine.Vector3    vector, float value) { return Util.SetVectorRightAxis  (vector, value); }
+      public static UnityEngine.Vector2Int SetVectorWidthAxis (UnityEngine.Vector2Int vector, int   value) { return Util.SetVectorRightAxis  (vector, value); }
+      public static UnityEngine.Vector3Int SetVectorWidthAxis (UnityEngine.Vector3Int vector, int   value) { return Util.SetVectorRightAxis  (vector, value); }
+
     public static void StopWaiting() {
       float timestamp = UnityEngine.Time.realtimeSinceStartup;
 
@@ -1256,6 +1590,10 @@ namespace PatchOdyssey {
           wait.callback?.Invoke();
         }
       }
+    }
+
+    public static object? Switch<T>(T value, System.Collections.Generic.Dictionary<T, object> expression, object? fallback = null) {
+      return expression?.TryGetValue(value, out object callback) ?? false ? callback : fallback;
     }
 
     public static void WaitAtLeastEvery(float delay, System.Action callback) {

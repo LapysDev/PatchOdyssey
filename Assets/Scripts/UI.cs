@@ -53,36 +53,61 @@ public class UI : UnityEngine.MonoBehaviour {
   private const           float                       LOAD_ANIMATION_DURATION                =  0.40f;                                           // → in Seconds greater than `UnityEngine.Time.deltaTime`
   private const           float                       IMMEDIATE_TEXT_BACKGROUND_TRANSPARENCY =  0.65f;                                           //
   private const           float                       COMPONENT_TAB_INITIAL_DELAY            =  1.00f;                                           // → UI keyboard repeat delay
+  private const           float                       BACKGROUND_UNLOAD_DURATION             =  2.00f;                                           //
   private const           float                       BACKGROUND_RESPONSIVENESS              = 20.00f;                                           // → Higher values are less responsive
   private static readonly (
     string BACK,
-    string MENU_CREDITS,
-    string MENU_OPTIONS,
-    string MENU_QUIT,
-    string MENU_START
-  ) COMPONENT_TAGS = ("BackButton", "MenuCreditsButton", "MenuOptionsButton", "MenuQuitButton", "MenuStartButton"); // → Tag identifiers for functional UI components
+    string MENU, string MENU_CREDITS, string MENU_OPTIONS, string MENU_QUIT, string MENU_START
+  ) COMPONENT_TAGS = ("BackButton", "MenuButton", "MenuCreditsButton", "MenuOptionsButton", "MenuQuitButton", "MenuStartButton"); // → Tag identifiers for functional UI components
 
-  [ReadWrite] private                float                                                                                          animationDurationElapsed        =  0.0f;  // → Generic; For all/ any animations
-  [ReadWrite] private readonly       System.Collections.Generic.Dictionary<string, UnityEngine.AudioSource?>                        audios                          =  new(); // → List of `UnityEngine.AudioSource` objects spawned via `UI::LoadAudio…()`
-  [ReadWrite] public                 UnityEngine.UI.RawImage?                                                                       background                      =  null;
-  [ReadWrite] private readonly       System.Collections.Generic.List<UI.ComponentLoadInfo>                                          componentLoads                  =  new(); // → List of UI `UI::components` (un-)loaded from the interface
-  [ReadWrite] public  /* readonly */ GameObjectReadOnlyDictionary                                                                   components                      =  new() {{"credits", null}, {"combat", null}, {"dialogue", null}, {"inventory", null}, {"menu", null}, {"options", null}, {"pause", null}, {"prompt", null}, {"splash", null}, {"tooltip:hud", null}, {"tooltip:scene", null}};
-  [ReadWrite] private                bool                                                                                           componentTabActive              =  false;
-  [ReadWrite] private                int                                                                                            componentTabIndex               =  -1;
-  [ReadWrite] private                float                                                                                          componentTabInitialDelayElapsed =  0.0f;
-  [ReadOnly]  private /* readonly */ System.Collections.Generic.List<UnityEngine.GameObject>                                        componentTabList                => this.tabbed; // → List of "tabbable" UI components
-  [ReadOnly]  public  /* readonly */ UnityEngine.GameObject                                                                         immediateText                   =  null;        // → Debug UI messages
-  [ReadWrite] private readonly       UI.EventInputInfo                                                                              inputs                          =  new();
-  [ReadWrite] private readonly       SerializedReadOnlyDictionary<string, System.Collections.Generic.List<UI.KeyboardInfo>>         keyboards                       =  new() {{"active", new()}, {"active:begin", new()}, {"active:end", new()}}; // → ⌨️
-  [ReadWrite] public  static         UI?                                                                                            main                            =  null;
-  [ReadOnly]  public                 UnityEngine.AudioSource?                                                                       music                           =  null; // → Current background music (intended to be) playing
-  [ReadWrite] private readonly       SerializedReadOnlyDictionary<string, System.Collections.Generic.List<UI.PointerComponentInfo>> pointers                        =  new() {{"active", new()}, {"active:begin", new()}, {"active:end", new()}, {"hover", new()}, {"hover:begin", new()}, {"hover:end", new()}}; // → 👆 🖱️
-  [ReadOnly]  public                 bool                                                                                           prompted                        =  false; // → Examples: "Is the 'Enter' key pressed?" or "Is the 'Proceed' button tapped?"
-  [ReadOnly]  public  /* readonly */ System.Collections.Generic.List<UnityEngine.GameObject>                                        tabbed                          =  new();
+  [ReadWriteInInspector] private                float                                                                                          animationDurationElapsed        =  0.0f; // → Generic; For all/ any animations
+  [ReadOnlyInInspector]  public  static         float                                                                                          averageDeltaTime                => 0uL != UI.updateCount ? (float) (UI.totalDeltaTime / UI.updateCount) : 0.0f;
+  [ReadWriteInInspector] private readonly       System.Collections.Generic.Dictionary<string, UnityEngine.AudioSource?>                        audios                          =  new(); // → List of `UnityEngine.AudioSource` objects spawned via `UI::LoadAudio…()`
+  [ReadWriteInInspector] public                 UnityEngine.UI.RawImage?                                                                       background                      =  null;
+  [ReadWriteInInspector] private readonly       System.Collections.Generic.List<UI.ComponentLoadInfo>                                          componentLoads                  =  new(); // → List of UI `UI::components` (un-)loaded from the interface
+  [ReadWriteInInspector] public  /* readonly */ GameObjectReadOnlyDictionary                                                                   components                      =  new() {{"credits", null}, {"combat", null}, {"dialogue", null}, {"inventory", null}, {"menu", null}, {"options", null}, {"pause", null}, {"prompt", null}, {"splash", null}, {"tooltip:hud", null}, {"tooltip:scene", null}};
+  [ReadWriteInInspector] private                bool                                                                                           componentTabActive              =  false;
+  [ReadWriteInInspector] private                int                                                                                            componentTabIndex               =  -1;
+  [ReadWriteInInspector] private                float                                                                                          componentTabInitialDelayElapsed =  0.0f;
+  [ReadOnlyInInspector]  private /* readonly */ System.Collections.Generic.List<UnityEngine.GameObject>                                        componentTabList                => this.tabbed; // → List of "tabbable" UI components
+  [ReadOnlyInInspector]  public  /* readonly */ UnityEngine.GameObject                                                                         immediateText                   =  null;        // → Debug UI messages
+  [ReadWriteInInspector] private readonly       UI.EventInputInfo                                                                              inputs                          =  new();
+  [ReadWriteInInspector] private readonly       SerializedReadOnlyDictionary<string, System.Collections.Generic.List<UI.KeyboardInfo>>         keyboards                       =  new() {{"active", new()}, {"active:begin", new()}, {"active:end", new()}}; // → ⌨️
+  [ReadOnlyInInspector]  public  static         UI?                                                                                            main                            =  null;
+  [ReadOnlyInInspector]  public  static         float                                                                                          maximumDeltaTime                =  float.NegativeInfinity;
+  [ReadOnlyInInspector]  public  static         float                                                                                          minimumDeltaTime                =  float.PositiveInfinity;
+  [ReadOnlyInInspector]  public                 UnityEngine.AudioSource?                                                                       music                           =  null; // → Current background music (intended to be) playing
+  [ReadWriteInInspector] private readonly       SerializedReadOnlyDictionary<string, System.Collections.Generic.List<UI.PointerComponentInfo>> pointers                        =  new() {{"active", new()}, {"active:begin", new()}, {"active:end", new()}, {"hover", new()}, {"hover:begin", new()}, {"hover:end", new()}}; // → 👆 🖱️
+  [ReadOnlyInInspector]  public                 bool                                                                                           prompted                        =  false; // → Examples: "Is the 'Enter' key pressed?" or "Is the 'Proceed' button tapped?"
+  [ReadOnlyInInspector]  public  /* readonly */ System.Collections.Generic.List<UnityEngine.GameObject>                                        tabbed                          =  new();
+  [ReadOnlyInInspector]  public  static         double                                                                                         totalDeltaTime                  =  0.0;
+  [ReadOnlyInInspector]  public  static         ulong                                                                                          updateCount                     =  0uL;
 
   /* … */
   private void Awake() {
     UI.main ??= this;
+  }
+
+  void EndEventData<T>(SerializedReadOnlyDictionary<string, System.Collections.Generic.List<T>> informationList) where T : UI.EventDataInfo {
+    this.inputs.keyboards.active  .Clear();
+    this.inputs.pointers .active  .Clear();
+    this.inputs.pointers .position.Clear();
+
+    foreach (string key in informationList.Keys)
+    if (!key.Contains(":")) {
+      System.Collections.Generic.List<T> _     = informationList[key];
+      System.Collections.Generic.List<T> begin = informationList.TryGetValue(key + ":begin", out begin) ? begin : new();
+      System.Collections.Generic.List<T> end   = informationList.TryGetValue(key + ":end",   out end)   ? end   : new();
+
+      // …
+      foreach (T information in Util.ArrayFrom(_, begin)) {
+        if (!end.Exists(subinformation => information.id == subinformation.id))
+        end.Add(information);
+      }
+
+      _    .Clear();
+      begin.Clear();
+    }
   }
 
   public void HideText(float duration = 0.0f) {
@@ -118,7 +143,11 @@ public class UI : UnityEngine.MonoBehaviour {
     return information.device is UnityEngine.InputSystem.Touchscreen;
   }
 
-  private bool IsSelected(UnityEngine.GameObject gameObject) {
+  public bool IsSelected(UnityEngine.Component component) {
+    return this.IsSelected(component.gameObject);
+  }
+
+  public bool IsSelected(UnityEngine.GameObject gameObject) {
     return null != gameObject && (
       (this.componentTabActive && this.componentTabIndex != -1 && null != this.componentTabList && this.prompted ? gameObject == this.componentTabList[this.componentTabIndex] : false) || (
         this.pointers["active:end"].Exists(pointerInformation => gameObject == pointerInformation.gameObject) &&
@@ -167,7 +196,7 @@ public class UI : UnityEngine.MonoBehaviour {
 
       // …
       if (null != audioClip) {
-        audioSource              = new UnityEngine.GameObject(System.IO.Path.GetFileNameWithoutExtension(path), typeof(UnityEngine.RectTransform)).AddComponent<UnityEngine.AudioSource>();
+        audioSource              = new UnityEngine.GameObject((UI.LoadAction.AsMusic == (action & UI.LoadAction.AsMusic) ? "🎼 " : UI.LoadAction.AsSoundEffect == (action & UI.LoadAction.AsSoundEffect) ? "🔊 " : "🎵 ") + System.IO.Path.GetFileNameWithoutExtension(path), typeof(UnityEngine.RectTransform)).AddComponent<UnityEngine.AudioSource>();
         audioSource.clip         = audioClip;
         audioSource.loop         = UI.LoadAction.AsMusic       == (action & UI.LoadAction.AsMusic);
         audioSource.spatialBlend = UI.LoadAction.AsSoundEffect == (action & UI.LoadAction.AsSoundEffect) ? 1.0f : 0.0f;
@@ -218,17 +247,21 @@ public class UI : UnityEngine.MonoBehaviour {
         begin.RemoveAll(subinformation => information.id == subinformation.id);
       }
 
-      if (new System.Collections.Generic.Dictionary<System.Type, object>() {
-        {typeof(UI.KeyboardInfo), (System.Action<System.Collections.Generic.List<UI.KeyboardInfo>>) ((System.Collections.Generic.List<UI.KeyboardInfo> _) => (begin as System.Collections.Generic.List<UI.KeyboardInfo>).ForEach(information => {
-          if (!_.Exists(subinformation => information.id == subinformation.id))
-          _.Add(new() {device = information.device, id = information.id, key = information.key, timestamp = timestamp});
-        }))},
+      (Util.Switch(typeof(T), new() {
+        {typeof(UI.KeyboardInfo), (System.Action<System.Collections.Generic.List<UI.KeyboardInfo>>) ((System.Collections.Generic.List<UI.KeyboardInfo> _) => {
+          foreach (var information in begin as System.Collections.Generic.List<UI.KeyboardInfo>) {
+            if (!_.Exists(subinformation => information.id == subinformation.id))
+            _.Add(new() {device = information.device, id = information.id, key = information.key, timestamp = timestamp});
+          }
+        })},
 
-        {typeof(UI.PointerComponentInfo), (System.Action<System.Collections.Generic.List<UI.PointerComponentInfo>>) ((System.Collections.Generic.List<UI.PointerComponentInfo> _) => (begin as System.Collections.Generic.List<UI.PointerComponentInfo>).ForEach(information => {
-          if (!_.Exists(subinformation => information.gameObject == subinformation.gameObject && information.id == subinformation.id))
-          _.Add(new() {device = information.device, gameObject = information.gameObject, id = information.id, position = information.position, timestamp = timestamp});
-        }))}
-      }.TryGetValue(typeof(T), out var __)) (__ as System.Action<System.Collections.Generic.List<T>>)(_);
+        {typeof(UI.PointerComponentInfo), (System.Action<System.Collections.Generic.List<UI.PointerComponentInfo>>) ((System.Collections.Generic.List<UI.PointerComponentInfo> _) => {
+          foreach (var information in begin as System.Collections.Generic.List<UI.PointerComponentInfo>) {
+            if (!_.Exists(subinformation => information.gameObject == subinformation.gameObject && information.id == subinformation.id))
+            _.Add(new() {device = information.device, gameObject = information.gameObject, id = information.id, position = information.position, timestamp = timestamp});
+          }
+        })}
+      }) as System.Action<System.Collections.Generic.List<T>>)(_);
     }
   }
 
@@ -353,8 +386,7 @@ public class UI : UnityEngine.MonoBehaviour {
   }
 
   public void OnMove(UnityEngine.InputSystem.InputAction.CallbackContext context) {
-    // TODO (Lapys)
-    // UnityEngine.Vector2 direction = context.ReadValue<UnityEngine.Vector2>();
+    Game.main?.player?.MoveBy(context.ReadValue<UnityEngine.Vector2>());
   }
 
   private void OnPointer(UI.PointerPositionInfo information) {
@@ -524,7 +556,7 @@ public class UI : UnityEngine.MonoBehaviour {
 
     // …
     if (null != splashTransform) {
-      float size = System.Math.Max(splashTransform.rect.height, splashTransform.rect.width);
+      float size = Util.Max(splashTransform.rect.height, splashTransform.rect.width);
       splashTransform.SetSize(new(size, size));
     }
 
@@ -573,17 +605,26 @@ public class UI : UnityEngine.MonoBehaviour {
     // → Sequence menus
     this.UnloadAllComponents(UI.LoadAction.Immediately);
     this.LoadComponent      ("splash", UI.LoadAction.Immediately);
+    this.LoadMusic          ("calm.mp3");
 
-    Util.WaitAtLeastOnce(3.0f, () => {
-      const float backgroundFadeDuration = 2.0f;
-
-      // …
-      this.components["splash"].GetComponent<UnityEngine.UI.RawImage>()?.CrossFadeAlpha(0.0f, backgroundFadeDuration, true); // → Thank goodness this method exists; T_T
+    Util.WaitAtLeastOnce(1.5f, () => {
+      this.components["splash"]?.GetComponent<UnityEngine.UI.RawImage>()?.CrossFadeAlpha(0.0f, BACKGROUND_UNLOAD_DURATION, true); // → Thank goodness this method exists; T_T
+      System.Array.ForEach(this.components["splash"]?.FindDescendantsByComponent<TMPro.TextMeshProUGUI>(), _ => _.alpha = 0.0f);
 
       this.LoadComponent  ("menu", UI.LoadAction.Immediately);
-      this.LoadMusic      ("calm.mp3");
-      Util.WaitAtLeastOnce(backgroundFadeDuration, () => this.UnloadComponent("splash", UI.LoadAction.Immediately));
+      Util.WaitAtLeastOnce(BACKGROUND_UNLOAD_DURATION, () => this.UnloadComponent("splash", UI.LoadAction.Immediately));
     });
+
+    // → Acknowledge application events
+    UnityEngine.Application.focusChanged += focus => {
+      if (!focus) {
+        this.EndEventData(this.keyboards);
+        this.EndEventData(this.pointers);
+        this.OnTabBlur   ();
+
+        Game.main?.Pause();
+      }
+    };
   }
 
   public void UnloadAllComponents(UI.LoadAction action = UI.LoadAction.Deferred) {
@@ -629,6 +670,7 @@ public class UI : UnityEngine.MonoBehaviour {
     (T, UnityEngine.Vector3 eulerAngles, UnityEngine.Vector3 localScale) teeterAnimationStart = (default(T), UnityEngine.Vector3.zero, UnityEngine.Vector3.one);
     System.Collections.Generic.List<UnityEngine.GameObject>              uiAnimatable         = new((int) this.gameObject.CountDescendants());
     System.Action<UnityEngine.AudioSource>                               uiAsSoundEffect      = uiAudio => { if (null != uiAudio) uiAudio.spatialBlend = 0.0f; };
+    UnityEngine.InputSystem.PlayerInput?                                 uiInput              = this.GetComponent<UnityEngine.InputSystem.PlayerInput>();
     System.Collections.Generic.List<UnityEngine.GameObject>              uiDeanimatable       = new((int) this.gameObject.CountDescendants());
     float                                                                uiTimestamp          = UnityEngine.Time.realtimeSinceStartup;
 
@@ -650,7 +692,7 @@ public class UI : UnityEngine.MonoBehaviour {
     // → Acknowledge pointer events
     this.pointers["active:begin"].Clear();
 
-    if (null == this.GetComponent<UnityEngine.InputSystem.PlayerInput>()?.actions) {
+    if (null == uiInput?.actions) {
       string[]            mouseIDs      = {"LEFT", "RIGHT", "MIDDLE"};
       UnityEngine.Vector2 mousePosition = UnityEngine.Input.mousePosition;
 
@@ -681,92 +723,124 @@ public class UI : UnityEngine.MonoBehaviour {
     this.LoadEventData(this.keyboards);
     this.LoadEventData(this.pointers);
 
-    // → Navigate UI components
-    this.componentTabList.Clear();
+    if (Game.main?.isPlaying ?? false) {
+      // → Gameplay events
+      if (null == uiInput?.actions) {
+        bool                move     = 0 != this.keyboards["active:end"].Count;
+        UnityEngine.Vector3 movement = UnityEngine.Vector3.zero;
 
-    foreach ((UnityEngine.GameObject uiComponent, UnityEngine.GameObject[] uiElements) in new[] {
-      (this.components["credits"], Util.ArrayFrom(this.components["credits"]?.FindDescendantsByTag(COMPONENT_TAGS.BACK))),
-      (this.components["menu"],    System.Array.ConvertAll(Util.ArrayFrom(this.components["menu"]?.FindDescendantsByComponent<UnityEngine.UI.Button>()), _ => _.gameObject))
-    }) {
-      this.componentTabList.AddRange(uiComponent?.activeSelf ?? false ? uiElements : new UnityEngine.GameObject[0]);
-      uiDeanimatable       .AddRange(uiElements);
+        // …
+        if (this.keyboards["active"].Exists(_ => UnityEngine.KeyCode.Escape  == _.key))
+        Game.main.Pause();
+
+        if (this.keyboards["active"].Exists(_ => UnityEngine.KeyCode.DownArrow  == _.key || UnityEngine.KeyCode.S == _.key)) { move = true; movement += UnityEngine.Vector3.back; }
+        if (this.keyboards["active"].Exists(_ => UnityEngine.KeyCode.LeftArrow  == _.key || UnityEngine.KeyCode.A == _.key)) { move = true; movement += UnityEngine.Vector3.left; }
+        if (this.keyboards["active"].Exists(_ => UnityEngine.KeyCode.RightArrow == _.key || UnityEngine.KeyCode.D == _.key)) { move = true; movement += UnityEngine.Vector3.right; }
+        if (this.keyboards["active"].Exists(_ => UnityEngine.KeyCode.UpArrow    == _.key || UnityEngine.KeyCode.W == _.key)) { move = true; movement += UnityEngine.Vector3.forward; }
+
+        if (move)
+        Game.main?.player?.MoveBy(movement);
+      }
     }
 
-    this.OnTabFocus();
-    uiAnimatable.AddRange(this.pointers["hover"].ConvertAll(_ => _.gameObject).FindAll(this.componentTabList.Contains)); // → All "tabbable" UI components can be animated
+    else {
+      // → Navigate UI components
+      this.componentTabList.Clear();
 
-    this.componentTabIndex = 0 != uiAnimatable.Count ? this.componentTabList.IndexOf(uiAnimatable[0]) : this.componentTabIndex; // → Tab index affected by UI pointer selection
-    if (this.componentTabIndex != -1 && null != this.componentTabList) {
-      this.componentTabActive = this.componentTabActive && !this.pointers["hover:end"].Exists(_ => _.gameObject == this.componentTabList[this.componentTabIndex]);
-
-      if (this.componentTabActive && !uiAnimatable.Contains(this.componentTabList[this.componentTabIndex]))
-      uiAnimatable.Add(this.componentTabList[this.componentTabIndex]);
-    }
-
-    uiDeanimatable.RemoveAll(uiAnimatable.Contains); // → Do not animate UI components not meant to be animated
-
-    // → Animate UI components
-    foreach (UnityEngine.GameObject uiElement in uiDeanimatable) {
-      uiElement.gameObject.transform.eulerAngles = teeterAnimationStart.eulerAngles;
-      uiElement.gameObject.transform.localScale  = teeterAnimationStart.localScale;
-
-      if (this.components["menu"]?.HasDescendant(uiElement) ?? false)
-      this.LoadTexture("menu-button-1.png", default, menuTexture => { UnityEngine.UI.RawImage? menuImage = uiElement.GetComponent<UnityEngine.UI.RawImage>(); if (null != menuImage) menuImage.texture = menuTexture; });
-    }
-
-    foreach (UnityEngine.GameObject uiElement in uiAnimatable) {
-      const uint animationKeyframes   = 4u;
-      float      animationProgress    = (this.animationDurationElapsed - (TEETER_ANIMATION_DURATION * (int) (this.animationDurationElapsed / TEETER_ANIMATION_DURATION))) / TEETER_ANIMATION_DURATION;
-      float      animationSubprogress = animationKeyframes * (animationProgress % (1.0f / animationKeyframes));
-      var        animationStart       = teeterAnimationStart;
-      uint       animationFrameIndex  = (uint) (animationProgress / (1.0f / animationKeyframes));
-      var        animationEnd         = (default(T), eulerAngles: UnityEngine.Vector3.forward * (animationFrameIndex < animationKeyframes / 2u ? +5.0f : -5.0f), localScale: animationStart.localScale * 1.1f);
-      var        animationDelta       = (default(T), eulerAngles: animationEnd.eulerAngles - animationStart.eulerAngles,                                         localScale: animationEnd.localScale - animationStart.localScale);
-
-      // …
-      if (animationFrameIndex % 2 == 1) {
-        (animationDelta.eulerAngles, animationDelta.localScale) = (-animationDelta.eulerAngles, -animationDelta.localScale);
-
-        (animationEnd.eulerAngles, animationStart.eulerAngles) = (animationStart.eulerAngles, animationEnd.eulerAngles);
-        (animationEnd.localScale,  animationStart.localScale)  = (animationStart.localScale,  animationEnd.localScale);
+      foreach ((UnityEngine.GameObject uiComponent, UnityEngine.GameObject[] uiElements) in new[] {
+        (this.components["credits"], System.Array.ConvertAll(Util.ArrayFrom(this.components["credits"]?.FindDescendantsByComponent<UnityEngine.UI.Button>()), _ => _.gameObject)),
+        (this.components["menu"],    System.Array.ConvertAll(Util.ArrayFrom(this.components["menu"]   ?.FindDescendantsByComponent<UnityEngine.UI.Button>()), _ => _.gameObject)),
+        (this.components["pause"],   System.Array.ConvertAll(Util.ArrayFrom(this.components["pause"]  ?.FindDescendantsByComponent<UnityEngine.UI.Button>()), _ => _.gameObject))
+      }) {
+        this.componentTabList.AddRange(uiComponent?.activeSelf ?? false ? uiElements : new UnityEngine.GameObject[0]);
+        uiDeanimatable       .AddRange(uiElements);
       }
 
-      uiElement.gameObject.transform.eulerAngles = animationStart.eulerAngles + (animationDelta.eulerAngles * (float) TEETER_ANIMATION_FUNCTION(animationSubprogress));
-      uiElement.gameObject.transform.localScale  = animationStart.localScale  + (animationDelta.localScale  * (float) TEETER_ANIMATION_FUNCTION(animationSubprogress));
+      this.OnTabFocus();
+      uiAnimatable.AddRange(this.pointers["hover"].ConvertAll(_ => _.gameObject).FindAll(this.componentTabList.Contains)); // → All "tabbable" UI components can be animated
 
-      if (this.components["menu"]?.HasDescendant(uiElement) ?? false)
-      this.LoadTexture($"menu-button-{(COMPONENT_TAGS.MENU_QUIT == uiElement.tag ? 4u : 3u)}.png", default, menuTexture => { UnityEngine.UI.RawImage? menuImage = uiElement.GetComponent<UnityEngine.UI.RawImage>(); if (null != menuImage) menuImage.texture = menuTexture; });
-    }
+      this.componentTabIndex = 0 != uiAnimatable.Count ? this.componentTabList.IndexOf(uiAnimatable[0]) : this.componentTabIndex; // → Tab index affected by UI pointer selection
+      if (this.componentTabIndex != -1 && null != this.componentTabList) {
+        this.componentTabActive = this.componentTabActive && !this.pointers["hover:end"].Exists(_ => _.gameObject == this.componentTabList[this.componentTabIndex]);
 
-    // → Sequence UI components
-    if (0 != this.keyboards["active:end"].Count)
-    this.LoadSoundEffect("click.mp3", UI.LoadAction.Deferred, uiAsSoundEffect);
+        if (this.componentTabActive && !uiAnimatable.Contains(this.componentTabList[this.componentTabIndex]))
+        uiAnimatable.Add(this.componentTabList[this.componentTabIndex]);
+      }
 
-    foreach (UnityEngine.GameObject creditsReturn in Util.ArrayFrom(this.components["credits"]?.FindChildrenByTag(COMPONENT_TAGS.BACK)))
-    if (this.IsSelected(creditsReturn)) {
-      this.LoadSoundEffect("click.mp3", UI.LoadAction.Immediately, uiAsSoundEffect);
+      uiDeanimatable.RemoveAll(uiAnimatable.Contains); // → Do not animate UI components not meant to be animated
 
-      this.LoadComponent  ("menu");
-      this.UnloadComponent("credits");
-    }
+      // → Animate UI components
+      foreach (UnityEngine.GameObject uiElement in uiDeanimatable) {
+        uiElement.gameObject.transform.eulerAngles = teeterAnimationStart.eulerAngles;
+        uiElement.gameObject.transform.localScale  = teeterAnimationStart.localScale;
 
-    foreach (UnityEngine.UI.Button menuButton in Util.ArrayFrom(this.components["menu"]?.FindDescendantsByComponent<UnityEngine.UI.Button>()))
-    if (this.IsSelected(menuButton.gameObject)) {
-      this.LoadSoundEffect("click.mp3", UI.LoadAction.Immediately, uiAsSoundEffect);
+        if (this.components["menu"]?.HasDescendant(uiElement) ?? false)
+        this.LoadTexture("menu-button-1.png", default, menuTexture => { UnityEngine.UI.RawImage? menuImage = uiElement.GetComponent<UnityEngine.UI.RawImage>(); if (null != menuImage) menuImage.texture = menuTexture; });
+      }
 
-      if (new System.Collections.Generic.Dictionary<string, System.Action?>() {
-        {COMPONENT_TAGS.MENU_QUIT,  () => Game.main?.Exit()},
-        {COMPONENT_TAGS.MENU_START, () => Game.main?.Play()},
+      foreach (UnityEngine.GameObject uiElement in uiAnimatable) {
+        const uint animationKeyframes   = 4u;
+        float      animationProgress    = (this.animationDurationElapsed - (TEETER_ANIMATION_DURATION * (int) (this.animationDurationElapsed / TEETER_ANIMATION_DURATION))) / TEETER_ANIMATION_DURATION;
+        float      animationSubprogress = animationKeyframes * (animationProgress % (1.0f / animationKeyframes));
+        var        animationStart       = teeterAnimationStart;
+        uint       animationFrameIndex  = (uint) (animationProgress / (1.0f / animationKeyframes));
+        var        animationEnd         = (default(T), eulerAngles: UnityEngine.Vector3.forward * (animationFrameIndex < animationKeyframes / 2u ? +5.0f : -5.0f), localScale: animationStart.localScale * 1.1f);
+        var        animationDelta       = (default(T), eulerAngles: animationEnd.eulerAngles - animationStart.eulerAngles,                                         localScale: animationEnd.localScale - animationStart.localScale);
 
-        {COMPONENT_TAGS.MENU_CREDITS, () => {
-          this.LoadComponent  ("credits");
-          this.UnloadComponent("menu");
-        }},
+        // …
+        if (animationFrameIndex % 2 == 1) {
+          (animationDelta.eulerAngles, animationDelta.localScale) = (-animationDelta.eulerAngles, -animationDelta.localScale);
 
-        {COMPONENT_TAGS.MENU_OPTIONS, () => {
-          // TODO (Lapys) → Do something…
-        }}
-      }.TryGetValue(menuButton.tag, out var __)) __?.Invoke();
+          (animationEnd.eulerAngles, animationStart.eulerAngles) = (animationStart.eulerAngles, animationEnd.eulerAngles);
+          (animationEnd.localScale,  animationStart.localScale)  = (animationStart.localScale,  animationEnd.localScale);
+        }
+
+        uiElement.gameObject.transform.eulerAngles = animationStart.eulerAngles + (animationDelta.eulerAngles * (float) TEETER_ANIMATION_FUNCTION(animationSubprogress));
+        uiElement.gameObject.transform.localScale  = animationStart.localScale  + (animationDelta.localScale  * (float) TEETER_ANIMATION_FUNCTION(animationSubprogress));
+
+        if (this.components["menu"]?.HasDescendant(uiElement) ?? false)
+        this.LoadTexture($"menu-button-{(COMPONENT_TAGS.MENU_QUIT == uiElement.tag ? 4u : 3u)}.png", default, menuTexture => { UnityEngine.UI.RawImage? menuImage = uiElement.GetComponent<UnityEngine.UI.RawImage>(); if (null != menuImage) menuImage.texture = menuTexture; });
+      }
+
+      // → Sequence UI components
+      if (0 != this.keyboards["active:end"].Count)
+      this.LoadSoundEffect("click.mp3", UI.LoadAction.Deferred, uiAsSoundEffect);
+
+      foreach (UnityEngine.UI.Button creditsButton in Util.ArrayFrom(this.components["credits"]?.FindDescendantsByComponent<UnityEngine.UI.Button>()))
+      if (this.IsSelected(creditsButton)) {
+        this.LoadSoundEffect("click.mp3", UI.LoadAction.Immediately, uiAsSoundEffect);
+        if (COMPONENT_TAGS.BACK == creditsButton.tag) {
+          this.LoadComponent  ("menu");
+          this.UnloadComponent("credits");
+        }
+      }
+
+      foreach (UnityEngine.UI.Button menuButton in Util.ArrayFrom(this.components["menu"]?.FindDescendantsByComponent<UnityEngine.UI.Button>()))
+      if (this.IsSelected(menuButton)) {
+        this.LoadSoundEffect("click.mp3", UI.LoadAction.Immediately, uiAsSoundEffect);
+        (Util.Switch(menuButton.tag, new() {
+          {COMPONENT_TAGS.MENU_QUIT,  (System.Action) (() => Game.main?.Exit())},
+          {COMPONENT_TAGS.MENU_START, (System.Action) (() => Game.main?.Play())},
+
+          {COMPONENT_TAGS.MENU_CREDITS, (System.Action) (() => {
+            this.LoadComponent  ("credits");
+            this.UnloadComponent("menu");
+          })},
+
+          {COMPONENT_TAGS.MENU_OPTIONS, (System.Action) (() => {
+            // TODO (Lapys) → Do something…
+          })}
+        }) as System.Action)();
+      }
+
+      foreach (UnityEngine.UI.Button pauseButton in Util.ArrayFrom(this.components["pause"]?.FindDescendantsByComponent<UnityEngine.UI.Button>()))
+      if (this.IsSelected(pauseButton)) {
+        this.LoadSoundEffect("click.mp3", UI.LoadAction.Immediately, uiAsSoundEffect);
+        (Util.Switch(pauseButton.tag, new() {
+          {COMPONENT_TAGS.BACK, (System.Action) (() => Game.main?.Play  ())},
+          {COMPONENT_TAGS.MENU, (System.Action) (() => Game.main?.ToMenu())},
+        }) as System.Action)();
+      }
     }
 
     // → Transition UI components
@@ -810,5 +884,10 @@ public class UI : UnityEngine.MonoBehaviour {
 
     this.animationDurationElapsed += UnityEngine.Time.deltaTime;
     this.prompted                  = false;
+
+    UI.maximumDeltaTime = UnityEngine.Time.deltaTime >= UI.maximumDeltaTime ? UnityEngine.Time.deltaTime : UI.maximumDeltaTime;
+    UI.minimumDeltaTime = UnityEngine.Time.deltaTime <= UI.minimumDeltaTime ? UnityEngine.Time.deltaTime : UI.minimumDeltaTime;
+    UI.totalDeltaTime  += UnityEngine.Time.deltaTime;
+    UI.updateCount     += 1uL;
   }
 }
