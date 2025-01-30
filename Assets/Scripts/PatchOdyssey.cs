@@ -3,19 +3,6 @@
 namespace PatchOdyssey {
   public class ReadOnlyInInspectorAttribute : UnityEngine.PropertyAttribute {}
 
-  [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ReadOnlyInInspectorAttribute))]
-  public class ReadOnlyInInspectorDrawer : UnityEditor.PropertyDrawer {
-    public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
-      return UnityEditor.EditorGUI.GetPropertyHeight(property, label, true);
-    }
-
-    public override void OnGUI(UnityEngine.Rect position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
-      UnityEngine.GUI.enabled = false;
-      UnityEditor.EditorGUI.PropertyField(position, property, label, true);
-      UnityEngine.GUI.enabled = true;
-    }
-  }
-
   [System.AttributeUsage(System.AttributeTargets.All, AllowMultiple = false, Inherited = false)]
   public sealed class ReadWriteInInspectorAttribute : System.Attribute {}
 
@@ -420,223 +407,15 @@ namespace PatchOdyssey {
     [System.Serializable] public class Vector3IntDictionary     : PatchOdyssey.SerializedDictionary<string, UnityEngine.Vector3Int>     {}
     [System.Serializable] public class Vector4Dictionary        : PatchOdyssey.SerializedDictionary<string, UnityEngine.Vector4>        {}
 
-  public class SerializedDictionaryDrawer<TDictionary> : UnityEditor.PropertyDrawer where TDictionary : class?, new() {
-    private const  float                                  BUTTON_HEIGHT       =  17.0f;
-    private const  float                                  BUTTON_WIDTH        =  18.0f;
-    private static (System.Type? key, System.Type? value) DICTIONARY_GENERICS => GetDictionaryGenerics();
-    private static System.Type                            DICTIONARY_TYPE     => GetDictionaryType    ();
-    private        TDictionary?                           dictionary          =  null;
-    private        bool                                   foldout             =  false;
-
-    /* … */
-    private void EnsureDictionary(UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
-      if (null == this.dictionary) {
-        this.dictionary = this.fieldInfo.GetValue(property.serializedObject.targetObject) as TDictionary;
-        this.foldout    = UnityEditor.EditorPrefs.GetBool(label.text);
-
-        if (null == this.dictionary)
-        this.fieldInfo.SetValue(property.serializedObject.targetObject, this.dictionary = new TDictionary());
-      }
-    }
-
-    private static (System.Type?, System.Type?) GetDictionaryGenerics() {
-      System.Type[] generics = GetDictionaryType()?.GetGenericArguments();
-      return (generics?.Length ?? 0) < 2 ? (null, null) : (generics[0], generics[1]);
-    }
-
-    private static System.Type GetDictionaryType() {
-      for (System.Type type = typeof(TDictionary); null != type; type = type.BaseType) {
-        System.Type[] generics   = type.GetGenericArguments();
-        System.Type[] interfaces = type.GetInterfaces      ();
-
-        // …
-        if (generics.Length == 2)
-        if (
-          type                            ==                                  typeof(System.Collections.Generic. Dictionary<,>).MakeGenericType(generics) ||
-          interfaces.GetLowerBound(0) - 1 != System.Array.IndexOf(interfaces, typeof(System.Collections.Generic.IDictionary<,>).MakeGenericType(generics))
-        ) return type;
-      }
-
-      return typeof(TDictionary);
-    }
-
-    public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
-      this.EnsureDictionary(property, label);
-      return BUTTON_HEIGHT * (this.foldout ? (GetDictionaryType().GetProperty("Count")?.GetValue(this.dictionary) as int? ?? 0) + 1 : 1);
-    }
-
-    private bool IsReadOnlyDictionary() {
-      if ((null, null) != DICTIONARY_GENERICS) {
-        System.Type type = typeof(PatchOdyssey.SerializedReadOnlyDictionary<,>).MakeGenericType(new[] {DICTIONARY_GENERICS.key, DICTIONARY_GENERICS.value});
-
-        // …
-        if (type == typeof(TDictionary) || typeof(TDictionary).IsSubclassOf(type))
-        return true;
-      }
-
-      return null != this.dictionary && (DICTIONARY_TYPE.GetProperty("IsReadOnly")?.GetValue(this.dictionary) as bool? ?? false);
-    }
-
-    public override void OnGUI(UnityEngine.Rect position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
-      bool                                                                     isReadOnly = this.IsReadOnlyDictionary();
-      (UnityEngine.Rect add, UnityEngine.Rect clear, UnityEngine.Rect foldout) positions;
-
-      // …
-      this.EnsureDictionary(property, label);
-
-      position .height  = BUTTON_HEIGHT;
-      positions.foldout = new(position.x,                                            position.y, position.width - BUTTON_WIDTH, position.height);
-      positions.clear   = new(position.x + (position.width - (BUTTON_WIDTH * 1.0f)), position.y, 0.0f           + BUTTON_WIDTH, position.height);
-      positions.add     = new(position.x + (position.width - (BUTTON_WIDTH * 2.0f)), position.y, 0.0f           + BUTTON_WIDTH, position.height);
-
-      // …
-      if ((null, null) == DICTIONARY_GENERICS)
-      return;
-
-      if (!isReadOnly) {
-        if (UnityEngine.GUI.Button(positions.add, new UnityEngine.GUIContent("+", "Add item"), UnityEditor.EditorStyles.miniButton))
-        try {
-          object key   =  DICTIONARY_GENERICS.key == typeof(string) ? ""   : System.Activator.CreateInstance(DICTIONARY_GENERICS.key);
-          object value = !DICTIONARY_GENERICS.value.IsValueType     ? null : System.Activator.CreateInstance(DICTIONARY_GENERICS.value);
-
-          // …
-          if (!(DICTIONARY_TYPE.GetMethod("ContainsKey", new[] {DICTIONARY_GENERICS.key})?.Invoke(this.dictionary, new object[] {key}) as bool? ?? true))
-          DICTIONARY_TYPE.GetMethod("Add", new[] {DICTIONARY_GENERICS.key, DICTIONARY_GENERICS.value})?.Invoke(this.dictionary, new object[] {key, value});
-        } catch (System.Exception exception) { UnityEngine.Debug.LogError($"{exception.Message}"); }
-
-        if (UnityEngine.GUI.Button(positions.clear, new UnityEngine.GUIContent("×", "Clear dictionary"), UnityEditor.EditorStyles.miniButtonRight))
-        DICTIONARY_TYPE.GetMethod("Clear", new System.Type[] {})?.Invoke(this.dictionary, null);
-      }
-
-      UnityEditor.EditorGUI.BeginChangeCheck();
-      this.foldout = UnityEditor.EditorGUI.Foldout(positions.foldout, this.foldout, label, true);
-      if (UnityEditor.EditorGUI.EndChangeCheck()) UnityEditor.EditorPrefs.SetBool(label.text, this.foldout);
-
-      if (!this.foldout)
-      return;
-
-      for (
-        object enumerator = DICTIONARY_TYPE.GetMethod("GetEnumerator")?.Invoke(this.dictionary, null);
-        enumerator?.GetType().GetMethod("MoveNext", new System.Type[] {})?.Invoke(enumerator, null) as bool? ?? false;
-      ) {
-        (UnityEngine.Rect key, UnityEngine.Rect remove, UnityEngine.Rect value) subpositions;
-        object                                                                  item = enumerator.GetType() .GetProperty("Current")?.GetValue(enumerator);
-        (object key, object value)                                                   = (item    ?.GetType()?.GetProperty("Key")    ?.GetValue(item), item?.GetType()?.GetProperty("Value")?.GetValue(item));
-
-        /* … */
-        static object Field(UnityEngine.Rect position, object value, System.Type type) {
-          if (null == type) {
-            UnityEditor.EditorGUI.LabelField(position, $"{value}");
-            return value;
-          }
-
-          if (type == typeof(bool))                              return (UnityEditor.EditorGUI.Toggle         (position,                              (System.Boolean)             (value as object))             as object);
-          if (type == typeof(double))                            return (UnityEditor.EditorGUI.DoubleField    (position,                              (System.Double)              (value as object))             as object);
-          if (type == typeof(float))                             return (UnityEditor.EditorGUI.FloatField     (position,                              (System.Single)              (value as object))             as object);
-          if (type == typeof(int))                               return (UnityEditor.EditorGUI.IntField       (position,                              (System.Int32)               (value as object))             as object);
-          if (type == typeof(long))                              return (UnityEditor.EditorGUI.LongField      (position,                              (System.Int64)               (value as object))             as object);
-          if (type == typeof(string))                            return (UnityEditor.EditorGUI.TextField      (position,                              (System.String)              (value as object))             as object);
-          if (type == typeof(UnityEngine.AnimationCurve))        return (UnityEditor.EditorGUI.CurveField     (position,                              (UnityEngine.AnimationCurve) (value as object))             as object);
-          if (type == typeof(UnityEngine.Bounds))                return (UnityEditor.EditorGUI.BoundsField    (position,                              (UnityEngine.Bounds)         (value as object))             as object);
-          if (type == typeof(UnityEngine.BoundsInt))             return (UnityEditor.EditorGUI.BoundsIntField (position,                              (UnityEngine.BoundsInt)      (value as object))             as object);
-          if (type == typeof(UnityEngine.Color))                 return (UnityEditor.EditorGUI.ColorField     (position,                              (UnityEngine.Color)          (value as object))             as object);
-          if (type == typeof(UnityEngine.Gradient))              return (UnityEditor.EditorGUI.GradientField  (position,                              (UnityEngine.Gradient)       (value as object))             as object);
-          if (type == typeof(UnityEngine.Rect))                  return (UnityEditor.EditorGUI.RectField      (position,                              (UnityEngine.Rect)           (value as object))             as object);
-          if (type == typeof(UnityEngine.RectInt))               return (UnityEditor.EditorGUI.RectIntField   (position,                              (UnityEngine.RectInt)        (value as object))             as object);
-          if (type == typeof(UnityEngine.Vector2))               return (UnityEditor.EditorGUI.Vector2Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector2)        (value as object))             as object);
-          if (type == typeof(UnityEngine.Vector2Int))            return (UnityEditor.EditorGUI.Vector2IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector2Int)     (value as object))             as object);
-          if (type == typeof(UnityEngine.Vector3))               return (UnityEditor.EditorGUI.Vector3Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector3)        (value as object))             as object);
-          if (type == typeof(UnityEngine.Vector3Int))            return (UnityEditor.EditorGUI.Vector3IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector3Int)     (value as object))             as object);
-          if (type == typeof(UnityEngine.Vector4))               return (UnityEditor.EditorGUI.Vector4Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector4)        (value as object))             as object);
-          if (type.IsEnum)                                       return (UnityEditor.EditorGUI.EnumPopup      (position,                              (System.Enum)                (value as object))             as object);
-          if (typeof(UnityEngine.Object).IsAssignableFrom(type)) return (UnityEditor.EditorGUI.ObjectField    (position,                              (UnityEngine.Object)         (value as object), type, true) as object);
-
-          UnityEngine.Debug.LogError($"Type `{type}` is not supported");
-          return value;
-        }
-
-        // …
-        position    .y     += BUTTON_HEIGHT;
-        subpositions.key    = new(position.x                                                     + (isReadOnly ? BUTTON_WIDTH : 0.0f), position.y, (position.width - BUTTON_WIDTH) * (2.0f / 5.0f), position.height);
-        subpositions.value  = new(position.x + ((position.width - BUTTON_WIDTH) * (2.0f / 5.0f)) + (isReadOnly ? BUTTON_WIDTH : 0.0f), position.y, (position.width - BUTTON_WIDTH) * (3.0f / 5.0f), position.height);
-        subpositions.remove = new(position.x + ((position.width - BUTTON_WIDTH) * (5.0f / 5.0f)),                                      position.y, BUTTON_WIDTH,                                    position.height);
-
-        UnityEditor.EditorGUI.BeginChangeCheck();
-        key = Field(subpositions.key, key, isReadOnly ? null : DICTIONARY_GENERICS.key);
-        if (UnityEditor.EditorGUI.EndChangeCheck()) {
-          try {
-            DICTIONARY_TYPE.GetMethod("Remove", new[] {DICTIONARY_GENERICS.key})                           .Invoke(this.dictionary, new object[] {item?.GetType()?.GetProperty("Key")?.GetValue(item)});
-            DICTIONARY_TYPE.GetMethod("Add",    new[] {DICTIONARY_GENERICS.key, DICTIONARY_GENERICS.value}).Invoke(this.dictionary, new object[] {key, value});
-          } catch (System.Exception exception) when (exception is not System.NullReferenceException) { UnityEngine.Debug.LogError($"{exception.Message}"); }
-
-          break;
-        }
-
-        UnityEditor.EditorGUI.BeginChangeCheck();
-        value = Field(subpositions.value, value, DICTIONARY_GENERICS.value);
-        if (UnityEditor.EditorGUI.EndChangeCheck()) {
-          DICTIONARY_TYPE.GetProperty((System.Attribute.GetCustomAttribute(typeof(TDictionary), typeof(System.Reflection.DefaultMemberAttribute)) as System.Reflection.DefaultMemberAttribute)?.MemberName ?? "", new[] {DICTIONARY_GENERICS.key})?.GetSetMethod()?.Invoke(this.dictionary, new object[] {key, value});
-          break;
-        }
-
-        if (!isReadOnly)
-        if (UnityEngine.GUI.Button(subpositions.remove, new UnityEngine.GUIContent("×", "Remove item"), UnityEditor.EditorStyles.miniButtonRight)) {
-          DICTIONARY_TYPE.GetMethod("Remove", new[] {DICTIONARY_GENERICS.key})?.Invoke(this.dictionary, new object[] {key});
-          break;
-        }
-      }
-    }
-  }
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.AnimationCurveDictionary))]         public class AnimationCurveDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.AnimationCurveDictionary>         {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.AnimationCurveReadOnlyDictionary))] public class AnimationCurveReadOnlyDictionaryDrawer : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.AnimationCurveReadOnlyDictionary> {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BooleanDictionary))]                public class BooleanDictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.BooleanDictionary>                {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BooleanReadOnlyDictionary))]        public class BooleanReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.BooleanReadOnlyDictionary>        {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsDictionary))]                 public class BoundsDictionaryDrawer                 : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.BoundsDictionary>                 {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsIntDictionary))]              public class BoundsIntDictionaryDrawer              : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.BoundsIntDictionary>              {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsIntReadOnlyDictionary))]      public class BoundsIntReadOnlyDictionaryDrawer      : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.BoundsIntReadOnlyDictionary>      {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsReadOnlyDictionary))]         public class BoundsReadOnlyDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.BoundsReadOnlyDictionary>         {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ColorDictionary))]                  public class ColorDictionaryDrawer                  : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.ColorDictionary>                  {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ColorReadOnlyDictionary))]          public class ColorReadOnlyDictionaryDrawer          : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.ColorReadOnlyDictionary>          {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.DoubleDictionary))]                 public class DoubleDictionaryDrawer                 : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.DoubleDictionary>                 {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.DoubleReadOnlyDictionary))]         public class DoubleReadOnlyDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.DoubleReadOnlyDictionary>         {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.FloatDictionary))]                  public class FloatDictionaryDrawer                  : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.FloatDictionary>                  {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.FloatReadOnlyDictionary))]          public class FloatReadOnlyDictionaryDrawer          : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.FloatReadOnlyDictionary>          {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GameObjectDictionary))]             public class GameObjectDictionaryDrawer             : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.GameObjectDictionary>             {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GameObjectReadOnlyDictionary))]     public class GameObjectReadOnlyDictionaryDrawer     : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.GameObjectReadOnlyDictionary>     {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GradientDictionary))]               public class GradientDictionaryDrawer               : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.GradientDictionary>               {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GradientReadOnlyDictionary))]       public class GradientReadOnlyDictionaryDrawer       : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.GradientReadOnlyDictionary>       {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.IntDictionary))]                    public class IntDictionaryDrawer                    : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.IntDictionary>                    {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.IntReadOnlyDictionary))]            public class IntReadOnlyDictionaryDrawer            : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.IntReadOnlyDictionary>            {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.LongDictionary))]                   public class LongDictionaryDrawer                   : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.LongDictionary>                   {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.LongReadOnlyDictionary))]           public class LongReadOnlyDictionaryDrawer           : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.LongReadOnlyDictionary>           {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectDictionary))]                   public class RectDictionaryDrawer                   : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.RectDictionary>                   {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectIntDictionary))]                public class RectIntDictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.RectIntDictionary>                {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectIntReadOnlyDictionary))]        public class RectIntReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.RectIntReadOnlyDictionary>        {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectReadOnlyDictionary))]           public class RectReadOnlyDictionaryDrawer           : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.RectReadOnlyDictionary>           {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.StringDictionary))]                 public class StringDictionaryDrawer                 : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.StringDictionary>                 {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.StringReadOnlyDictionary))]         public class StringReadOnlyDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.StringReadOnlyDictionary>         {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.UIntDictionary))]                   public class UIntDictionaryDrawer                   : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.UIntDictionary>                   {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.UIntReadOnlyDictionary))]           public class UIntReadOnlyDictionaryDrawer           : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.UIntReadOnlyDictionary>           {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ULongDictionary))]                  public class ULongDictionaryDrawer                  : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.ULongDictionary>                  {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ULongReadOnlyDictionary))]          public class ULongReadOnlyDictionaryDrawer          : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.ULongReadOnlyDictionary>          {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2Dictionary))]                public class Vector2DictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector2Dictionary>                {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2IntDictionary))]             public class Vector2IntDictionaryDrawer             : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector2IntDictionary>             {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2IntReadOnlyDictionary))]     public class Vector2IntReadOnlyDictionaryDrawer     : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector2IntReadOnlyDictionary>     {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2ReadOnlyDictionary))]        public class Vector2ReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector2ReadOnlyDictionary>        {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3Dictionary))]                public class Vector3DictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector3Dictionary>                {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3IntDictionary))]             public class Vector3IntDictionaryDrawer             : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector3IntDictionary>             {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3IntReadOnlyDictionary))]     public class Vector3IntReadOnlyDictionaryDrawer     : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector3IntReadOnlyDictionary>     {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3ReadOnlyDictionary))]        public class Vector3ReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector3ReadOnlyDictionary>        {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector4Dictionary))]                public class Vector4DictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector4Dictionary>                {}
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector4ReadOnlyDictionary))]        public class Vector4ReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector4ReadOnlyDictionary>        {}
-
   [System.Serializable]
   public class SerializedReadOnlyDictionary<TKey, TValue> : PatchOdyssey.SerializedDictionary<TKey, TValue> /* → `System.Collections.Generic.IReadOnlyDictionary<…>` */ {
     public new bool IsReadOnly => true;
 
-    [System.Obsolete("", true)] public  new void Clear ()                                    {}
-    [System.Obsolete("", true)] private     void Insert(TKey key, TValue value, bool insert) {}
-    [System.Obsolete("", true)] public  new bool Remove(TKey key)                            => false;
+    #pragma warning disable CS0109
+      [System.Obsolete("", true)] public  new void Clear ()                                    {}
+      [System.Obsolete("", true)] private new void Insert(TKey key, TValue value, bool insert) {}
+      [System.Obsolete("", true)] public  new bool Remove(TKey key)                            => false;
+    #pragma warning restore CS0109
   }
     [System.Serializable] public class AnimationCurveReadOnlyDictionary : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.AnimationCurve> {}
     [System.Serializable] public class BooleanReadOnlyDictionary        : PatchOdyssey.SerializedReadOnlyDictionary<string, System.Boolean>             {}
@@ -659,6 +438,231 @@ namespace PatchOdyssey {
     [System.Serializable] public class Vector3ReadOnlyDictionary        : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Vector3>        {}
     [System.Serializable] public class Vector3IntReadOnlyDictionary     : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Vector3Int>     {}
     [System.Serializable] public class Vector4ReadOnlyDictionary        : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Vector4>        {}
+
+  #if UNITY_EDITOR
+    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ReadOnlyInInspectorAttribute))]
+    public class ReadOnlyInInspectorDrawer : UnityEditor.PropertyDrawer {
+      public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
+        return UnityEditor.EditorGUI.GetPropertyHeight(property, label, true);
+      }
+
+      public override void OnGUI(UnityEngine.Rect position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
+        UnityEngine.GUI.enabled = false;
+        UnityEditor.EditorGUI.PropertyField(position, property, label, true);
+        UnityEngine.GUI.enabled = true;
+      }
+    }
+
+    public class SerializedDictionaryDrawer<TDictionary> : UnityEditor.PropertyDrawer where TDictionary : class?, new() {
+      private const  float                                  BUTTON_HEIGHT       =  17.0f;
+      private const  float                                  BUTTON_WIDTH        =  18.0f;
+      private static (System.Type? key, System.Type? value) DICTIONARY_GENERICS => GetDictionaryGenerics();
+      private static System.Type                            DICTIONARY_TYPE     => GetDictionaryType    ();
+      private        TDictionary?                           dictionary          =  null;
+      private        bool                                   foldout             =  false;
+
+      /* … */
+      private void Ensure(UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
+        if (null == this.dictionary) {
+          this.dictionary = this.fieldInfo.GetValue(property.serializedObject.targetObject) as TDictionary;
+          this.foldout    = UnityEditor.EditorPrefs.GetBool(label.text);
+
+          if (null == this.dictionary)
+          this.fieldInfo.SetValue(property.serializedObject.targetObject, this.dictionary = new TDictionary());
+        }
+      }
+
+      private static (System.Type?, System.Type?) GetDictionaryGenerics() {
+        System.Type[] generics = GetDictionaryType()?.GetGenericArguments();
+        return (generics?.Length ?? 0) < 2 ? (null, null) : (generics[0], generics[1]);
+      }
+
+      private static System.Type GetDictionaryType() {
+        for (System.Type type = typeof(TDictionary); null != type; type = type.BaseType) {
+          System.Type[] generics   = type.GetGenericArguments();
+          System.Type[] interfaces = type.GetInterfaces      ();
+
+          // …
+          if (generics.Length == 2)
+          if (
+            type                            ==                                  typeof(System.Collections.Generic. Dictionary<,>).MakeGenericType(generics) ||
+            interfaces.GetLowerBound(0) - 1 != System.Array.IndexOf(interfaces, typeof(System.Collections.Generic.IDictionary<,>).MakeGenericType(generics))
+          ) return type;
+        }
+
+        return typeof(TDictionary);
+      }
+
+      public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
+        this.Ensure(property, label);
+        return BUTTON_HEIGHT * (this.foldout ? (GetDictionaryType().GetProperty("Count")?.GetValue(this.dictionary) as int? ?? 0) + 1 : 1);
+      }
+
+      private bool IsReadOnlyDictionary() {
+        if ((null, null) != DICTIONARY_GENERICS) {
+          System.Type type = typeof(PatchOdyssey.SerializedReadOnlyDictionary<,>).MakeGenericType(new[] {DICTIONARY_GENERICS.key, DICTIONARY_GENERICS.value});
+
+          // …
+          if (type == typeof(TDictionary) || typeof(TDictionary).IsSubclassOf(type))
+          return true;
+        }
+
+        return null != this.dictionary && (DICTIONARY_TYPE.GetProperty("IsReadOnly")?.GetValue(this.dictionary) as bool? ?? false);
+      }
+
+      public override void OnGUI(UnityEngine.Rect position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
+        bool                                                                     isReadOnly = this.IsReadOnlyDictionary();
+        (UnityEngine.Rect add, UnityEngine.Rect clear, UnityEngine.Rect foldout) positions;
+
+        // …
+        this.Ensure(property, label);
+
+        position .height  = BUTTON_HEIGHT;
+        positions.foldout = new(position.x,                                            position.y, position.width - BUTTON_WIDTH, position.height);
+        positions.clear   = new(position.x + (position.width - (BUTTON_WIDTH * 1.0f)), position.y, 0.0f           + BUTTON_WIDTH, position.height);
+        positions.add     = new(position.x + (position.width - (BUTTON_WIDTH * 2.0f)), position.y, 0.0f           + BUTTON_WIDTH, position.height);
+
+        // …
+        if ((null, null) == DICTIONARY_GENERICS)
+        return;
+
+        if (!isReadOnly) {
+          if (UnityEngine.GUI.Button(positions.add, new UnityEngine.GUIContent("+", "Add item"), UnityEditor.EditorStyles.miniButton))
+          try {
+            object key   =  DICTIONARY_GENERICS.key == typeof(string) ? ""   : System.Activator.CreateInstance(DICTIONARY_GENERICS.key);
+            object value = !DICTIONARY_GENERICS.value.IsValueType     ? null : System.Activator.CreateInstance(DICTIONARY_GENERICS.value);
+
+            // …
+            if (!(DICTIONARY_TYPE.GetMethod("ContainsKey", new[] {DICTIONARY_GENERICS.key})?.Invoke(this.dictionary, new object[] {key}) as bool? ?? true))
+            DICTIONARY_TYPE.GetMethod("Add", new[] {DICTIONARY_GENERICS.key, DICTIONARY_GENERICS.value})?.Invoke(this.dictionary, new object[] {key, value});
+          } catch (System.Exception exception) { UnityEngine.Debug.LogError($"[{UnityEngine.Application.productName}]: {exception.Message}"); }
+
+          if (UnityEngine.GUI.Button(positions.clear, new UnityEngine.GUIContent("×", "Clear dictionary"), UnityEditor.EditorStyles.miniButtonRight))
+          DICTIONARY_TYPE.GetMethod("Clear", new System.Type[] {})?.Invoke(this.dictionary, null);
+        }
+
+        UnityEditor.EditorGUI.BeginChangeCheck();
+        this.foldout = UnityEditor.EditorGUI.Foldout(positions.foldout, this.foldout, label, true);
+        if (UnityEditor.EditorGUI.EndChangeCheck()) UnityEditor.EditorPrefs.SetBool(label.text, this.foldout);
+
+        if (!this.foldout)
+        return;
+
+        for (
+          object enumerator = DICTIONARY_TYPE.GetMethod("GetEnumerator")?.Invoke(this.dictionary, null);
+          enumerator?.GetType().GetMethod("MoveNext", new System.Type[] {})?.Invoke(enumerator, null) as bool? ?? false;
+        ) {
+          (UnityEngine.Rect key, UnityEngine.Rect remove, UnityEngine.Rect value) subpositions;
+          object                                                                  item = enumerator.GetType() .GetProperty("Current")?.GetValue(enumerator);
+          (object key, object value)                                                   = (item    ?.GetType()?.GetProperty("Key")    ?.GetValue(item), item?.GetType()?.GetProperty("Value")?.GetValue(item));
+
+          /* … */
+          static object Field(UnityEngine.Rect position, object value, System.Type type) {
+            if (null == type) {
+              UnityEditor.EditorGUI.LabelField(position, $"{value}");
+              return value;
+            }
+
+            if (type == typeof(bool))                              return (UnityEditor.EditorGUI.Toggle         (position,                              (System.Boolean)             (value as object))             as object);
+            if (type == typeof(double))                            return (UnityEditor.EditorGUI.DoubleField    (position,                              (System.Double)              (value as object))             as object);
+            if (type == typeof(float))                             return (UnityEditor.EditorGUI.FloatField     (position,                              (System.Single)              (value as object))             as object);
+            if (type == typeof(int))                               return (UnityEditor.EditorGUI.IntField       (position,                              (System.Int32)               (value as object))             as object);
+            if (type == typeof(long))                              return (UnityEditor.EditorGUI.LongField      (position,                              (System.Int64)               (value as object))             as object);
+            if (type == typeof(string))                            return (UnityEditor.EditorGUI.TextField      (position,                              (System.String)              (value as object))             as object);
+            if (type == typeof(UnityEngine.AnimationCurve))        return (UnityEditor.EditorGUI.CurveField     (position,                              (UnityEngine.AnimationCurve) (value as object))             as object);
+            if (type == typeof(UnityEngine.Bounds))                return (UnityEditor.EditorGUI.BoundsField    (position,                              (UnityEngine.Bounds)         (value as object))             as object);
+            if (type == typeof(UnityEngine.BoundsInt))             return (UnityEditor.EditorGUI.BoundsIntField (position,                              (UnityEngine.BoundsInt)      (value as object))             as object);
+            if (type == typeof(UnityEngine.Color))                 return (UnityEditor.EditorGUI.ColorField     (position,                              (UnityEngine.Color)          (value as object))             as object);
+            if (type == typeof(UnityEngine.Gradient))              return (UnityEditor.EditorGUI.GradientField  (position,                              (UnityEngine.Gradient)       (value as object))             as object);
+            if (type == typeof(UnityEngine.Rect))                  return (UnityEditor.EditorGUI.RectField      (position,                              (UnityEngine.Rect)           (value as object))             as object);
+            if (type == typeof(UnityEngine.RectInt))               return (UnityEditor.EditorGUI.RectIntField   (position,                              (UnityEngine.RectInt)        (value as object))             as object);
+            if (type == typeof(UnityEngine.Vector2))               return (UnityEditor.EditorGUI.Vector2Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector2)        (value as object))             as object);
+            if (type == typeof(UnityEngine.Vector2Int))            return (UnityEditor.EditorGUI.Vector2IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector2Int)     (value as object))             as object);
+            if (type == typeof(UnityEngine.Vector3))               return (UnityEditor.EditorGUI.Vector3Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector3)        (value as object))             as object);
+            if (type == typeof(UnityEngine.Vector3Int))            return (UnityEditor.EditorGUI.Vector3IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector3Int)     (value as object))             as object);
+            if (type == typeof(UnityEngine.Vector4))               return (UnityEditor.EditorGUI.Vector4Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector4)        (value as object))             as object);
+            if (type.IsEnum)                                       return (UnityEditor.EditorGUI.EnumPopup      (position,                              (System.Enum)                (value as object))             as object);
+            if (typeof(UnityEngine.Object).IsAssignableFrom(type)) return (UnityEditor.EditorGUI.ObjectField    (position,                              (UnityEngine.Object)         (value as object), type, true) as object);
+
+            UnityEngine.Debug.LogError($"[{UnityEngine.Application.productName}]: Type `{type}` is not supported");
+            return value;
+          }
+
+          // …
+          position    .y     += BUTTON_HEIGHT;
+          subpositions.key    = new(position.x                                                     + (isReadOnly ? BUTTON_WIDTH : 0.0f), position.y, (position.width - BUTTON_WIDTH) * (2.0f / 5.0f), position.height);
+          subpositions.value  = new(position.x + ((position.width - BUTTON_WIDTH) * (2.0f / 5.0f)) + (isReadOnly ? BUTTON_WIDTH : 0.0f), position.y, (position.width - BUTTON_WIDTH) * (3.0f / 5.0f), position.height);
+          subpositions.remove = new(position.x + ((position.width - BUTTON_WIDTH) * (5.0f / 5.0f)),                                      position.y, BUTTON_WIDTH,                                    position.height);
+
+          UnityEditor.EditorGUI.BeginChangeCheck();
+          key = Field(subpositions.key, key, isReadOnly ? null : DICTIONARY_GENERICS.key);
+          if (UnityEditor.EditorGUI.EndChangeCheck()) {
+            try {
+              DICTIONARY_TYPE.GetMethod("Remove", new[] {DICTIONARY_GENERICS.key})                           .Invoke(this.dictionary, new object[] {item?.GetType()?.GetProperty("Key")?.GetValue(item)});
+              DICTIONARY_TYPE.GetMethod("Add",    new[] {DICTIONARY_GENERICS.key, DICTIONARY_GENERICS.value}).Invoke(this.dictionary, new object[] {key, value});
+            } catch (System.Exception exception) when (exception is not System.NullReferenceException) { UnityEngine.Debug.LogError($"[{UnityEngine.Application.productName}]: {exception.Message}"); }
+
+            break;
+          }
+
+          UnityEditor.EditorGUI.BeginChangeCheck();
+          value = Field(subpositions.value, value, DICTIONARY_GENERICS.value);
+          if (UnityEditor.EditorGUI.EndChangeCheck()) {
+            DICTIONARY_TYPE.GetProperty((System.Attribute.GetCustomAttribute(typeof(TDictionary), typeof(System.Reflection.DefaultMemberAttribute)) as System.Reflection.DefaultMemberAttribute)?.MemberName ?? "", new[] {DICTIONARY_GENERICS.key})?.GetSetMethod()?.Invoke(this.dictionary, new object[] {key, value});
+            break;
+          }
+
+          if (!isReadOnly)
+          if (UnityEngine.GUI.Button(subpositions.remove, new UnityEngine.GUIContent("×", "Remove item"), UnityEditor.EditorStyles.miniButtonRight)) {
+            DICTIONARY_TYPE.GetMethod("Remove", new[] {DICTIONARY_GENERICS.key})?.Invoke(this.dictionary, new object[] {key});
+            break;
+          }
+        }
+      }
+    }
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.AnimationCurveDictionary))]         public class AnimationCurveDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.AnimationCurveDictionary>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.AnimationCurveReadOnlyDictionary))] public class AnimationCurveReadOnlyDictionaryDrawer : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.AnimationCurveReadOnlyDictionary> {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BooleanDictionary))]                public class BooleanDictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.BooleanDictionary>                {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BooleanReadOnlyDictionary))]        public class BooleanReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.BooleanReadOnlyDictionary>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsDictionary))]                 public class BoundsDictionaryDrawer                 : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.BoundsDictionary>                 {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsIntDictionary))]              public class BoundsIntDictionaryDrawer              : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.BoundsIntDictionary>              {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsIntReadOnlyDictionary))]      public class BoundsIntReadOnlyDictionaryDrawer      : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.BoundsIntReadOnlyDictionary>      {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsReadOnlyDictionary))]         public class BoundsReadOnlyDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.BoundsReadOnlyDictionary>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ColorDictionary))]                  public class ColorDictionaryDrawer                  : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.ColorDictionary>                  {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ColorReadOnlyDictionary))]          public class ColorReadOnlyDictionaryDrawer          : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.ColorReadOnlyDictionary>          {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.DoubleDictionary))]                 public class DoubleDictionaryDrawer                 : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.DoubleDictionary>                 {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.DoubleReadOnlyDictionary))]         public class DoubleReadOnlyDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.DoubleReadOnlyDictionary>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.FloatDictionary))]                  public class FloatDictionaryDrawer                  : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.FloatDictionary>                  {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.FloatReadOnlyDictionary))]          public class FloatReadOnlyDictionaryDrawer          : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.FloatReadOnlyDictionary>          {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GameObjectDictionary))]             public class GameObjectDictionaryDrawer             : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.GameObjectDictionary>             {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GameObjectReadOnlyDictionary))]     public class GameObjectReadOnlyDictionaryDrawer     : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.GameObjectReadOnlyDictionary>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GradientDictionary))]               public class GradientDictionaryDrawer               : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.GradientDictionary>               {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GradientReadOnlyDictionary))]       public class GradientReadOnlyDictionaryDrawer       : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.GradientReadOnlyDictionary>       {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.IntDictionary))]                    public class IntDictionaryDrawer                    : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.IntDictionary>                    {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.IntReadOnlyDictionary))]            public class IntReadOnlyDictionaryDrawer            : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.IntReadOnlyDictionary>            {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.LongDictionary))]                   public class LongDictionaryDrawer                   : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.LongDictionary>                   {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.LongReadOnlyDictionary))]           public class LongReadOnlyDictionaryDrawer           : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.LongReadOnlyDictionary>           {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectDictionary))]                   public class RectDictionaryDrawer                   : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.RectDictionary>                   {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectIntDictionary))]                public class RectIntDictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.RectIntDictionary>                {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectIntReadOnlyDictionary))]        public class RectIntReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.RectIntReadOnlyDictionary>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectReadOnlyDictionary))]           public class RectReadOnlyDictionaryDrawer           : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.RectReadOnlyDictionary>           {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.StringDictionary))]                 public class StringDictionaryDrawer                 : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.StringDictionary>                 {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.StringReadOnlyDictionary))]         public class StringReadOnlyDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.StringReadOnlyDictionary>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.UIntDictionary))]                   public class UIntDictionaryDrawer                   : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.UIntDictionary>                   {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.UIntReadOnlyDictionary))]           public class UIntReadOnlyDictionaryDrawer           : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.UIntReadOnlyDictionary>           {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ULongDictionary))]                  public class ULongDictionaryDrawer                  : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.ULongDictionary>                  {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ULongReadOnlyDictionary))]          public class ULongReadOnlyDictionaryDrawer          : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.ULongReadOnlyDictionary>          {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2Dictionary))]                public class Vector2DictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector2Dictionary>                {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2IntDictionary))]             public class Vector2IntDictionaryDrawer             : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector2IntDictionary>             {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2IntReadOnlyDictionary))]     public class Vector2IntReadOnlyDictionaryDrawer     : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector2IntReadOnlyDictionary>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2ReadOnlyDictionary))]        public class Vector2ReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector2ReadOnlyDictionary>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3Dictionary))]                public class Vector3DictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector3Dictionary>                {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3IntDictionary))]             public class Vector3IntDictionaryDrawer             : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector3IntDictionary>             {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3IntReadOnlyDictionary))]     public class Vector3IntReadOnlyDictionaryDrawer     : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector3IntReadOnlyDictionary>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3ReadOnlyDictionary))]        public class Vector3ReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector3ReadOnlyDictionary>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector4Dictionary))]                public class Vector4DictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector4Dictionary>                {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector4ReadOnlyDictionary))]        public class Vector4ReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector4ReadOnlyDictionary>        {}
+  #endif
 }
 
 namespace PatchOdyssey {
@@ -738,8 +742,10 @@ namespace PatchOdyssey {
 
       return null;
     }
+
       public static T?                      FindChildByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject.FindChild(child => null != child.GetComponent<T>()) ?.GetComponent<T>();
       public static UnityEngine.Component?  FindChildByComponent   (this UnityEngine.GameObject gameObject, System.Type type)               => gameObject.FindChild(child => null != child.GetComponent(type))?.GetComponent(type);
+      public static UnityEngine.GameObject? FindChildByIndex       (this UnityEngine.GameObject gameObject, uint        index)              => gameObject.FindChild(child => 0u   == index--);
       public static UnityEngine.GameObject? FindChildByTag         (this UnityEngine.GameObject gameObject, string      tag)                => gameObject.FindChild(child => tag  == child.tag);
 
     public static UnityEngine.GameObject[] FindChildren(this UnityEngine.GameObject gameObject, System.Predicate<UnityEngine.GameObject> predicate) {
@@ -753,8 +759,8 @@ namespace PatchOdyssey {
 
       return children.ToArray();
     }
-      public static T[]                      FindChildrenByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => System.Array.ConvertAll(gameObject.FindChildren(child => null != child.GetComponent<T>()),  child => child.GetComponent<T>());
-      public static UnityEngine.Component[]  FindChildrenByComponent   (this UnityEngine.GameObject gameObject, System.Type type)               => System.Array.ConvertAll(gameObject.FindChildren(child => null != child.GetComponent(type)), child => child.GetComponent(type));
+      public static T                     [] FindChildrenByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => System.Array.ConvertAll(gameObject.FindChildren(child => null != child.GetComponent<T>()),  child => child.GetComponent<T>());
+      public static UnityEngine.Component [] FindChildrenByComponent   (this UnityEngine.GameObject gameObject, System.Type type)               => System.Array.ConvertAll(gameObject.FindChildren(child => null != child.GetComponent(type)), child => child.GetComponent(type));
       public static UnityEngine.GameObject[] FindChildrenByTag         (this UnityEngine.GameObject gameObject, string      tag)                => gameObject.FindChildren(child => child.tag == tag);
 
     public static UnityEngine.GameObject? FindDescendant(this UnityEngine.GameObject gameObject, System.Predicate<UnityEngine.GameObject> predicate) {
@@ -777,29 +783,28 @@ namespace PatchOdyssey {
 
       // …
       for (System.Collections.Generic.List<UnityEngine.GameObject> pending = new() {gameObject}; 0 != pending.Count; pending.RemoveAt(0))
-      descendants.AddRange(pending[0].FindChildren(child => { pending.Add(child); return predicate(child); }));
+      descendants.AddRange(pending[0].FindChildren(descendant => { pending.Add(descendant); return predicate(descendant); }));
 
       return descendants.ToArray();
     }
-      public static T[]                      FindDescendantsByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => System.Array.ConvertAll(gameObject.FindDescendants(child => null != child.GetComponent<T>()),  child => child.GetComponent<T>());
-      public static UnityEngine.Component[]  FindDescendantsByComponent   (this UnityEngine.GameObject gameObject, System.Type type)               => System.Array.ConvertAll(gameObject.FindDescendants(child => null != child.GetComponent(type)), child => child.GetComponent(type));
-      public static UnityEngine.GameObject[] FindDescendantsByTag         (this UnityEngine.GameObject gameObject, string      tag)                => gameObject.FindDescendants(child => child.tag == tag);
+      public static T                     [] FindDescendantsByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => System.Array.ConvertAll(gameObject.FindDescendants(descendant => null != descendant.GetComponent<T>()),  descendant => descendant.GetComponent<T>());
+      public static UnityEngine.Component [] FindDescendantsByComponent   (this UnityEngine.GameObject gameObject, System.Type type)               => System.Array.ConvertAll(gameObject.FindDescendants(descendant => null != descendant.GetComponent(type)), descendant => descendant.GetComponent(type));
+      public static UnityEngine.GameObject[] FindDescendantsByTag         (this UnityEngine.GameObject gameObject, string      tag)                => gameObject.FindDescendants(descendant => descendant.tag == tag);
 
-    public static UnityEngine.GameObject? GetChild(this UnityEngine.GameObject gameObject, uint index) {
-      foreach (UnityEngine.Transform transform in gameObject.transform) {
-        if (0u == index--)
-        return transform.gameObject;
-      }
-
-      return null;
+    public static UnityEngine.GameObject[] FindLineage(this UnityEngine.GameObject gameObject, System.Predicate<UnityEngine.GameObject> predicate) {
+      return Util.ArrayFrom(predicate(gameObject) ? new[] {gameObject} : new UnityEngine.GameObject[0], gameObject.FindDescendants(predicate));
     }
+      public static T                     [] FindLineageByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => System.Array.ConvertAll(gameObject.FindLineage(successor => null != successor.GetComponent<T>()),  successor => successor.GetComponent<T>());
+      public static UnityEngine.Component [] FindLineageByComponent   (this UnityEngine.GameObject gameObject, System.Type type)               => System.Array.ConvertAll(gameObject.FindLineage(successor => null != successor.GetComponent(type)), successor => successor.GetComponent(type));
+      public static UnityEngine.GameObject[] FindLineageByTag         (this UnityEngine.GameObject gameObject, string      tag)                => gameObject.FindLineage(successor => successor.tag == tag);
 
     public static UnityEngine.GameObject[] GetChildren   (this UnityEngine.GameObject gameObject) => gameObject.FindChildren   (_ => true);
     public static UnityEngine.GameObject[] GetDescendants(this UnityEngine.GameObject gameObject) => gameObject.FindDescendants(_ => true);
+    public static UnityEngine.GameObject[] GetLineage    (this UnityEngine.GameObject gameObject) => gameObject.FindLineage    (_ => true);
     public static UnityEngine.GameObject   GetParent     (this UnityEngine.GameObject gameObject) => gameObject.transform.parent.gameObject;
 
-    public static bool HasChild     (this UnityEngine.GameObject gameObject, UnityEngine.GameObject child) => null != gameObject.FindChild     (_ => _ == child);
-    public static bool HasDescendant(this UnityEngine.GameObject gameObject, UnityEngine.GameObject child) => null != gameObject.FindDescendant(_ => _ == child);
+    public static bool HasChild     (this UnityEngine.GameObject gameObject, UnityEngine.GameObject child)      => null != gameObject.FindChild     (_ => _ == child);
+    public static bool HasDescendant(this UnityEngine.GameObject gameObject, UnityEngine.GameObject descendant) => null != gameObject.FindDescendant(_ => _ == descendant);
 
     public static void Reset(this UnityEngine.Transform transform) {
       transform.localRotation = UnityEngine.Quaternion.identity;
@@ -967,7 +972,7 @@ namespace PatchOdyssey {
     }
 
     public static int[] GetMouseButtons() {
-      return new int[] {0x0, 0x1, 0x2};
+      return new[] {0x0, 0x1, 0x2};
     }
 
     public static UnityEngine.Vector2    GetVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector2    axes) { return new(0.0f != axes.x ? vector.x : 0.0f, 0.0f != axes.y ? vector.y : 0.0f); }
@@ -1400,6 +1405,8 @@ namespace PatchOdyssey {
         path    => UnityEngine.Networking.UnityWebRequest.Get(path),
         request => {
           UnityEngine.Texture2D texture = new(2, 2, UnityEngine.TextureFormat.RGBA32, -1, false);
+
+          texture.name = "🖼️ " + System.IO.Path.GetFileName(path);
           return UnityEngine.ImageConversion.LoadImage(texture, request.downloadHandler.data, true) ? texture : null;
         }
       ) as UnityEngine.Texture2D;

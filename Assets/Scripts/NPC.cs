@@ -4,23 +4,31 @@ using PatchOdyssey;
 #nullable enable annotations
 
 /* … */
+[UnityEngine.RequireComponent(typeof(UnityEngine.Collider))]
 [UnityEngine.RequireComponent(typeof(UnityEngine.Rigidbody))]
 public class NPC : UnityEngine.MonoBehaviour {
   public enum Mode : byte {
     Idle,
     Combat,
     Independent,
-    Follow
+    Support
   };
 
   /* … */
   private const float MOVEMENT_ACCELERATION = 4.0e1f;
-  private const float MOVEMENT_DECELERATION = 4.0e0f;
+  private const float MOVEMENT_DECELERATION = 2.5e0f;
 
   [ReadWriteInInspector]    new public  UnityEngine.Camera? camera                    =  null;
   [ReadWriteInInspector]        public  UnityEngine.Vector3 cameraAngle               =  new(35.0f, -90.0f, 0.0f);
-  [ReadWriteInInspector]        public  UnityEngine.Vector3 cameraOffset              =  new(15.0f,  12.5f, 0.0f);
+  [ReadWriteInInspector]        public  UnityEngine.Vector3 cameraOffset              =  new(12.5f,  10.0f, 0.0f);
+  [ReadWriteInInspector]        public  UnityEngine.Light?  glowlight                 =  null;                     // TODO (Lapys)
+  [ReadOnlyInInspector]         public  float               glowlightIntensity        =  5.0f;                     // TODO (Lapys)
+  [ReadOnlyInInspector]         public  UnityEngine.Vector3 glowlightOrigin           =  UnityEngine.Vector3.zero; // TODO (Lapys)
+  [ReadOnlyInInspector]         public  float               glowlightRange            =  10.0f;                    // TODO (Lapys)
   [ReadWriteInInspector]        public  NPC.Mode            mode                      =  NPC.Mode.Idle;
+  [ReadWriteInInspector]        public  Mount               mount                     =  null;
+  [ReadOnlyInInspector]         public  bool                mountIsChanged            =  false; // → Prevent spamming `NPC::Dismount(…)` and `NPC::Mount(…)` calls
+  [ReadOnlyInInspector]         public  NPC.Mode            mountMode                 =  NPC.Mode.Idle;
   [UnityEngine.HideInInspector] public  UnityEngine.Vector3 movement                  =  UnityEngine.Vector3.zero; // → Preserves scale of movement direction
   [ReadWriteInInspector]        public  UnityEngine.Vector3 movementDirection         => this.movement / Util.Max(System.Math.Abs(this.movement.x), System.Math.Abs(this.movement.y), System.Math.Abs(this.movement.z));
   [UnityEngine.HideInInspector] public  float               movementDurationElapsed   =  0.0f;
@@ -30,6 +38,47 @@ public class NPC : UnityEngine.MonoBehaviour {
   [ReadWriteInInspector]        public  float               rotationSpeed             =  360.0f; // → in Degrees per Second
 
   /* … */
+  private void Awake() {
+    this.Ensure();
+  }
+
+  public void Dismount() {
+    if (null != this.mount && !this.mountIsChanged) {
+      this.mount.mode     = this.mountMode;
+      this.mountMode      = NPC.Mode.Idle;
+      this.mountIsChanged = true;
+    }
+
+    this.mount = null;
+  }
+
+  public void Ensure() {
+    for (Mount mount = this.mount; null != mount; mount = null != mount ? mount.mount : null)
+    if (mount == this) {
+      this.mount = null;
+      break;
+    }
+
+    if (null != this.mount) {
+      if (null != this.mount.mount)
+      this.mount.mount = null;
+    }
+  }
+
+  public void Mount(Mount mount) {
+    if (mount != this.mount && !this.mountIsChanged) {
+      if (null != this.mount)
+        this.Dismount();
+
+      // …
+      this.mount          = mount;
+      this.mountIsChanged = true;
+      this.mountMode      = mount.mode;
+
+      mount.mode = NPC.Mode.Idle;
+    }
+  }
+
   public void MoveBy(UnityEngine.Vector2 distance) {
     this.MoveBy(new UnityEngine.Vector3(distance.x, 0.0f, distance.y));
   }
@@ -50,13 +99,20 @@ public class NPC : UnityEngine.MonoBehaviour {
     }
   }
 
-  protected void Start() {}
+  protected void Start() {
+    this.Ensure();
+
+    if (null != this.glowlight)
+    this.glowlightOrigin = this.glowlight.transform.position;
+  }
 
   protected void Update() {
     UnityEngine.Rigidbody npcRigidBody        = this.gameObject.GetComponent<UnityEngine.Rigidbody>();
     bool                  npcHasMoveDirection = 0.0f != this.movement.x || 0.0f != this.movement.z;
 
-    // → Move the `NPC` Non-Player Character
+    // …
+    this.Ensure();
+
     npcRigidBody.collisionDetectionMode     = UnityEngine.CollisionDetectionMode.Discrete;
     npcRigidBody.constraints               |= UnityEngine.RigidbodyConstraints.FreezeRotationY;
     npcRigidBody.detectCollisions           = true;
@@ -73,6 +129,9 @@ public class NPC : UnityEngine.MonoBehaviour {
       this.camera.transform.LookAt(this.transform, UnityEngine.Vector3.up);
       this.camera.transform.rotation = UnityEngine.Quaternion.Euler(this.cameraAngle);
     }
+
+    if (null != this.glowlight)
+    this.glowlight.type = UnityEngine.LightType.Point;
 
     if (Game.main?.isPlaying ?? false) {
       float movementDepth = Util.GetVectorForwardAxis(this.movement);

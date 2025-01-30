@@ -5,9 +5,12 @@ using PatchOdyssey;
 
 /* … */
 public class Game : UnityEngine.MonoBehaviour {
-  [ReadOnlyInInspector]  public        bool    isPlaying = false;
-  [ReadOnlyInInspector]  public static Game?   main      = null;
-  [ReadWriteInInspector] public        Player? player    = null;
+  [ReadOnlyInInspector]  public                bool                      isLoaded          = false;
+  [ReadOnlyInInspector]  public                bool                      isPlaying         = false;
+  [ReadOnlyInInspector]  public static         Game?                     main              = null;
+  [ReadWriteInInspector] public                Player?                   player            = null;
+  [ReadWriteInInspector] public                GameObjectDictionary      prototypeData     = new();                                                                           // TODO (Lapys)
+  [ReadOnlyInInspector]  public /* readonly */ BooleanReadOnlyDictionary prototypeMetadata = new() {{"clearing:begin", false}, {"clearing:end", false}, {"mounting", false}}; // TODO (Lapys)
 
   /* … */
   private void Awake() {
@@ -22,11 +25,21 @@ public class Game : UnityEngine.MonoBehaviour {
     #endif
   }
 
-  public void LoadChunk(UnityEngine.GameObject chunk) {
+  private void Load() {
+    if (!this.isLoaded) {
+      UnityEngine.Debug.Log("[Game::Load()]");
+    }
+
+    this.isLoaded = true;
+  }
+
+  private Chunk LoadChunk(Chunk chunk) {
+    /* TODO (Lapys) */
     /* [1]: Load prefab `UnityEngine.GameObject` called `chunk` */
     /* [2]: Clone/ instantiate prefab as existing `UnityEngine.GameObject` within the current `UnityEngine.SceneManagement.Scene` scenes */
     /* [3]: Find "ground" `UnityEngine.GameObject` child component */
     /* [4]: Variegate the elevation of a random selection of its faces to create the illusion of procedurally-generated rough terrain */
+    return UnityEngine.Object.Instantiate(chunk);
   }
 
   public void Pause() {
@@ -46,6 +59,9 @@ public class Game : UnityEngine.MonoBehaviour {
       UI.main?.UnloadBackground   ();
 
       UnityEngine.Debug.Log("[Game::Play()]");
+      this.Load();
+
+      /* TODO (Lapys) */
       /*  [0]: Blog update: Asset Loading, Code Style, File Structure, GitHub, Settings Serialization */
       /*  [1]: `Game::LoadChunk(…)` the prototype testing chunk */
       /*  [2]: Relocate existing (set with the Inspector) `Player` object at the chunk's spawnpoint  */
@@ -63,14 +79,78 @@ public class Game : UnityEngine.MonoBehaviour {
   }
 
   public void ToMenu() {
-    this.Pause();
+    this.Pause ();
+    this.Unload();
 
     UI.main?.UnloadAllComponents();
     UI.main?.LoadComponent      ("menu");
     UI.main?.LoadBackground     ("menu-background-1.png");
   }
 
+  private void Unload() {
+    if (this.isLoaded) {
+      UnityEngine.Debug.Log("[Game::Unload()]");
+    }
+
+    this.isLoaded = false;
+  }
+
   private void Update() {
+    if (this.isLoaded && null != this.player) {
+      const float        boundsErrorMargin = 0.1f;
+      UnityEngine.Bounds playerBounds      = this.player.GetComponent<UnityEngine.Collider>().bounds;
+      const float        playerMountRange  = 1.0f;
+
+      // TODO (Lapys)
+      playerBounds.Expand(boundsErrorMargin);
+
+      if (System.Array.Exists(Util.ArrayFrom(this.prototypeData?["clearing"]?.FindLineageByComponent<UnityEngine.Collider>()), collider => collider.bounds.Intersects(playerBounds)))
+        this.prototypeMetadata["clearing:begin"] = true;
+
+      else if (this.prototypeMetadata["clearing:begin"]) {
+        this.prototypeMetadata["clearing:end"] = true;
+        this.prototypeMetadata["mounting"]     = (
+          System.Array.Exists(Util.ArrayFrom(this.prototypeData?["mounting#0"]?.FindLineageByComponent<UnityEngine.Collider>()), collider => collider.bounds.Intersects(playerBounds)) ||
+          System.Array.Exists(Util.ArrayFrom(this.prototypeData?["mounting#1"]?.FindLineageByComponent<UnityEngine.Collider>()), collider => collider.bounds.Intersects(playerBounds))
+        );
+      }
+
+      // TODO (Lapys)
+      playerBounds.Expand(playerMountRange);
+
+      foreach (NPC npc in UnityEngine.Object.FindObjectsByType<NPC>(UnityEngine.FindObjectsSortMode.None))
+      if (npc != this.player) {
+        npc.transform.LookAt(this.player.transform, UnityEngine.Vector3.up);
+
+        // TODO (Lapys) → Move to `NPC` script and update `UI` script (including `InputActions`)
+        if (npc is Mount) {
+          UnityEngine.Bounds npcBounds = npc.GetComponent<UnityEngine.Collider>().bounds;
+
+          // …
+          npcBounds.Expand(boundsErrorMargin + playerMountRange);
+
+          if (npcBounds.Intersects(playerBounds)) {
+            if (UnityEngine.Input.GetKeyUp(UnityEngine.KeyCode.Space)) {
+              if (!player.mountIsChanged)
+                player.Dismount();
+
+              player.mountIsChanged = false;
+            }
+
+            else if (UI.main?.keyboards["active"].Exists(_ => UnityEngine.KeyCode.Space == _.key) ?? false) {
+              if (null == player.mount)
+              player.Mount(npc as Mount);
+            }
+          }
+        }
+      }
+
+      if      (false) {}
+      else if (this.prototypeMetadata["clearing:begin"] && !this.prototypeMetadata["clearing:end"]) UI.main?.ShowText("Arrows/ WASD to move");
+      else if (this.prototypeMetadata["mounting"])                                                  UI.main?.ShowText("Space to dismount/ ride");
+      else                                                                                          UI.main?.HideText();
+    }
+
     Util.StopWaiting();
   }
 }
