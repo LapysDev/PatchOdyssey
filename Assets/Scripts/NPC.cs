@@ -128,6 +128,11 @@ public class NPC : UnityEngine.MonoBehaviour {
       this.camera.transform.position = this.transform.position + this.cameraOffset;
       this.camera.transform.LookAt(this.transform, UnityEngine.Vector3.up);
       this.camera.transform.rotation = UnityEngine.Quaternion.Euler(this.cameraAngle);
+
+      // Strafing and turning around will tilt the camera sideways.
+      // Jumping, falling, and moving forward or backwards will affect the camera's pitch.
+      // Nearby explosions will shake the screen, and
+      // Ceasing movement for enough time will cause the camera to gently sway around while waiting for your input.
     }
 
     if (null != this.glowlight)

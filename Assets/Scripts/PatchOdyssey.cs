@@ -1,443 +1,239 @@
 #nullable enable annotations
 
-namespace PatchOdyssey {
-  public class ReadOnlyInInspectorAttribute : UnityEngine.PropertyAttribute {}
+namespace PatchOdyssey /* → Class types */ {
+  private class AnimationKeyframe {
+    public              System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>? begin      =  null;
+    public     readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>  end        =  new(new System.Collections.Generic.Dictionary<string, object?>());
+    public     readonly string                                                              name       =  null;
+    public ref readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>  properties => ref this.end;
+    public     readonly double                                                              timestamp  =  0.0;
+
+    /* … */
+    public AnimationKeyframe(string name, System.Collections.Generic.IDictionary<string, object?> properties) {
+      this.name      = name;
+      this.timestamp = UnityEngine.Time.realtimeSinceStartupAsDouble;
+
+      if (null == properties)
+      return;
+
+      this.properties = new(new System.Collections.Generic.Dictionary<string, object?>(properties));
+    }
+
+    public AnimationKeyframe(string name, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) {
+      (System.Collections.Generic.Dictionary<string, object?> begin, System.Collections.Generic.Dictionary<string, object?> end) properties = (new(begin?.Keys.Count ?? 0), new(end?.Keys.Count ?? 0));
+
+      // …
+      this.name      = name;
+      this.timestamp = UnityEngine.Time.realtimeSinceStartupAsDouble;
+
+      if (null == begin || null == end)
+      return;
+
+      foreach (string property in begin.Keys) {
+        if (end.ContainsKey(property))
+        properties.begin.Add(property, begin[property]);
+      }
+
+      foreach (string proeprty in end.Keys) {
+        if (begin.ContainsKey(property))
+        properties.end.Add(property, end[property]);
+      }
+
+      properties.begin.Capacity = properties.begin.Count;
+      properties.end  .Capacity = properties.end  .Count;
+      this.begin                = properties.begin;
+      this.end                  = properties.end;
+    }
+  }
+
+  public class AnimationSequence : AnimationKeyframe {
+    /* … */
+    public  double                                                          delay        = 0.0;
+    public  double                                                          duration     = 0.0;
+    public  System.Func                    <double, double>                 easing       = PatchOdyssey.AnimationFunction.Linear;
+    public  System.Func                    <double, object, object>         interpolator = PatchOdyssey.AnimationFunction.Linear;
+    private System.Collections.Generic.List<PatchOdyssey.AnimationKeyframe> keyframes;
+
+    /* … */
+    public AnimationSequence(string name, double duration,               System.Func<double, double> easing, System.Func<double, object, object> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   easing, begin, end)                                                                                                                         {}
+    public AnimationSequence(string name, double duration,               System.Func<double, double> easing, System.Func<double, object, object> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   easing, begin, end)                                                                                                                         {}
+    public AnimationSequence(string name, double duration, double delay, System.Func<double, double> easing, System.Func<double, object, object> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, delay, easing, begin as System.Collections.Generic.IDictionary<string, object?>, end as System.Collections.Generic.IDictionary<string, object?>) {}
+    public AnimationSequence(string name, double duration, double delay, System.Func<double, double> easing, System.Func<double, object, object> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : base(name, begin ?? new System.Collections.Generic.Dictionary<string, object?>(0), end) {
+      this.delay        = delay;
+      this.duration     = duration;
+      this.easing       = easing;
+      this.interpolator = interpolator;
+    }
+
+    /* … */
+    public void Add(double progress, System.Collections.Generic.IDictionary<string, object?> properties) {
+      new AnimationSequence(5.0, AnimationFunction.Linear, null, new() {"color", new(255, 0, 255)}, new() {"color", new(255, 255, 255)}) {
+        {null, Util.Percent(30.0), {"color", new(255, 127, 255)}},
+        {"renamed", {}}
+      }
+    }
+
+    public void Remove(double progress) {}
+    public void Remove(string keyframe) {}
+    public void Remove(double begin, double end) {}
+
+    private static object Interpolate(double progress, object? a, object? b) {
+      System.Type? type = a?.GetType();
+
+      if (type != b?.GetType())    return null;
+      if (type == typeof(double))  return (double)  ((double) ((double)  b - (double)  a) * progress);
+      if (type == typeof(float))   return (float)   ((double) ((float)   b - (float)   a) * progress);
+      if (type == typeof(decimal)) return (decimal) ((double) ((decimal) b - (decimal) a) * progress);
+      if (type == typeof(int))     return (int)     ((double) ((int)     b - (int)     a) * progress);
+      if (type == typeof(nint))    return (nint)    ((double) ((nint)    b - (nint)    a) * progress);
+      if (type == typeof(long))    return (long)    ((double) ((long)    b - (long)    a) * progress);
+      if (type == typeof(uint))    return (uint)    ((double) ((uint)    b - (uint)    a) * progress);
+      if (type == typeof(nuint))   return (nuint)   ((double) ((nuint)   b - (nuint)   a) * progress);
+      if (type == typeof(ulong))   return (ulong)   ((double) ((ulong)   b - (ulong)   a) * progress);
+      if (type == typeof(short))   return (short)   ((double) ((short)   b - (short)   a) * progress);
+      if (type == typeof(ushort))  return (ushort)  ((double) ((ushort)  b - (ushort)  a) * progress);
+      if (type == typeof(byte))    return (byte)    ((double) ((byte)    b - (byte)    a) * progress);
+      if (type == typeof(sbyte))   return (sbyte)   ((double) ((sbyte)   b - (sbyte)   a) * progress);
+
+      // …
+      System.Reflection.MethodInfo? subtractionOverload    = type?.GetMethod("op_Subtraction", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static, null, new[] {type, type}, null);
+      System.Type                   progressType           = progress.GetType();
+      System.Reflection.MethodInfo? multiplicationOverload = System.Array.Find(type?.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static), method => {
+        if (method.Name != "op_Multiply") return false;
+        System.Reflection.ParameterInfo[] parameters = method.GetParameters();
+
+        return parameters.Length == 2 && parameters[0].ParameterType == (subtractionOverload?.ReturnType ?? type) && System.Array.Exists(new[] {typeof(double), typeof(float), typeof(decimal), typeof(int), typeof(nint), typeof(long), typeof(uint), typeof(nuint), typeof(ulong), typeof(short), typeof(ushort), typeof(byte), typeof(sbyte)}, type => {
+          if (parameters[1].ParameterType != type) return false;
+
+          progressType = type;
+          return true;
+        });
+      });
+
+      return multiplicationOverload?.Invoke(null, new[] {subtractionOverload?.Invoke(null, new[] {b, a}), System.Convert.ChangeType(progress, progressType)});
+    }
+
+    public void Reset() => this.timestamp = UnityEngine.Time.realtimeSinceStartupAsDouble;
+
+    public object? this[string property] { get {
+      double elapsed = UnityEngine.Time.realtimeSinceStartupAsDouble - this.timestamp;
+      return (this.interpolator ?? PatchOdyssey.AnimationSequence.Interpolate)(this.delay <= elapsed ? 0.0 : this.duration <= elapsed - this.delay ? 1.0 : (this.easing ?? PatchOdyssey.AnimationFunction.Linear)((elapsed - this.delay) / this.duration), this.begin[property], this.end[property]);
+    } }
+  }
+
+  public sealed class ReadOnlyInInspectorAttribute : UnityEngine.PropertyAttribute {}
 
   [System.AttributeUsage(System.AttributeTargets.All, AllowMultiple = false, Inherited = false)]
   public sealed class ReadWriteInInspectorAttribute : System.Attribute {}
 
   [System.Serializable]
-  public class SerializedDictionary<TKey, TValue> : System.Collections.Generic.IDictionary<TKey, TValue> {
-    public struct Enumerator : System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<TKey, TValue>> {
-      public           System.Collections.Generic.KeyValuePair<TKey, TValue> Current => this.current;
-      private          System.Collections.Generic.KeyValuePair<TKey, TValue> current;
-      private readonly PatchOdyssey.SerializedDictionary      <TKey, TValue> dictionary;
-      private          int                                                   index;
-      object                                                                 System.Collections.IEnumerator.Current => Current;
-      public           int                                                   version;
-
-      /* … */
-      public void Dispose() {}
-
-      internal Enumerator(PatchOdyssey.SerializedDictionary<TKey, TValue> dictionary) {
-        this.current    = default;
-        this.dictionary = dictionary;
-        this.index      = 0;
-        this.version    = dictionary.version;
-      }
-
-      public bool MoveNext() {
-        if (this.dictionary.version != this.version)
-        throw new System.InvalidOperationException($"Dictionary version {this.version} must be the same as Enumerator version {this.dictionary.version}");
-
-        for (; this.dictionary.count > this.index; ++this.index)
-        if (this.dictionary.hashes[this.index] >= 0) {
-          this.current = new(this.dictionary.keys[index], this.dictionary.values[index]);
-          this.index  += 1;
-
-          return true;
-        }
-
-        this.current = default;
-        this.index   = this.dictionary.count + 1;
-
-        return false;
-      }
-
-      void System.Collections.IEnumerator.Reset() {
-        if (this.dictionary.version != this.version)
-        throw new System.InvalidOperationException($"Dictionary version {this.version} must be the same as Enumerator version {this.dictionary.version}");
-
-        this.current = default;
-        this.index   = 0;
-      }
-    }
+  public class SerializedDictionary<TKey, TValue> : System.Collections.Generic.Dictionary<TKey, TValue> {
+    public SerializedDictionary()                                                                                                                                                                            : base()                     => this.Ensure();
+    public SerializedDictionary(int                                                                                                 capacity)                                                                : base(capacity)             => this.Ensure();
+    public SerializedDictionary(System.Collections.Generic.IEqualityComparer<TKey>                                                  comparer)                                                                : base(comparer)             => this.Ensure();
+    public SerializedDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary)                                                              : base(dictionary)           => this.Ensure();
+    public SerializedDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable)                                                              : base(enumerable)           => this.Ensure();
+    public SerializedDictionary(int                                                                                                 capacity,   System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(capacity,   comparer) => this.Ensure();
+    public SerializedDictionary(System.Collections.Generic.IDictionary<TKey, TValue>                                                dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(dictionary, comparer) => this.Ensure();
+    public SerializedDictionary(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>       enumerable, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(enumerable, comparer) => this.Ensure();
 
     /* … */
-    public                                                            System.Collections.Generic.Dictionary<TKey, TValue> AsDictionary => new System.Collections.Generic.Dictionary<TKey, TValue>(this);
-    [UnityEngine.HideInInspector, UnityEngine.SerializeField] private int[]                                               buckets      =  null;
-    private readonly                                                  System.Collections.Generic.IEqualityComparer<TKey>  comparer     =  System.Collections.Generic.EqualityComparer<TKey>.Default;
-    public                                                            int                                                 Count        => this.count - this.freeCount;
-    [UnityEngine.HideInInspector, UnityEngine.SerializeField] private int                                                 count        =  0;
-    [UnityEngine.HideInInspector, UnityEngine.SerializeField] private int                                                 freeCount    =  0;
-    [UnityEngine.HideInInspector, UnityEngine.SerializeField] private int                                                 freeList     =  0;
-    [UnityEngine.HideInInspector, UnityEngine.SerializeField] private int[]                                               hashes       =  null;
-    public                                                            bool                                                IsReadOnly   => false;
-    public                                                            System.Collections.Generic.ICollection<TKey>        Keys         { get { TKey[] keys = new TKey[this.Count]; System.Array.Copy(this.keys, 0, keys, 0, this.Count); return keys; } }
-    [UnityEngine.HideInInspector, UnityEngine.SerializeField] private TKey[]                                              keys         = null;
-    [UnityEngine.HideInInspector, UnityEngine.SerializeField] private int []                                              next         = null;
-    public                                                            System.Collections.Generic.ICollection<TValue>      Values       { get { TValue[] values = new TValue[this.Count]; System.Array.Copy(this.values, 0, values, 0, this.Count); return values; } }
-    [UnityEngine.HideInInspector, UnityEngine.SerializeField] private TValue[]                                            values       = null;
-    [UnityEngine.HideInInspector, UnityEngine.SerializeField] public  int                                                 version      = 0;
-
-    /* … */
-    public SerializedDictionary()                                                                : this(0,          null)     {}
-    public SerializedDictionary(int                                                  capacity)   : this(capacity,   null)     {}
-    public SerializedDictionary(System.Collections.Generic.IEqualityComparer<TKey>   comparer)   : this(0,          comparer) {}
-    public SerializedDictionary(System.Collections.Generic.IDictionary<TKey, TValue> dictionary) : this(dictionary, null)     {}
-
-    public SerializedDictionary(int capacity, System.Collections.Generic.IEqualityComparer<TKey> comparer) {
-      if (capacity < 0)
-        throw new System.ArgumentOutOfRangeException($"SerializedDictionary capacity is less than 0");
-
-      this.Initialize(capacity);
-      this.comparer = comparer ?? System.Collections.Generic.EqualityComparer<TKey>.Default;
-    }
-
-    public SerializedDictionary(System.Collections.Generic.IDictionary<TKey, TValue> dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : this(null != dictionary ? dictionary.Count : 0, comparer) {
-      if (null == dictionary)
-      throw new System.ArgumentNullException($"SerializedDictionary dictionary is null");
-
-      foreach (System.Collections.Generic.KeyValuePair<TKey, TValue> current in dictionary)
-      this.Add(current.Key, current.Value);
-    }
-
-    /* … */
-    public void Add(System.Collections.Generic.KeyValuePair<TKey, TValue> item) {
-      this.Add(item.Key, item.Value);
-    }
-
-    public void Add(TKey key, TValue value) {
-      this.Insert(key, value, true);
-    }
-
-    public void Clear() {
-      if (this.count <= 0)
-      return;
-
-      for (int index = 0; index != this.buckets.Length; ++index)
-        this.buckets[index] = -1;
-
-      System.Array.Clear(this.hashes, 0, this.count);
-      System.Array.Clear(this.keys,   0, this.count);
-      System.Array.Clear(this.next,   0, this.count);
-      System.Array.Clear(this.values, 0, this.count);
-
-      this.count     = 0;
-      this.freeCount = 0;
-      this.freeList  = -1;
-      this.version  += 1;
-    }
-
-    public bool Contains(System.Collections.Generic.KeyValuePair<TKey, TValue> item) {
-      int index = this.FindIndex(item.Key);
-      return index >= 0 && System.Collections.Generic.EqualityComparer<TValue>.Default.Equals(this.values[index], item.Value);
-    }
-
-    public bool ContainsKey(TKey key) {
-      return this.FindIndex(key) >= 0;
-    }
-
-    public bool ContainsValue(TValue value) {
-      System.Func<TValue?, TValue?, bool> comparer = null == value ? (x, y) => null == x : System.Collections.Generic.EqualityComparer<TValue>.Default.Equals;
-
-      // …
-      for (int index = 0; index != this.count; ++index) {
-        if (this.hashes[index] >= 0 && comparer(this.values[index], value))
-        return true;
-      }
-
-      return false;
-    }
-
-    public void CopyTo(System.Collections.Generic.KeyValuePair<TKey, TValue>[] array, int offset) {
-      if (null == array)                       throw new System.ArgumentNullException      ($"Array is null");
-      if (offset < 0 || offset > array.Length) throw new System.ArgumentOutOfRangeException($"SerializedDictionary.CopyTo(…) {{index: {offset}, array: {{Length: {array.Length}}}}}");
-      if (Count > array.Length - offset)       throw new System.ArgumentException          ($"The number of elements in the dictionary ({Count}) is greater than the available space from offset to the end of the destination array ({array.Length})");
-
-      for (int index = 0; index != this.count; ++index) {
-        if (this.hashes[index] >= 0)
-        array[offset++] = new(this.keys[index], this.values[index]);
-      }
-    }
-
-    private int FindIndex(TKey key) {
-      if (null == key)
-      throw new System.ArgumentNullException($"Dictionary key is null");
-
-      if (null != this.buckets) {
-        int hash = this.comparer.GetHashCode(key) & 0x7FFFFFFF;
-
-        for (int index = this.buckets[hash % this.buckets.Length]; index >= 0; index = this.next[index]) {
-          if (hash == this.hashes[index] && this.comparer.Equals(this.keys[index], key))
-          return index;
-        }
-      }
-
-      return -1;
-    }
-
-    public Enumerator GetEnumerator() {
-      return new(this);
-    }
-
-    public static int GetPrime(int minimum) {
-      if (minimum < 0)
-      throw new System.ArgumentException($"Dictionary prime minimum is less than 0");
-
-      foreach (int prime in new[] {3, 7, 11, 17, 23, 29, 37, 47, 59, 71, 89, 107, 131, 163, 197, 239, 293, 353, 431, 521, 631, 761, 919, 1103, 1327, 1597, 1931, 2333, 2801, 3371, 4049, 4861, 5839, 7013, 8419, 10103, 12143, 14591, 17519, 21023, 25229, 30293, 36353, 43627, 52361, 62851, 75431, 90523, 108631, 130363, 156437, 187751, 225307, 270371, 324449, 389357, 467237, 560689, 672827, 807403, 968897, 1162687, 1395263, 1674319, 2009191, 2411033, 2893249, 3471899, 4166287, 4999559, 5999471, 7199369}) {
-        if (minimum <= prime)
-        return prime;
-      }
-
-      for (int index = minimum | 1; index != 0x7FFFFFFF; index += 2) {
-        if (index == 2)
-        return index;
-
-        if (0 != (index & 1)) {
-          int  limit  = (int) System.Math.Sqrt((double) index);
-          bool primed = true;
-
-          // …
-          for (int subindex = 3; limit >= subindex; subindex += 2)
-          if (0 == index % subindex) {
-            primed = false;
-            break;
-          }
-
-          if (primed && 0 != (index - 1) % 101)
-          return index;
-        }
-      }
-
-      return minimum;
-    }
-
-    private void Initialize(int capacity) {
-      int prime = SerializedDictionary<TKey, TValue>.GetPrime(capacity);
-
-      // …
-      this.buckets  = new int[prime];
-      this.freeList = -1;
-      this.hashes   = new int   [prime];
-      this.keys     = new TKey  [prime];
-      this.next     = new int   [prime];
-      this.values   = new TValue[prime];
-
-      System.Array.Fill(this.buckets, -1);
-    }
-
-    private void Insert(TKey key, TValue value, bool insert) {
-      int hash      = 0;
-      int hashIndex = 0;
-      int number    = 0;
-
-      // …
-      if (null == key)
-        throw new System.ArgumentNullException($"Dictionary key is `null`");
-
-      if (null == this.buckets)
-        this.Initialize(0);
-
-      hash      = this.comparer.GetHashCode(key) & 0x7FFFFFFF;
-      hashIndex = hash % this.buckets.Length;
-
-      for (int index = this.buckets[hashIndex]; index >= 0; index = next[index]) {
-        if (hash == this.hashes[index] && this.comparer.Equals(this.keys[index], key)) {
-          if (insert) throw new System.ArgumentException($"Dictionary key already exists: `{key}`");
-
-          this.values[index] = value;
-          this.version      += 1;
-          return;
-        }
-
-        ++number;
-      }
-
-      if (this.freeCount > 0) {
-        number          = this.freeList;
-        this.freeCount -= 1;
-        this.freeList   = this.next[number];
-      }
-
-      else {
-        if (this.count == this.keys.Length) {
-          this.Resize();
-          hashIndex = hash % this.buckets.Length;
-        }
-
-        number      = this.count;
-        this.count += 1;
-      }
-
-      this.next   [number]    = this.buckets[hashIndex];
-      this.buckets[hashIndex] = number;
-      this.hashes [number]    = hash;
-      this.keys   [number]    = key;
-      this.values [number]    = value;
-      this.version           += 1;
-    }
-
-    public bool Remove(TKey key) {
-      int hash      = 0;
-      int hashIndex = 0;
-      int number    = -1;
-
-      // …
-      if (key == null)
-        throw new System.ArgumentNullException($"Dictionary key is null");
-
-      hash      = this.comparer.GetHashCode(key) & 0x7FFFFFFF;
-      hashIndex = hash % this.buckets.Length;
-
-      for (int index = this.buckets[hashIndex]; index >= 0; index = this.next[index], number = index)
-      if (hash == this.hashes[index] && this.comparer.Equals(this.keys[index], key)) {
-        if (number < 0) this.buckets[hashIndex] = this.next[index];
-        else            this.next   [number]    = this.next[index];
-
-        this.version      += 1;
-        this.values[index] = default;
-        this.next  [index] = this.freeList;
-        this.keys  [index] = default;
-        this.hashes[index] = -1;
-        this.freeList      = index;
-        this.freeCount    += 1;
-
-        return true;
-      }
-
-      return false;
-    }
-
-    public bool Remove(System.Collections.Generic.KeyValuePair<TKey, TValue> item) {
-      return this.Remove(item.Key);
-    }
-
-    private void Resize() {
-      this.Resize(this.count < 0x7FEFFFFD && this.count * 2 > 0x7FEFFFFD ? 0x7FEFFFFD : SerializedDictionary<TKey, TValue>.GetPrime(this.count * 2), false);
-    }
-
-    private void Resize(int capacity, bool regenerateHashes) {
-      int[]    buckets = new int   [capacity];
-      int[]    hashes  = new int   [capacity];
-      TKey[]   keys    = new TKey  [capacity];
-      int[]    next    = new int   [capacity];
-      TValue[] values  = new TValue[capacity];
-
-      // …
-      for (int index = 0; buckets.Length != index; ++index)
-        buckets[index] = -1;
-
-      System.Array.Copy(this.hashes, 0, hashes, 0, this.count);
-      System.Array.Copy(this.keys,   0, keys,   0, this.count);
-      System.Array.Copy(this.next,   0, next,   0, this.count);
-      System.Array.Copy(this.values, 0, values, 0, this.count);
-
-      if (regenerateHashes)
-      for (int index = 0; index != this.count; index++) {
-        if (hashes[index] != -1)
-        hashes[index] = this.comparer.GetHashCode(keys[index]) & 0x7FFFFFFF;
-      }
-
-      for (int index = 0; index != this.count; index++) {
-        int hashIndex = hashes[index] % capacity;
-
-        // …
-        next   [index]     = buckets[hashIndex];
-        buckets[hashIndex] = index;
-      }
-
-      this.buckets = buckets;
-      this.hashes  = hashes;
-      this.keys    = keys;
-      this.next    = next;
-      this.values  = values;
-    }
-
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
-      return this.GetEnumerator();
-    }
-
-    System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<TKey,TValue>> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey,TValue>>.GetEnumerator() {
-      return this.GetEnumerator();
-    }
-
-    public bool TryGetValue(TKey key, out TValue value) {
-      int index = this.FindIndex(key);
-
-      // …
-      if (index >= 0) {
-        value = this.values[index];
-        return true;
-      }
-
-      value = default;
-      return false;
-    }
-
-    public TValue this[TKey key] {
-      get {
-        int index = this.FindIndex(key);
-
-        if (index >= 0) return this.values[index];
-        throw new System.Collections.Generic.KeyNotFoundException(key.ToString());
-      }
-
-      set {
-        this.Insert(key, value, false);
-      }
-    }
-
-    public TValue this[TKey key, TValue _] {
-      get {
-        int index = this.FindIndex(key);
-        return index >= 0 ? this.values[index] : _;
-      }
+    public static System.Func<UnityEngine.Rect, object, object> DelegateGUIField<T>() => (System.Func<UnityEngine.Rect, object, object>) Util.Switch(typeof(T), new() {
+      {typeof(bool),                       (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Toggle         (position,                              (System.Boolean)             value) as object)},
+      {typeof(double),                     (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.DoubleField    (position,                              (System.Double)              value) as object)},
+      {typeof(float),                      (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.FloatField     (position,                              (System.Single)              value) as object)},
+      {typeof(int),                        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.IntField       (position,                              (System.Int32)               value) as object)},
+      {typeof(long),                       (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.LongField      (position,                              (System.Int64)               value) as object)},
+      {typeof(string),                     (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.TextField      (position,                              (System.String)              value) as object)},
+      {typeof(UnityEngine.AnimationCurve), (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.CurveField     (position,                              (UnityEngine.AnimationCurve) value) as object)},
+      {typeof(UnityEngine.Bounds),         (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.BoundsField    (position,                              (UnityEngine.Bounds)         value) as object)},
+      {typeof(UnityEngine.BoundsInt),      (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.BoundsIntField (position,                              (UnityEngine.BoundsInt)      value) as object)},
+      {typeof(UnityEngine.Color),          (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.ColorField     (position,                              (UnityEngine.Color)          value) as object)},
+      {typeof(UnityEngine.Gradient),       (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.GradientField  (position,                              (UnityEngine.Gradient)       value) as object)},
+      {typeof(UnityEngine.Rect),           (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.RectField      (position,                              (UnityEngine.Rect)           value) as object)},
+      {typeof(UnityEngine.RectInt),        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.RectIntField   (position,                              (UnityEngine.RectInt)        value) as object)},
+      {typeof(UnityEngine.Vector2),        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector2Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector2)        value) as object)},
+      {typeof(UnityEngine.Vector2Int),     (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector2IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector2Int)     value) as object)},
+      {typeof(UnityEngine.Vector3),        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector3Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector3)        value) as object)},
+      {typeof(UnityEngine.Vector3Int),     (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector3IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector3Int)     value) as object)},
+      {typeof(UnityEngine.Vector4),        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector4Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector4)        value) as object)}
+    }) ?? (
+      typeof(T).IsEnum                                       ? static (position, value) => UnityEditor.EditorGUI.EnumPopup  (position, (System.Enum)        value)                  as object :
+      typeof(UnityEngine.Object).IsAssignableFrom(typeof(T)) ?        (position, value) => UnityEditor.EditorGUI.ObjectField(position, (UnityEngine.Object) value, typeof(T), true) as object :
+      null
+    );
+
+    public void Ensure() {
+      if (null == PatchOdyssey.SerializedDictionary<TKey, TValue>.DelegateGUIField<TKey>  ()) throw new System.NotSupportedException($"[{UnityEngine.Application.productName}]: Type `{typeof(TKey)}` is not supported for `System.*.IDictionary` object");
+      if (null == PatchOdyssey.SerializedDictionary<TKey, TValue>.DelegateGUIField<TValue>()) throw new System.NotSupportedException($"[{UnityEngine.Application.productName}]: Type `{typeof(TValue)}` is not supported for `System.*.IDictionary` object");
     }
   }
-    [System.Serializable] public class AnimationCurveDictionary : PatchOdyssey.SerializedDictionary<string, UnityEngine.AnimationCurve> {}
-    [System.Serializable] public class BooleanDictionary        : PatchOdyssey.SerializedDictionary<string, System.Boolean>             {}
-    [System.Serializable] public class BoundsDictionary         : PatchOdyssey.SerializedDictionary<string, UnityEngine.Bounds>         {}
-    [System.Serializable] public class BoundsIntDictionary      : PatchOdyssey.SerializedDictionary<string, UnityEngine.BoundsInt>      {}
-    [System.Serializable] public class ColorDictionary          : PatchOdyssey.SerializedDictionary<string, UnityEngine.Color>          {}
-    [System.Serializable] public class DoubleDictionary         : PatchOdyssey.SerializedDictionary<string, System.Double>              {}
-    [System.Serializable] public class FloatDictionary          : PatchOdyssey.SerializedDictionary<string, System.Single>              {}
-    [System.Serializable] public class GameObjectDictionary     : PatchOdyssey.SerializedDictionary<string, UnityEngine.GameObject>     {}
-    [System.Serializable] public class GradientDictionary       : PatchOdyssey.SerializedDictionary<string, UnityEngine.Gradient>       {}
-    [System.Serializable] public class IntDictionary            : PatchOdyssey.SerializedDictionary<string, System.Int32>               {}
-    [System.Serializable] public class LongDictionary           : PatchOdyssey.SerializedDictionary<string, System.Int64>               {}
-    [System.Serializable] public class RectDictionary           : PatchOdyssey.SerializedDictionary<string, UnityEngine.Rect>           {}
-    [System.Serializable] public class RectIntDictionary        : PatchOdyssey.SerializedDictionary<string, UnityEngine.RectInt>        {}
-    [System.Serializable] public class StringDictionary         : PatchOdyssey.SerializedDictionary<string, System.String>              {}
-    [System.Serializable] public class UIntDictionary           : PatchOdyssey.SerializedDictionary<string, System.UInt32>              {}
-    [System.Serializable] public class ULongDictionary          : PatchOdyssey.SerializedDictionary<string, System.UInt64>              {}
-    [System.Serializable] public class Vector2Dictionary        : PatchOdyssey.SerializedDictionary<string, UnityEngine.Vector2>        {}
-    [System.Serializable] public class Vector2IntDictionary     : PatchOdyssey.SerializedDictionary<string, UnityEngine.Vector2Int>     {}
-    [System.Serializable] public class Vector3Dictionary        : PatchOdyssey.SerializedDictionary<string, UnityEngine.Vector3>        {}
-    [System.Serializable] public class Vector3IntDictionary     : PatchOdyssey.SerializedDictionary<string, UnityEngine.Vector3Int>     {}
-    [System.Serializable] public class Vector4Dictionary        : PatchOdyssey.SerializedDictionary<string, UnityEngine.Vector4>        {}
+    [System.Serializable] public class AnimationCurveDictionary : PatchOdyssey.SerializedDictionary<string, UnityEngine.AnimationCurve> { public AnimationCurveDictionary() : base() {} public AnimationCurveDictionary(int capacity) : base(capacity) {} public AnimationCurveDictionary(System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public AnimationCurveDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary) : base(dictionary) {} public AnimationCurveDictionary(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.AnimationCurve>> enumerable) : base(enumerable) {} public AnimationCurveDictionary(int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public AnimationCurveDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public AnimationCurveDictionary(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.AnimationCurve>> enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class BooleanDictionary        : PatchOdyssey.SerializedDictionary<string, System.Boolean>             { public BooleanDictionary       () : base() {} public BooleanDictionary       (int capacity) : base(capacity) {} public BooleanDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public BooleanDictionary       (System.Collections.Generic.IDictionary<string, System.Boolean>             dictionary) : base(dictionary) {} public BooleanDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Boolean>>             enumerable) : base(enumerable) {} public BooleanDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public BooleanDictionary       (System.Collections.Generic.IDictionary<string, System.Boolean>             dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public BooleanDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Boolean>>             enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class BoundsDictionary         : PatchOdyssey.SerializedDictionary<string, UnityEngine.Bounds>         { public BoundsDictionary        () : base() {} public BoundsDictionary        (int capacity) : base(capacity) {} public BoundsDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public BoundsDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary) : base(dictionary) {} public BoundsDictionary        (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Bounds>>         enumerable) : base(enumerable) {} public BoundsDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public BoundsDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public BoundsDictionary        (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Bounds>>         enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class BoundsIntDictionary      : PatchOdyssey.SerializedDictionary<string, UnityEngine.BoundsInt>      { public BoundsIntDictionary     () : base() {} public BoundsIntDictionary     (int capacity) : base(capacity) {} public BoundsIntDictionary     (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public BoundsIntDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary) : base(dictionary) {} public BoundsIntDictionary     (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.BoundsInt>>      enumerable) : base(enumerable) {} public BoundsIntDictionary     (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public BoundsIntDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public BoundsIntDictionary     (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.BoundsInt>>      enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class ColorDictionary          : PatchOdyssey.SerializedDictionary<string, UnityEngine.Color>          { public ColorDictionary         () : base() {} public ColorDictionary         (int capacity) : base(capacity) {} public ColorDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public ColorDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary) : base(dictionary) {} public ColorDictionary         (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Color>>          enumerable) : base(enumerable) {} public ColorDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public ColorDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public ColorDictionary         (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Color>>          enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class DoubleDictionary         : PatchOdyssey.SerializedDictionary<string, System.Double>              { public DoubleDictionary        () : base() {} public DoubleDictionary        (int capacity) : base(capacity) {} public DoubleDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public DoubleDictionary        (System.Collections.Generic.IDictionary<string, System.Double>              dictionary) : base(dictionary) {} public DoubleDictionary        (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Double>>              enumerable) : base(enumerable) {} public DoubleDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public DoubleDictionary        (System.Collections.Generic.IDictionary<string, System.Double>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public DoubleDictionary        (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Double>>              enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class FloatDictionary          : PatchOdyssey.SerializedDictionary<string, System.Single>              { public FloatDictionary         () : base() {} public FloatDictionary         (int capacity) : base(capacity) {} public FloatDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public FloatDictionary         (System.Collections.Generic.IDictionary<string, System.Single>              dictionary) : base(dictionary) {} public FloatDictionary         (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Single>>              enumerable) : base(enumerable) {} public FloatDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public FloatDictionary         (System.Collections.Generic.IDictionary<string, System.Single>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public FloatDictionary         (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Single>>              enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class GameObjectDictionary     : PatchOdyssey.SerializedDictionary<string, UnityEngine.GameObject>     { public GameObjectDictionary    () : base() {} public GameObjectDictionary    (int capacity) : base(capacity) {} public GameObjectDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public GameObjectDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary) : base(dictionary) {} public GameObjectDictionary    (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.GameObject>>     enumerable) : base(enumerable) {} public GameObjectDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public GameObjectDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public GameObjectDictionary    (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.GameObject>>     enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class GradientDictionary       : PatchOdyssey.SerializedDictionary<string, UnityEngine.Gradient>       { public GradientDictionary      () : base() {} public GradientDictionary      (int capacity) : base(capacity) {} public GradientDictionary      (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public GradientDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary) : base(dictionary) {} public GradientDictionary      (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Gradient>>       enumerable) : base(enumerable) {} public GradientDictionary      (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public GradientDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public GradientDictionary      (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Gradient>>       enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class IntDictionary            : PatchOdyssey.SerializedDictionary<string, System.Int32>               { public IntDictionary           () : base() {} public IntDictionary           (int capacity) : base(capacity) {} public IntDictionary           (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public IntDictionary           (System.Collections.Generic.IDictionary<string, System.Int32>               dictionary) : base(dictionary) {} public IntDictionary           (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Int32>>               enumerable) : base(enumerable) {} public IntDictionary           (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public IntDictionary           (System.Collections.Generic.IDictionary<string, System.Int32>               dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public IntDictionary           (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Int32>>               enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class LongDictionary           : PatchOdyssey.SerializedDictionary<string, System.Int64>               { public LongDictionary          () : base() {} public LongDictionary          (int capacity) : base(capacity) {} public LongDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public LongDictionary          (System.Collections.Generic.IDictionary<string, System.Int64>               dictionary) : base(dictionary) {} public LongDictionary          (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Int64>>               enumerable) : base(enumerable) {} public LongDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public LongDictionary          (System.Collections.Generic.IDictionary<string, System.Int64>               dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public LongDictionary          (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Int64>>               enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class RectDictionary           : PatchOdyssey.SerializedDictionary<string, UnityEngine.Rect>           { public RectDictionary          () : base() {} public RectDictionary          (int capacity) : base(capacity) {} public RectDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public RectDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary) : base(dictionary) {} public RectDictionary          (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Rect>>           enumerable) : base(enumerable) {} public RectDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public RectDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public RectDictionary          (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Rect>>           enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class RectIntDictionary        : PatchOdyssey.SerializedDictionary<string, UnityEngine.RectInt>        { public RectIntDictionary       () : base() {} public RectIntDictionary       (int capacity) : base(capacity) {} public RectIntDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public RectIntDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary) : base(dictionary) {} public RectIntDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.RectInt>>        enumerable) : base(enumerable) {} public RectIntDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public RectIntDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public RectIntDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.RectInt>>        enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class StringDictionary         : PatchOdyssey.SerializedDictionary<string, System.String>              { public StringDictionary        () : base() {} public StringDictionary        (int capacity) : base(capacity) {} public StringDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public StringDictionary        (System.Collections.Generic.IDictionary<string, System.String>              dictionary) : base(dictionary) {} public StringDictionary        (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.String>>              enumerable) : base(enumerable) {} public StringDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public StringDictionary        (System.Collections.Generic.IDictionary<string, System.String>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public StringDictionary        (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.String>>              enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class UIntDictionary           : PatchOdyssey.SerializedDictionary<string, System.UInt32>              { public UIntDictionary          () : base() {} public UIntDictionary          (int capacity) : base(capacity) {} public UIntDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public UIntDictionary          (System.Collections.Generic.IDictionary<string, System.UInt32>              dictionary) : base(dictionary) {} public UIntDictionary          (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.UInt32>>              enumerable) : base(enumerable) {} public UIntDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public UIntDictionary          (System.Collections.Generic.IDictionary<string, System.UInt32>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public UIntDictionary          (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.UInt32>>              enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class ULongDictionary          : PatchOdyssey.SerializedDictionary<string, System.UInt64>              { public ULongDictionary         () : base() {} public ULongDictionary         (int capacity) : base(capacity) {} public ULongDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public ULongDictionary         (System.Collections.Generic.IDictionary<string, System.UInt64>              dictionary) : base(dictionary) {} public ULongDictionary         (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.UInt64>>              enumerable) : base(enumerable) {} public ULongDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public ULongDictionary         (System.Collections.Generic.IDictionary<string, System.UInt64>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public ULongDictionary         (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.UInt64>>              enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class Vector2Dictionary        : PatchOdyssey.SerializedDictionary<string, UnityEngine.Vector2>        { public Vector2Dictionary       () : base() {} public Vector2Dictionary       (int capacity) : base(capacity) {} public Vector2Dictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector2Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary) : base(dictionary) {} public Vector2Dictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector2>>        enumerable) : base(enumerable) {} public Vector2Dictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector2Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public Vector2Dictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector2>>        enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class Vector2IntDictionary     : PatchOdyssey.SerializedDictionary<string, UnityEngine.Vector2Int>     { public Vector2IntDictionary    () : base() {} public Vector2IntDictionary    (int capacity) : base(capacity) {} public Vector2IntDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector2IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary) : base(dictionary) {} public Vector2IntDictionary    (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector2Int>>     enumerable) : base(enumerable) {} public Vector2IntDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector2IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public Vector2IntDictionary    (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector2Int>>     enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class Vector3Dictionary        : PatchOdyssey.SerializedDictionary<string, UnityEngine.Vector3>        { public Vector3Dictionary       () : base() {} public Vector3Dictionary       (int capacity) : base(capacity) {} public Vector3Dictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector3Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary) : base(dictionary) {} public Vector3Dictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector3>>        enumerable) : base(enumerable) {} public Vector3Dictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector3Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public Vector3Dictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector3>>        enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class Vector3IntDictionary     : PatchOdyssey.SerializedDictionary<string, UnityEngine.Vector3Int>     { public Vector3IntDictionary    () : base() {} public Vector3IntDictionary    (int capacity) : base(capacity) {} public Vector3IntDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector3IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary) : base(dictionary) {} public Vector3IntDictionary    (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector3Int>>     enumerable) : base(enumerable) {} public Vector3IntDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector3IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public Vector3IntDictionary    (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector3Int>>     enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class Vector4Dictionary        : PatchOdyssey.SerializedDictionary<string, UnityEngine.Vector4>        { public Vector4Dictionary       () : base() {} public Vector4Dictionary       (int capacity) : base(capacity) {} public Vector4Dictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector4Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary) : base(dictionary) {} public Vector4Dictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector4>>        enumerable) : base(enumerable) {} public Vector4Dictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector4Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public Vector4Dictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector4>>        enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
 
   [System.Serializable]
-  public class SerializedReadOnlyDictionary<TKey, TValue> : PatchOdyssey.SerializedDictionary<TKey, TValue> /* → `System.Collections.Generic.IReadOnlyDictionary<…>` */ {
-    public new bool IsReadOnly => true;
+  public class SerializedReadOnlyDictionary<TKey, TValue> : System.Collections.ObjectModel.ReadOnlyDictionary<TKey, TValue> {
+    #pragma warning disable CS0108
+    public readonly int Capacity = 0;
+    #pragma warning restore CS0108
 
-    #pragma warning disable CS0109
-      [System.Obsolete("", true)] public  new void Clear ()                                    {}
-      [System.Obsolete("", true)] private new void Insert(TKey key, TValue value, bool insert) {}
-      [System.Obsolete("", true)] public  new bool Remove(TKey key)                            => false;
-    #pragma warning restore CS0109
+    /* … */
+    public SerializedReadOnlyDictionary(int                                                                                                 capacity)                                                                : base(new System.Collections.Generic.Dictionary<TKey, TValue>(capacity))             => this.Capacity = capacity;
+    public SerializedReadOnlyDictionary(System.Collections.Generic.IEqualityComparer<TKey>                                                  comparer)                                                                : base(new System.Collections.Generic.Dictionary<TKey, TValue>(comparer))             {}
+    public SerializedReadOnlyDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary)                                                              : base(dictionary)                                                                    {}
+    public SerializedReadOnlyDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable)                                                              : base(new System.Collections.Generic.Dictionary<TKey, TValue>(enumerable))           {}
+    public SerializedReadOnlyDictionary(int                                                                                                 capacity,   System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(new System.Collections.Generic.Dictionary<TKey, TValue>(capacity,   comparer)) => this.Capacity = capacity;
+    public SerializedReadOnlyDictionary(System.Collections.Generic.IDictionary<TKey, TValue>                                                dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(new System.Collections.Generic.Dictionary<TKey, TValue>(dictionary, comparer)) {}
+    public SerializedReadOnlyDictionary(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>       enumerable, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(new System.Collections.Generic.Dictionary<TKey, TValue>(enumerable, comparer)) {}
+
+    /* … */
+    public void Add(TKey key, TValue value) {
+      if (this.Capacity <= this.Count)
+        throw new System.NotSupportedException("Can not add item to `SerializedReadOnlyDictionary`");
+
+      this.Dictionary.Add(key, value);
+    }
   }
-    [System.Serializable] public class AnimationCurveReadOnlyDictionary : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.AnimationCurve> {}
-    [System.Serializable] public class BooleanReadOnlyDictionary        : PatchOdyssey.SerializedReadOnlyDictionary<string, System.Boolean>             {}
-    [System.Serializable] public class BoundsReadOnlyDictionary         : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Bounds>         {}
-    [System.Serializable] public class BoundsIntReadOnlyDictionary      : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.BoundsInt>      {}
-    [System.Serializable] public class ColorReadOnlyDictionary          : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Color>          {}
-    [System.Serializable] public class DoubleReadOnlyDictionary         : PatchOdyssey.SerializedReadOnlyDictionary<string, System.Double>              {}
-    [System.Serializable] public class FloatReadOnlyDictionary          : PatchOdyssey.SerializedReadOnlyDictionary<string, System.Single>              {}
-    [System.Serializable] public class GameObjectReadOnlyDictionary     : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.GameObject>     {}
-    [System.Serializable] public class GradientReadOnlyDictionary       : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Gradient>       {}
-    [System.Serializable] public class IntReadOnlyDictionary            : PatchOdyssey.SerializedReadOnlyDictionary<string, System.Int32>               {}
-    [System.Serializable] public class LongReadOnlyDictionary           : PatchOdyssey.SerializedReadOnlyDictionary<string, System.Int64>               {}
-    [System.Serializable] public class RectReadOnlyDictionary           : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Rect>           {}
-    [System.Serializable] public class RectIntReadOnlyDictionary        : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.RectInt>        {}
-    [System.Serializable] public class StringReadOnlyDictionary         : PatchOdyssey.SerializedReadOnlyDictionary<string, System.String>              {}
-    [System.Serializable] public class UIntReadOnlyDictionary           : PatchOdyssey.SerializedReadOnlyDictionary<string, System.UInt32>              {}
-    [System.Serializable] public class ULongReadOnlyDictionary          : PatchOdyssey.SerializedReadOnlyDictionary<string, System.UInt64>              {}
-    [System.Serializable] public class Vector2ReadOnlyDictionary        : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Vector2>        {}
-    [System.Serializable] public class Vector2IntReadOnlyDictionary     : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Vector2Int>     {}
-    [System.Serializable] public class Vector3ReadOnlyDictionary        : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Vector3>        {}
-    [System.Serializable] public class Vector3IntReadOnlyDictionary     : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Vector3Int>     {}
-    [System.Serializable] public class Vector4ReadOnlyDictionary        : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Vector4>        {}
+    [System.Serializable] public class AnimationCurveReadOnlyDictionary : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.AnimationCurve> { public AnimationCurveReadOnlyDictionary(int capacity) : base(capacity) {} public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary) : base(dictionary) {} public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.AnimationCurve>> enumerable) : base(enumerable) {} public AnimationCurveReadOnlyDictionary(int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.AnimationCurve>> enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class BooleanReadOnlyDictionary        : PatchOdyssey.SerializedReadOnlyDictionary<string, System.Boolean>             { public BooleanReadOnlyDictionary       (int capacity) : base(capacity) {} public BooleanReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public BooleanReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, System.Boolean>             dictionary) : base(dictionary) {} public BooleanReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Boolean>>             enumerable) : base(enumerable) {} public BooleanReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public BooleanReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, System.Boolean>             dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public BooleanReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Boolean>>             enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class BoundsReadOnlyDictionary         : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Bounds>         { public BoundsReadOnlyDictionary        (int capacity) : base(capacity) {} public BoundsReadOnlyDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public BoundsReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary) : base(dictionary) {} public BoundsReadOnlyDictionary        (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Bounds>>         enumerable) : base(enumerable) {} public BoundsReadOnlyDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public BoundsReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public BoundsReadOnlyDictionary        (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Bounds>>         enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class BoundsIntReadOnlyDictionary      : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.BoundsInt>      { public BoundsIntReadOnlyDictionary     (int capacity) : base(capacity) {} public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary) : base(dictionary) {} public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.BoundsInt>>      enumerable) : base(enumerable) {} public BoundsIntReadOnlyDictionary     (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.BoundsInt>>      enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class ColorReadOnlyDictionary          : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Color>          { public ColorReadOnlyDictionary         (int capacity) : base(capacity) {} public ColorReadOnlyDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public ColorReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary) : base(dictionary) {} public ColorReadOnlyDictionary         (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Color>>          enumerable) : base(enumerable) {} public ColorReadOnlyDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public ColorReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public ColorReadOnlyDictionary         (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Color>>          enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class DoubleReadOnlyDictionary         : PatchOdyssey.SerializedReadOnlyDictionary<string, System.Double>              { public DoubleReadOnlyDictionary        (int capacity) : base(capacity) {} public DoubleReadOnlyDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public DoubleReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System.Double>              dictionary) : base(dictionary) {} public DoubleReadOnlyDictionary        (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Double>>              enumerable) : base(enumerable) {} public DoubleReadOnlyDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public DoubleReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System.Double>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public DoubleReadOnlyDictionary        (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Double>>              enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class FloatReadOnlyDictionary          : PatchOdyssey.SerializedReadOnlyDictionary<string, System.Single>              { public FloatReadOnlyDictionary         (int capacity) : base(capacity) {} public FloatReadOnlyDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public FloatReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System.Single>              dictionary) : base(dictionary) {} public FloatReadOnlyDictionary         (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Single>>              enumerable) : base(enumerable) {} public FloatReadOnlyDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public FloatReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System.Single>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public FloatReadOnlyDictionary         (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Single>>              enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class GameObjectReadOnlyDictionary     : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.GameObject>     { public GameObjectReadOnlyDictionary    (int capacity) : base(capacity) {} public GameObjectReadOnlyDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public GameObjectReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary) : base(dictionary) {} public GameObjectReadOnlyDictionary    (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.GameObject>>     enumerable) : base(enumerable) {} public GameObjectReadOnlyDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public GameObjectReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public GameObjectReadOnlyDictionary    (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.GameObject>>     enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class GradientReadOnlyDictionary       : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Gradient>       { public GradientReadOnlyDictionary      (int capacity) : base(capacity) {} public GradientReadOnlyDictionary      (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public GradientReadOnlyDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary) : base(dictionary) {} public GradientReadOnlyDictionary      (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Gradient>>       enumerable) : base(enumerable) {} public GradientReadOnlyDictionary      (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public GradientReadOnlyDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public GradientReadOnlyDictionary      (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Gradient>>       enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class IntReadOnlyDictionary            : PatchOdyssey.SerializedReadOnlyDictionary<string, System.Int32>               { public IntReadOnlyDictionary           (int capacity) : base(capacity) {} public IntReadOnlyDictionary           (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public IntReadOnlyDictionary           (System.Collections.Generic.IDictionary<string, System.Int32>               dictionary) : base(dictionary) {} public IntReadOnlyDictionary           (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Int32>>               enumerable) : base(enumerable) {} public IntReadOnlyDictionary           (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public IntReadOnlyDictionary           (System.Collections.Generic.IDictionary<string, System.Int32>               dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public IntReadOnlyDictionary           (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Int32>>               enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class LongReadOnlyDictionary           : PatchOdyssey.SerializedReadOnlyDictionary<string, System.Int64>               { public LongReadOnlyDictionary          (int capacity) : base(capacity) {} public LongReadOnlyDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public LongReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System.Int64>               dictionary) : base(dictionary) {} public LongReadOnlyDictionary          (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Int64>>               enumerable) : base(enumerable) {} public LongReadOnlyDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public LongReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System.Int64>               dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public LongReadOnlyDictionary          (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Int64>>               enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class RectReadOnlyDictionary           : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Rect>           { public RectReadOnlyDictionary          (int capacity) : base(capacity) {} public RectReadOnlyDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public RectReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary) : base(dictionary) {} public RectReadOnlyDictionary          (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Rect>>           enumerable) : base(enumerable) {} public RectReadOnlyDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public RectReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public RectReadOnlyDictionary          (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Rect>>           enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class RectIntReadOnlyDictionary        : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.RectInt>        { public RectIntReadOnlyDictionary       (int capacity) : base(capacity) {} public RectIntReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public RectIntReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary) : base(dictionary) {} public RectIntReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.RectInt>>        enumerable) : base(enumerable) {} public RectIntReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public RectIntReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public RectIntReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.RectInt>>        enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class StringReadOnlyDictionary         : PatchOdyssey.SerializedReadOnlyDictionary<string, System.String>              { public StringReadOnlyDictionary        (int capacity) : base(capacity) {} public StringReadOnlyDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public StringReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System.String>              dictionary) : base(dictionary) {} public StringReadOnlyDictionary        (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.String>>              enumerable) : base(enumerable) {} public StringReadOnlyDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public StringReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System.String>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public StringReadOnlyDictionary        (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.String>>              enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class UIntReadOnlyDictionary           : PatchOdyssey.SerializedReadOnlyDictionary<string, System.UInt32>              { public UIntReadOnlyDictionary          (int capacity) : base(capacity) {} public UIntReadOnlyDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public UIntReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System.UInt32>              dictionary) : base(dictionary) {} public UIntReadOnlyDictionary          (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.UInt32>>              enumerable) : base(enumerable) {} public UIntReadOnlyDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public UIntReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System.UInt32>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public UIntReadOnlyDictionary          (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.UInt32>>              enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class ULongReadOnlyDictionary          : PatchOdyssey.SerializedReadOnlyDictionary<string, System.UInt64>              { public ULongReadOnlyDictionary         (int capacity) : base(capacity) {} public ULongReadOnlyDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public ULongReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System.UInt64>              dictionary) : base(dictionary) {} public ULongReadOnlyDictionary         (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.UInt64>>              enumerable) : base(enumerable) {} public ULongReadOnlyDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public ULongReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System.UInt64>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public ULongReadOnlyDictionary         (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.UInt64>>              enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class Vector2ReadOnlyDictionary        : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Vector2>        { public Vector2ReadOnlyDictionary       (int capacity) : base(capacity) {} public Vector2ReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector2ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary) : base(dictionary) {} public Vector2ReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector2>>        enumerable) : base(enumerable) {} public Vector2ReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector2ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public Vector2ReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector2>>        enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class Vector2IntReadOnlyDictionary     : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Vector2Int>     { public Vector2IntReadOnlyDictionary    (int capacity) : base(capacity) {} public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary) : base(dictionary) {} public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector2Int>>     enumerable) : base(enumerable) {} public Vector2IntReadOnlyDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector2Int>>     enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class Vector3ReadOnlyDictionary        : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Vector3>        { public Vector3ReadOnlyDictionary       (int capacity) : base(capacity) {} public Vector3ReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector3ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary) : base(dictionary) {} public Vector3ReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector3>>        enumerable) : base(enumerable) {} public Vector3ReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector3ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public Vector3ReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector3>>        enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class Vector3IntReadOnlyDictionary     : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Vector3Int>     { public Vector3IntReadOnlyDictionary    (int capacity) : base(capacity) {} public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary) : base(dictionary) {} public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector3Int>>     enumerable) : base(enumerable) {} public Vector3IntReadOnlyDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector3Int>>     enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
+    [System.Serializable] public class Vector4ReadOnlyDictionary        : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Vector4>        { public Vector4ReadOnlyDictionary       (int capacity) : base(capacity) {} public Vector4ReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector4ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary) : base(dictionary) {} public Vector4ReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector4>>        enumerable) : base(enumerable) {} public Vector4ReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector4ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public Vector4ReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector4>>        enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
 
   #if UNITY_EDITOR
     [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ReadOnlyInInspectorAttribute))]
@@ -453,219 +249,124 @@ namespace PatchOdyssey {
       }
     }
 
-    public class SerializedDictionaryDrawer<TDictionary> : UnityEditor.PropertyDrawer where TDictionary : class?, new() {
-      private const  float                                  BUTTON_HEIGHT       =  17.0f;
-      private const  float                                  BUTTON_WIDTH        =  18.0f;
-      private static (System.Type? key, System.Type? value) DICTIONARY_GENERICS => GetDictionaryGenerics();
-      private static System.Type                            DICTIONARY_TYPE     => GetDictionaryType    ();
-      private        TDictionary?                           dictionary          =  null;
-      private        bool                                   foldout             =  false;
+    public class SerializedDictionaryDrawer<TKey, TValue> : UnityEditor.PropertyDrawer {
+      private bool foldout = false;
 
       /* … */
-      private void Ensure(UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
-        if (null == this.dictionary) {
-          this.dictionary = this.fieldInfo.GetValue(property.serializedObject.targetObject) as TDictionary;
-          this.foldout    = UnityEditor.EditorPrefs.GetBool(label.text);
+      private System.Collections.Generic.IDictionary<TKey, TValue> Ensure(UnityEditor.SerializedProperty property) {
+        System.Collections.Generic.IDictionary<TKey, TValue> dictionary = (this.fieldInfo.GetValue(property.serializedObject.targetObject) ?? new PatchOdyssey.SerializedDictionary<TKey, TValue>()) as System.Collections.Generic.IDictionary<TKey, TValue>;
 
-          if (null == this.dictionary)
-          this.fieldInfo.SetValue(property.serializedObject.targetObject, this.dictionary = new TDictionary());
-        }
-      }
-
-      private static (System.Type?, System.Type?) GetDictionaryGenerics() {
-        System.Type[] generics = GetDictionaryType()?.GetGenericArguments();
-        return (generics?.Length ?? 0) < 2 ? (null, null) : (generics[0], generics[1]);
-      }
-
-      private static System.Type GetDictionaryType() {
-        for (System.Type type = typeof(TDictionary); null != type; type = type.BaseType) {
-          System.Type[] generics   = type.GetGenericArguments();
-          System.Type[] interfaces = type.GetInterfaces      ();
-
-          // …
-          if (generics.Length == 2)
-          if (
-            type                            ==                                  typeof(System.Collections.Generic. Dictionary<,>).MakeGenericType(generics) ||
-            interfaces.GetLowerBound(0) - 1 != System.Array.IndexOf(interfaces, typeof(System.Collections.Generic.IDictionary<,>).MakeGenericType(generics))
-          ) return type;
-        }
-
-        return typeof(TDictionary);
+        // …
+        this.fieldInfo.SetValue(property.serializedObject.targetObject, dictionary);
+        return dictionary;
       }
 
       public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
-        this.Ensure(property, label);
-        return BUTTON_HEIGHT * (this.foldout ? (GetDictionaryType().GetProperty("Count")?.GetValue(this.dictionary) as int? ?? 0) + 1 : 1);
-      }
-
-      private bool IsReadOnlyDictionary() {
-        if ((null, null) != DICTIONARY_GENERICS) {
-          System.Type type = typeof(PatchOdyssey.SerializedReadOnlyDictionary<,>).MakeGenericType(new[] {DICTIONARY_GENERICS.key, DICTIONARY_GENERICS.value});
-
-          // …
-          if (type == typeof(TDictionary) || typeof(TDictionary).IsSubclassOf(type))
-          return true;
-        }
-
-        return null != this.dictionary && (DICTIONARY_TYPE.GetProperty("IsReadOnly")?.GetValue(this.dictionary) as bool? ?? false);
+        return base.GetPropertyHeight(property, label) * (this.foldout || UnityEditor.EditorPrefs.GetBool(label.text) ? Util.Max(this.Ensure(property).Count, 1) + 1 : 1);
       }
 
       public override void OnGUI(UnityEngine.Rect position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
-        bool                                                                     isReadOnly = this.IsReadOnlyDictionary();
-        (UnityEngine.Rect add, UnityEngine.Rect clear, UnityEngine.Rect foldout) positions;
+        System.Collections.Generic.IDictionary<TKey, TValue> dictionary           = this.Ensure(property);
+        bool                                                 dictionaryIsReadOnly = dictionary is System.Collections.ObjectModel.ReadOnlyDictionary<TKey, TValue>;
+        float                                                size                 = position.height = base.GetPropertyHeight(property, label);
+        var                                                  positions            = new {
+          add     = new UnityEngine.Rect(position.x + (position.width - Util.PercentOf(size, 200.0f)), position.y, 0.0f           + size, position.height),
+          clear   = new UnityEngine.Rect(position.x + (position.width - Util.PercentOf(size, 100.0f)), position.y, 0.0f           + size, position.height),
+          foldout = new UnityEngine.Rect(position.x,                                                   position.y, position.width - size, position.height)
+        };
 
         // …
-        this.Ensure(property, label);
-
-        position .height  = BUTTON_HEIGHT;
-        positions.foldout = new(position.x,                                            position.y, position.width - BUTTON_WIDTH, position.height);
-        positions.clear   = new(position.x + (position.width - (BUTTON_WIDTH * 1.0f)), position.y, 0.0f           + BUTTON_WIDTH, position.height);
-        positions.add     = new(position.x + (position.width - (BUTTON_WIDTH * 2.0f)), position.y, 0.0f           + BUTTON_WIDTH, position.height);
-
-        // …
-        if ((null, null) == DICTIONARY_GENERICS)
-        return;
-
-        if (!isReadOnly) {
-          if (UnityEngine.GUI.Button(positions.add, new UnityEngine.GUIContent("+", "Add item"), UnityEditor.EditorStyles.miniButton))
-          try {
-            object key   =  DICTIONARY_GENERICS.key == typeof(string) ? ""   : System.Activator.CreateInstance(DICTIONARY_GENERICS.key);
-            object value = !DICTIONARY_GENERICS.value.IsValueType     ? null : System.Activator.CreateInstance(DICTIONARY_GENERICS.value);
-
-            // …
-            if (!(DICTIONARY_TYPE.GetMethod("ContainsKey", new[] {DICTIONARY_GENERICS.key})?.Invoke(this.dictionary, new object[] {key}) as bool? ?? true))
-            DICTIONARY_TYPE.GetMethod("Add", new[] {DICTIONARY_GENERICS.key, DICTIONARY_GENERICS.value})?.Invoke(this.dictionary, new object[] {key, value});
-          } catch (System.Exception exception) { UnityEngine.Debug.LogError($"[{UnityEngine.Application.productName}]: {exception.Message}"); }
+        if (!dictionaryIsReadOnly) {
+          if (UnityEngine.GUI.Button(positions.add, new UnityEngine.GUIContent("+", "Add field"), UnityEditor.EditorStyles.miniButton))
+          dictionary.TryAdd(
+            typeof(TKey) != typeof(string) ? System.Activator.CreateInstance<TKey>  () : (TKey)   (""   as object),
+            typeof(TValue).IsValueType     ? System.Activator.CreateInstance<TValue>() : (TValue) (null as object)
+          );
 
           if (UnityEngine.GUI.Button(positions.clear, new UnityEngine.GUIContent("×", "Clear dictionary"), UnityEditor.EditorStyles.miniButtonRight))
-          DICTIONARY_TYPE.GetMethod("Clear", new System.Type[] {})?.Invoke(this.dictionary, null);
+          dictionary.Clear();
         }
 
-        UnityEditor.EditorGUI.BeginChangeCheck();
-        this.foldout = UnityEditor.EditorGUI.Foldout(positions.foldout, this.foldout, label, true);
-        if (UnityEditor.EditorGUI.EndChangeCheck()) UnityEditor.EditorPrefs.SetBool(label.text, this.foldout);
+        UnityEditor.EditorGUI.BeginChangeCheck(); {
+          this.foldout = UnityEditor.EditorPrefs.GetBool(label.text);
+          this.foldout = UnityEditor.EditorGUI.  Foldout(positions.foldout, this.foldout, label, true);
+        } if (UnityEditor.EditorGUI.EndChangeCheck()) UnityEditor.EditorPrefs.SetBool(label.text, this.foldout);
 
         if (!this.foldout)
         return;
 
-        for (
-          object enumerator = DICTIONARY_TYPE.GetMethod("GetEnumerator")?.Invoke(this.dictionary, null);
-          enumerator?.GetType().GetMethod("MoveNext", new System.Type[] {})?.Invoke(enumerator, null) as bool? ?? false;
-        ) {
-          (UnityEngine.Rect key, UnityEngine.Rect remove, UnityEngine.Rect value) subpositions;
-          object                                                                  item = enumerator.GetType() .GetProperty("Current")?.GetValue(enumerator);
-          (object key, object value)                                                   = (item    ?.GetType()?.GetProperty("Key")    ?.GetValue(item), item?.GetType()?.GetProperty("Value")?.GetValue(item));
-
-          /* … */
-          static object Field(UnityEngine.Rect position, object value, System.Type type) {
-            if (null == type) {
-              UnityEditor.EditorGUI.LabelField(position, $"{value}");
-              return value;
-            }
-
-            if (type == typeof(bool))                              return (UnityEditor.EditorGUI.Toggle         (position,                              (System.Boolean)             (value as object))             as object);
-            if (type == typeof(double))                            return (UnityEditor.EditorGUI.DoubleField    (position,                              (System.Double)              (value as object))             as object);
-            if (type == typeof(float))                             return (UnityEditor.EditorGUI.FloatField     (position,                              (System.Single)              (value as object))             as object);
-            if (type == typeof(int))                               return (UnityEditor.EditorGUI.IntField       (position,                              (System.Int32)               (value as object))             as object);
-            if (type == typeof(long))                              return (UnityEditor.EditorGUI.LongField      (position,                              (System.Int64)               (value as object))             as object);
-            if (type == typeof(string))                            return (UnityEditor.EditorGUI.TextField      (position,                              (System.String)              (value as object))             as object);
-            if (type == typeof(UnityEngine.AnimationCurve))        return (UnityEditor.EditorGUI.CurveField     (position,                              (UnityEngine.AnimationCurve) (value as object))             as object);
-            if (type == typeof(UnityEngine.Bounds))                return (UnityEditor.EditorGUI.BoundsField    (position,                              (UnityEngine.Bounds)         (value as object))             as object);
-            if (type == typeof(UnityEngine.BoundsInt))             return (UnityEditor.EditorGUI.BoundsIntField (position,                              (UnityEngine.BoundsInt)      (value as object))             as object);
-            if (type == typeof(UnityEngine.Color))                 return (UnityEditor.EditorGUI.ColorField     (position,                              (UnityEngine.Color)          (value as object))             as object);
-            if (type == typeof(UnityEngine.Gradient))              return (UnityEditor.EditorGUI.GradientField  (position,                              (UnityEngine.Gradient)       (value as object))             as object);
-            if (type == typeof(UnityEngine.Rect))                  return (UnityEditor.EditorGUI.RectField      (position,                              (UnityEngine.Rect)           (value as object))             as object);
-            if (type == typeof(UnityEngine.RectInt))               return (UnityEditor.EditorGUI.RectIntField   (position,                              (UnityEngine.RectInt)        (value as object))             as object);
-            if (type == typeof(UnityEngine.Vector2))               return (UnityEditor.EditorGUI.Vector2Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector2)        (value as object))             as object);
-            if (type == typeof(UnityEngine.Vector2Int))            return (UnityEditor.EditorGUI.Vector2IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector2Int)     (value as object))             as object);
-            if (type == typeof(UnityEngine.Vector3))               return (UnityEditor.EditorGUI.Vector3Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector3)        (value as object))             as object);
-            if (type == typeof(UnityEngine.Vector3Int))            return (UnityEditor.EditorGUI.Vector3IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector3Int)     (value as object))             as object);
-            if (type == typeof(UnityEngine.Vector4))               return (UnityEditor.EditorGUI.Vector4Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector4)        (value as object))             as object);
-            if (type.IsEnum)                                       return (UnityEditor.EditorGUI.EnumPopup      (position,                              (System.Enum)                (value as object))             as object);
-            if (typeof(UnityEngine.Object).IsAssignableFrom(type)) return (UnityEditor.EditorGUI.ObjectField    (position,                              (UnityEngine.Object)         (value as object), type, true) as object);
-
-            UnityEngine.Debug.LogError($"[{UnityEngine.Application.productName}]: Type `{type}` is not supported");
-            return value;
-          }
+        if (0 == dictionary.Count) UnityEngine.GUI.Label(new(position.x, position.y + position.height, position.width, position.height), "Dictionary is empty");
+        else foreach (System.Collections.Generic.KeyValuePair<TKey, TValue> item in dictionary) {
+          (TKey key, TValue value) = (item.Key, item.Value);
+          var subpositions         = new {
+            key   = new UnityEngine.Rect(position.x                                                 + (dictionaryIsReadOnly ? size : 0.0f), position.y += position.height, Util.PercentOf(position.width - size, 40.0f), position.height),
+            value = new UnityEngine.Rect(position.x + Util.PercentOf(position.width - size,  40.0f) + (dictionaryIsReadOnly ? size : 0.0f), position.y,                    Util.PercentOf(position.width - size, 60.0f), position.height),
+            clear = new UnityEngine.Rect(position.x + Util.PercentOf(position.width - size, 100.0f),                                        position.y,                    size,                                         position.height)
+          };
 
           // …
-          position    .y     += BUTTON_HEIGHT;
-          subpositions.key    = new(position.x                                                     + (isReadOnly ? BUTTON_WIDTH : 0.0f), position.y, (position.width - BUTTON_WIDTH) * (2.0f / 5.0f), position.height);
-          subpositions.value  = new(position.x + ((position.width - BUTTON_WIDTH) * (2.0f / 5.0f)) + (isReadOnly ? BUTTON_WIDTH : 0.0f), position.y, (position.width - BUTTON_WIDTH) * (3.0f / 5.0f), position.height);
-          subpositions.remove = new(position.x + ((position.width - BUTTON_WIDTH) * (5.0f / 5.0f)),                                      position.y, BUTTON_WIDTH,                                    position.height);
+          UnityEditor.EditorGUI.BeginChangeCheck();
+            key = (TKey) PatchOdyssey.SerializedDictionary<TKey, TValue>.DelegateGUIField<TKey>()(subpositions.key, key);
+          if (UnityEditor.EditorGUI.EndChangeCheck()) { dictionary.Remove(item.Key); dictionary.Add(key, value); break; }
 
           UnityEditor.EditorGUI.BeginChangeCheck();
-          key = Field(subpositions.key, key, isReadOnly ? null : DICTIONARY_GENERICS.key);
-          if (UnityEditor.EditorGUI.EndChangeCheck()) {
-            try {
-              DICTIONARY_TYPE.GetMethod("Remove", new[] {DICTIONARY_GENERICS.key})                           .Invoke(this.dictionary, new object[] {item?.GetType()?.GetProperty("Key")?.GetValue(item)});
-              DICTIONARY_TYPE.GetMethod("Add",    new[] {DICTIONARY_GENERICS.key, DICTIONARY_GENERICS.value}).Invoke(this.dictionary, new object[] {key, value});
-            } catch (System.Exception exception) when (exception is not System.NullReferenceException) { UnityEngine.Debug.LogError($"[{UnityEngine.Application.productName}]: {exception.Message}"); }
+            value = (TValue) PatchOdyssey.SerializedDictionary<TKey, TValue>.DelegateGUIField<TValue>()(subpositions.value, value);
+          if (UnityEditor.EditorGUI.EndChangeCheck()) { dictionary[key] = value; break; }
 
-            break;
-          }
-
-          UnityEditor.EditorGUI.BeginChangeCheck();
-          value = Field(subpositions.value, value, DICTIONARY_GENERICS.value);
-          if (UnityEditor.EditorGUI.EndChangeCheck()) {
-            DICTIONARY_TYPE.GetProperty((System.Attribute.GetCustomAttribute(typeof(TDictionary), typeof(System.Reflection.DefaultMemberAttribute)) as System.Reflection.DefaultMemberAttribute)?.MemberName ?? "", new[] {DICTIONARY_GENERICS.key})?.GetSetMethod()?.Invoke(this.dictionary, new object[] {key, value});
-            break;
-          }
-
-          if (!isReadOnly)
-          if (UnityEngine.GUI.Button(subpositions.remove, new UnityEngine.GUIContent("×", "Remove item"), UnityEditor.EditorStyles.miniButtonRight)) {
-            DICTIONARY_TYPE.GetMethod("Remove", new[] {DICTIONARY_GENERICS.key})?.Invoke(this.dictionary, new object[] {key});
+          if (!dictionaryIsReadOnly)
+          if (UnityEngine.GUI.Button(subpositions.clear, new UnityEngine.GUIContent("×", "Clear item"), UnityEditor.EditorStyles.miniButtonRight)) {
+            dictionary.Remove(key);
             break;
           }
         }
       }
     }
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.AnimationCurveDictionary))]         public class AnimationCurveDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.AnimationCurveDictionary>         {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.AnimationCurveReadOnlyDictionary))] public class AnimationCurveReadOnlyDictionaryDrawer : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.AnimationCurveReadOnlyDictionary> {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BooleanDictionary))]                public class BooleanDictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.BooleanDictionary>                {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BooleanReadOnlyDictionary))]        public class BooleanReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.BooleanReadOnlyDictionary>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsDictionary))]                 public class BoundsDictionaryDrawer                 : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.BoundsDictionary>                 {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsIntDictionary))]              public class BoundsIntDictionaryDrawer              : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.BoundsIntDictionary>              {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsIntReadOnlyDictionary))]      public class BoundsIntReadOnlyDictionaryDrawer      : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.BoundsIntReadOnlyDictionary>      {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsReadOnlyDictionary))]         public class BoundsReadOnlyDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.BoundsReadOnlyDictionary>         {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ColorDictionary))]                  public class ColorDictionaryDrawer                  : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.ColorDictionary>                  {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ColorReadOnlyDictionary))]          public class ColorReadOnlyDictionaryDrawer          : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.ColorReadOnlyDictionary>          {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.DoubleDictionary))]                 public class DoubleDictionaryDrawer                 : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.DoubleDictionary>                 {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.DoubleReadOnlyDictionary))]         public class DoubleReadOnlyDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.DoubleReadOnlyDictionary>         {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.FloatDictionary))]                  public class FloatDictionaryDrawer                  : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.FloatDictionary>                  {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.FloatReadOnlyDictionary))]          public class FloatReadOnlyDictionaryDrawer          : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.FloatReadOnlyDictionary>          {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GameObjectDictionary))]             public class GameObjectDictionaryDrawer             : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.GameObjectDictionary>             {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GameObjectReadOnlyDictionary))]     public class GameObjectReadOnlyDictionaryDrawer     : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.GameObjectReadOnlyDictionary>     {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GradientDictionary))]               public class GradientDictionaryDrawer               : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.GradientDictionary>               {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GradientReadOnlyDictionary))]       public class GradientReadOnlyDictionaryDrawer       : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.GradientReadOnlyDictionary>       {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.IntDictionary))]                    public class IntDictionaryDrawer                    : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.IntDictionary>                    {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.IntReadOnlyDictionary))]            public class IntReadOnlyDictionaryDrawer            : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.IntReadOnlyDictionary>            {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.LongDictionary))]                   public class LongDictionaryDrawer                   : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.LongDictionary>                   {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.LongReadOnlyDictionary))]           public class LongReadOnlyDictionaryDrawer           : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.LongReadOnlyDictionary>           {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectDictionary))]                   public class RectDictionaryDrawer                   : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.RectDictionary>                   {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectIntDictionary))]                public class RectIntDictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.RectIntDictionary>                {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectIntReadOnlyDictionary))]        public class RectIntReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.RectIntReadOnlyDictionary>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectReadOnlyDictionary))]           public class RectReadOnlyDictionaryDrawer           : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.RectReadOnlyDictionary>           {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.StringDictionary))]                 public class StringDictionaryDrawer                 : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.StringDictionary>                 {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.StringReadOnlyDictionary))]         public class StringReadOnlyDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.StringReadOnlyDictionary>         {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.UIntDictionary))]                   public class UIntDictionaryDrawer                   : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.UIntDictionary>                   {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.UIntReadOnlyDictionary))]           public class UIntReadOnlyDictionaryDrawer           : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.UIntReadOnlyDictionary>           {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ULongDictionary))]                  public class ULongDictionaryDrawer                  : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.ULongDictionary>                  {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ULongReadOnlyDictionary))]          public class ULongReadOnlyDictionaryDrawer          : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.ULongReadOnlyDictionary>          {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2Dictionary))]                public class Vector2DictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector2Dictionary>                {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2IntDictionary))]             public class Vector2IntDictionaryDrawer             : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector2IntDictionary>             {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2IntReadOnlyDictionary))]     public class Vector2IntReadOnlyDictionaryDrawer     : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector2IntReadOnlyDictionary>     {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2ReadOnlyDictionary))]        public class Vector2ReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector2ReadOnlyDictionary>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3Dictionary))]                public class Vector3DictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector3Dictionary>                {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3IntDictionary))]             public class Vector3IntDictionaryDrawer             : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector3IntDictionary>             {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3IntReadOnlyDictionary))]     public class Vector3IntReadOnlyDictionaryDrawer     : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector3IntReadOnlyDictionary>     {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3ReadOnlyDictionary))]        public class Vector3ReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector3ReadOnlyDictionary>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector4Dictionary))]                public class Vector4DictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector4Dictionary>                {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector4ReadOnlyDictionary))]        public class Vector4ReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<PatchOdyssey.Vector4ReadOnlyDictionary>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.AnimationCurveDictionary))]         public class AnimationCurveDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.AnimationCurve> {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.AnimationCurveReadOnlyDictionary))] public class AnimationCurveReadOnlyDictionaryDrawer : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.AnimationCurve> {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BooleanDictionary))]                public class BooleanDictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<string, System.Boolean>             {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BooleanReadOnlyDictionary))]        public class BooleanReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<string, System.Boolean>             {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsDictionary))]                 public class BoundsDictionaryDrawer                 : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Bounds>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsReadOnlyDictionary))]         public class BoundsReadOnlyDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Bounds>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsIntDictionary))]              public class BoundsIntDictionaryDrawer              : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.BoundsInt>      {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsIntReadOnlyDictionary))]      public class BoundsIntReadOnlyDictionaryDrawer      : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.BoundsInt>      {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ColorDictionary))]                  public class ColorDictionaryDrawer                  : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Color>          {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ColorReadOnlyDictionary))]          public class ColorReadOnlyDictionaryDrawer          : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Color>          {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.DoubleDictionary))]                 public class DoubleDictionaryDrawer                 : PatchOdyssey.SerializedDictionaryDrawer<string, System.Double>              {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.DoubleReadOnlyDictionary))]         public class DoubleReadOnlyDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<string, System.Double>              {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.FloatDictionary))]                  public class FloatDictionaryDrawer                  : PatchOdyssey.SerializedDictionaryDrawer<string, System.Single>              {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.FloatReadOnlyDictionary))]          public class FloatReadOnlyDictionaryDrawer          : PatchOdyssey.SerializedDictionaryDrawer<string, System.Single>              {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GameObjectDictionary))]             public class GameObjectDictionaryDrawer             : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.GameObject>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GameObjectReadOnlyDictionary))]     public class GameObjectReadOnlyDictionaryDrawer     : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.GameObject>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GradientDictionary))]               public class GradientDictionaryDrawer               : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Gradient>       {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GradientReadOnlyDictionary))]       public class GradientReadOnlyDictionaryDrawer       : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Gradient>       {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.IntDictionary))]                    public class IntDictionaryDrawer                    : PatchOdyssey.SerializedDictionaryDrawer<string, System.Int32>               {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.IntReadOnlyDictionary))]            public class IntReadOnlyDictionaryDrawer            : PatchOdyssey.SerializedDictionaryDrawer<string, System.Int32>               {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.LongDictionary))]                   public class LongDictionaryDrawer                   : PatchOdyssey.SerializedDictionaryDrawer<string, System.Int64>               {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.LongReadOnlyDictionary))]           public class LongReadOnlyDictionaryDrawer           : PatchOdyssey.SerializedDictionaryDrawer<string, System.Int64>               {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectDictionary))]                   public class RectDictionaryDrawer                   : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Rect>           {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectReadOnlyDictionary))]           public class RectReadOnlyDictionaryDrawer           : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Rect>           {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectIntDictionary))]                public class RectIntDictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.RectInt>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectIntReadOnlyDictionary))]        public class RectIntReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.RectInt>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.StringDictionary))]                 public class StringDictionaryDrawer                 : PatchOdyssey.SerializedDictionaryDrawer<string, System.String>              {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.StringReadOnlyDictionary))]         public class StringReadOnlyDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<string, System.String>              {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.UIntDictionary))]                   public class UIntDictionaryDrawer                   : PatchOdyssey.SerializedDictionaryDrawer<string, System.UInt32>              {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.UIntReadOnlyDictionary))]           public class UIntReadOnlyDictionaryDrawer           : PatchOdyssey.SerializedDictionaryDrawer<string, System.UInt32>              {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ULongDictionary))]                  public class ULongDictionaryDrawer                  : PatchOdyssey.SerializedDictionaryDrawer<string, System.UInt64>              {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ULongReadOnlyDictionary))]          public class ULongReadOnlyDictionaryDrawer          : PatchOdyssey.SerializedDictionaryDrawer<string, System.UInt64>              {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2Dictionary))]                public class Vector2DictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector2>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2ReadOnlyDictionary))]        public class Vector2ReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector2>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2IntDictionary))]             public class Vector2IntDictionaryDrawer             : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector2Int>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2IntReadOnlyDictionary))]     public class Vector2IntReadOnlyDictionaryDrawer     : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector2Int>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3Dictionary))]                public class Vector3DictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector3>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3ReadOnlyDictionary))]        public class Vector3ReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector3>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3IntDictionary))]             public class Vector3IntDictionaryDrawer             : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector3Int>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3IntReadOnlyDictionary))]     public class Vector3IntReadOnlyDictionaryDrawer     : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector3Int>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector4Dictionary))]                public class Vector4DictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector4>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector4ReadOnlyDictionary))]        public class Vector4ReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector4>        {}
   #endif
 }
 
-namespace PatchOdyssey {
+namespace PatchOdyssey /* → …everything else */ {
   public static class AnimationFunction {
     public static double CubicBézier    (double time, double p0, double p1, double p2, double p3) => (p0 * System.Math.Pow(1.0 - time, 3.0)) + (p1 * time * 3.0 * System.Math.Pow(1.0 - time, 2.0)) + (p2 * (1.0 - time) * 3.0 * System.Math.Pow(time, 2.0)) + (p3 * System.Math.Pow(time, 3.0));
     public static double QuadraticBézier(double time, double p0, double p1, double p2)            => (p0 * System.Math.Pow(1.0 - time, 2.0)) + (p1 * time * 2.0 * System.Math.Pow(1.0 - time, 1.0))                                                          + (p2 * System.Math.Pow(time, 2.0));
@@ -708,6 +409,20 @@ namespace PatchOdyssey {
   }
 
   public static class Extensions {
+    public static void Clear<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary) {
+      foreach (TKey key in dictionary.Keys)
+      dictionary.Remove(key);
+    }
+
+    public static bool ContainsValue(this System.Collections.ObjectModel.ReadOnlyDictionary<TKey, TValue> dictionary, TValue value) {
+      foreach (TValue dictionaryValue in dictionary.Values) {
+        if ((value as System.IEquatable<TValue>)?.Equals(dictionaryValue) ?? (object) value == (object) dictionaryValue)
+        return true;
+      }
+
+      return false;
+    }
+
     public static uint CountChildren(this UnityEngine.GameObject gameObject) {
       uint count = 0u;
 
@@ -826,6 +541,17 @@ namespace PatchOdyssey {
       UnityEngine.RectTransform? parentTransform = transform.parent?.transform as UnityEngine.RectTransform;
       transform.sizeDelta = new(width - (null != parentTransform ? parentTransform.rect.width * (transform.anchorMax.x - transform.anchorMin.x) : 0.0f), transform.sizeDelta.y);
     }
+
+    #if true || !(NET5_0 || NET5_0_OR_GREATER || NET6_0 || NET6_0_OR_GREATER || NET7_0 || NET7_0_OR_GREATER || NET8_0 || NET8_0_OR_GREATER || NET9_0 || NETCOREAPP2_0 || NETCOREAPP2_0_OR_GREATER || NETCOREAPP2_1 || NETCOREAPP2_1_OR_GREATER || NETCOREAPP2_2 || NETCOREAPP2_2_OR_GREATER || NETCOREAPP3_0 || NETCOREAPP3_0_OR_GREATER || NETCOREAPP3_1 || NETCOREAPP3_1_OR_GREATER || NETSTANDARD2_1 || NETSTANDARD2_1_OR_GREATER)
+      public static bool TryAdd<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, TKey key, TValue value) {
+        if (!dictionary.ContainsKey(key)) {
+          dictionary.Add(key, value);
+          return true;
+        }
+
+        return false;
+      }
+    #endif
   }
 
   public static class Util /* → Utilities */ {
@@ -943,6 +669,15 @@ namespace PatchOdyssey {
       return corners;
     }
 
+    public static System.Delegate DelegateConvert(System.Type typeA, System.Type typeB) {
+      System.Linq.Expressions.ParameterExpression expression = System.Linq.Expressions.Expression.Parameter(typeA);
+      return System.Linq.Expressions.Expression.Lambda(System.Linq.Expressions.Expression.Convert(expression, typeB), expression).Compile();
+    }
+
+    public static System.Predicate<T> DelegateEquals<T>(T value) where T : System.IEquatable<T> {
+      return subvalue => value.Equals(subvalue);
+    }
+
     public static string GetAssetPath() {
       return Util.NormalizeURI(UnityEngine.Application.streamingAssetsPath);
     }
@@ -967,13 +702,8 @@ namespace PatchOdyssey {
       return Util.NormalizeURI(UnityEngine.Application.persistentDataPath);
     }
 
-    public static UnityEngine.KeyCode[] GetKeyCodes() {
-      return new[] {UnityEngine.KeyCode.A, UnityEngine.KeyCode.Alpha0, UnityEngine.KeyCode.Alpha1, UnityEngine.KeyCode.Alpha2, UnityEngine.KeyCode.Alpha3, UnityEngine.KeyCode.Alpha4, UnityEngine.KeyCode.Alpha5, UnityEngine.KeyCode.Alpha6, UnityEngine.KeyCode.Alpha7, UnityEngine.KeyCode.Alpha8, UnityEngine.KeyCode.Alpha9, UnityEngine.KeyCode.AltGr, UnityEngine.KeyCode.Ampersand, UnityEngine.KeyCode.Asterisk, UnityEngine.KeyCode.At, UnityEngine.KeyCode.B, UnityEngine.KeyCode.BackQuote, UnityEngine.KeyCode.Backslash, UnityEngine.KeyCode.Backspace, UnityEngine.KeyCode.Break, UnityEngine.KeyCode.C, UnityEngine.KeyCode.CapsLock, UnityEngine.KeyCode.Caret, UnityEngine.KeyCode.Clear, UnityEngine.KeyCode.Colon, UnityEngine.KeyCode.Comma, UnityEngine.KeyCode.D, UnityEngine.KeyCode.Delete, UnityEngine.KeyCode.Dollar, UnityEngine.KeyCode.DoubleQuote, UnityEngine.KeyCode.DownArrow, UnityEngine.KeyCode.E, UnityEngine.KeyCode.End, UnityEngine.KeyCode.Equals, UnityEngine.KeyCode.Escape, UnityEngine.KeyCode.Exclaim, UnityEngine.KeyCode.F, UnityEngine.KeyCode.F1, UnityEngine.KeyCode.F10, UnityEngine.KeyCode.F11, UnityEngine.KeyCode.F12, UnityEngine.KeyCode.F13, UnityEngine.KeyCode.F14, UnityEngine.KeyCode.F15, UnityEngine.KeyCode.F2, UnityEngine.KeyCode.F3, UnityEngine.KeyCode.F4, UnityEngine.KeyCode.F5, UnityEngine.KeyCode.F6, UnityEngine.KeyCode.F7, UnityEngine.KeyCode.F8, UnityEngine.KeyCode.F9, UnityEngine.KeyCode.G, UnityEngine.KeyCode.Greater, UnityEngine.KeyCode.H, UnityEngine.KeyCode.Hash, UnityEngine.KeyCode.Help, UnityEngine.KeyCode.Home, UnityEngine.KeyCode.I, UnityEngine.KeyCode.Insert, UnityEngine.KeyCode.J, UnityEngine.KeyCode.K, UnityEngine.KeyCode.Keypad0, UnityEngine.KeyCode.Keypad1, UnityEngine.KeyCode.Keypad2, UnityEngine.KeyCode.Keypad3, UnityEngine.KeyCode.Keypad4, UnityEngine.KeyCode.Keypad5, UnityEngine.KeyCode.Keypad6, UnityEngine.KeyCode.Keypad7, UnityEngine.KeyCode.Keypad8, UnityEngine.KeyCode.Keypad9, UnityEngine.KeyCode.KeypadDivide, UnityEngine.KeyCode.KeypadEnter, UnityEngine.KeyCode.KeypadEquals, UnityEngine.KeyCode.KeypadMinus, UnityEngine.KeyCode.KeypadMultiply, UnityEngine.KeyCode.KeypadPeriod, UnityEngine.KeyCode.KeypadPlus, UnityEngine.KeyCode.L, UnityEngine.KeyCode.LeftAlt, UnityEngine.KeyCode.LeftApple, UnityEngine.KeyCode.LeftArrow, UnityEngine.KeyCode.LeftBracket, UnityEngine.KeyCode.LeftCommand, UnityEngine.KeyCode.LeftControl, UnityEngine.KeyCode.LeftCurlyBracket, UnityEngine.KeyCode.LeftMeta, UnityEngine.KeyCode.LeftParen, UnityEngine.KeyCode.LeftShift, UnityEngine.KeyCode.LeftWindows, UnityEngine.KeyCode.Less, UnityEngine.KeyCode.M, UnityEngine.KeyCode.Menu, UnityEngine.KeyCode.Minus, UnityEngine.KeyCode.N, UnityEngine.KeyCode.Numlock, UnityEngine.KeyCode.O, UnityEngine.KeyCode.P, UnityEngine.KeyCode.PageDown, UnityEngine.KeyCode.PageUp, UnityEngine.KeyCode.Pause, UnityEngine.KeyCode.Percent, UnityEngine.KeyCode.Period, UnityEngine.KeyCode.Pipe, UnityEngine.KeyCode.Plus, UnityEngine.KeyCode.Print, UnityEngine.KeyCode.Q, UnityEngine.KeyCode.Question, UnityEngine.KeyCode.Quote, UnityEngine.KeyCode.R, UnityEngine.KeyCode.Return, UnityEngine.KeyCode.RightAlt, UnityEngine.KeyCode.RightApple, UnityEngine.KeyCode.RightArrow, UnityEngine.KeyCode.RightBracket, UnityEngine.KeyCode.RightCommand, UnityEngine.KeyCode.RightControl, UnityEngine.KeyCode.RightCurlyBracket, UnityEngine.KeyCode.RightMeta, UnityEngine.KeyCode.RightParen, UnityEngine.KeyCode.RightShift, UnityEngine.KeyCode.RightWindows, UnityEngine.KeyCode.S, UnityEngine.KeyCode.ScrollLock, UnityEngine.KeyCode.Semicolon, UnityEngine.KeyCode.Slash, UnityEngine.KeyCode.Space, UnityEngine.KeyCode.SysReq, UnityEngine.KeyCode.T, UnityEngine.KeyCode.Tab, UnityEngine.KeyCode.Tilde, UnityEngine.KeyCode.U, UnityEngine.KeyCode.Underscore, UnityEngine.KeyCode.UpArrow, UnityEngine.KeyCode.V, UnityEngine.KeyCode.W, UnityEngine.KeyCode.X, UnityEngine.KeyCode.Y, UnityEngine.KeyCode.Z};
-    }
-
-    public static int[] GetMouseButtons() {
-      return new[] {0x0, 0x1, 0x2};
-    }
+    public static UnityEngine.KeyCode[] GetKeyCodes    () => new[] {UnityEngine.KeyCode.A, UnityEngine.KeyCode.Alpha0, UnityEngine.KeyCode.Alpha1, UnityEngine.KeyCode.Alpha2, UnityEngine.KeyCode.Alpha3, UnityEngine.KeyCode.Alpha4, UnityEngine.KeyCode.Alpha5, UnityEngine.KeyCode.Alpha6, UnityEngine.KeyCode.Alpha7, UnityEngine.KeyCode.Alpha8, UnityEngine.KeyCode.Alpha9, UnityEngine.KeyCode.AltGr, UnityEngine.KeyCode.Ampersand, UnityEngine.KeyCode.Asterisk, UnityEngine.KeyCode.At, UnityEngine.KeyCode.B, UnityEngine.KeyCode.BackQuote, UnityEngine.KeyCode.Backslash, UnityEngine.KeyCode.Backspace, UnityEngine.KeyCode.Break, UnityEngine.KeyCode.C, UnityEngine.KeyCode.CapsLock, UnityEngine.KeyCode.Caret, UnityEngine.KeyCode.Clear, UnityEngine.KeyCode.Colon, UnityEngine.KeyCode.Comma, UnityEngine.KeyCode.D, UnityEngine.KeyCode.Delete, UnityEngine.KeyCode.Dollar, UnityEngine.KeyCode.DoubleQuote, UnityEngine.KeyCode.DownArrow, UnityEngine.KeyCode.E, UnityEngine.KeyCode.End, UnityEngine.KeyCode.Equals, UnityEngine.KeyCode.Escape, UnityEngine.KeyCode.Exclaim, UnityEngine.KeyCode.F, UnityEngine.KeyCode.F1, UnityEngine.KeyCode.F10, UnityEngine.KeyCode.F11, UnityEngine.KeyCode.F12, UnityEngine.KeyCode.F13, UnityEngine.KeyCode.F14, UnityEngine.KeyCode.F15, UnityEngine.KeyCode.F2, UnityEngine.KeyCode.F3, UnityEngine.KeyCode.F4, UnityEngine.KeyCode.F5, UnityEngine.KeyCode.F6, UnityEngine.KeyCode.F7, UnityEngine.KeyCode.F8, UnityEngine.KeyCode.F9, UnityEngine.KeyCode.G, UnityEngine.KeyCode.Greater, UnityEngine.KeyCode.H, UnityEngine.KeyCode.Hash, UnityEngine.KeyCode.Help, UnityEngine.KeyCode.Home, UnityEngine.KeyCode.I, UnityEngine.KeyCode.Insert, UnityEngine.KeyCode.J, UnityEngine.KeyCode.K, UnityEngine.KeyCode.Keypad0, UnityEngine.KeyCode.Keypad1, UnityEngine.KeyCode.Keypad2, UnityEngine.KeyCode.Keypad3, UnityEngine.KeyCode.Keypad4, UnityEngine.KeyCode.Keypad5, UnityEngine.KeyCode.Keypad6, UnityEngine.KeyCode.Keypad7, UnityEngine.KeyCode.Keypad8, UnityEngine.KeyCode.Keypad9, UnityEngine.KeyCode.KeypadDivide, UnityEngine.KeyCode.KeypadEnter, UnityEngine.KeyCode.KeypadEquals, UnityEngine.KeyCode.KeypadMinus, UnityEngine.KeyCode.KeypadMultiply, UnityEngine.KeyCode.KeypadPeriod, UnityEngine.KeyCode.KeypadPlus, UnityEngine.KeyCode.L, UnityEngine.KeyCode.LeftAlt, UnityEngine.KeyCode.LeftApple, UnityEngine.KeyCode.LeftArrow, UnityEngine.KeyCode.LeftBracket, UnityEngine.KeyCode.LeftCommand, UnityEngine.KeyCode.LeftControl, UnityEngine.KeyCode.LeftCurlyBracket, UnityEngine.KeyCode.LeftMeta, UnityEngine.KeyCode.LeftParen, UnityEngine.KeyCode.LeftShift, UnityEngine.KeyCode.LeftWindows, UnityEngine.KeyCode.Less, UnityEngine.KeyCode.M, UnityEngine.KeyCode.Menu, UnityEngine.KeyCode.Minus, UnityEngine.KeyCode.N, UnityEngine.KeyCode.Numlock, UnityEngine.KeyCode.O, UnityEngine.KeyCode.P, UnityEngine.KeyCode.PageDown, UnityEngine.KeyCode.PageUp, UnityEngine.KeyCode.Pause, UnityEngine.KeyCode.Percent, UnityEngine.KeyCode.Period, UnityEngine.KeyCode.Pipe, UnityEngine.KeyCode.Plus, UnityEngine.KeyCode.Print, UnityEngine.KeyCode.Q, UnityEngine.KeyCode.Question, UnityEngine.KeyCode.Quote, UnityEngine.KeyCode.R, UnityEngine.KeyCode.Return, UnityEngine.KeyCode.RightAlt, UnityEngine.KeyCode.RightApple, UnityEngine.KeyCode.RightArrow, UnityEngine.KeyCode.RightBracket, UnityEngine.KeyCode.RightCommand, UnityEngine.KeyCode.RightControl, UnityEngine.KeyCode.RightCurlyBracket, UnityEngine.KeyCode.RightMeta, UnityEngine.KeyCode.RightParen, UnityEngine.KeyCode.RightShift, UnityEngine.KeyCode.RightWindows, UnityEngine.KeyCode.S, UnityEngine.KeyCode.ScrollLock, UnityEngine.KeyCode.Semicolon, UnityEngine.KeyCode.Slash, UnityEngine.KeyCode.Space, UnityEngine.KeyCode.SysReq, UnityEngine.KeyCode.T, UnityEngine.KeyCode.Tab, UnityEngine.KeyCode.Tilde, UnityEngine.KeyCode.U, UnityEngine.KeyCode.Underscore, UnityEngine.KeyCode.UpArrow, UnityEngine.KeyCode.V, UnityEngine.KeyCode.W, UnityEngine.KeyCode.X, UnityEngine.KeyCode.Y, UnityEngine.KeyCode.Z};
+    public static int                [] GetMouseButtons() => new[] {0x0, 0x1, 0x2};
 
     public static UnityEngine.Vector2    GetVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector2    axes) { return new(0.0f != axes.x ? vector.x : 0.0f, 0.0f != axes.y ? vector.y : 0.0f); }
     public static UnityEngine.Vector2Int GetVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector2Int axes) { return new   (0 != axes.x ? vector.x : 0,       0 != axes.y ? vector.y : 0); }
@@ -1426,37 +1156,94 @@ namespace PatchOdyssey {
       return null == corners ? null : Util.RectFromCorners(corners);
     }
 
-    public static T Max<T>(params T[] values) where T : System.IComparable<T> {
-      return values.Max();
+    public static void Loop(int begin, int end, System.Delegate callback, bool reversed = false) {
+      System.Reflection.ParameterInfo[]? parameters = callback?.Method.GetParameters();
+      System.Reflection.MethodInfo?      method     = callback?.GetType().GetMethod("Invoke");
+      int                                direction  = System.Math.Sign(end - begin);
+      object[]                           arguments  = new object[] {begin, System.Math.Abs(end - begin), begin, end};
+
+      // …
+      if (null == method || null == parameters) return;
+      if (reversed) { (begin, end) = (end, begin); direction = -direction; }
+
+      try { System.Array.Resize(ref arguments, parameters.Length); }
+      catch (System.Exception) { throw new System.NotSupportedException("Cannot `Loop(…)` given specified callback; Too many parameters"); }
+
+      for (int index = 0; index != parameters.Length; ++index)
+      arguments[index] = Util.DelegateConvert(arguments[index].GetType(), parameters[index].ParameterType).DynamicInvoke(arguments[index]);
+
+      for ((int index, System.Delegate Convert) = (begin, 0 != parameters.Length ? Util.DelegateConvert(typeof(int), parameters[0].ParameterType) : null); ; index += direction) {
+        if (null != Convert)
+          arguments[0] = Convert.DynamicInvoke(index);
+
+        method.Invoke(callback, arguments);
+        if (end == index) return;
+      }
     }
 
-    public static T Max<T>(this System.Collections.Generic.IEnumerable<T> enumerable) where T : System.IComparable<T> {
+    public static void Loop<T>(System.Collections.Generic.IEnumerable<T> enumerable, System.Delegate callback, bool reversed = false) {
+      System.Reflection.ParameterInfo[]?      parameters = callback?.Method.GetParameters();
+      System.Reflection.MethodInfo?           method     = callback?.GetType().GetMethod("Invoke");
+      System.Collections.Generic.List<object> loopable   = new();
+      int                                     index      = 0;
+      object[]                                arguments  = new object[] {null, index};
+
+      // …
+      if (null == method || null == parameters) return;
+      foreach (T value in enumerable) { loopable.Add(value); ++index; }
+      if      (reversed)                loopable.Reverse();
+
+      try { System.Array.Resize(ref arguments, parameters.Length); }
+      catch (System.Exception) { throw new System.NotSupportedException("Cannot `Loop(…)` given specified callback; Too many parameters"); }
+
+      loopable.Capacity = index;
+      index             = reversed ? index - 1 : 0;
+
+      foreach (object value in loopable) {
+        if (parameters.Length > 0) arguments[0] = (T) value;
+        if (parameters.Length > 1) arguments[1] = Util.DelegateConvert(typeof(int), parameters[1].ParameterType).DynamicInvoke(index);
+
+        index += reversed ? -1 : +1;
+        method.Invoke(callback, arguments);
+      }
+    }
+      public static void Loop   (int count,                                            System.Delegate                   callback, bool reversed = false) { if (0 != count) Loop(System.Math.Sign(count), count, callback, reversed); }
+      public static void Loop   (int count,                                            System.Action<int>                callback, bool reversed = false) => Loop(count,      (System.Delegate) callback, reversed);
+      public static void Loop   (int count,                                            System.Action<int, int>           callback, bool reversed = false) => Loop(count,      (System.Delegate) callback, reversed);
+      public static void Loop   (int count,                                            System.Action<int, int, int, int> callback, bool reversed = false) => Loop(count,      (System.Delegate) callback, reversed);
+      public static void Loop   (int begin, int end,                                   System.Action<int>                callback, bool reversed = false) => Loop(begin, end, (System.Delegate) callback, reversed);
+      public static void Loop   (int begin, int end,                                   System.Action<int, int>           callback, bool reversed = false) => Loop(begin, end, (System.Delegate) callback, reversed);
+      public static void Loop   (int begin, int end,                                   System.Action<int, int, int, int> callback, bool reversed = false) => Loop(begin, end, (System.Delegate) callback, reversed);
+      public static void Loop<T>(System.Collections.Generic.IEnumerable<T> enumerable, System.Action<T>                  callback, bool reversed = false) => Loop(enumerable, (System.Delegate) callback, reversed);
+      public static void Loop<T>(System.Collections.Generic.IEnumerable<T> enumerable, System.Action<T, int>             callback, bool reversed = false) => Loop(enumerable, (System.Delegate) callback, reversed);
+
+    public static T Max<T>(System.Collections.Generic.IEnumerable<T> enumerable) where T : System.IComparable<T> {
       T[] maximum = null;
 
       // …
       foreach (T value in enumerable) {
-        if (null == maximum)                 maximum    = new T[] {value};
+        if (null == maximum)                 maximum    = new[] {value};
         if (value.CompareTo(maximum[0]) > 0) maximum[0] = value;
       }
 
-      return maximum[0]; // → `System.Exception`
+      return maximum[0]; // → `System.IndexOutOfRangeException`
     }
+      public static T Max<T>(T valueA, T valueB) where T : System.IComparable<T> => valueA.CompareTo(valueB) > 0 ? valueA : valueB;
+      public static T Max<T>(params T[] values)                                  => Util.Max(values);
 
-    public static T Min<T>(params T[] values) where T : System.IComparable<T> {
-      return values.Min();
-    }
-
-    public static T Min<T>(this System.Collections.Generic.IEnumerable<T> enumerable) where T : System.IComparable<T> {
+    public static T Min<T>(System.Collections.Generic.IEnumerable<T> enumerable) where T : System.IComparable<T> {
       T[] minimum = null;
 
       // …
       foreach (T value in enumerable) {
-        if (null == minimum)                 minimum    = new T[] {value};
+        if (null == minimum)                 minimum    = new[] {value};
         if (value.CompareTo(minimum[0]) < 0) minimum[0] = value;
       }
 
-      return minimum[0]; // → `System.Exception`
+      return minimum[0]; // → `System.IndexOutOfRangeException`
     }
+      public static T Min<T>(T valueA, T valueB) where T : System.IComparable<T> => valueA.CompareTo(valueB) < 0 ? valueA : valueB;
+      public static T Min<T>(params T[] values)                                  => Util.Min(values);
 
     private static string NormalizeURI(string path) {
       path = path.TrimEnd().Replace(System.IO.Path.AltDirectorySeparatorChar, System.IO.Path.DirectorySeparatorChar);
@@ -1468,21 +1255,24 @@ namespace PatchOdyssey {
       return path;
     }
 
-    public static float Percent(float percent) {
-      return percent / 100.0f;
-    }
+    public static decimal Percent(decimal percentage) => percentage / 100.0m;
+    public static double  Percent(double  percentage) => percentage / 100.0;
+    public static float   Percent(float   percentage) => percentage / 100.0f;
 
-    public static void PreloadURI(string path) {
-      Util.LoadURI(path, null, 0.0f, false);
-    }
+    public static decimal PercentOf(decimal value, decimal percentage) => System.Math.Min(value, (decimal) percentage) * (System.Math.Max(value, (decimal) percentage) / 100.0m);
+    public static decimal PercentOf(decimal value, double  percentage) => System.Math.Min(value, (decimal) percentage) * (System.Math.Max(value, (decimal) percentage) / 100.0m);
+    public static decimal PercentOf(decimal value, float   percentage) => System.Math.Min(value, (decimal) percentage) * (System.Math.Max(value, (decimal) percentage) / 100.0m);
+    public static double  PercentOf(double  value, decimal percentage) => System.Math.Min(value, (double)  percentage) * (System.Math.Max(value, (double)  percentage) / 100.0);
+    public static double  PercentOf(double  value, double  percentage) => System.Math.Min(value, (double)  percentage) * (System.Math.Max(value, (double)  percentage) / 100.0);
+    public static double  PercentOf(double  value, float   percentage) => System.Math.Min(value, (double)  percentage) * (System.Math.Max(value, (double)  percentage) / 100.0);
+    public static float   PercentOf(float   value, decimal percentage) => System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f);
+    public static float   PercentOf(float   value, double  percentage) => System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f);
+    public static float   PercentOf(float   value, float   percentage) => System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f);
 
-    public static void PreloadURIAsAudioClip(string path, UnityEngine.AudioType? encoding = null) {
-      Util.LoadURIAsAudioClip(path, null, 0.0f, false, encoding);
-    }
-
-    public static void PreloadURIAsText(string path, System.Text.Encoding? encoding = null) {
-      Util.LoadURIAsText(path, null, 0.0f, false, encoding);
-    }
+    public static void  PreloadURI           (string path)                                         => Util.LoadURI           (path, null, Util.LoadAsynchronously, Util.LoadCached);
+    public static void  PreloadURIAsAudioClip(string path, UnityEngine.AudioType? encoding = null) => Util.LoadURIAsAudioClip(path, null, Util.LoadAsynchronously, Util.LoadCached, encoding);
+    public static void  PreloadURIAsText     (string path, System.Text.Encoding?  encoding = null) => Util.LoadURIAsText     (path, null, Util.LoadAsynchronously, Util.LoadCached, encoding);
+    public static void  PreloadURIAsTexture2D(string path)                                         => Util.LoadURIAsTexture2D(path, null, Util.LoadAsynchronously, Util.LoadCached);
 
     public static UnityEngine.Rect RectFromCorners(UnityEngine.Vector3[] corners) {
       // → Origin begins from bottom-left rather than top-left

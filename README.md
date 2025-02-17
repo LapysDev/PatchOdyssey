@@ -11,7 +11,7 @@ Clone/ download the <abbr title=repository>repo.</abbr> files into your chosen f
 Open the folder location as a Project with the [Unity Hub](https://unity.com/unity-hub).       </br>
 <br/>
 *Voila~!* Your very own look into the Patch Odyssey inner workings <br/>
-<small style="opacity: 0.75"> <sub> <i> * lasted tested on [Unity v6000.0.28f1](https://unity.com/releases/editor/whats-new/6000.0.0). </i> </sub> </small>
+<small style="opacity: 0.75"> <sub> <i> * lasted tested on [Unity v6000.0.36f1](https://unity.com/releases/editor/whats-new/6000.0.0). </i> </sub> </small>
 
 ## Download & Install &#128451;&#65039;
 No release builds at the moment. (Sorry!)

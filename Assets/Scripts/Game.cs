@@ -5,12 +5,12 @@ using PatchOdyssey;
 
 /* … */
 public class Game : UnityEngine.MonoBehaviour {
-  [ReadOnlyInInspector]  public                bool                      isLoaded          = false;
-  [ReadOnlyInInspector]  public                bool                      isPlaying         = false;
-  [ReadOnlyInInspector]  public static         Game?                     main              = null;
-  [ReadWriteInInspector] public                Player?                   player            = null;
-  [ReadWriteInInspector] public                GameObjectDictionary      prototypeData     = new();                                                                           // TODO (Lapys)
-  [ReadOnlyInInspector]  public /* readonly */ BooleanReadOnlyDictionary prototypeMetadata = new() {{"clearing:begin", false}, {"clearing:end", false}, {"mounting", false}}; // TODO (Lapys)
+  [ReadOnlyInInspector]  public                bool                 isLoaded          = false;
+  [ReadOnlyInInspector]  public                bool                 isPlaying         = false;
+  [ReadOnlyInInspector]  public static         Game?                main              = null;
+  [ReadWriteInInspector] public                Player?              player            = null;
+  [ReadWriteInInspector] public                GameObjectDictionary prototypeData     = new();                                                                           // TODO (Lapys)
+  [ReadOnlyInInspector]  public /* readonly */ BooleanDictionary    prototypeMetadata = new() {{"clearing:begin", false}, {"clearing:end", false}, {"mounting", false}}; // TODO (Lapys)
 
   /* … */
   private void Awake() {
@@ -35,6 +35,7 @@ public class Game : UnityEngine.MonoBehaviour {
 
   private Chunk LoadChunk(Chunk chunk) {
     /* TODO (Lapys) */
+    /* [0]: "Play" button should say "Explore" instead */
     /* [1]: Load prefab `UnityEngine.GameObject` called `chunk` */
     /* [2]: Clone/ instantiate prefab as existing `UnityEngine.GameObject` within the current `UnityEngine.SceneManagement.Scene` scenes */
     /* [3]: Find "ground" `UnityEngine.GameObject` child component */
@@ -70,6 +71,8 @@ public class Game : UnityEngine.MonoBehaviour {
       /*  [5]: Introduce interaction */
       /*  [6]: Introduce wild monster */
       /*  [7]: Tame wild monster — other re-introduce another wild monster */
+      /*  [7B]: Bait Items, Environment Re-scaping, Lasoo, Pheromones, Tranquilizers, Trapping (Box or Net) */
+      /*  [7C]: Nickname, Gameplay Personality */
       /*  [8]: Use pet monster */
       /*  [9]: Battle enemy explorer (one with and one without pet monster) */
       /* [10]: Prototype ended */
