@@ -107,14 +107,14 @@ public class Game : UnityEngine.MonoBehaviour {
       // TODO (Lapys)
       playerBounds.Expand(boundsErrorMargin);
 
-      if (System.Array.Exists(Util.ArrayFrom(this.prototypeData?["clearing"]?.FindLineageByComponent<UnityEngine.Collider>()), collider => collider.bounds.Intersects(playerBounds)))
+      if (System.Array.Exists(Util.ArrayFrom(this.prototypeData?["clearing"]?.FindHierarchyByComponent<UnityEngine.Collider>()), collider => collider.bounds.Intersects(playerBounds)))
         this.prototypeMetadata["clearing:begin"] = true;
 
       else if (this.prototypeMetadata["clearing:begin"]) {
         this.prototypeMetadata["clearing:end"] = true;
         this.prototypeMetadata["mounting"]     = (
-          System.Array.Exists(Util.ArrayFrom(this.prototypeData?["mounting#0"]?.FindLineageByComponent<UnityEngine.Collider>()), collider => collider.bounds.Intersects(playerBounds)) ||
-          System.Array.Exists(Util.ArrayFrom(this.prototypeData?["mounting#1"]?.FindLineageByComponent<UnityEngine.Collider>()), collider => collider.bounds.Intersects(playerBounds))
+          System.Array.Exists(Util.ArrayFrom(this.prototypeData?["mounting#0"]?.FindHierarchyByComponent<UnityEngine.Collider>()), collider => collider.bounds.Intersects(playerBounds)) ||
+          System.Array.Exists(Util.ArrayFrom(this.prototypeData?["mounting#1"]?.FindHierarchyByComponent<UnityEngine.Collider>()), collider => collider.bounds.Intersects(playerBounds))
         );
       }
 

@@ -118,12 +118,12 @@ public class UI : UnityEngine.MonoBehaviour {
 
     this.immediateText.SetActive(false);
 
-    foreach (UnityEngine.UI.RawImage image in this.immediateText.FindLineageByComponent<UnityEngine.UI.RawImage>()) {
+    foreach (UnityEngine.UI.RawImage image in this.immediateText.FindHierarchyByComponent<UnityEngine.UI.RawImage>()) {
       image.CrossFadeAlpha(0.0f, duration, true);
       image.color = Util.IIFE<UnityEngine.Color>(color => color.a = 0.0f)(image.color);
     }
 
-    foreach (TMPro.TextMeshProUGUI textMesh in this.immediateText.FindLineageByComponent<TMPro.TextMeshProUGUI>()) {
+    foreach (TMPro.TextMeshProUGUI textMesh in this.immediateText.FindHierarchyByComponent<TMPro.TextMeshProUGUI>()) {
       textMesh.alpha = 0.0f;
       textMesh.text  = "";
     }
@@ -545,18 +545,19 @@ public class UI : UnityEngine.MonoBehaviour {
 
     this.immediateText.SetActive(true);
 
-    foreach (UnityEngine.UI.RawImage image in this.immediateText.FindLineageByComponent<UnityEngine.UI.RawImage>()) {
+    foreach (UnityEngine.UI.RawImage image in this.immediateText.FindHierarchyByComponent<UnityEngine.UI.RawImage>()) {
       image.CrossFadeAlpha(IMMEDIATE_TEXT_BACKGROUND_TRANSPARENCY, duration, true);
       image.color = Util.IIFE<UnityEngine.Color>(color => color.a = IMMEDIATE_TEXT_BACKGROUND_TRANSPARENCY)(image.color);
     }
 
-    foreach (TMPro.TextMeshProUGUI textMesh in this.immediateText.FindLineageByComponent<TMPro.TextMeshProUGUI>()) {
+    foreach (TMPro.TextMeshProUGUI textMesh in this.immediateText.FindHierarchyByComponent<TMPro.TextMeshProUGUI>()) {
       textMesh.alpha = 1.0f;
       textMesh.text  = text;
     }
   }
 
   private void Start() {
+    return; // TODO (Lapys)
     UnityEngine.RectTransform? splashTransform = this.components["splash"]?.transform as UnityEngine.RectTransform;
 
     // …
@@ -672,6 +673,7 @@ public class UI : UnityEngine.MonoBehaviour {
   }
 
   private void Update() {
+    return; // TODO (Lapys)
     (T, UnityEngine.Vector3 eulerAngles, UnityEngine.Vector3 localScale) teeterAnimationStart = (default(T), UnityEngine.Vector3.zero, UnityEngine.Vector3.one);
     System.Collections.Generic.List<UnityEngine.GameObject>              uiAnimatable         = new((int) this.gameObject.CountDescendants());
     System.Action<UnityEngine.AudioSource>                               uiAsSoundEffect      = uiAudio => { if (null != uiAudio) uiAudio.spatialBlend = 0.0f; };

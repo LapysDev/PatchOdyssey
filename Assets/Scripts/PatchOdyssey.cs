@@ -1,81 +1,106 @@
 #nullable enable annotations
 
 namespace PatchOdyssey /* → Class types */ {
-  private class AnimationKeyframe {
+  public class AnimationKeyframe {
     public              System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>? begin      =  null;
-    public     readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>  end        =  new(new System.Collections.Generic.Dictionary<string, object?>());
+    public ref readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>  end        => ref this.properties;
     public     readonly string                                                              name       =  null;
-    public ref readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>  properties => ref this.end;
+    public     readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>  properties =  new(new System.Collections.Generic.Dictionary<string, object?>());
     public     readonly double                                                              timestamp  =  0.0;
 
     /* … */
-    public AnimationKeyframe(string name, System.Collections.Generic.IDictionary<string, object?> properties) {
-      this.name      = name;
-      this.timestamp = UnityEngine.Time.realtimeSinceStartupAsDouble;
-
-      if (null == properties)
-      return;
-
-      this.properties = new(new System.Collections.Generic.Dictionary<string, object?>(properties));
+    public AnimationKeyframe(string name, double time, System.Collections.Generic.IDictionary<string, object?> properties) {
+      this.name       = name;
+      this.properties = null != properties ? new(new System.Collections.Generic.Dictionary<string, object?>(properties)) : this.properties;
+      this.timestamp  = time;
     }
 
-    public AnimationKeyframe(string name, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) {
-      (System.Collections.Generic.Dictionary<string, object?> begin, System.Collections.Generic.Dictionary<string, object?> end) properties = (new(begin?.Keys.Count ?? 0), new(end?.Keys.Count ?? 0));
-
-      // …
+    public AnimationKeyframe(string name, double time, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) {
       this.name      = name;
-      this.timestamp = UnityEngine.Time.realtimeSinceStartupAsDouble;
+      this.timestamp = time;
 
-      if (null == begin || null == end)
-      return;
+      if (null != begin && null != end) {
+        (System.Collections.Generic.Dictionary<string, object?> begin, System.Collections.Generic.Dictionary<string, object?> end) properties = (new(begin?.Keys.Count ?? 0), new(end?.Keys.Count ?? 0));
 
-      foreach (string property in begin.Keys) {
-        if (end.ContainsKey(property))
-        properties.begin.Add(property, begin[property]);
+        // …
+        foreach (string property in begin.Keys) { if (end  .ContainsKey(property)) properties.begin.Add(property, begin[property]); }
+        foreach (string property in end  .Keys) { if (begin.ContainsKey(property)) properties.end  .Add(property, end  [property]); }
+
+        this.begin      = new(properties.begin);
+        this.properties = new(properties.end); // → `this.end = …`
       }
-
-      foreach (string proeprty in end.Keys) {
-        if (begin.ContainsKey(property))
-        properties.end.Add(property, end[property]);
-      }
-
-      properties.begin.Capacity = properties.begin.Count;
-      properties.end  .Capacity = properties.end  .Count;
-      this.begin                = properties.begin;
-      this.end                  = properties.end;
     }
   }
 
-  public class AnimationSequence : AnimationKeyframe {
-    /* … */
-    public  double                                                          delay        = 0.0;
-    public  double                                                          duration     = 0.0;
-    public  System.Func                    <double, double>                 easing       = PatchOdyssey.AnimationFunction.Linear;
-    public  System.Func                    <double, object, object>         interpolator = PatchOdyssey.AnimationFunction.Linear;
-    private System.Collections.Generic.List<PatchOdyssey.AnimationKeyframe> keyframes;
+  public class AnimationSequence : PatchOdyssey.AnimationKeyframe, System.Collections.IEnumerable {
+    public           double                                                              delay        = 0.0;
+    public           double                                                              duration     = 0.0;
+    public           System.Func                    <double, double>?                    easing       = PatchOdyssey.AnimationFunction.Linear;
+    public           System.Func                    <double, object?, object?, object?>? interpolator = PatchOdyssey.AnimationSequence.Interpolate;
+    private readonly System.Collections.Generic.List<PatchOdyssey.AnimationKeyframe>     keyframes    = new();
+    private new      double                                                              timestamp    =  0.0;
 
     /* … */
-    public AnimationSequence(string name, double duration,               System.Func<double, double> easing, System.Func<double, object, object> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   easing, begin, end)                                                                                                                         {}
-    public AnimationSequence(string name, double duration,               System.Func<double, double> easing, System.Func<double, object, object> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   easing, begin, end)                                                                                                                         {}
-    public AnimationSequence(string name, double duration, double delay, System.Func<double, double> easing, System.Func<double, object, object> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, delay, easing, begin as System.Collections.Generic.IDictionary<string, object?>, end as System.Collections.Generic.IDictionary<string, object?>) {}
-    public AnimationSequence(string name, double duration, double delay, System.Func<double, double> easing, System.Func<double, object, object> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : base(name, begin ?? new System.Collections.Generic.Dictionary<string, object?>(0), end) {
+    public AnimationSequence             (double duration,                                                                                                                System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   null,   null,         begin, end)                                                                                                                       {}
+    public AnimationSequence             (double duration,                                                                                                                System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   null,   null,         begin, end)                                                                                                                       {}
+    public AnimationSequence             (double duration, double delay,                                                                                                  System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   null,   null,         begin, end)                                                                                                                       {}
+    public AnimationSequence             (double duration, double delay,                                                                                                  System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   null,   null,         begin, end)                                                                                                                       {}
+    public AnimationSequence             (double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   easing, null,         begin, end)                                                                                                                       {}
+    public AnimationSequence             (double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   easing, null,         begin, end)                                                                                                                       {}
+    public AnimationSequence             (double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, delay, easing, null,         begin, end)                                                                                                                       {}
+    public AnimationSequence             (double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, delay, easing, null,         begin, end)                                                                                                                       {}
+    public AnimationSequence             (double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   null,   interpolator, begin, end)                                                                                                                       {}
+    public AnimationSequence             (double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   null,   interpolator, begin, end)                                                                                                                       {}
+    public AnimationSequence             (double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, delay, null,   interpolator, begin, end)                                                                                                                       {}
+    public AnimationSequence             (double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, delay, null,   interpolator, begin, end)                                                                                                                       {}
+    public AnimationSequence             (double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   easing, interpolator, begin, end)                                                                                                                       {}
+    public AnimationSequence             (double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   easing, interpolator, begin, end)                                                                                                                       {}
+    public AnimationSequence             (double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, delay, easing, interpolator, begin, end)                                                                                                                       {}
+    public AnimationSequence             (double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, delay, easing, interpolator, begin, end)                                                                                                                       {}
+    public AnimationSequence(string name, double duration,                                                                                                                System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   null,   null,         begin, end)                                                                                                                       {}
+    public AnimationSequence(string name, double duration,                                                                                                                System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   null,   null,         begin, end)                                                                                                                       {}
+    public AnimationSequence(string name, double duration, double delay,                                                                                                  System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   null,   null,         begin, end)                                                                                                                       {}
+    public AnimationSequence(string name, double duration, double delay,                                                                                                  System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   null,   null,         begin, end)                                                                                                                       {}
+    public AnimationSequence(string name, double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   easing, null,         begin, end)                                                                                                                       {}
+    public AnimationSequence(string name, double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   easing, null,         begin, end)                                                                                                                       {}
+    public AnimationSequence(string name, double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, delay, easing, null,         begin, end)                                                                                                                       {}
+    public AnimationSequence(string name, double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, delay, easing, null,         begin, end)                                                                                                                       {}
+    public AnimationSequence(string name, double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   null,   interpolator, begin, end)                                                                                                                       {}
+    public AnimationSequence(string name, double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   null,   interpolator, begin, end)                                                                                                                       {}
+    public AnimationSequence(string name, double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, delay, null,   interpolator, begin, end)                                                                                                                       {}
+    public AnimationSequence(string name, double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, delay, null,   interpolator, begin, end)                                                                                                                       {}
+    public AnimationSequence(string name, double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   easing, interpolator, begin, end)                                                                                                                       {}
+    public AnimationSequence(string name, double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   easing, interpolator, begin, end)                                                                                                                       {}
+    public AnimationSequence(string name, double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, delay, easing, interpolator, begin as System.Collections.Generic.IDictionary<string, object?>, end as System.Collections.Generic.IDictionary<string, object?>) {}
+    public AnimationSequence(string name, double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : base(name, UnityEngine.Time.realtimeSinceStartupAsDouble, begin ?? new System.Collections.Generic.Dictionary<string, object?>(0), end) {
       this.delay        = delay;
       this.duration     = duration;
       this.easing       = easing;
       this.interpolator = interpolator;
+      this.timestamp    = base.timestamp;
     }
 
     /* … */
-    public void Add(double progress, System.Collections.Generic.IDictionary<string, object?> properties) {
-      new AnimationSequence(5.0, AnimationFunction.Linear, null, new() {"color", new(255, 0, 255)}, new() {"color", new(255, 255, 255)}) {
-        {null, Util.Percent(30.0), {"color", new(255, 127, 255)}},
-        {"renamed", {}}
+    public void Add                 (double progress, System.Collections.Generic.Dictionary <string, object?> properties) => this.Add($"#{this.keyframes.Count + 1}", progress, properties);
+    public void Add                 (double progress, System.Collections.Generic.IDictionary<string, object?> properties) => this.Add($"#{this.keyframes.Count + 1}", progress, properties);
+    public void Add(string keyframe, double progress, System.Collections.Generic.Dictionary <string, object?> properties) => this.Add(keyframe, progress, properties as System.Collections.Generic.IDictionary<string, object?>);
+    public void Add(string keyframe, double progress, System.Collections.Generic.IDictionary<string, object?> properties) {
+      // → Intended for initializer lists
+      if (this.keyframes.Exists(frame => frame.timestamp == progress || (null != keyframe && frame.name == keyframe)))
+      return;
+
+      for (int index = 0; index != this.keyframes.Count; ++index)
+      if (progress < this.keyframes[index].timestamp) {
+        this.keyframes.Insert(index, new(keyframe, progress, properties));
+        return; // → Ensure frames are sorted in ascending order
       }
+
+      this.keyframes.Add(new(keyframe, progress, properties));
     }
 
-    public void Remove(double progress) {}
-    public void Remove(string keyframe) {}
-    public void Remove(double begin, double end) {}
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
+      return null;
+    }
 
     private static object Interpolate(double progress, object? a, object? b) {
       System.Type? type = a?.GetType();
@@ -95,7 +120,7 @@ namespace PatchOdyssey /* → Class types */ {
       if (type == typeof(byte))    return (byte)    ((double) ((byte)    b - (byte)    a) * progress);
       if (type == typeof(sbyte))   return (sbyte)   ((double) ((sbyte)   b - (sbyte)   a) * progress);
 
-      // …
+      // … → Interpolate between eligible class types e.g. `UnityEngine.Color`, `UnityEngine.Vector3`, …
       System.Reflection.MethodInfo? subtractionOverload    = type?.GetMethod("op_Subtraction", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static, null, new[] {type, type}, null);
       System.Type                   progressType           = progress.GetType();
       System.Reflection.MethodInfo? multiplicationOverload = System.Array.Find(type?.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static), method => {
@@ -113,11 +138,29 @@ namespace PatchOdyssey /* → Class types */ {
       return multiplicationOverload?.Invoke(null, new[] {subtractionOverload?.Invoke(null, new[] {b, a}), System.Convert.ChangeType(progress, progressType)});
     }
 
-    public void Reset() => this.timestamp = UnityEngine.Time.realtimeSinceStartupAsDouble;
+    public void Reset() {
+      this.timestamp = UnityEngine.Time.realtimeSinceStartupAsDouble;
+    }
 
     public object? this[string property] { get {
-      double elapsed = UnityEngine.Time.realtimeSinceStartupAsDouble - this.timestamp;
-      return (this.interpolator ?? PatchOdyssey.AnimationSequence.Interpolate)(this.delay <= elapsed ? 0.0 : this.duration <= elapsed - this.delay ? 1.0 : (this.easing ?? PatchOdyssey.AnimationFunction.Linear)((elapsed - this.delay) / this.duration), this.begin[property], this.end[property]);
+      if (this.properties.ContainsKey(property)) {
+        System.Collections.ObjectModel.ReadOnlyDictionary<string, object?> begin    = this.begin;
+        double                                                             elapsed  = UnityEngine.Time.realtimeSinceStartupAsDouble - this.timestamp;
+        System.Collections.ObjectModel.ReadOnlyDictionary<string, object?> end      = this.end;
+        double                                                             progress = (elapsed - this.delay) / this.duration;
+
+        // …
+        foreach (PatchOdyssey.AnimationKeyframe frame in this.keyframes)
+        if (frame.properties.ContainsKey(property)) {
+          if (frame.timestamp <= progress) begin = frame.properties;
+          if (frame.timestamp >= progress) end   = frame.properties;
+        }
+
+        if (begin.ContainsKey(property) && end.ContainsKey(property))
+        return (this.interpolator ?? PatchOdyssey.AnimationSequence.Interpolate)(this.delay <= elapsed ? 0.0 : this.duration <= elapsed - this.delay ? 1.0 : (this.easing ?? PatchOdyssey.AnimationFunction.Linear)((elapsed - this.delay) / this.duration), begin[property], end[property]);
+      }
+
+      return null;
     } }
   }
 
@@ -128,40 +171,42 @@ namespace PatchOdyssey /* → Class types */ {
 
   [System.Serializable]
   public class SerializedDictionary<TKey, TValue> : System.Collections.Generic.Dictionary<TKey, TValue> {
-    public SerializedDictionary()                                                                                                                                                                            : base()                     => this.Ensure();
-    public SerializedDictionary(int                                                                                                 capacity)                                                                : base(capacity)             => this.Ensure();
-    public SerializedDictionary(System.Collections.Generic.IEqualityComparer<TKey>                                                  comparer)                                                                : base(comparer)             => this.Ensure();
-    public SerializedDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary)                                                              : base(dictionary)           => this.Ensure();
-    public SerializedDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable)                                                              : base(enumerable)           => this.Ensure();
-    public SerializedDictionary(int                                                                                                 capacity,   System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(capacity,   comparer) => this.Ensure();
-    public SerializedDictionary(System.Collections.Generic.IDictionary<TKey, TValue>                                                dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(dictionary, comparer) => this.Ensure();
-    public SerializedDictionary(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>       enumerable, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(enumerable, comparer) => this.Ensure();
+    public SerializedDictionary()                                                                                                                                                                            : base()                     { this.Ensure(); }
+    public SerializedDictionary(int                                                                                                 capacity)                                                                : base(capacity)             { this.Ensure(); }
+    public SerializedDictionary(System.Collections.Generic.IEqualityComparer<TKey>                                                  comparer)                                                                : base(comparer)             { this.Ensure(); }
+    public SerializedDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary)                                                              : base(dictionary)           { this.Ensure(); }
+    public SerializedDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable)                                                              : base(enumerable)           { this.Ensure(); }
+    public SerializedDictionary(int                                                                                                 capacity,   System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(capacity,   comparer) { this.Ensure(); }
+    public SerializedDictionary(System.Collections.Generic.IDictionary<TKey, TValue>                                                dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(dictionary, comparer) { this.Ensure(); }
+    public SerializedDictionary(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>       enumerable, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(enumerable, comparer) { this.Ensure(); }
 
     /* … */
-    public static System.Func<UnityEngine.Rect, object, object> DelegateGUIField<T>() => (System.Func<UnityEngine.Rect, object, object>) Util.Switch(typeof(T), new() {
-      {typeof(bool),                       (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Toggle         (position,                              (System.Boolean)             value) as object)},
-      {typeof(double),                     (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.DoubleField    (position,                              (System.Double)              value) as object)},
-      {typeof(float),                      (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.FloatField     (position,                              (System.Single)              value) as object)},
-      {typeof(int),                        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.IntField       (position,                              (System.Int32)               value) as object)},
-      {typeof(long),                       (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.LongField      (position,                              (System.Int64)               value) as object)},
-      {typeof(string),                     (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.TextField      (position,                              (System.String)              value) as object)},
-      {typeof(UnityEngine.AnimationCurve), (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.CurveField     (position,                              (UnityEngine.AnimationCurve) value) as object)},
-      {typeof(UnityEngine.Bounds),         (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.BoundsField    (position,                              (UnityEngine.Bounds)         value) as object)},
-      {typeof(UnityEngine.BoundsInt),      (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.BoundsIntField (position,                              (UnityEngine.BoundsInt)      value) as object)},
-      {typeof(UnityEngine.Color),          (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.ColorField     (position,                              (UnityEngine.Color)          value) as object)},
-      {typeof(UnityEngine.Gradient),       (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.GradientField  (position,                              (UnityEngine.Gradient)       value) as object)},
-      {typeof(UnityEngine.Rect),           (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.RectField      (position,                              (UnityEngine.Rect)           value) as object)},
-      {typeof(UnityEngine.RectInt),        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.RectIntField   (position,                              (UnityEngine.RectInt)        value) as object)},
-      {typeof(UnityEngine.Vector2),        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector2Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector2)        value) as object)},
-      {typeof(UnityEngine.Vector2Int),     (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector2IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector2Int)     value) as object)},
-      {typeof(UnityEngine.Vector3),        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector3Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector3)        value) as object)},
-      {typeof(UnityEngine.Vector3Int),     (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector3IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector3Int)     value) as object)},
-      {typeof(UnityEngine.Vector4),        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector4Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector4)        value) as object)}
-    }) ?? (
-      typeof(T).IsEnum                                       ? static (position, value) => UnityEditor.EditorGUI.EnumPopup  (position, (System.Enum)        value)                  as object :
-      typeof(UnityEngine.Object).IsAssignableFrom(typeof(T)) ?        (position, value) => UnityEditor.EditorGUI.ObjectField(position, (UnityEngine.Object) value, typeof(T), true) as object :
-      null
-    );
+    public static System.Func<UnityEngine.Rect, object, object> DelegateGUIField<T>() {
+      return (System.Func<UnityEngine.Rect, object, object>) Util.Switch(typeof(T), new() {
+        {typeof(bool),                       (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Toggle         (position,                              (System.Boolean)             value) as object)},
+        {typeof(double),                     (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.DoubleField    (position,                              (System.Double)              value) as object)},
+        {typeof(float),                      (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.FloatField     (position,                              (System.Single)              value) as object)},
+        {typeof(int),                        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.IntField       (position,                              (System.Int32)               value) as object)},
+        {typeof(long),                       (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.LongField      (position,                              (System.Int64)               value) as object)},
+        {typeof(string),                     (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.TextField      (position,                              (System.String)              value) as object)},
+        {typeof(UnityEngine.AnimationCurve), (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.CurveField     (position,                              (UnityEngine.AnimationCurve) value) as object)},
+        {typeof(UnityEngine.Bounds),         (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.BoundsField    (position,                              (UnityEngine.Bounds)         value) as object)},
+        {typeof(UnityEngine.BoundsInt),      (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.BoundsIntField (position,                              (UnityEngine.BoundsInt)      value) as object)},
+        {typeof(UnityEngine.Color),          (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.ColorField     (position,                              (UnityEngine.Color)          value) as object)},
+        {typeof(UnityEngine.Gradient),       (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.GradientField  (position,                              (UnityEngine.Gradient)       value) as object)},
+        {typeof(UnityEngine.Rect),           (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.RectField      (position,                              (UnityEngine.Rect)           value) as object)},
+        {typeof(UnityEngine.RectInt),        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.RectIntField   (position,                              (UnityEngine.RectInt)        value) as object)},
+        {typeof(UnityEngine.Vector2),        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector2Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector2)        value) as object)},
+        {typeof(UnityEngine.Vector2Int),     (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector2IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector2Int)     value) as object)},
+        {typeof(UnityEngine.Vector3),        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector3Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector3)        value) as object)},
+        {typeof(UnityEngine.Vector3Int),     (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector3IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector3Int)     value) as object)},
+        {typeof(UnityEngine.Vector4),        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector4Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector4)        value) as object)}
+      }) ?? (
+        typeof(T).IsEnum                                       ? static (position, value) => UnityEditor.EditorGUI.EnumPopup  (position, (System.Enum)        value)                  as object :
+        typeof(UnityEngine.Object).IsAssignableFrom(typeof(T)) ? static (position, value) => UnityEditor.EditorGUI.ObjectField(position, (UnityEngine.Object) value, typeof(T), true) as object :
+        null
+      );
+    }
 
     public void Ensure() {
       if (null == PatchOdyssey.SerializedDictionary<TKey, TValue>.DelegateGUIField<TKey>  ()) throw new System.NotSupportedException($"[{UnityEngine.Application.productName}]: Type `{typeof(TKey)}` is not supported for `System.*.IDictionary` object");
@@ -197,20 +242,19 @@ namespace PatchOdyssey /* → Class types */ {
     #pragma warning restore CS0108
 
     /* … */
-    public SerializedReadOnlyDictionary(int                                                                                                 capacity)                                                                : base(new System.Collections.Generic.Dictionary<TKey, TValue>(capacity))             => this.Capacity = capacity;
+    public SerializedReadOnlyDictionary(int                                                                                                 capacity)                                                                : base(new System.Collections.Generic.Dictionary<TKey, TValue>(capacity))             { this.Capacity = capacity; }
     public SerializedReadOnlyDictionary(System.Collections.Generic.IEqualityComparer<TKey>                                                  comparer)                                                                : base(new System.Collections.Generic.Dictionary<TKey, TValue>(comparer))             {}
     public SerializedReadOnlyDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary)                                                              : base(dictionary)                                                                    {}
     public SerializedReadOnlyDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable)                                                              : base(new System.Collections.Generic.Dictionary<TKey, TValue>(enumerable))           {}
-    public SerializedReadOnlyDictionary(int                                                                                                 capacity,   System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(new System.Collections.Generic.Dictionary<TKey, TValue>(capacity,   comparer)) => this.Capacity = capacity;
+    public SerializedReadOnlyDictionary(int                                                                                                 capacity,   System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(new System.Collections.Generic.Dictionary<TKey, TValue>(capacity,   comparer)) { this.Capacity = capacity; }
     public SerializedReadOnlyDictionary(System.Collections.Generic.IDictionary<TKey, TValue>                                                dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(new System.Collections.Generic.Dictionary<TKey, TValue>(dictionary, comparer)) {}
     public SerializedReadOnlyDictionary(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>       enumerable, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(new System.Collections.Generic.Dictionary<TKey, TValue>(enumerable, comparer)) {}
 
     /* … */
     public void Add(TKey key, TValue value) {
-      if (this.Capacity <= this.Count)
-        throw new System.NotSupportedException("Can not add item to `SerializedReadOnlyDictionary`");
-
-      this.Dictionary.Add(key, value);
+      // → Intended for initializer lists only
+      if (this.Capacity > this.Count) this.Dictionary.Add(key, value);
+      else throw new System.NotSupportedException("Can not add item to `SerializedReadOnlyDictionary`");
     }
   }
     [System.Serializable] public class AnimationCurveReadOnlyDictionary : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.AnimationCurve> { public AnimationCurveReadOnlyDictionary(int capacity) : base(capacity) {} public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary) : base(dictionary) {} public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.AnimationCurve>> enumerable) : base(enumerable) {} public AnimationCurveReadOnlyDictionary(int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.AnimationCurve>> enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
@@ -368,53 +412,63 @@ namespace PatchOdyssey /* → Class types */ {
 
 namespace PatchOdyssey /* → …everything else */ {
   public static class AnimationFunction {
-    public static double CubicBézier    (double time, double p0, double p1, double p2, double p3) => (p0 * System.Math.Pow(1.0 - time, 3.0)) + (p1 * time * 3.0 * System.Math.Pow(1.0 - time, 2.0)) + (p2 * (1.0 - time) * 3.0 * System.Math.Pow(time, 2.0)) + (p3 * System.Math.Pow(time, 3.0));
-    public static double QuadraticBézier(double time, double p0, double p1, double p2)            => (p0 * System.Math.Pow(1.0 - time, 2.0)) + (p1 * time * 2.0 * System.Math.Pow(1.0 - time, 1.0))                                                          + (p2 * System.Math.Pow(time, 2.0));
+    public static double CubicBézier    (double time, double p0, double p1, double p2, double p3) { return (p0 * System.Math.Pow(1.0 - time, 3.0)) + (p1 * time * 3.0 * System.Math.Pow(1.0 - time, 2.0)) + (p2 * (1.0 - time) * 3.0 * System.Math.Pow(time, 2.0)) + (p3 * System.Math.Pow(time, 3.0)); }
+    public static double QuadraticBézier(double time, double p0, double p1, double p2)            { return (p0 * System.Math.Pow(1.0 - time, 2.0)) + (p1 * time * 2.0 * System.Math.Pow(1.0 - time, 1.0))                                                          + (p2 * System.Math.Pow(time, 2.0)); }
 
-    public static double Ease                (double time) => PatchOdyssey.AnimationFunction.CubicBézier(time, 0.25, 0.10, 0.25, 1.00);
-    public static double EaseIn              (double time) => PatchOdyssey.AnimationFunction.CubicBézier(time, 0.42, 0.00, 1.00, 1.00);
-    public static double EaseInBack          (double time) => (System.Math.Pow(time, 3.0) * 2.70158) - (System.Math.Pow(time, 2.0) * 1.70158);
-    public static double EaseInBounce        (double time) => 1.0 - PatchOdyssey.AnimationFunction.EaseOutBounce(1.0 - time);
-    public static double EaseInCircular      (double time) => 1.0 - System.Math.Sqrt(1.0 - System.Math.Pow(time, 2.0));
-    public static double EaseInCubic         (double time) => System.Math.Pow(time, 3.0);
-    public static double EaseInElastic       (double time) => time != 0.0 && time != 1.0 ? -System.Math.Pow(2.0, (time * 10.0) - 10.0) * System.Math.Sin(((time * 10.0) - 10.75) * ((System.Math.PI * 2.0) / 3.0)) : time;
-    public static double EaseInExponential   (double time) => time != 0.0 ? System.Math.Pow(2.0, (time * 10.0) - 10.0) : 0.0;
-    public static double EaseInOut           (double time) => PatchOdyssey.AnimationFunction.CubicBézier(time, 0.42, 0.00, 0.58, 1.00);
-    public static double EaseInOutBack       (double time) => (time < 0.5 ? System.Math.Pow(time * 2.0, 2.0) * ((7.189819f * time) - 2.5949095) : ((System.Math.Pow((time * 2.0) - 2.0, 2.0) * ((((time * 2.0) - 2.0) * 3.5949095) + 2.5949095)) + 2.0)) / 2.0;
-    public static double EaseInOutBounce     (double time) => (time < 0.5 ? (1.0 - PatchOdyssey.AnimationFunction.EaseOutBounce(1.0 - (time * 2.0))) : (1.0 + PatchOdyssey.AnimationFunction.EaseOutBounce((time * 2.0) - 1.0))) / 2.0;
-    public static double EaseInOutCircular   (double time) => (time < 0.5 ? (1.0 - System.Math.Sqrt(1.0 - System.Math.Pow(time * 2.0, 2.0))) : (1.0 + System.Math.Sqrt(1.0 - System.Math.Pow((time * -2.0) + 2.0, 2.0)))) / 2.0;
-    public static double EaseInOutCubic      (double time) => time < 0.5 ? 4.0 * System.Math.Pow(time, 3.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 3.0) / 2.0));
-    public static double EaseInOutElastic    (double time) => time != 0.0 && time != 1.0 ? time < 0.5 ? -(System.Math.Pow(2.0, (time * 20.0) - 10.0) * System.Math.Sin(((time * 20.0) - 11.125) * ((System.Math.PI * 2.0) / 4.5))) / 2.0 : ((System.Math.Pow(2.0, (time * -20.0) + 10.0) * System.Math.Sin(((time * 20.0) - 11.125) * ((System.Math.PI * 2.0) / 4.5))) / 2.0 + 1.0) : time;
-    public static double EaseInOutExponential(double time) => time != 0.0 && time != 1.0 ? (time < 0.5 ? System.Math.Pow(2.0, (time * 20.0) - 10.0) : (2.0 - System.Math.Pow(2.0, (time * -20.0) + 10.0))) / 2.0 : time;
-    public static double EaseInOutQuadratic  (double time) => time < 0.5 ?  2.0 * System.Math.Pow(time, 2.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 2.0) / 2.0));
-    public static double EaseInOutQuartic    (double time) => time < 0.5 ?  8.0 * System.Math.Pow(time, 4.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 4.0) / 2.0));
-    public static double EaseInOutQuintic    (double time) => time < 0.5 ? 16.0 * System.Math.Pow(time, 5.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 5.0) / 2.0));
-    public static double EaseInOutSine       (double time) => -(System.Math.Cos(System.Math.PI * time) - 1.0) / 2.0;
-    public static double EaseInQuadratic     (double time) => System.Math.Pow(time, 2.0);
-    public static double EaseInQuartic       (double time) => System.Math.Pow(time, 4.0);
-    public static double EaseInQuintic       (double time) => System.Math.Pow(time, 5.0);
-    public static double EaseInSine          (double time) => 1.0 - System.Math.Cos((System.Math.PI * time) / 2.0);
-    public static double EaseOut             (double time) => PatchOdyssey.AnimationFunction.CubicBézier(time, 0.00, 0.00, 0.58, 1.00);
-    public static double EaseOutBack         (double time) => 1.0 + (2.70158 * System.Math.Pow(time - 1.0, 3.0)) + (System.Math.Pow(time - 1.0, 2.0) * 1.70158);
-    public static double EaseOutBounce       (double time) => time < 1.0 / 2.75 ? System.Math.Pow(time, 2.0) * 7.5625 : time < 2.0 / 2.75 ? (System.Math.Pow(time - (1.5 / 2.75), 2.0) * 7.5625) + 0.75 : time < 2.5 / 2.75 ? (System.Math.Pow(time - (2.25 / 2.75), 2.0) * 7.5625) + 0.9375 : (System.Math.Pow(time - (2.625 / 2.75), 2.0) * 7.5625) + 0.984375;
-    public static double EaseOutCircular     (double time) => System.Math.Sqrt(1.0 - System.Math.Pow(time - 1.0, 2.0));
-    public static double EaseOutCubic        (double time) => 1.0 - System.Math.Pow(1.0 - time, 3.0);
-    public static double EaseOutElastic      (double time) => time != 0.0 && time != 1.0 ? (System.Math.Pow(2.0, time * -10.0) * System.Math.Sin(((time * 10.0) - 0.75) * ((System.Math.PI * 2.0) / 3.0))) + 1.0 : time;
-    public static double EaseOutExponential  (double time) => time != 1.0 ? 1.0 - System.Math.Pow(2.0, time * -10.0) : 1.0;
-    public static double EaseOutQuadratic    (double time) => 1.0 - System.Math.Pow(1.0 - time, 2.0);
-    public static double EaseOutQuartic      (double time) => 1.0 - System.Math.Pow(1.0 - time, 4.0);
-    public static double EaseOutQuintic      (double time) => 1.0 - System.Math.Pow(1.0 - time, 5.0);
-    public static double EaseOutSine         (double time) => System.Math.Sin((System.Math.PI * time) / 2.0);
-    public static double Linear              (double time) => time;
+    public static double Ease                (double time) { return PatchOdyssey.AnimationFunction.CubicBézier(time, 0.25, 0.10, 0.25, 1.00); }
+    public static double EaseIn              (double time) { return PatchOdyssey.AnimationFunction.CubicBézier(time, 0.42, 0.00, 1.00, 1.00); }
+    public static double EaseInBack          (double time) { return (System.Math.Pow(time, 3.0) * 2.70158) - (System.Math.Pow(time, 2.0) * 1.70158); }
+    public static double EaseInBounce        (double time) { return 1.0 - PatchOdyssey.AnimationFunction.EaseOutBounce(1.0 - time); }
+    public static double EaseInCircular      (double time) { return 1.0 - System.Math.Sqrt(1.0 - System.Math.Pow(time, 2.0)); }
+    public static double EaseInCubic         (double time) { return System.Math.Pow(time, 3.0); }
+    public static double EaseInElastic       (double time) { return time != 0.0 && time != 1.0 ? -System.Math.Pow(2.0, (time * 10.0) - 10.0) * System.Math.Sin(((time * 10.0) - 10.75) * ((System.Math.PI * 2.0) / 3.0)) : time; }
+    public static double EaseInExponential   (double time) { return time != 0.0 ? System.Math.Pow(2.0, (time * 10.0) - 10.0) : 0.0; }
+    public static double EaseInOut           (double time) { return PatchOdyssey.AnimationFunction.CubicBézier(time, 0.42, 0.00, 0.58, 1.00); }
+    public static double EaseInOutBack       (double time) { return (time < 0.5 ? System.Math.Pow(time * 2.0, 2.0) * ((7.189819f * time) - 2.5949095) : ((System.Math.Pow((time * 2.0) - 2.0, 2.0) * ((((time * 2.0) - 2.0) * 3.5949095) + 2.5949095)) + 2.0)) / 2.0; }
+    public static double EaseInOutBounce     (double time) { return (time < 0.5 ? (1.0 - PatchOdyssey.AnimationFunction.EaseOutBounce(1.0 - (time * 2.0))) : (1.0 + PatchOdyssey.AnimationFunction.EaseOutBounce((time * 2.0) - 1.0))) / 2.0; }
+    public static double EaseInOutCircular   (double time) { return (time < 0.5 ? (1.0 - System.Math.Sqrt(1.0 - System.Math.Pow(time * 2.0, 2.0))) : (1.0 + System.Math.Sqrt(1.0 - System.Math.Pow((time * -2.0) + 2.0, 2.0)))) / 2.0; }
+    public static double EaseInOutCubic      (double time) { return time < 0.5 ? 4.0 * System.Math.Pow(time, 3.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 3.0) / 2.0)); }
+    public static double EaseInOutElastic    (double time) { return time != 0.0 && time != 1.0 ? time < 0.5 ? -(System.Math.Pow(2.0, (time * 20.0) - 10.0) * System.Math.Sin(((time * 20.0) - 11.125) * ((System.Math.PI * 2.0) / 4.5))) / 2.0 : ((System.Math.Pow(2.0, (time * -20.0) + 10.0) * System.Math.Sin(((time * 20.0) - 11.125) * ((System.Math.PI * 2.0) / 4.5))) / 2.0 + 1.0) : time; }
+    public static double EaseInOutExponential(double time) { return time != 0.0 && time != 1.0 ? (time < 0.5 ? System.Math.Pow(2.0, (time * 20.0) - 10.0) : (2.0 - System.Math.Pow(2.0, (time * -20.0) + 10.0))) / 2.0 : time; }
+    public static double EaseInOutQuadratic  (double time) { return time < 0.5 ?  2.0 * System.Math.Pow(time, 2.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 2.0) / 2.0)); }
+    public static double EaseInOutQuartic    (double time) { return time < 0.5 ?  8.0 * System.Math.Pow(time, 4.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 4.0) / 2.0)); }
+    public static double EaseInOutQuintic    (double time) { return time < 0.5 ? 16.0 * System.Math.Pow(time, 5.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 5.0) / 2.0)); }
+    public static double EaseInOutSine       (double time) { return -(System.Math.Cos(System.Math.PI * time) - 1.0) / 2.0; }
+    public static double EaseInQuadratic     (double time) { return System.Math.Pow(time, 2.0); }
+    public static double EaseInQuartic       (double time) { return System.Math.Pow(time, 4.0); }
+    public static double EaseInQuintic       (double time) { return System.Math.Pow(time, 5.0); }
+    public static double EaseInSine          (double time) { return 1.0 - System.Math.Cos((System.Math.PI * time) / 2.0); }
+    public static double EaseOut             (double time) { return PatchOdyssey.AnimationFunction.CubicBézier(time, 0.00, 0.00, 0.58, 1.00); }
+    public static double EaseOutBack         (double time) { return 1.0 + (2.70158 * System.Math.Pow(time - 1.0, 3.0)) + (System.Math.Pow(time - 1.0, 2.0) * 1.70158); }
+    public static double EaseOutBounce       (double time) { return time < 1.0 / 2.75 ? System.Math.Pow(time, 2.0) * 7.5625 : time < 2.0 / 2.75 ? (System.Math.Pow(time - (1.5 / 2.75), 2.0) * 7.5625) + 0.75 : time < 2.5 / 2.75 ? (System.Math.Pow(time - (2.25 / 2.75), 2.0) * 7.5625) + 0.9375 : (System.Math.Pow(time - (2.625 / 2.75), 2.0) * 7.5625) + 0.984375; }
+    public static double EaseOutCircular     (double time) { return System.Math.Sqrt(1.0 - System.Math.Pow(time - 1.0, 2.0)); }
+    public static double EaseOutCubic        (double time) { return 1.0 - System.Math.Pow(1.0 - time, 3.0); }
+    public static double EaseOutElastic      (double time) { return time != 0.0 && time != 1.0 ? (System.Math.Pow(2.0, time * -10.0) * System.Math.Sin(((time * 10.0) - 0.75) * ((System.Math.PI * 2.0) / 3.0))) + 1.0 : time; }
+    public static double EaseOutExponential  (double time) { return time != 1.0 ? 1.0 - System.Math.Pow(2.0, time * -10.0) : 1.0; }
+    public static double EaseOutQuadratic    (double time) { return 1.0 - System.Math.Pow(1.0 - time, 2.0); }
+    public static double EaseOutQuartic      (double time) { return 1.0 - System.Math.Pow(1.0 - time, 4.0); }
+    public static double EaseOutQuintic      (double time) { return 1.0 - System.Math.Pow(1.0 - time, 5.0); }
+    public static double EaseOutSine         (double time) { return System.Math.Sin((System.Math.PI * time) / 2.0); }
+    public static double Linear              (double time) { return time; }
   }
 
   public static class Extensions {
-    public static void Clear<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary) {
-      foreach (TKey key in dictionary.Keys)
-      dictionary.Remove(key);
+    public static void Add<T>(this System.Collections.Generic.Queue<T> queue, T item) {
+      // → Intended for initializer lists only
+      queue.Enqueue(item);
     }
 
-    public static bool ContainsValue(this System.Collections.ObjectModel.ReadOnlyDictionary<TKey, TValue> dictionary, TValue value) {
+    public static void Add<T>(this System.Collections.Generic.Stack<T> stack, T item) {
+      // → Intended for initializer lists only
+      stack.Push(item);
+    }
+
+    public static void Clear<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary) {
+      foreach (TKey key in dictionary.Keys)
+      dictionary.Remove(key); // → `::Capacity` remains unchanged
+    }
+
+    public static bool ContainsValue<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, TValue value) {
       foreach (TValue dictionaryValue in dictionary.Values) {
         if ((value as System.IEquatable<TValue>)?.Equals(dictionaryValue) ?? (object) value == (object) dictionaryValue)
         return true;
@@ -423,31 +477,189 @@ namespace PatchOdyssey /* → …everything else */ {
       return false;
     }
 
+    public static uint CountChildren(this UnityEngine.Component  component) => component.CountChildrenByComponent(component.GetType());
+    public static uint CountChildren(this UnityEngine.Transform  transform) => transform.gameObject.CountChildren();
     public static uint CountChildren(this UnityEngine.GameObject gameObject) {
+      #if false // → Was unaware of `UnityEngine.Transform::childCount` prior
+        uint count = 0u;
+
+        // …
+        for (System.Collections.IEnumerator enumerator = gameObject.transform.GetEnumerator(); enumerator.MoveNext(); )
+          ++count;
+
+        return count;
+      #endif
+      return (uint) gameObject.transform.childCount;
+    }
+
+    public static uint CountChildrenByComponent<T>(this UnityEngine.Component  component) => component.gameObject.CountChildrenByComponent<T>();
+    public static uint CountChildrenByComponent<T>(this UnityEngine.GameObject gameObject) {
       uint count = 0u;
 
       // …
       foreach (UnityEngine.Transform transform in gameObject.transform)
-      ++count;
+      count += null != transform.GetComponent<T>() ? 1u : 0u;
 
       return count;
     }
 
-    public static uint CountDescendants(this UnityEngine.GameObject gameObject) {
+    public static uint CountChildrenByComponent(this UnityEngine.Component  component,  System.Type type) => component.gameObject.CountChildrenByComponent(type);
+    public static uint CountChildrenByComponent(this UnityEngine.GameObject gameObject, System.Type type) {
       uint count = 0u;
 
       // …
-      for (System.Collections.Generic.List<UnityEngine.GameObject> pending = new() {gameObject}; 0 != pending.Count; pending.RemoveAt(0))
-      foreach (UnityEngine.Transform transform in pending[0].transform) {
-        ++count;
-        pending.Add(transform.gameObject);
+      foreach (UnityEngine.Transform transform in gameObject.transform)
+      count += null != transform.GetComponent(type) ? 1u : 0u;
+
+      return count;
+    }
+
+    public static uint CountChildrenByName(this UnityEngine.Component  component,  string name) => component.gameObject.CountChildrenByName(name);
+    public static uint CountChildrenByName(this UnityEngine.GameObject gameObject, string name) {
+      uint count = 0u;
+
+      // …
+      foreach (UnityEngine.Transform transform in gameObject.transform)
+      count += name == transform.name ? 1u : 0u;
+
+      return count;
+    }
+
+    public static uint CountChildrenByTag(this UnityEngine.Component  component,  string tag) => component.gameObject.CountChildrenByTag(tag);
+    public static uint CountChildrenByTag(this UnityEngine.GameObject gameObject, string tag) {
+      uint count = 0u;
+
+      // …
+      foreach (UnityEngine.Transform transform in gameObject.transform)
+      count += tag == transform.tag ? 1u : 0u;
+
+      return count;
+    }
+
+    public static uint CountDescendants(this UnityEngine.Component  component) => component.CountDescendantsByComponent(component.GetType());
+    public static uint CountDescendants(this UnityEngine.Transform  transform) => transform.gameObject.CountDescendants();
+    public static uint CountDescendants(this UnityEngine.GameObject gameObject) {
+      #if false // → Was unaware of `UnityEngine.Transform::hierarchyCount` prior
+        uint count = 0u;
+
+        // …
+        for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
+        foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+          ++count;
+          pending.Enqueue(transform);
+        }
+
+        return count;
+      #endif
+      return (uint) gameObject.transform.hierarchyCount - 1;
+    }
+
+    public static uint CountDescendantsByComponent<T>(this UnityEngine.Component  component) => component.gameObject.CountDescendantsByComponent<T>();
+    public static uint CountDescendantsByComponent<T>(this UnityEngine.GameObject gameObject) {
+      uint count = 0u;
+
+      // …
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        count += null != transform.GetComponent<T>() ? 1u : 0u;
+        pending.Enqueue(transform);
       }
 
       return count;
     }
 
-    public static T                     EnsureComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => null == gameObject.GetComponent<T>()  ? gameObject.AddComponent<T>()  : gameObject.GetComponent<T>();
-    public static UnityEngine.Component EnsureComponent   (this UnityEngine.GameObject gameObject, System.Type type)               => null == gameObject.GetComponent(type) ? gameObject.AddComponent(type) : gameObject.GetComponent(type);
+    public static uint CountDescendantsByComponent(this UnityEngine.Component  component,  System.Type type) => component.gameObject.CountDescendantsByComponent(type);
+    public static uint CountDescendantsByComponent(this UnityEngine.GameObject gameObject, System.Type type) {
+      uint count = 0u;
+
+      // …
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        count += null != transform.GetComponent(type) ? 1u : 0u;
+        pending.Enqueue(transform);
+      }
+
+      return count;
+    }
+
+    public static uint CountDescendantsByName(this UnityEngine.Component  component,  string name) => component.gameObject.CountDescendantsByName(name);
+    public static uint CountDescendantsByName(this UnityEngine.GameObject gameObject, string name) {
+      uint count = 0u;
+
+      // …
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        count += name == transform.name ? 1u : 0u;
+        pending.Enqueue(transform);
+      }
+
+      return count;
+    }
+
+    public static uint CountDescendantsByTag(this UnityEngine.Component  component,  string tag) => component.gameObject.CountDescendantsByTag(tag);
+    public static uint CountDescendantsByTag(this UnityEngine.GameObject gameObject, string tag) {
+      uint count = 0u;
+
+      // …
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        count += tag == transform.tag ? 1u : 0u;
+        pending.Enqueue(transform);
+      }
+
+      return count;
+    }
+
+    public static uint CountHierarchy(this UnityEngine.Component  component) => component.gameObject.CountHierarchyByComponent(component.GetType());
+    public static uint CountHierarchy(this UnityEngine.Transform  transform) => transform.gameObject.CountHierarchy();
+    public static uint CountHierarchy(this UnityEngine.GameObject gameObject) { return gameObject.CountDescendants() + 1u; }
+
+    public static uint CountHierarchyByComponent<T>(this UnityEngine.Component  component) => component.gameObject.CountHierarchyByComponent<T>();
+    public static uint CountHierarchyByComponent<T>(this UnityEngine.GameObject gameObject) { return gameObject.CountDescendantsByComponent<T>() + (null != gameObject.GetComponent<T>() ? 1u : 0u); }
+
+    public static uint CountHierarchyByComponent(this UnityEngine.Component  component,  System.Type type) => component.gameObject.CountHierarchyByComponent(type);
+    public static uint CountHierarchyByComponent(this UnityEngine.GameObject gameObject, System.Type type) { return gameObject.CountDescendantsByComponent(type) + (null != gameObject.GetComponent(type) ? 1u : 0u); }
+
+    public static uint CountHierarchyByName(this UnityEngine.Component  component,  string name) => component.gameObject.CountHierarchyByName(name);
+    public static uint CountHierarchyByName(this UnityEngine.GameObject gameObject, string name) { return gameObject.CountDescendantsByName(name) + (name == gameObject.name ? 1u : 0u); }
+
+    public static uint CountHierarchyByTag(this UnityEngine.Component  component,  string tag) => component.gameObject.CountHierarchyByTag(tag);
+    public static uint CountHierarchyByTag(this UnityEngine.GameObject gameObject, string tag) { return gameObject.CountDescendantsByTag(tag) + (tag == gameObject.tag ? 1u : 0u); }
+
+    public static T EnsureComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component {
+      T? component = gameObject.GetComponent<T>();
+      return null != component ? component : gameObject.AddComponent<T>();
+    }
+
+    public static UnityEngine.Component EnsureComponent(this UnityEngine.GameObject gameObject, System.Type type) {
+      UnityEngine.Component? component = gameObject.GetComponent(type);
+      return null != component ? component : gameObject.AddComponent(type);
+    }
+
+    public static UnityEngine.Component? FindChild(this UnityEngine.Component component, System.Predicate<UnityEngine.Component> predicate) {
+      System.Type type = component.GetType();
+
+      // …
+      foreach (UnityEngine.Transform transform in component.transform) {
+        UnityEngine.Component? subcomponent = transform.GetComponent(type);
+
+        if (null != subcomponent && predicate(subcomponent))
+        return subcomponent;
+      }
+
+      return null;
+    }
+
+    public static T? FindChild<T>(this UnityEngine.Component component, System.Predicate<T> predicate) where T : UnityEngine.Component {
+      foreach (UnityEngine.Transform transform in component.transform) {
+        T? subcomponent = transform.GetComponent<T>();
+
+        if (null != subcomponent && predicate(subcomponent))
+        return subcomponent;
+      }
+
+      return null;
+    }
 
     public static UnityEngine.GameObject? FindChild(this UnityEngine.GameObject gameObject, System.Predicate<UnityEngine.GameObject> predicate) {
       foreach (UnityEngine.Transform transform in gameObject.transform) {
@@ -458,13 +670,87 @@ namespace PatchOdyssey /* → …everything else */ {
       return null;
     }
 
-      public static T?                      FindChildByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject.FindChild(child => null != child.GetComponent<T>()) ?.GetComponent<T>();
-      public static UnityEngine.Component?  FindChildByComponent   (this UnityEngine.GameObject gameObject, System.Type type)               => gameObject.FindChild(child => null != child.GetComponent(type))?.GetComponent(type);
-      public static UnityEngine.GameObject? FindChildByIndex       (this UnityEngine.GameObject gameObject, uint        index)              => gameObject.FindChild(child => 0u   == index--);
-      public static UnityEngine.GameObject? FindChildByTag         (this UnityEngine.GameObject gameObject, string      tag)                => gameObject.FindChild(child => tag  == child.tag);
+    public static T? FindChildByComponent<T>(this UnityEngine.Component  component)  where T : UnityEngine.Component => component.gameObject.FindChildByComponent<T>();
+    public static T? FindChildByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component {
+      foreach (UnityEngine.Transform transform in gameObject.transform) {
+        T? component = transform.GetComponent<T>();
+
+        if (null != component)
+        return component;
+      }
+
+      return null;
+    }
+
+    public static UnityEngine.Component? FindChildByComponent(this UnityEngine.Component  component,  System.Type type) => component.gameObject.FindChildByComponent(type);
+    public static UnityEngine.Component? FindChildByComponent(this UnityEngine.GameObject gameObject, System.Type type) {
+      foreach (UnityEngine.Transform transform in gameObject.transform) {
+        UnityEngine.Component? component = transform.GetComponent(type);
+
+        if (null != component)
+        return component;
+      }
+
+      return null;
+    }
+
+    public static UnityEngine.GameObject? FindChildByIndex(this UnityEngine.Component  component,  uint index) => component.gameObject.FindChildByIndex(index);
+    public static UnityEngine.GameObject? FindChildByIndex(this UnityEngine.GameObject gameObject, uint index) {
+      for (System.Collections.IEnumerator enumerator = gameObject.transform.GetEnumerator(); enumerator.MoveNext(); ) {
+        if (0u == index--)
+        return (enumerator.Current as UnityEngine.Transform).gameObject;
+      }
+
+      return null;
+    }
+
+    public static UnityEngine.GameObject? FindChildByName(this UnityEngine.Component  component,  string name) => component.gameObject.FindChildByName(name);
+    public static UnityEngine.GameObject? FindChildByName(this UnityEngine.GameObject gameObject, string name) {
+      foreach (UnityEngine.Transform transform in gameObject.transform) {
+        if (name == transform.name)
+        return transform.gameObject;
+      }
+
+      return null;
+    }
+
+    public static UnityEngine.GameObject? FindChildByTag(this UnityEngine.Component  component,  string tag) => component.gameObject.FindChildByTag(tag);
+    public static UnityEngine.GameObject? FindChildByTag(this UnityEngine.GameObject gameObject, string tag) {
+      foreach (UnityEngine.Transform transform in gameObject.transform) {
+        if (tag == transform.tag)
+        return transform.gameObject;
+      }
+
+      return null;
+    }
+
+    public static UnityEngine.Component[] FindChildren(this UnityEngine.Component component, System.Predicate<UnityEngine.Component> predicate) {
+      System.Collections.Generic.List<UnityEngine.Component> children = new(component.transform.childCount); // → `new(gameObject.transform.childCapacity)`
+      System.Type                                            type     = component.GetType();
+
+      // …
+      foreach (UnityEngine.Transform transform in component.transform) {
+        UnityEngine.Component? subcomponent = transform.GetComponent(type);
+        if (null != subcomponent && predicate(subcomponent)) children.Add(subcomponent);
+      }
+
+      return Util.ArrayFrom(children);
+    }
+
+    public static T[] FindChildren<T>(this UnityEngine.Component component, System.Predicate<T> predicate) where T : UnityEngine.Component {
+      System.Collections.Generic.List<T> children = new(component.transform.childCount); // → `new(gameObject.transform.childCapacity)`
+
+      // …
+      foreach (UnityEngine.Transform transform in component.transform) {
+        T? subcomponent = transform.GetComponent<T>();
+        if (null != subcomponent && predicate(subcomponent)) children.Add(subcomponent);
+      }
+
+      return Util.ArrayFrom(children);
+    }
 
     public static UnityEngine.GameObject[] FindChildren(this UnityEngine.GameObject gameObject, System.Predicate<UnityEngine.GameObject> predicate) {
-      System.Collections.Generic.List<UnityEngine.GameObject> children = new();
+      System.Collections.Generic.List<UnityEngine.GameObject> children = new(gameObject.transform.childCount); // → `new(gameObject.transform.childCapacity)`
 
       // …
       foreach (UnityEngine.Transform transform in gameObject.transform) {
@@ -472,54 +758,426 @@ namespace PatchOdyssey /* → …everything else */ {
         children.Add(transform.gameObject);
       }
 
-      return children.ToArray();
+      return Util.ArrayFrom(children);
     }
-      public static T                     [] FindChildrenByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => System.Array.ConvertAll(gameObject.FindChildren(child => null != child.GetComponent<T>()),  child => child.GetComponent<T>());
-      public static UnityEngine.Component [] FindChildrenByComponent   (this UnityEngine.GameObject gameObject, System.Type type)               => System.Array.ConvertAll(gameObject.FindChildren(child => null != child.GetComponent(type)), child => child.GetComponent(type));
-      public static UnityEngine.GameObject[] FindChildrenByTag         (this UnityEngine.GameObject gameObject, string      tag)                => gameObject.FindChildren(child => child.tag == tag);
 
-    public static UnityEngine.GameObject? FindDescendant(this UnityEngine.GameObject gameObject, System.Predicate<UnityEngine.GameObject> predicate) {
-      for (System.Collections.Generic.List<UnityEngine.GameObject> pending = new() {gameObject}; 0 != pending.Count; pending.RemoveAt(0))
-      foreach (UnityEngine.Transform transform in pending[0].transform) {
-        pending.Add(transform.gameObject);
+    public static T[] FindChildrenByComponent<T>(this UnityEngine.Component  component)  where T : UnityEngine.Component => component.gameObject.FindChildrenByComponent<T>();
+    public static T[] FindChildrenByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component {
+      System.Collections.Generic.List<T> children = new(gameObject.transform.childCount); // → `new(gameObject.transform.childCapacity)`
 
-        if (predicate(transform.gameObject))
-        return transform.gameObject;
+      // …
+      foreach (UnityEngine.Transform transform in gameObject.transform) {
+        T? component = transform.GetComponent<T>();
+        if (null != component) children.Add(component);
+      }
+
+      return Util.ArrayFrom(children);
+    }
+
+    public static UnityEngine.Component[] FindChildrenByComponent(this UnityEngine.Component  component,  System.Type type) => component.gameObject.FindChildrenByComponent(type);
+    public static UnityEngine.Component[] FindChildrenByComponent(this UnityEngine.GameObject gameObject, System.Type type) {
+      System.Collections.Generic.List<UnityEngine.Component> children = new(gameObject.transform.childCount); // → `new(gameObject.transform.childCapacity)`
+
+      // …
+      foreach (UnityEngine.Transform transform in gameObject.transform) {
+        UnityEngine.Component? component = transform.GetComponent(type);
+        if (null != component) children.Add(component);
+      }
+
+      return Util.ArrayFrom(children);
+    }
+
+    public static UnityEngine.GameObject[] FindChildrenByName(this UnityEngine.Component  component,  string name) => component.gameObject.FindChildrenByName(name);
+    public static UnityEngine.GameObject[] FindChildrenByName(this UnityEngine.GameObject gameObject, string name) {
+      System.Collections.Generic.List<UnityEngine.GameObject> children = new(gameObject.transform.childCount); // → `new(gameObject.transform.childCapacity)`
+
+      // …
+      foreach (UnityEngine.Transform transform in gameObject.transform) {
+        if (name == transform.name)
+        children.Add(transform.gameObject);
+      }
+
+      return Util.ArrayFrom(children);
+    }
+
+    public static UnityEngine.GameObject[] FindChildrenByTag(this UnityEngine.Component  component,  string tag) => component.gameObject.FindChildrenByTag(tag);
+    public static UnityEngine.GameObject[] FindChildrenByTag(this UnityEngine.GameObject gameObject, string tag) {
+      System.Collections.Generic.List<UnityEngine.GameObject> children = new(gameObject.transform.childCount); // → `new(gameObject.transform.childCapacity)`
+
+      // …
+      foreach (UnityEngine.Transform transform in gameObject.transform) {
+        if (tag == transform.tag)
+        children.Add(transform.gameObject);
+      }
+
+      return Util.ArrayFrom(children);
+    }
+
+    public static UnityEngine.Component? FindDescendant(this UnityEngine.Component component, System.Predicate<UnityEngine.Component> predicate) {
+      System.Type type = component.GetType();
+
+      // …
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(component.transform.hierarchyCapacity) {component.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        UnityEngine.Component? subcomponent = transform.GetComponent(type);
+
+        // …
+        if (null != subcomponent && predicate(subcomponent))
+        return subcomponent;
+
+        pending.Enqueue(transform);
       }
 
       return null;
     }
-      public static T?                      FindDescendantByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject.FindDescendant(child => null != child.GetComponent<T>()) ?.GetComponent<T>();
-      public static UnityEngine.Component?  FindDescendantByComponent   (this UnityEngine.GameObject gameObject, System.Type type)               => gameObject.FindDescendant(child => null != child.GetComponent(type))?.GetComponent(type);
-      public static UnityEngine.GameObject? FindDescendantByTag         (this UnityEngine.GameObject gameObject, string      tag)                => gameObject.FindDescendant(child => tag  == child.tag);
 
-    public static UnityEngine.GameObject[] FindDescendants(this UnityEngine.GameObject gameObject, System.Predicate<UnityEngine.GameObject> predicate) {
-      System.Collections.Generic.List<UnityEngine.GameObject> descendants = new();
+    public static T? FindDescendant<T>(this UnityEngine.Component component, System.Predicate<T> predicate) where T : UnityEngine.Component {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(component.transform.hierarchyCapacity) {component.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        T? subcomponent = transform.GetComponent<T>();
+
+        // …
+        if (null != subcomponent && predicate(subcomponent))
+        return subcomponent;
+
+        pending.Enqueue(transform);
+      }
+
+      return null;
+    }
+
+    public static UnityEngine.GameObject? FindDescendant(this UnityEngine.GameObject gameObject, System.Predicate<UnityEngine.GameObject> predicate) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        if (predicate(transform.gameObject))
+        return transform.gameObject;
+
+        pending.Enqueue(transform);
+      }
+
+      return null;
+    }
+
+    public static T? FindDescendantByComponent<T>(this UnityEngine.Component  component)  where T : UnityEngine.Component => component.gameObject.FindDescendantByComponent<T>();
+    public static T? FindDescendantByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        T? component = transform.GetComponent<T>();
+
+        // …
+        if (null != component)
+        return component;
+
+        pending.Enqueue(transform);
+      }
+
+      return null;
+    }
+
+    public static UnityEngine.Component? FindDescendantByComponent(this UnityEngine.Component  component,  System.Type type) => component.gameObject.FindDescendantByComponent(type);
+    public static UnityEngine.Component? FindDescendantByComponent(this UnityEngine.GameObject gameObject, System.Type type) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        UnityEngine.Component? component = transform.GetComponent(type);
+
+        // …
+        if (null != component)
+        return component;
+
+        pending.Enqueue(transform);
+      }
+
+      return null;
+    }
+
+    public static UnityEngine.GameObject? FindDescendantByName(this UnityEngine.Component  component,  string name) => component.gameObject.FindDescendantByName(name);
+    public static UnityEngine.GameObject? FindDescendantByName(this UnityEngine.GameObject gameObject, string name) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        if (name == transform.name)
+        return transform.gameObject;
+
+        pending.Enqueue(transform);
+      }
+
+      return null;
+    }
+
+    public static UnityEngine.GameObject? FindDescendantByTag(this UnityEngine.Component  component,  string tag) => component.gameObject.FindDescendantByTag(tag);
+    public static UnityEngine.GameObject? FindDescendantByTag(this UnityEngine.GameObject gameObject, string tag) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        if (tag == transform.tag)
+        return transform.gameObject;
+
+        pending.Enqueue(transform);
+      }
+
+      return null;
+    }
+
+    public static UnityEngine.Component[] FindDescendants(this UnityEngine.Component component, System.Predicate<UnityEngine.Component> predicate) {
+      System.Collections.Generic.List<UnityEngine.Component> descendants = new(component.transform.hierarchyCapacity);
+      System.Type                                            type        = component.GetType();
 
       // …
-      for (System.Collections.Generic.List<UnityEngine.GameObject> pending = new() {gameObject}; 0 != pending.Count; pending.RemoveAt(0))
-      descendants.AddRange(pending[0].FindChildren(descendant => { pending.Add(descendant); return predicate(descendant); }));
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(component.transform.hierarchyCapacity) {component.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        UnityEngine.Component? subcomponent = transform.GetComponent(type);
 
-      return descendants.ToArray();
+        // …
+        if (null != subcomponent && predicate(subcomponent))
+          descendants.Add(subcomponent);
+
+        pending.Enqueue(transform);
+      }
+
+      return Util.ArrayFrom(descendants);
     }
-      public static T                     [] FindDescendantsByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => System.Array.ConvertAll(gameObject.FindDescendants(descendant => null != descendant.GetComponent<T>()),  descendant => descendant.GetComponent<T>());
-      public static UnityEngine.Component [] FindDescendantsByComponent   (this UnityEngine.GameObject gameObject, System.Type type)               => System.Array.ConvertAll(gameObject.FindDescendants(descendant => null != descendant.GetComponent(type)), descendant => descendant.GetComponent(type));
-      public static UnityEngine.GameObject[] FindDescendantsByTag         (this UnityEngine.GameObject gameObject, string      tag)                => gameObject.FindDescendants(descendant => descendant.tag == tag);
 
-    public static UnityEngine.GameObject[] FindLineage(this UnityEngine.GameObject gameObject, System.Predicate<UnityEngine.GameObject> predicate) {
-      return Util.ArrayFrom(predicate(gameObject) ? new[] {gameObject} : new UnityEngine.GameObject[0], gameObject.FindDescendants(predicate));
+    public static T[] FindDescendants<T>(this UnityEngine.Component component, System.Predicate<T> predicate) where T : UnityEngine.Component {
+      System.Collections.Generic.List<T> descendants = new(component.transform.hierarchyCapacity);
+
+      // …
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(component.transform.hierarchyCapacity) {component.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        T? subcomponent = transform.GetComponent<T>();
+
+        // …
+        if (null != subcomponent && predicate(subcomponent))
+          descendants.Add(subcomponent);
+
+        pending.Enqueue(transform);
+      }
+
+      return Util.ArrayFrom(descendants);
     }
-      public static T                     [] FindLineageByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => System.Array.ConvertAll(gameObject.FindLineage(successor => null != successor.GetComponent<T>()),  successor => successor.GetComponent<T>());
-      public static UnityEngine.Component [] FindLineageByComponent   (this UnityEngine.GameObject gameObject, System.Type type)               => System.Array.ConvertAll(gameObject.FindLineage(successor => null != successor.GetComponent(type)), successor => successor.GetComponent(type));
-      public static UnityEngine.GameObject[] FindLineageByTag         (this UnityEngine.GameObject gameObject, string      tag)                => gameObject.FindLineage(successor => successor.tag == tag);
 
-    public static UnityEngine.GameObject[] GetChildren   (this UnityEngine.GameObject gameObject) => gameObject.FindChildren   (_ => true);
-    public static UnityEngine.GameObject[] GetDescendants(this UnityEngine.GameObject gameObject) => gameObject.FindDescendants(_ => true);
-    public static UnityEngine.GameObject[] GetLineage    (this UnityEngine.GameObject gameObject) => gameObject.FindLineage    (_ => true);
-    public static UnityEngine.GameObject   GetParent     (this UnityEngine.GameObject gameObject) => gameObject.transform.parent.gameObject;
+    public static UnityEngine.GameObject[] FindDescendants(this UnityEngine.GameObject gameObject, System.Predicate<UnityEngine.GameObject> predicate) {
+      System.Collections.Generic.List<UnityEngine.GameObject> descendants = new(gameObject.transform.hierarchyCapacity);
 
-    public static bool HasChild     (this UnityEngine.GameObject gameObject, UnityEngine.GameObject child)      => null != gameObject.FindChild     (_ => _ == child);
-    public static bool HasDescendant(this UnityEngine.GameObject gameObject, UnityEngine.GameObject descendant) => null != gameObject.FindDescendant(_ => _ == descendant);
+      // …
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        if (predicate(transform.gameObject))
+          descendants.Add(transform.gameObject);
+
+        pending.Enqueue(transform);
+      }
+
+      return Util.ArrayFrom(descendants);
+    }
+
+    public static T[] FindDescendantsByComponent<T>(this UnityEngine.Component  component)  where T : UnityEngine.Component => component.gameObject.FindDescendantsByComponent<T>();
+    public static T[] FindDescendantsByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component {
+      System.Collections.Generic.List<T> descendants = new(gameObject.transform.hierarchyCapacity);
+
+      // …
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        T? component = transform.GetComponent<T>();
+
+        // …
+        if (null != component)
+          descendants.Add(component);
+
+        pending.Enqueue(transform);
+      }
+
+      return Util.ArrayFrom(descendants);
+    }
+
+    public static UnityEngine.Component[] FindDescendantsByComponent(this UnityEngine.Component  component,  System.Type type) => component.gameObject.FindDescendantsByComponent(type);
+    public static UnityEngine.Component[] FindDescendantsByComponent(this UnityEngine.GameObject gameObject, System.Type type) {
+      System.Collections.Generic.List<UnityEngine.Component> descendants = new(gameObject.transform.hierarchyCapacity);
+
+      // …
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        UnityEngine.Component? component = transform.GetComponent(type);
+
+        // …
+        if (null != component)
+          descendants.Add(component);
+
+        pending.Enqueue(transform);
+      }
+
+      return Util.ArrayFrom(descendants);
+    }
+
+    public static UnityEngine.GameObject[] FindDescendantsByName(this UnityEngine.Component  component,  string name) => component.gameObject.FindDescendantsByName(name);
+    public static UnityEngine.GameObject[] FindDescendantsByName(this UnityEngine.GameObject gameObject, string name) {
+      System.Collections.Generic.List<UnityEngine.GameObject> descendants = new(gameObject.transform.hierarchyCapacity);
+
+      // …
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        if (name == transform.name)
+          descendants.Add(transform.gameObject);
+
+        pending.Enqueue(transform);
+      }
+
+      return Util.ArrayFrom(descendants);
+    }
+
+    public static UnityEngine.GameObject[] FindDescendantsByTag(this UnityEngine.Component  component,  string tag) => component.gameObject.FindDescendantsByTag(tag);
+    public static UnityEngine.GameObject[] FindDescendantsByTag(this UnityEngine.GameObject gameObject, string tag) {
+      System.Collections.Generic.List<UnityEngine.GameObject> descendants = new(gameObject.transform.hierarchyCapacity);
+
+      // …
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        if (tag == transform.tag)
+          descendants.Add(transform.gameObject);
+
+        pending.Enqueue(transform);
+      }
+
+      return Util.ArrayFrom(descendants);
+    }
+
+    public static UnityEngine.Component [] FindHierarchy   (this UnityEngine.Component  component,  System.Predicate<UnityEngine.Component>  predicate)                                 { return Util.ArrayFrom(new[] {component},                                     component .FindDescendants   (predicate)); }
+    public static T                     [] FindHierarchy<T>(this UnityEngine.Component  component,  System.Predicate<T>                      predicate) where T : UnityEngine.Component { return Util.ArrayFrom(component is T        ? new[] {component as T} : null, component .FindDescendants<T>(predicate)); }
+    public static UnityEngine.GameObject[] FindHierarchy   (this UnityEngine.GameObject gameObject, System.Predicate<UnityEngine.GameObject> predicate)                                 { return Util.ArrayFrom(predicate(gameObject) ? new[] {gameObject}     : null, gameObject.FindDescendants   (predicate)); }
+
+    public static T[] FindHierarchyByComponent<T>(this UnityEngine.Component  component)  where T : UnityEngine.Component => component.gameObject.FindHierarchyByComponent<T>();
+    public static T[] FindHierarchyByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component {
+      T? component = gameObject.GetComponent<T>();
+      return Util.ArrayFrom(null != component ? new[] {component} : null, gameObject.FindDescendantsByComponent<T>());
+    }
+
+    public static UnityEngine.Component[] FindHierarchyByComponent(this UnityEngine.Component  component,  System.Type type) => component.gameObject.FindHierarchyByComponent(type);
+    public static UnityEngine.Component[] FindHierarchyByComponent(this UnityEngine.GameObject gameObject, System.Type type) {
+      UnityEngine.Component? component = gameObject.GetComponent(type);
+      return Util.ArrayFrom(null != component ? new[] {component} : null, gameObject.FindDescendantsByComponent(type));
+    }
+
+    public static UnityEngine.GameObject[] FindHierarchyByName(this UnityEngine.Component  component,  string name) => component.gameObject.FindHierarchyByName(name);
+    public static UnityEngine.GameObject[] FindHierarchyByName(this UnityEngine.GameObject gameObject, string name) { return Util.ArrayFrom(gameObject.name == name ? new[] {gameObject} : null, gameObject.FindDescendantsByName(name)); }
+
+    public static UnityEngine.GameObject[] FindHierarchyByTag(this UnityEngine.Component  component,  string tag) => component.gameObject.FindHierarchyByTag(tag);
+    public static UnityEngine.GameObject[] FindHierarchyByTag(this UnityEngine.GameObject gameObject, string tag) { return Util.ArrayFrom(gameObject.tag == tag ? new[] {gameObject} : null, gameObject.FindDescendantsByTag(tag)); }
+
+    public static UnityEngine.Component[] GetChildren(this UnityEngine.Component component) {
+      System.Collections.Generic.List<UnityEngine.Component> children = new(component.transform.childCount); // → `new(gameObject.transform.childCapacity)`
+      System.Type                                            type     = component.GetType();
+
+      // …
+      foreach (UnityEngine.Transform transform in component.transform) {
+        UnityEngine.Component? subcomponent = transform.GetComponent(type);
+        if (null != subcomponent) children.Add(subcomponent);
+      }
+
+      return Util.ArrayFrom(children);
+    }
+
+    public static T[] GetChildren<T>(this UnityEngine.Component component) where T : UnityEngine.Component {
+      System.Collections.Generic.List<T> children = new(component.transform.childCount); // → `new(gameObject.transform.childCapacity)`
+
+      // …
+      foreach (UnityEngine.Transform transform in component.transform) {
+        T? subcomponent = transform.GetComponent<T>();
+        if (null != subcomponent) children.Add(subcomponent);
+      }
+
+      return Util.ArrayFrom(children);
+    }
+
+    public static UnityEngine.GameObject[] GetChildren(this UnityEngine.GameObject gameObject) {
+      System.Collections.Generic.List<UnityEngine.GameObject> children = new(gameObject.transform.childCount); // → `new(gameObject.transform.childCapacity)`
+
+      // …
+      foreach (UnityEngine.Transform transform in gameObject.transform)
+      children.Add(transform.gameObject);
+
+      return Util.ArrayFrom(children);
+    }
+
+    public static UnityEngine.Component[] GetDescendants(this UnityEngine.Component component) {
+      System.Collections.Generic.List<UnityEngine.Component> descendants = new(component.transform.hierarchyCapacity);
+      System.Type                                            type        = component.GetType();
+
+      // …
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(component.transform.hierarchyCapacity) {component.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        UnityEngine.Component? subcomponent = transform.GetComponent(type);
+
+        // …
+        if (null != subcomponent)
+          descendants.Add(subcomponent);
+
+        pending.Enqueue(transform);
+      }
+
+      return Util.ArrayFrom(descendants);
+    }
+
+    public static T[] GetDescendants<T>(this UnityEngine.Component component) where T : UnityEngine.Component {
+      System.Collections.Generic.List<T> descendants = new(component.transform.hierarchyCapacity);
+
+      // …
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(component.transform.hierarchyCapacity) {component.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        T? subcomponent = transform.GetComponent<T>();
+
+        // …
+        if (null != subcomponent)
+          descendants.Add(subcomponent);
+
+        pending.Enqueue(transform);
+      }
+
+      return Util.ArrayFrom(descendants);
+    }
+
+    public static UnityEngine.GameObject[] GetDescendants(this UnityEngine.GameObject gameObject) {
+      System.Collections.Generic.List<UnityEngine.GameObject> descendants = new(gameObject.transform.hierarchyCapacity);
+
+      // …
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        descendants.Add(transform.gameObject);
+        pending.Enqueue(transform);
+      }
+
+      return Util.ArrayFrom(descendants);
+    }
+
+    public static UnityEngine.Component [] GetHierarchy   (this UnityEngine.Component  component)                                 { return Util.ArrayFrom(new[] {component},      component .GetDescendants   ()); }
+    public static T                     [] GetHierarchy<T>(this UnityEngine.Component  component) where T : UnityEngine.Component { return Util.ArrayFrom(new[] {component as T}, component .GetDescendants<T>()); }
+    public static UnityEngine.GameObject[] GetHierarchy   (this UnityEngine.GameObject gameObject)                                { return Util.ArrayFrom(new[] {gameObject},     gameObject.GetDescendants   ()); }
+
+    public static UnityEngine.GameObject GetParent(this UnityEngine.Component  component) => component.gameObject.GetParent();
+    public static UnityEngine.GameObject GetParent(this UnityEngine.GameObject gameObject) { return gameObject.transform.parent.gameObject; }
+
+    public static bool HasChild(this UnityEngine.Component  component,  UnityEngine.Component  child) => component.gameObject.HasChild(child);
+    public static bool HasChild(this UnityEngine.Component  component,  UnityEngine.GameObject child) => component.gameObject.HasChild(child);
+    public static bool HasChild(this UnityEngine.GameObject gameObject, UnityEngine.Component  child) => gameObject.HasChild(child.gameObject);
+    public static bool HasChild(this UnityEngine.GameObject gameObject, UnityEngine.GameObject child) {
+      for (System.Collections.IEnumerator enumerator = gameObject.transform.GetEnumerator(); enumerator.MoveNext(); ) {
+        if (enumerator.Current == (object) child.transform)
+        return true;
+      }
+
+      return false;
+    }
+
+    public static bool HasDescendant(this UnityEngine.Component  component,  UnityEngine.Component  descendant) => component.gameObject.HasDescendant(descendant);
+    public static bool HasDescendant(this UnityEngine.Component  component,  UnityEngine.GameObject descendant) => component.gameObject.HasDescendant(descendant);
+    public static bool HasDescendant(this UnityEngine.GameObject gameObject, UnityEngine.Component  descendant) => gameObject.HasDescendant(descendant.gameObject);
+    public static bool HasDescendant(this UnityEngine.GameObject gameObject, UnityEngine.GameObject descendant) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
+      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+        if (descendant.transform == transform)
+        return true;
+
+        pending.Enqueue(transform);
+      }
+
+      return false;
+    }
 
     public static void Reset(this UnityEngine.Transform transform) {
       transform.localRotation = UnityEngine.Quaternion.identity;
@@ -542,16 +1200,23 @@ namespace PatchOdyssey /* → …everything else */ {
       transform.sizeDelta = new(width - (null != parentTransform ? parentTransform.rect.width * (transform.anchorMax.x - transform.anchorMin.x) : 0.0f), transform.sizeDelta.y);
     }
 
-    #if true || !(NET5_0 || NET5_0_OR_GREATER || NET6_0 || NET6_0_OR_GREATER || NET7_0 || NET7_0_OR_GREATER || NET8_0 || NET8_0_OR_GREATER || NET9_0 || NETCOREAPP2_0 || NETCOREAPP2_0_OR_GREATER || NETCOREAPP2_1 || NETCOREAPP2_1_OR_GREATER || NETCOREAPP2_2 || NETCOREAPP2_2_OR_GREATER || NETCOREAPP3_0 || NETCOREAPP3_0_OR_GREATER || NETCOREAPP3_1 || NETCOREAPP3_1_OR_GREATER || NETSTANDARD2_1 || NETSTANDARD2_1_OR_GREATER)
-      public static bool TryAdd<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, TKey key, TValue value) {
-        if (!dictionary.ContainsKey(key)) {
-          dictionary.Add(key, value);
-          return true;
-        }
-
-        return false;
+    public static bool TryAdd<T>(this System.Collections.Generic.IList<T> list, T element) {
+      if (!list.Contains(element)) {
+        list.Add(element);
+        return true;
       }
-    #endif
+
+      return false;
+    }
+
+    public static bool TryAdd<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, TKey key, TValue value) {
+      if (!dictionary.ContainsKey(key)) {
+        dictionary.Add(key, value);
+        return true;
+      }
+
+      return false;
+    }
   }
 
   public static class Util /* → Utilities */ {
@@ -568,8 +1233,9 @@ namespace PatchOdyssey /* → …everything else */ {
     }
 
     /* … */
-    private static readonly System.Collections.Generic.Dictionary<string, Util.Load> LOADED = new();
-    private static readonly System.Collections.Generic.List<Util.Wait>               WAITS  = new();
+    private static readonly System.Collections.Generic.Dictionary<System.ValueTuple<System.Type, System.Type>, System.Delegate> DELEGATED_CONVERTS = new();
+    private static readonly System.Collections.Generic.Dictionary<string,                                      Util.Load>       LOADED             = new();
+    private static readonly System.Collections.Generic.List      <Util.Wait>                                                    WAITS              = new();
 
     public const           float  LoadAsynchronously = 0.0f;  // → `LoadURI*(…, float? loadDurationMaximum, …)`
     public const           bool   LoadCached         = false; // → `LoadURI*(…, bool uncached)`
@@ -577,22 +1243,61 @@ namespace PatchOdyssey /* → …everything else */ {
     public static readonly float? LoadSynchronously  = null;  // → `LoadURI*(…, float? loadDurationMaximum, …)`
 
     /* … */
-    public static object[] ArrayFrom() {
-      return new object[0];
+    public static object[] ArrayFrom   () { return new object[0]; }
+    public static T     [] ArrayFrom<T>() { return new T     [0]; }
+
+    public static T[] ArrayFrom<T>(T[]                                       array)      { return array; }
+    public static T[] ArrayFrom<T>(System.Collections.ArrayList              list)       { return System.Array.ConvertAll(list.ToArray() as object[], static element => (T) element); }
+    public static T[] ArrayFrom<T>(System.Collections.Generic.List       <T> list)       { return list .ToArray(); }
+    public static T[] ArrayFrom<T>(System.Collections.Generic.Queue      <T> queue)      { return queue.ToArray(); }
+    public static T[] ArrayFrom<T>(System.Span                           <T> span)       { return span .ToArray(); }
+    public static T[] ArrayFrom<T>(System.Collections.Generic.Stack      <T> stack)      { return stack.ToArray(); }
+    public static T[] ArrayFrom<T>(System.Collections.Generic.IEnumerable<T> enumerable) {
+      return enumerable switch {
+        T[]                                 array => Util.ArrayFrom<T>(array),
+        System.Collections.ArrayList        list  => Util.ArrayFrom<T>(list),
+        System.Collections.Generic.List <T> list  => Util.ArrayFrom<T>(list),
+        System.Collections.Generic.Queue<T> queue => Util.ArrayFrom<T>(queue),
+        System.Collections.Generic.Stack<T> stack => Util.ArrayFrom<T>(stack),
+        _                                         => new System.Collections.Generic.List<T>(enumerable).ToArray()
+      };
     }
 
-    public static T[] ArrayFrom<T>() {
-      return new T[0];
+    public static T[] ArrayFrom<T>(System.Collections.Generic.IEnumerable<T> enumerableA, System.Collections.Generic.IEnumerable<T> enumerableB) {
+      if (null == enumerableB) return null != enumerableA ? Util.ArrayFrom(enumerableA) : new T[0];
+      if (null == enumerableA) return null != enumerableB ? Util.ArrayFrom(enumerableB) : new T[0];
+
+      return Util.ArrayFrom(new[] {enumerableA, enumerableB});
     }
 
     public static T[] ArrayFrom<T>(params System.Collections.Generic.IEnumerable<T>[] enumerables) {
-      System.Collections.Generic.List<T> concatenation = new();
+      System.Collections.Generic.List<T>? concatenation = null;
 
-      // …
-      foreach (System.Collections.Generic.IEnumerable<T> enumerable in enumerables) {
-        if (null != enumerable)
-        concatenation.AddRange(enumerable);
-      }
+      // … → Mimic optimization of `Util.ArrayFrom<T>(T, T)` where the only non-null `enumerable` would be evaluated as-is, rather than concatenated.
+      #if true
+        (System.Collections.Generic.IEnumerable<T>? alone, System.Collections.Generic.IEnumerable<T>? accompanying) enumerated = (null, null);
+
+        // …
+        foreach (System.Collections.Generic.IEnumerable<T> enumerable in enumerables)
+        if (null != enumerable) {
+          if (null != enumerated.alone) {
+            concatenation ??=  new(enumerated.alone);
+            concatenation.AddRange(enumerated.accompanying = enumerable);
+          }
+
+          enumerated.alone ??= enumerable;
+        }
+
+        if (null != enumerated.alone && null == enumerated.accompanying) return Util.ArrayFrom(enumerated.alone);
+        if (null == concatenation)                                       return new T[0];
+      #else
+        concatenation = new(enumerables.Length);
+
+        foreach (System.Collections.Generic.IEnumerable<T> enumerable in enumerables) {
+          if (null != enumerable)
+          concatenation.AddRange(enumerable);
+        }
+      #endif
 
       return concatenation.ToArray();
     }
@@ -670,12 +1375,15 @@ namespace PatchOdyssey /* → …everything else */ {
     }
 
     public static System.Delegate DelegateConvert(System.Type typeA, System.Type typeB) {
+      if (typeA == typeB)                                                                return (System.Func<object, object>) (static _ => _);
+      if (DELEGATED_CONVERTS.TryGetValue((typeA, typeB), out System.Delegate converter)) return converter;
+
       System.Linq.Expressions.ParameterExpression expression = System.Linq.Expressions.Expression.Parameter(typeA);
-      return System.Linq.Expressions.Expression.Lambda(System.Linq.Expressions.Expression.Convert(expression, typeB), expression).Compile();
+      return DELEGATED_CONVERTS[(typeA, typeB)] = System.Linq.Expressions.Expression.Lambda(System.Linq.Expressions.Expression.Convert(expression, typeB), expression).Compile();
     }
 
-    public static System.Predicate<T> DelegateEquals<T>(T value) where T : System.IEquatable<T> {
-      return subvalue => value.Equals(subvalue);
+    public static System.Predicate<T> DelegateEquals<T>(T value) {
+      return subvalue => (value as System.IEquatable<T>)?.Equals(subvalue) ?? (object) value == (object) subvalue;
     }
 
     public static string GetAssetPath() {
@@ -1074,8 +1782,7 @@ namespace PatchOdyssey /* → …everything else */ {
       return Util.LoadURI(
         typeof(UnityEngine.AudioClip).ToString(), path, _ => callback?.Invoke(_ as UnityEngine.AudioClip), loadDurationMaximum, uncached,
         predata => {
-          // → WARN (Lapys): Consume less memory resources, please T_T
-          #if false
+          #if false // → Consume less memory resources, please T_T
             UnityEngine.AudioClip                preaudioClip     = predata as UnityEngine.AudioClip;
             Unity.Collections.NativeArray<float> preaudioClipData = new(preaudioClip.channels * preaudioClip.samples, Unity.Collections.Allocator.Temp, Unity.Collections.NativeArrayOptions.UninitializedMemory);
             UnityEngine.AudioClip                audioClip        = UnityEngine.AudioClip.Create("🎵 " + System.IO.Path.GetFileName(path), preaudioClip.samples, preaudioClip.channels, preaudioClip.frequency, false);
@@ -1122,8 +1829,7 @@ namespace PatchOdyssey /* → …everything else */ {
       return Util.LoadURI(
         typeof(UnityEngine.Texture2D).ToString(), path, _ => callback?.Invoke(_ as UnityEngine.Texture2D), loadDurationMaximum, uncached,
         predata => {
-          // → WARN (Lapys): Consume less memory resources, please T_T
-          #if false
+          #if false  // → Consume less memory resources, please T_T
             UnityEngine.Texture2D pretexture = predata as UnityEngine.Texture2D;
             UnityEngine.Texture2D texture    = new(pretexture.width, pretexture.height, pretexture.format, pretexture.mipmapCount, false);
 
@@ -1156,40 +1862,66 @@ namespace PatchOdyssey /* → …everything else */ {
       return null == corners ? null : Util.RectFromCorners(corners);
     }
 
+    public static void Loop(int begin, int end, System.Action<int> callback, bool reversed = false) {
+      if (null == callback) return;
+      if (reversed) (begin, end) = (end, begin);
+
+      for (int direction = System.Math.Sign(end - begin); ; begin += direction) {
+        callback(begin);
+
+        if (begin == end)
+        return;
+      }
+    }
+
+    public static void Loop(int begin, int end, System.Action<int, int> callback, bool reversed = false) {
+      if (null == callback) return;
+      if (reversed) (begin, end) = (end, begin);
+
+      for (int direction = System.Math.Sign(end - begin), length = System.Math.Abs(end - begin); ; begin += direction) {
+        callback(begin, length);
+
+        if (begin == end)
+        return;
+      }
+    }
+
     public static void Loop(int begin, int end, System.Delegate callback, bool reversed = false) {
-      System.Reflection.ParameterInfo[]? parameters = callback?.Method.GetParameters();
-      System.Reflection.MethodInfo?      method     = callback?.GetType().GetMethod("Invoke");
-      int                                direction  = System.Math.Sign(end - begin);
       object[]                           arguments  = new object[] {begin, System.Math.Abs(end - begin), begin, end};
+      int                                direction  = System.Math.Sign(end - begin);
+      System.Reflection.ParameterInfo[]? parameters = callback?.Method.GetParameters();
 
       // …
-      if (null == method || null == parameters) return;
+      if (null == callback || null == parameters) return;
       if (reversed) { (begin, end) = (end, begin); direction = -direction; }
 
       try { System.Array.Resize(ref arguments, parameters.Length); }
       catch (System.Exception) { throw new System.NotSupportedException("Cannot `Loop(…)` given specified callback; Too many parameters"); }
 
-      for (int index = 0; index != parameters.Length; ++index)
-      arguments[index] = Util.DelegateConvert(arguments[index].GetType(), parameters[index].ParameterType).DynamicInvoke(arguments[index]);
+      for (int index = parameters.Length; 0 != index; )
+      arguments[--index] = Util.DelegateConvert(arguments[index].GetType(), parameters[index].ParameterType).DynamicInvoke(arguments[index]);
 
-      for ((int index, System.Delegate Convert) = (begin, 0 != parameters.Length ? Util.DelegateConvert(typeof(int), parameters[0].ParameterType) : null); ; index += direction) {
-        if (null != Convert)
-          arguments[0] = Convert.DynamicInvoke(index);
+      for (int index = begin; ; index += direction) {
+        if (parameters.Length > 0) arguments[0] = Util.DelegateConvert(index.GetType(), parameters[0].ParameterType).DynamicInvoke(index);
 
-        method.Invoke(callback, arguments);
+        callback.DynamicInvoke(arguments);
         if (end == index) return;
       }
     }
 
+    public static void Loop<T>(System.Collections.Generic.IEnumerable<T> enumerable, System.Action<T> callback) {
+      if      (null == callback)      return;
+      foreach (T value in enumerable) callback(value);
+    }
+
     public static void Loop<T>(System.Collections.Generic.IEnumerable<T> enumerable, System.Delegate callback, bool reversed = false) {
       System.Reflection.ParameterInfo[]?      parameters = callback?.Method.GetParameters();
-      System.Reflection.MethodInfo?           method     = callback?.GetType().GetMethod("Invoke");
       System.Collections.Generic.List<object> loopable   = new();
       int                                     index      = 0;
       object[]                                arguments  = new object[] {null, index};
 
       // …
-      if (null == method || null == parameters) return;
+      if (null == callback || null == parameters) return;
       foreach (T value in enumerable) { loopable.Add(value); ++index; }
       if      (reversed)                loopable.Reverse();
 
@@ -1201,21 +1933,19 @@ namespace PatchOdyssey /* → …everything else */ {
 
       foreach (object value in loopable) {
         if (parameters.Length > 0) arguments[0] = (T) value;
-        if (parameters.Length > 1) arguments[1] = Util.DelegateConvert(typeof(int), parameters[1].ParameterType).DynamicInvoke(index);
+        if (parameters.Length > 1) arguments[1] = Util.DelegateConvert(index.GetType(), parameters[1].ParameterType).DynamicInvoke(index);
 
         index += reversed ? -1 : +1;
-        method.Invoke(callback, arguments);
+        callback.DynamicInvoke(arguments);
       }
     }
-      public static void Loop   (int count,                                            System.Delegate                   callback, bool reversed = false) { if (0 != count) Loop(System.Math.Sign(count), count, callback, reversed); }
-      public static void Loop   (int count,                                            System.Action<int>                callback, bool reversed = false) => Loop(count,      (System.Delegate) callback, reversed);
-      public static void Loop   (int count,                                            System.Action<int, int>           callback, bool reversed = false) => Loop(count,      (System.Delegate) callback, reversed);
-      public static void Loop   (int count,                                            System.Action<int, int, int, int> callback, bool reversed = false) => Loop(count,      (System.Delegate) callback, reversed);
-      public static void Loop   (int begin, int end,                                   System.Action<int>                callback, bool reversed = false) => Loop(begin, end, (System.Delegate) callback, reversed);
-      public static void Loop   (int begin, int end,                                   System.Action<int, int>           callback, bool reversed = false) => Loop(begin, end, (System.Delegate) callback, reversed);
-      public static void Loop   (int begin, int end,                                   System.Action<int, int, int, int> callback, bool reversed = false) => Loop(begin, end, (System.Delegate) callback, reversed);
-      public static void Loop<T>(System.Collections.Generic.IEnumerable<T> enumerable, System.Action<T>                  callback, bool reversed = false) => Loop(enumerable, (System.Delegate) callback, reversed);
-      public static void Loop<T>(System.Collections.Generic.IEnumerable<T> enumerable, System.Action<T, int>             callback, bool reversed = false) => Loop(enumerable, (System.Delegate) callback, reversed);
+      public static void Loop   (int count,                                            System.Delegate                   callback, bool reversed = false) { if (0 != count) Util.Loop(System.Math.Sign(count), count, callback, reversed); }
+      public static void Loop   (int count,                                            System.Action<int>                callback, bool reversed = false) { if (0 != count) Util.Loop(System.Math.Sign(count), count, callback, reversed); }
+      public static void Loop   (int count,                                            System.Action<int, int>           callback, bool reversed = false) => Util.Loop(count,      (System.Delegate) callback, reversed);
+      public static void Loop   (int count,                                            System.Action<int, int, int, int> callback, bool reversed = false) => Util.Loop(count,      (System.Delegate) callback, reversed);
+      public static void Loop   (int begin, int end,                                   System.Action<int, int, int, int> callback, bool reversed = false) => Util.Loop(begin, end, (System.Delegate) callback, reversed);
+      public static void Loop<T>(System.Collections.Generic.IEnumerable<T> enumerable, System.Action<T>                  callback, bool reversed)         => Util.Loop(enumerable, (System.Delegate) callback, reversed);
+      public static void Loop<T>(System.Collections.Generic.IEnumerable<T> enumerable, System.Action<T, int>             callback, bool reversed = false) => Util.Loop(enumerable, (System.Delegate) callback, reversed);
 
     public static T Max<T>(System.Collections.Generic.IEnumerable<T> enumerable) where T : System.IComparable<T> {
       T[] maximum = null;
@@ -1389,7 +2119,8 @@ namespace PatchOdyssey /* → …everything else */ {
       }
     }
 
-    public static object? Switch<T>(T value, System.Collections.Generic.Dictionary<T, object> expression, object? fallback = null) {
+    public static object? Switch<T>(T value, System.Collections.Generic. Dictionary<T, object> expression, object? fallback = null) => Util.Switch(value, expression as System.Collections.Generic.IDictionary<T, object>, fallback);
+    public static object? Switch<T>(T value, System.Collections.Generic.IDictionary<T, object> expression, object? fallback = null) {
       return expression?.TryGetValue(value, out object callback) ?? false ? callback : fallback;
     }
 
