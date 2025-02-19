@@ -682,7 +682,7 @@ public class UI : UnityEngine.MonoBehaviour {
     float                                                                uiTimestamp          = UnityEngine.Time.realtimeSinceStartup;
 
     // → Acknowledge keyboard events
-    foreach (UnityEngine.KeyCode keyCode in Util.GetKeyCodes()) {
+    foreach (UnityEngine.KeyCode keyCode in Util.GetKeys()) {
       if (UnityEngine.Input.GetKey    (keyCode)) this.OnKey     (new() {key = keyCode, timestamp = uiTimestamp});
       if (UnityEngine.Input.GetKeyDown(keyCode)) this.OnKeyBegin(new() {key = keyCode, timestamp = uiTimestamp});
       if (UnityEngine.Input.GetKeyUp  (keyCode)) this.OnKeyEnd  (new() {key = keyCode, timestamp = uiTimestamp});

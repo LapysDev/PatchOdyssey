@@ -1221,9 +1221,9 @@ namespace PatchOdyssey /* → …everything else */ {
 
   public static class Util /* → Utilities */ {
     private sealed class Load {
-      public object?                                                 data     = null;
-      public System.Collections.Generic.List<System.Action<object?>> handlers = new();
-      public bool                                                    pending  = false;
+      public                object?                                                 data     = null;
+      public /* readonly */ System.Collections.Generic.List<System.Action<object?>> handlers = new();
+      public                bool                                                    pending  = false;
     }
 
     private sealed class Wait {
@@ -1233,20 +1233,38 @@ namespace PatchOdyssey /* → …everything else */ {
     }
 
     /* … */
-    private static readonly System.Collections.Generic.Dictionary<System.ValueTuple<System.Type, System.Type>, System.Delegate> DELEGATED_CONVERTS = new();
-    private static readonly System.Collections.Generic.Dictionary<string,                                      Util.Load>       LOADED             = new();
-    private static readonly System.Collections.Generic.List      <Util.Wait>                                                    WAITS              = new();
-
     public const           float  LoadAsynchronously = 0.0f;  // → `LoadURI*(…, float? loadDurationMaximum, …)`
     public const           bool   LoadCached         = false; // → `LoadURI*(…, bool uncached)`
     public const           bool   LoadDirectly       = true;  // → `LoadURI*(…, bool uncached)`
     public static readonly float? LoadSynchronously  = null;  // → `LoadURI*(…, float? loadDurationMaximum, …)`
+    public const           int    MouseButtonLeft    = 0x0;
+    public const           int    MouseButtonMiddle  = 0x2;
+    public const           int    MouseButtonRight   = 0x1;
+
+    private static readonly System.Collections.Generic.List                  <Util.Wait>                                                    WAITS                  = new();
+    private static readonly System.Collections.ObjectModel.ReadOnlyCollection<int>                                                          MOUSE_BUTTONS          = System.Array.AsReadOnly(new[] {Util.MouseButtonLeft, Util.MouseButtonRight, Util.MouseButtonMiddle});
+    private static readonly System.Collections.Generic.Dictionary            <string, Util.Load>                                            LOADED                 = new();
+    private static readonly System.Collections.ObjectModel.ReadOnlyCollection<UnityEngine.KeyCode>                                          KEYS                   = System.Array.AsReadOnly(new[] {UnityEngine.KeyCode.A, UnityEngine.KeyCode.Alpha0, UnityEngine.KeyCode.Alpha1, UnityEngine.KeyCode.Alpha2, UnityEngine.KeyCode.Alpha3, UnityEngine.KeyCode.Alpha4, UnityEngine.KeyCode.Alpha5, UnityEngine.KeyCode.Alpha6, UnityEngine.KeyCode.Alpha7, UnityEngine.KeyCode.Alpha8, UnityEngine.KeyCode.Alpha9, UnityEngine.KeyCode.AltGr, UnityEngine.KeyCode.Ampersand, UnityEngine.KeyCode.Asterisk, UnityEngine.KeyCode.At, UnityEngine.KeyCode.B, UnityEngine.KeyCode.BackQuote, UnityEngine.KeyCode.Backslash, UnityEngine.KeyCode.Backspace, UnityEngine.KeyCode.Break, UnityEngine.KeyCode.C, UnityEngine.KeyCode.CapsLock, UnityEngine.KeyCode.Caret, UnityEngine.KeyCode.Clear, UnityEngine.KeyCode.Colon, UnityEngine.KeyCode.Comma, UnityEngine.KeyCode.D, UnityEngine.KeyCode.Delete, UnityEngine.KeyCode.Dollar, UnityEngine.KeyCode.DoubleQuote, UnityEngine.KeyCode.DownArrow, UnityEngine.KeyCode.E, UnityEngine.KeyCode.End, UnityEngine.KeyCode.Equals, UnityEngine.KeyCode.Escape, UnityEngine.KeyCode.Exclaim, UnityEngine.KeyCode.F, UnityEngine.KeyCode.F1, UnityEngine.KeyCode.F10, UnityEngine.KeyCode.F11, UnityEngine.KeyCode.F12, UnityEngine.KeyCode.F13, UnityEngine.KeyCode.F14, UnityEngine.KeyCode.F15, UnityEngine.KeyCode.F2, UnityEngine.KeyCode.F3, UnityEngine.KeyCode.F4, UnityEngine.KeyCode.F5, UnityEngine.KeyCode.F6, UnityEngine.KeyCode.F7, UnityEngine.KeyCode.F8, UnityEngine.KeyCode.F9, UnityEngine.KeyCode.G, UnityEngine.KeyCode.Greater, UnityEngine.KeyCode.H, UnityEngine.KeyCode.Hash, UnityEngine.KeyCode.Help, UnityEngine.KeyCode.Home, UnityEngine.KeyCode.I, UnityEngine.KeyCode.Insert, UnityEngine.KeyCode.J, UnityEngine.KeyCode.K, UnityEngine.KeyCode.Keypad0, UnityEngine.KeyCode.Keypad1, UnityEngine.KeyCode.Keypad2, UnityEngine.KeyCode.Keypad3, UnityEngine.KeyCode.Keypad4, UnityEngine.KeyCode.Keypad5, UnityEngine.KeyCode.Keypad6, UnityEngine.KeyCode.Keypad7, UnityEngine.KeyCode.Keypad8, UnityEngine.KeyCode.Keypad9, UnityEngine.KeyCode.KeypadDivide, UnityEngine.KeyCode.KeypadEnter, UnityEngine.KeyCode.KeypadEquals, UnityEngine.KeyCode.KeypadMinus, UnityEngine.KeyCode.KeypadMultiply, UnityEngine.KeyCode.KeypadPeriod, UnityEngine.KeyCode.KeypadPlus, UnityEngine.KeyCode.L, UnityEngine.KeyCode.LeftAlt, UnityEngine.KeyCode.LeftApple, UnityEngine.KeyCode.LeftArrow, UnityEngine.KeyCode.LeftBracket, UnityEngine.KeyCode.LeftCommand, UnityEngine.KeyCode.LeftControl, UnityEngine.KeyCode.LeftCurlyBracket, UnityEngine.KeyCode.LeftMeta, UnityEngine.KeyCode.LeftParen, UnityEngine.KeyCode.LeftShift, UnityEngine.KeyCode.LeftWindows, UnityEngine.KeyCode.Less, UnityEngine.KeyCode.M, UnityEngine.KeyCode.Menu, UnityEngine.KeyCode.Minus, UnityEngine.KeyCode.N, UnityEngine.KeyCode.Numlock, UnityEngine.KeyCode.O, UnityEngine.KeyCode.P, UnityEngine.KeyCode.PageDown, UnityEngine.KeyCode.PageUp, UnityEngine.KeyCode.Pause, UnityEngine.KeyCode.Percent, UnityEngine.KeyCode.Period, UnityEngine.KeyCode.Pipe, UnityEngine.KeyCode.Plus, UnityEngine.KeyCode.Print, UnityEngine.KeyCode.Q, UnityEngine.KeyCode.Question, UnityEngine.KeyCode.Quote, UnityEngine.KeyCode.R, UnityEngine.KeyCode.Return, UnityEngine.KeyCode.RightAlt, UnityEngine.KeyCode.RightApple, UnityEngine.KeyCode.RightArrow, UnityEngine.KeyCode.RightBracket, UnityEngine.KeyCode.RightCommand, UnityEngine.KeyCode.RightControl, UnityEngine.KeyCode.RightCurlyBracket, UnityEngine.KeyCode.RightMeta, UnityEngine.KeyCode.RightParen, UnityEngine.KeyCode.RightShift, UnityEngine.KeyCode.RightWindows, UnityEngine.KeyCode.S, UnityEngine.KeyCode.ScrollLock, UnityEngine.KeyCode.Semicolon, UnityEngine.KeyCode.Slash, UnityEngine.KeyCode.Space, UnityEngine.KeyCode.SysReq, UnityEngine.KeyCode.T, UnityEngine.KeyCode.Tab, UnityEngine.KeyCode.Tilde, UnityEngine.KeyCode.U, UnityEngine.KeyCode.Underscore, UnityEngine.KeyCode.UpArrow, UnityEngine.KeyCode.V, UnityEngine.KeyCode.W, UnityEngine.KeyCode.X, UnityEngine.KeyCode.Y, UnityEngine.KeyCode.Z});
+    private static readonly System.Collections.Generic.Dictionary            <System.ValueTuple<System.Type, System.Type>, System.Delegate> DELEGATED_CONVERTS     = new();
+    private static readonly System.Collections.ObjectModel.ReadOnlyDictionary<System.Type,                                 System.Type[]>   IMPLICIT_TYPE_CONVERTS = new(new System.Collections.Generic.Dictionary<System.Type, System.Type[]>() {
+      {typeof(byte),   new[] {typeof(decimal), typeof(double), typeof(float), typeof(int), typeof(long), typeof(nint), typeof(nuint), typeof(short), typeof(uint), typeof(ulong), typeof(ushort)}},
+      {typeof(float),  new[] {typeof(double)}},
+      {typeof(int),    new[] {typeof(decimal), typeof(double), typeof(float), typeof(long), typeof(nint)}},
+      {typeof(long),   new[] {typeof(decimal), typeof(double), typeof(float)}},
+      {typeof(nint),   new[] {typeof(decimal), typeof(double), typeof(float), typeof(long)}},
+      {typeof(nuint),  new[] {typeof(decimal), typeof(double), typeof(float), typeof(ulong)}},
+      {typeof(sbyte),  new[] {typeof(decimal), typeof(double), typeof(float), typeof(int), typeof(long), typeof(nint), typeof(short)}},
+      {typeof(short),  new[] {typeof(decimal), typeof(double), typeof(float), typeof(int), typeof(long), typeof(nint)}},
+      {typeof(uint),   new[] {typeof(decimal), typeof(double), typeof(float), typeof(long), typeof(nuint), typeof(ulong)}},
+      {typeof(ulong),  new[] {typeof(decimal), typeof(double), typeof(float)}},
+      {typeof(ushort), new[] {typeof(decimal), typeof(double), typeof(float), typeof(int), typeof(long), typeof(nint), typeof(nuint), typeof(uint), typeof(ulong)}}
+    });
 
     /* … */
     public static object[] ArrayFrom   () { return new object[0]; }
     public static T     [] ArrayFrom<T>() { return new T     [0]; }
 
-    public static T[] ArrayFrom<T>(T[]                                       array)      { return array; }
+    public static T[] ArrayFrom<T>(T[]                                       array)      { return array ?? new T[0]; }
     public static T[] ArrayFrom<T>(System.Collections.ArrayList              list)       { return System.Array.ConvertAll(list.ToArray() as object[], static element => (T) element); }
     public static T[] ArrayFrom<T>(System.Collections.Generic.List       <T> list)       { return list .ToArray(); }
     public static T[] ArrayFrom<T>(System.Collections.Generic.Queue      <T> queue)      { return queue.ToArray(); }
@@ -1303,55 +1321,43 @@ namespace PatchOdyssey /* → …everything else */ {
     }
 
     public static T[] ArrayFromMembers<T>(object structure) where T : class? {
-      if (null == structure)
-      return null as T?[];
+      static System.Func<object?, object?[]?, object?>? DelegateCast<U>() where U : class {
+        foreach (System.Reflection.MethodInfo method in typeof(U).GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)) {
+          System.Reflection.ParameterInfo[] parameters = method.GetParameters();
 
-      T[]    array     = null;
-      uint   length    = 0u;
-      T?[][] sequences = System.Array.ConvertAll(structure.GetType().GetMembers(), member => {
-        System.Type? memberType  = null;
-        object?      memberValue = member.MemberType switch {
-          System.Reflection.MemberTypes.Field    => new System.Func<object?>(() => (member as System.Reflection.FieldInfo)   .GetValue(structure))(),
-          System.Reflection.MemberTypes.Property => new System.Func<object?>(() => (member as System.Reflection.PropertyInfo).GetValue(structure))(),
-          _                                      => null
-        };
+          if (method.Name == "op_Implicit" && method.ReturnType == typeof(U) && 0 != parameters.Length && parameters[0].ParameterType == typeof(U))
+          return method.Invoke;
+        }
 
-        System.Reflection.MethodInfo? GetConversionOperator(System.Type type) => System.Array.Find(
-          memberType?.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static) ?? new System.Reflection.MethodInfo[] {},
-          method =>
-            method                                               .Name          == "op_Implicit" &&
-            method                                               .ReturnType    == type          &&
-            System.Array.Find(method.GetParameters(), _ => true)?.ParameterType == memberType
-        );
+        return static (object target, object?[]? parameters) => (object?) (parameters[0] as U);
+      }
+
+      if (null != structure) {
+        System.Reflection.MemberInfo[]     members    = structure.GetType().GetMembers();
+        System.Collections.Generic.List<T> decomposed = new(members.Length);
+        T?[][]                             arrays     = System.Array.ConvertAll(members, member => {
+          object?      value = member switch { System.Reflection.FieldInfo field => field.GetValue(structure), System.Reflection.PropertyInfo property => property.GetValue(structure), _ => null };
+          System.Type? type  = value?.GetType();
+
+          // … → Decompose array field/ property members also
+          if (Util.IsConvertibleType(type, typeof(T)))                    return new[]         {DelegateCast<T>   ().Invoke(null, new[] {value}) as T};
+          if (Util.IsConvertibleType(type, typeof(T [])) && value is T[]) return Util.ArrayFrom(DelegateCast<T []>().Invoke(null, new[] {value}) as T []);
+          if (Util.IsConvertibleType(type, typeof(T?[])))                 return Util.ArrayFrom(DelegateCast<T?[]>().Invoke(null, new[] {value}) as T?[]);
+
+          return new T?[0];
+        });
 
         // …
-        memberType = memberValue?.GetType();
-
-        if (Util.IsConvertibleType(memberType, typeof(T)))                                 return new[] {memberValue as T    ?? GetConversionOperator(typeof(T))   ?.Invoke(null, new[] {memberValue}) as T};
-        if (Util.IsConvertibleType(memberType, typeof(T[])) && null != memberValue as T[]) return        memberValue as T[]  ?? GetConversionOperator(typeof(T[])) ?.Invoke(null, new[] {memberValue}) as T[];
-        if (Util.IsConvertibleType(memberType, typeof(T?[])))                              return        memberValue as T?[] ?? GetConversionOperator(typeof(T?[]))?.Invoke(null, new[] {memberValue}) as T?[];
-
-        return null as T?[];
-      });
-
-      // …
-      foreach (T?[] sequence in sequences) {
-        foreach (T? sequenced in sequence ?? new T?[] {null})
-        length += null != sequenced ? 1u : 0u;
-      }
-
-      if (0u != length) {
-        array  = new T?[length];
-        length = 0u;
-
-        foreach (T?[] sequence  in sequences)
-        foreach (T?   sequenced in sequence ?? new T?[] {null}) {
-          if (null != sequenced)
-          array[length++] = sequenced;
+        foreach (T?[] array in arrays)
+        foreach (T?   value in array) {
+          if (null != value)
+          decomposed.Add(value);
         }
+
+        return Util.ArrayFrom(decomposed);
       }
 
-      return array;
+      return null;
     }
 
     public static UnityEngine.Vector3[] CornersFromRect(UnityEngine.Rect rectangle) {
@@ -1365,7 +1371,7 @@ namespace PatchOdyssey /* → …everything else */ {
     }
 
     public static UnityEngine.Vector3[]? CornersFromRectTransform(System.Action<UnityEngine.Vector3[]>? transformMethod) {
-      UnityEngine.Vector3[] corners = null;
+      UnityEngine.Vector3[]? corners = null;
 
       // …
       if (transformMethod?.Target is UnityEngine.RectTransform)
@@ -1386,58 +1392,36 @@ namespace PatchOdyssey /* → …everything else */ {
       return subvalue => (value as System.IEquatable<T>)?.Equals(subvalue) ?? (object) value == (object) subvalue;
     }
 
-    public static string GetAssetPath() {
-      return Util.NormalizeURI(UnityEngine.Application.streamingAssetsPath);
-    }
-
-    public static System.Collections.Generic.Dictionary<System.Type, System.Type[]> GetConvertibleImplicitTypes() {
-      return new() {
-        {typeof(byte),   new[] {typeof(decimal), typeof(double), typeof(float), typeof(int), typeof(long), typeof(nint), typeof(nuint), typeof(short), typeof(uint), typeof(ulong), typeof(ushort)}},
-        {typeof(float),  new[] {typeof(double)}},
-        {typeof(int),    new[] {typeof(decimal), typeof(double), typeof(float), typeof(long), typeof(nint)}},
-        {typeof(long),   new[] {typeof(decimal), typeof(double), typeof(float)}},
-        {typeof(nint),   new[] {typeof(decimal), typeof(double), typeof(float), typeof(long)}},
-        {typeof(nuint),  new[] {typeof(decimal), typeof(double), typeof(float), typeof(ulong)}},
-        {typeof(sbyte),  new[] {typeof(decimal), typeof(double), typeof(float), typeof(int), typeof(long), typeof(nint), typeof(short)}},
-        {typeof(short),  new[] {typeof(decimal), typeof(double), typeof(float), typeof(int), typeof(long), typeof(nint)}},
-        {typeof(uint),   new[] {typeof(decimal), typeof(double), typeof(float), typeof(long), typeof(nuint), typeof(ulong)}},
-        {typeof(ulong),  new[] {typeof(decimal), typeof(double), typeof(float)}},
-        {typeof(ushort), new[] {typeof(decimal), typeof(double), typeof(float), typeof(int), typeof(long), typeof(nint), typeof(nuint), typeof(uint), typeof(ulong)}}
-      };
-    }
-
-    public static string GetDataPath() {
-      return Util.NormalizeURI(UnityEngine.Application.persistentDataPath);
-    }
-
-    public static UnityEngine.KeyCode[] GetKeyCodes    () => new[] {UnityEngine.KeyCode.A, UnityEngine.KeyCode.Alpha0, UnityEngine.KeyCode.Alpha1, UnityEngine.KeyCode.Alpha2, UnityEngine.KeyCode.Alpha3, UnityEngine.KeyCode.Alpha4, UnityEngine.KeyCode.Alpha5, UnityEngine.KeyCode.Alpha6, UnityEngine.KeyCode.Alpha7, UnityEngine.KeyCode.Alpha8, UnityEngine.KeyCode.Alpha9, UnityEngine.KeyCode.AltGr, UnityEngine.KeyCode.Ampersand, UnityEngine.KeyCode.Asterisk, UnityEngine.KeyCode.At, UnityEngine.KeyCode.B, UnityEngine.KeyCode.BackQuote, UnityEngine.KeyCode.Backslash, UnityEngine.KeyCode.Backspace, UnityEngine.KeyCode.Break, UnityEngine.KeyCode.C, UnityEngine.KeyCode.CapsLock, UnityEngine.KeyCode.Caret, UnityEngine.KeyCode.Clear, UnityEngine.KeyCode.Colon, UnityEngine.KeyCode.Comma, UnityEngine.KeyCode.D, UnityEngine.KeyCode.Delete, UnityEngine.KeyCode.Dollar, UnityEngine.KeyCode.DoubleQuote, UnityEngine.KeyCode.DownArrow, UnityEngine.KeyCode.E, UnityEngine.KeyCode.End, UnityEngine.KeyCode.Equals, UnityEngine.KeyCode.Escape, UnityEngine.KeyCode.Exclaim, UnityEngine.KeyCode.F, UnityEngine.KeyCode.F1, UnityEngine.KeyCode.F10, UnityEngine.KeyCode.F11, UnityEngine.KeyCode.F12, UnityEngine.KeyCode.F13, UnityEngine.KeyCode.F14, UnityEngine.KeyCode.F15, UnityEngine.KeyCode.F2, UnityEngine.KeyCode.F3, UnityEngine.KeyCode.F4, UnityEngine.KeyCode.F5, UnityEngine.KeyCode.F6, UnityEngine.KeyCode.F7, UnityEngine.KeyCode.F8, UnityEngine.KeyCode.F9, UnityEngine.KeyCode.G, UnityEngine.KeyCode.Greater, UnityEngine.KeyCode.H, UnityEngine.KeyCode.Hash, UnityEngine.KeyCode.Help, UnityEngine.KeyCode.Home, UnityEngine.KeyCode.I, UnityEngine.KeyCode.Insert, UnityEngine.KeyCode.J, UnityEngine.KeyCode.K, UnityEngine.KeyCode.Keypad0, UnityEngine.KeyCode.Keypad1, UnityEngine.KeyCode.Keypad2, UnityEngine.KeyCode.Keypad3, UnityEngine.KeyCode.Keypad4, UnityEngine.KeyCode.Keypad5, UnityEngine.KeyCode.Keypad6, UnityEngine.KeyCode.Keypad7, UnityEngine.KeyCode.Keypad8, UnityEngine.KeyCode.Keypad9, UnityEngine.KeyCode.KeypadDivide, UnityEngine.KeyCode.KeypadEnter, UnityEngine.KeyCode.KeypadEquals, UnityEngine.KeyCode.KeypadMinus, UnityEngine.KeyCode.KeypadMultiply, UnityEngine.KeyCode.KeypadPeriod, UnityEngine.KeyCode.KeypadPlus, UnityEngine.KeyCode.L, UnityEngine.KeyCode.LeftAlt, UnityEngine.KeyCode.LeftApple, UnityEngine.KeyCode.LeftArrow, UnityEngine.KeyCode.LeftBracket, UnityEngine.KeyCode.LeftCommand, UnityEngine.KeyCode.LeftControl, UnityEngine.KeyCode.LeftCurlyBracket, UnityEngine.KeyCode.LeftMeta, UnityEngine.KeyCode.LeftParen, UnityEngine.KeyCode.LeftShift, UnityEngine.KeyCode.LeftWindows, UnityEngine.KeyCode.Less, UnityEngine.KeyCode.M, UnityEngine.KeyCode.Menu, UnityEngine.KeyCode.Minus, UnityEngine.KeyCode.N, UnityEngine.KeyCode.Numlock, UnityEngine.KeyCode.O, UnityEngine.KeyCode.P, UnityEngine.KeyCode.PageDown, UnityEngine.KeyCode.PageUp, UnityEngine.KeyCode.Pause, UnityEngine.KeyCode.Percent, UnityEngine.KeyCode.Period, UnityEngine.KeyCode.Pipe, UnityEngine.KeyCode.Plus, UnityEngine.KeyCode.Print, UnityEngine.KeyCode.Q, UnityEngine.KeyCode.Question, UnityEngine.KeyCode.Quote, UnityEngine.KeyCode.R, UnityEngine.KeyCode.Return, UnityEngine.KeyCode.RightAlt, UnityEngine.KeyCode.RightApple, UnityEngine.KeyCode.RightArrow, UnityEngine.KeyCode.RightBracket, UnityEngine.KeyCode.RightCommand, UnityEngine.KeyCode.RightControl, UnityEngine.KeyCode.RightCurlyBracket, UnityEngine.KeyCode.RightMeta, UnityEngine.KeyCode.RightParen, UnityEngine.KeyCode.RightShift, UnityEngine.KeyCode.RightWindows, UnityEngine.KeyCode.S, UnityEngine.KeyCode.ScrollLock, UnityEngine.KeyCode.Semicolon, UnityEngine.KeyCode.Slash, UnityEngine.KeyCode.Space, UnityEngine.KeyCode.SysReq, UnityEngine.KeyCode.T, UnityEngine.KeyCode.Tab, UnityEngine.KeyCode.Tilde, UnityEngine.KeyCode.U, UnityEngine.KeyCode.Underscore, UnityEngine.KeyCode.UpArrow, UnityEngine.KeyCode.V, UnityEngine.KeyCode.W, UnityEngine.KeyCode.X, UnityEngine.KeyCode.Y, UnityEngine.KeyCode.Z};
-    public static int                [] GetMouseButtons() => new[] {0x0, 0x1, 0x2};
+    public static              string                                                                 GetAssetPath   () { return Util.NormalizeURI(UnityEngine.Application.streamingAssetsPath); }
+    public static              string                                                                 GetDataPath    () { return Util.NormalizeURI(UnityEngine.Application.persistentDataPath); }
+    public static ref readonly System.Collections.ObjectModel.ReadOnlyCollection<int>                 GetMouseButtons() { return ref Util.MOUSE_BUTTONS; }
+    public static ref readonly System.Collections.ObjectModel.ReadOnlyCollection<UnityEngine.KeyCode> GetKeys        () { return ref Util.KEYS; }
 
     public static UnityEngine.Vector2    GetVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector2    axes) { return new(0.0f != axes.x ? vector.x : 0.0f, 0.0f != axes.y ? vector.y : 0.0f); }
     public static UnityEngine.Vector2Int GetVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector2Int axes) { return new   (0 != axes.x ? vector.x : 0,       0 != axes.y ? vector.y : 0); }
     public static UnityEngine.Vector3    GetVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector3    axes) { return new(0.0f != axes.x ? vector.x : 0.0f, 0.0f != axes.y ? vector.y : 0.0f, 0.0f != axes.z ? vector.z : 0.0f); }
     public static UnityEngine.Vector3Int GetVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector3Int axes) { return new   (0 != axes.x ? vector.x : 0,       0 != axes.y ? vector.y : 0,       0 != axes.z ? vector.z : 0); }
     public static UnityEngine.Vector4    GetVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector4    axes) { return new(0.0f != axes.x ? vector.x : 0.0f, 0.0f != axes.y ? vector.y : 0.0f, 0.0f != axes.z ? vector.z : 0.0f, 0.0f != axes.w ? vector.w : 0.0f); }
-      public static UnityEngine.Vector2    GetVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector2Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y)); }
-      public static UnityEngine.Vector2    GetVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector3    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y)); }
-      public static UnityEngine.Vector2    GetVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector3Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y)); }
-      public static UnityEngine.Vector2    GetVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector4    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y)); }
-      public static UnityEngine.Vector2Int GetVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector2    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y)); }
-      public static UnityEngine.Vector2Int GetVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector3    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y)); }
-      public static UnityEngine.Vector2Int GetVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector3Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y)); }
-      public static UnityEngine.Vector2Int GetVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector4    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y)); }
-      public static UnityEngine.Vector3    GetVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector2    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) 0.0f)); }
-      public static UnityEngine.Vector3    GetVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector2Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) 0.0f)); }
-      public static UnityEngine.Vector3    GetVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector3Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) axes.z)); }
-      public static UnityEngine.Vector3    GetVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector4    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) axes.z)); }
-      public static UnityEngine.Vector3Int GetVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector2    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   0)); }
-      public static UnityEngine.Vector3Int GetVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector2Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   0)); }
-      public static UnityEngine.Vector3Int GetVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector3    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   axes.z)); }
-      public static UnityEngine.Vector3Int GetVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector4    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   axes.z)); }
-      public static UnityEngine.Vector4    GetVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector2    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) 0.0f,   (float) 0.0f)); }
-      public static UnityEngine.Vector4    GetVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector2Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) 0.0f,   (float) 0.0f)); }
-      public static UnityEngine.Vector4    GetVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector3    axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) axes.z, (float) 0.0f)); }
-      public static UnityEngine.Vector4    GetVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector3Int axes) { return Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) axes.z, (float) 0.0f)); }
+      public static UnityEngine.Vector2    GetVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector2Int axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y));
+      public static UnityEngine.Vector2    GetVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector3    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y));
+      public static UnityEngine.Vector2    GetVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector3Int axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y));
+      public static UnityEngine.Vector2    GetVectorAxes(UnityEngine.Vector2    vector, UnityEngine.Vector4    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y));
+      public static UnityEngine.Vector2Int GetVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector2    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y));
+      public static UnityEngine.Vector2Int GetVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector3    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y));
+      public static UnityEngine.Vector2Int GetVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector3Int axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y));
+      public static UnityEngine.Vector2Int GetVectorAxes(UnityEngine.Vector2Int vector, UnityEngine.Vector4    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y));
+      public static UnityEngine.Vector3    GetVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector2    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) 0.0f));
+      public static UnityEngine.Vector3    GetVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector2Int axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) 0.0f));
+      public static UnityEngine.Vector3    GetVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector3Int axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) axes.z));
+      public static UnityEngine.Vector3    GetVectorAxes(UnityEngine.Vector3    vector, UnityEngine.Vector4    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) axes.z));
+      public static UnityEngine.Vector3Int GetVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector2    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   0));
+      public static UnityEngine.Vector3Int GetVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector2Int axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   0));
+      public static UnityEngine.Vector3Int GetVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector3    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   axes.z));
+      public static UnityEngine.Vector3Int GetVectorAxes(UnityEngine.Vector3Int vector, UnityEngine.Vector4    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   axes.z));
+      public static UnityEngine.Vector4    GetVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector2    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) 0.0f,   (float) 0.0f));
+      public static UnityEngine.Vector4    GetVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector2Int axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) 0.0f,   (float) 0.0f));
+      public static UnityEngine.Vector4    GetVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector3    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) axes.z, (float) 0.0f));
+      public static UnityEngine.Vector4    GetVectorAxes(UnityEngine.Vector4    vector, UnityEngine.Vector3Int axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) axes.z, (float) 0.0f));
 
     public static float GetVectorAxis(UnityEngine.Vector4 vector, UnityEngine.Vector4 axis) {
       if (0.0f != axis.x) return vector.x;
@@ -1652,7 +1636,7 @@ namespace PatchOdyssey /* → …everything else */ {
         ) return true;
 
         // … → Recurse `IsConvertibleType(…)` loop
-        if (Util.GetConvertibleImplicitTypes().TryGetValue(typeA, out System.Type[] implicitTypes))
+        if (IMPLICIT_TYPE_CONVERTS.TryGetValue(typeA, out System.Type[] implicitTypes))
         if (System.Array.IndexOf(implicitTypes, typeB) != implicitTypes.GetLowerBound(0) - 1) {
           foreach (System.Type implicitType in implicitTypes) {
             if (!types.Contains(implicitType))
@@ -1675,7 +1659,7 @@ namespace PatchOdyssey /* → …everything else */ {
     }
 
     private static bool IsImplicitConvertibleType(System.Type typeA, System.Type typeB) {
-      if (Util.GetConvertibleImplicitTypes().TryGetValue(typeA, out System.Type[] implicitTypes))
+      if (IMPLICIT_TYPE_CONVERTS.TryGetValue(typeA, out System.Type[] implicitTypes))
         return System.Array.IndexOf(implicitTypes, typeB) != implicitTypes.GetLowerBound(0) - 1;
 
       return false;
@@ -1687,7 +1671,7 @@ namespace PatchOdyssey /* → …everything else */ {
       System.Func<string, UnityEngine.Networking.UnityWebRequest>  requester, // → Map `path` URI to preempted `UnityEngine.Networking.UnityWebRequest`
       System.Func<UnityEngine.Networking.UnityWebRequest, object?> parser     // → Map `UnityEngine.Networking.UnityWebRequest` result to desired URI data
     ) {
-      Util.Load                                            load = new() {data = null, handlers = new(new[] {callback}), pending = false};
+      Util.Load                                            load = new() {data = null, handlers = new() {callback}, pending = false};
       UnityEngine.Networking.UnityWebRequestAsyncOperation operation;
       UnityEngine.Networking.UnityWebRequest               request; // → Able to access the `UnityEngine.Application.streamingAssetsPath` directory
       System.Diagnostics.Stopwatch                         stopwatch = new();
