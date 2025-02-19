@@ -85,7 +85,7 @@ public class NPC : UnityEngine.MonoBehaviour {
 
   public void MoveBy(UnityEngine.Vector3 distance) {
     if (Game.main?.isPlaying ?? false) {
-      this.movement                  = Util.IgnoreVectorHeightAxes(distance);
+      this.movement                  = Util.ExcludeVectorHeightAxes(distance);
       this.movementOrigin            = this.transform.position;
       this.noMovementDurationElapsed = 0.0f;
     }
@@ -93,7 +93,7 @@ public class NPC : UnityEngine.MonoBehaviour {
 
   public void MoveHalt() {
     if (Game.main?.isPlaying ?? false) {
-      this.movement                = Util.IgnoreVectorForwardAxes(this.movement);
+      this.movement                = Util.ExcludeVectorForwardAxes(this.movement);
       this.movementDurationElapsed = 0.0f;
       this.movementOrigin          = this.transform.position;
     }

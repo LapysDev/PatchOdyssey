@@ -557,7 +557,6 @@ public class UI : UnityEngine.MonoBehaviour {
   }
 
   private void Start() {
-    return; // TODO (Lapys)
     UnityEngine.RectTransform? splashTransform = this.components["splash"]?.transform as UnityEngine.RectTransform;
 
     // …
@@ -673,7 +672,6 @@ public class UI : UnityEngine.MonoBehaviour {
   }
 
   private void Update() {
-    return; // TODO (Lapys)
     (T, UnityEngine.Vector3 eulerAngles, UnityEngine.Vector3 localScale) teeterAnimationStart = (default(T), UnityEngine.Vector3.zero, UnityEngine.Vector3.one);
     System.Collections.Generic.List<UnityEngine.GameObject>              uiAnimatable         = new((int) this.gameObject.CountDescendants());
     System.Action<UnityEngine.AudioSource>                               uiAsSoundEffect      = uiAudio => { if (null != uiAudio) uiAudio.spatialBlend = 0.0f; };
