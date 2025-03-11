@@ -12,12 +12,9 @@ public class UI : UnityEngine.MonoBehaviour {
   public enum T : byte {} // → Dummy type
 
   public sealed class ComponentLoadInfo {
-    public float                              animationDurationElapsed = 0.0f;               // → Pending reset whenever `loading` is modified
-    public (T, UnityEngine.Vector3? position) animationEnd             = (default(T), null); //
-    public (T, UnityEngine.Vector3? position) animationStart           = (default(T), null); //
-    public UnityEngine.GameObject             gameObject               = null;               //
-    public bool                               loading                  = true;               //
-    public float                              timestamp                = 0.0f;               // → `UnityEngine.Time.realtimeSinceStartup`
+    public AnimationSequence      animation;
+    public UnityEngine.GameObject gameObject;
+    public bool                   loading = true;
   }
 
   public class EventDataInfo {
@@ -49,7 +46,7 @@ public class UI : UnityEngine.MonoBehaviour {
 
   /* … */
   private static readonly System.Func<double, double> TEETER_ANIMATION_FUNCTION              = PatchOdyssey.AnimationFunction.EaseInOutCircular; // → 𝑓
-  private const           float                       TEETER_ANIMATION_DURATION              = 2.0f;                                             // → in Seconds greater than `UnityEngine.Time.deltaTime`
+  private const           float                       TEETER_ANIMATION_DURATION              = 2.00f;                                            // → in Seconds greater than `UnityEngine.Time.deltaTime`
   private static readonly System.Func<double, double> LOAD_ANIMATION_FUNCTION                = PatchOdyssey.AnimationFunction.EaseInOutQuintic;  // → 𝑓
   private const           float                       LOAD_ANIMATION_DURATION                = 0.40f;                                            // → in Seconds greater than `UnityEngine.Time.deltaTime`
   private static readonly float                       IMMEDIATE_TEXT_BACKGROUND_TRANSPARENCY = Util.Percent(65.0f);                              //
@@ -88,6 +85,9 @@ public class UI : UnityEngine.MonoBehaviour {
   /* … */
   private void Awake() {
     UI.main ??= this;
+
+    // … → Make rendering faster
+    this.GetComponent<UnityEngine.Canvas>().pixelPerfect = false;
   }
 
   void EndEventData<T>(SerializedReadOnlyDictionary<string, System.Collections.Generic.List<T>> informationList) where T : UI.EventDataInfo {
@@ -223,18 +223,20 @@ public class UI : UnityEngine.MonoBehaviour {
   }
 
   public void LoadComponent(string name, UI.LoadAction action = UI.LoadAction.Deferred) {
-    if (this.components.TryGetValue(name, out UnityEngine.GameObject gameObject)) {
-      UI.ComponentLoadInfo? componentLoadInformation = this.componentLoads.Find(componentLoadInformation => gameObject == componentLoadInformation.gameObject);
+    this.componentLoads.RemoveAll(static _ => null == _.gameObject);
 
-      // …
-      this.OnTabBlur();
+    if (this.components.TryGetValue(name, out UnityEngine.GameObject gameObject))
+    if (null != gameObject) {
+      foreach (UI.ComponentLoadInfo componentLoad in this.componentLoads)
+      if (componentLoad.gameObject == gameObject) {
+        this.OnTabBlur();
 
-      if (null == componentLoadInformation)
-        this.componentLoads.Add(componentLoadInformation = new());
+        if (false == componentLoad.loading) componentLoad.animation.Reset();
+        componentLoad.animation.duration = 0x0u != (action & UI.LoadAction.Immediately) ? 0.0 : 0.4;
+        componentLoad.loading            = true;
 
-      componentLoadInformation.animationDurationElapsed = 0x0u != (action & UI.LoadAction.Immediately) ? LOAD_ANIMATION_DURATION + 1.0e-3f : !componentLoadInformation.loading ? 0.0f : componentLoadInformation.animationDurationElapsed;
-      componentLoadInformation.gameObject               = null == gameObject /* → Non-null destroyed `GameObject` */ ? null : gameObject;
-      componentLoadInformation.loading                  = true;
+        break;
+      }
     }
   }
 
@@ -557,6 +559,8 @@ public class UI : UnityEngine.MonoBehaviour {
   }
 
   private void Start() {
+    // TODO (Lapys) → Test `ComponentLoad` animations
+    // TODO (Lapys) → Why does `SerializedDictionary` completely reset itself each build? T_T
     UnityEngine.RectTransform? splashTransform = this.components["splash"]?.transform as UnityEngine.RectTransform;
 
     // …
@@ -608,11 +612,19 @@ public class UI : UnityEngine.MonoBehaviour {
     }
 
     // → Sequence menus
+    /* VOLUME DB IS EXPONENTIAL, NOT LINEAR */
+    /* CACHE `Camera.main` */
+    /* USE `Object.ReferenceEquals(…)` for non user scripts */
+    /* Cache properties like `transform`, fuck man, Unity! */
+    /* System.ReadOnlySpan<UnmanagedT> bruh = stackalloc UnmanagedT[begin.Count]; like `int` */
+    /* FLOAT * FLOAT * VECTOR */
+    /* OBJECT POOL FOR BULLETS: INSTANTIATE OBJECTS THEN RE-CYCLE THEM.. IT'S FUCKING CUSTOM */
+    /* Use `in` for const references and readonly structs (or struct properties) only */
     this.UnloadAllComponents(UI.LoadAction.Immediately);
     this.LoadComponent      ("splash", UI.LoadAction.Immediately);
     this.LoadMusic          ("calm.mp3");
 
-    Util.WaitAtLeastOnce(1.5f, () => {
+    Util.WaitAtLeastOnce(1.5, () => {
       this.components["splash"]?.GetComponent<UnityEngine.UI.RawImage>()?.CrossFadeAlpha(0.0f, BACKGROUND_UNLOAD_DURATION, true); // → Thank goodness this method exists; T_T
       System.Array.ForEach(this.components["splash"]?.FindDescendantsByComponent<TMPro.TextMeshProUGUI>(), _ => _.alpha = 0.0f);
 
@@ -645,22 +657,21 @@ public class UI : UnityEngine.MonoBehaviour {
   }
 
   public void UnloadComponent(string name, UI.LoadAction action = UI.LoadAction.Deferred) {
-    if (this.components.TryGetValue(name, out UnityEngine.GameObject gameObject)) {
-      UI.ComponentLoadInfo?     componentLoadInformation = this.componentLoads.Find(componentLoadInformation => gameObject == componentLoadInformation.gameObject);
-      UnityEngine.RectTransform gameObjectTransform;
+    this.componentLoads.RemoveAll(static _ => null == _.gameObject);
+
+    if (this.components.TryGetValue(name, out UnityEngine.GameObject gameObject))
+    if (null != gameObject && gameObject.transform is UnityEngine.RectTransform) {
+      UnityEngine.RectTransform transform     = gameObject.transform as UnityEngine.RectTransform;
+      UnityEngine.Vector3       position      = transform.position;
+      UI.ComponentLoadInfo      componentLoad = this.componentLoads.Find(_ => gameObject == _.gameObject) ?? this.componentLoads.Append(new());
 
       // …
-      gameObject          = null == gameObject /* → Non-null destroyed `GameObject` */ ? null : gameObject;
-      gameObjectTransform = gameObject?.transform as UnityEngine.RectTransform;
-
-      if (null == componentLoadInformation)
-        this.componentLoads.Add(componentLoadInformation = new());
-
-      componentLoadInformation.animationDurationElapsed  = 0x0u != (action & UI.LoadAction.Immediately) ? LOAD_ANIMATION_DURATION + 1.0e-3f : componentLoadInformation.loading ? 0.0f : componentLoadInformation.animationDurationElapsed;
-      componentLoadInformation.loading                   = false;
-      componentLoadInformation.gameObject                = gameObject;
-      componentLoadInformation.animationStart.position ??= gameObjectTransform?.position;
-      componentLoadInformation.animationEnd  .position   = null == gameObjectTransform ? null : new((float) componentLoadInformation.animationStart.position?.x, (float) Util.WorldRectFromRectTransform(this.transform as UnityEngine.RectTransform)?.yMin - (float) Util.WorldBoundsFromRectTransform(gameObjectTransform)?.extents.y, (float) componentLoadInformation.animationStart.position?.z);
+      componentLoad.loading    = false;
+      componentLoad.gameObject = gameObject;
+      componentLoad.animation  = new("unload", 0x0u != (action & UI.LoadAction.Immediately) ? 0.0 : 0.4, PatchOdyssey.AnimationFunction.EaseInOutQuintic,
+        new() {{"position", position}},
+        new() {{"position", new UnityEngine.Vector3(position.x, (float) Util.WorldRectFromRectTransform(this.transform as UnityEngine.RectTransform)?.yMin - (float) Util.WorldBoundsFromRectTransform(transform)?.extents.y, position.z)}}
+      );
     }
   }
 
@@ -860,29 +871,17 @@ public class UI : UnityEngine.MonoBehaviour {
       this.background.transform.localPosition = pointerPosition / BACKGROUND_RESPONSIVENESS;
     }
 
-    this.componentLoads.RemoveAll(componentLoadInformation =>
-      (componentLoadInformation.loading ? LOAD_ANIMATION_DURATION <= componentLoadInformation.animationDurationElapsed - 1.0e-2f : false) || (
-        null == componentLoadInformation.animationEnd  .position ||
-        null == componentLoadInformation.animationStart.position ||
-        null == componentLoadInformation.gameObject
-      )
-    );
-
-    foreach (UI.ComponentLoadInfo componentLoadInformation in this.componentLoads) {
-      var   animationStart    = (default(T), position: (UnityEngine.Vector3) componentLoadInformation.animationStart.position);
-      float animationProgress = System.Math.Clamp(componentLoadInformation.animationDurationElapsed / LOAD_ANIMATION_DURATION, 0.0f, 1.0f);
-      var   animationEnd      = (default(T), position: (UnityEngine.Vector3) componentLoadInformation.animationEnd.position);
-      var   animationDelta    = (default(T), position: animationEnd.position - animationStart.position);
+    for (int index = this.componentLoads.Count; 0 != index; ) {
+      UI.ComponentLoadInfo componentLoad = this.componentLoads[--index];
 
       // …
-      if (componentLoadInformation.loading) {
-        animationDelta.position                          = -animationDelta.position;
-        (animationEnd.position, animationStart.position) = (animationStart.position, animationEnd.position);
+      if (componentLoad.animation.isDone || null == componentLoad.gameObject) {
+        this.componentLoads.RemoveAt(index);
+        continue;
       }
 
-      componentLoadInformation.animationDurationElapsed     += UnityEngine.Time.deltaTime;
-      componentLoadInformation.gameObject.transform.position = LOAD_ANIMATION_DURATION > componentLoadInformation.animationDurationElapsed ? animationStart.position + (animationDelta.position * (float) LOAD_ANIMATION_FUNCTION(animationProgress)) : animationEnd.position;
-      componentLoadInformation.gameObject.SetActive(componentLoadInformation.loading || LOAD_ANIMATION_DURATION > componentLoadInformation.animationDurationElapsed);
+      componentLoad.gameObject.transform.position = (UnityEngine.Vector3) componentLoad.animation["position"];
+      componentLoad.gameObject.SetActive(componentLoad.loading || !componentLoad.animation.isDone);
     }
 
     // …

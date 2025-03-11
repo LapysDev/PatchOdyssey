@@ -11647,7 +11647,7 @@ Canvas:
   m_RenderMode: 0
   m_Camera: {fileID: 0}
   m_PlaneDistance: 100
-  m_PixelPerfect: 1
+  m_PixelPerfect: 0
   m_ReceivesEvents: 1
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
@@ -11916,50 +11916,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   background: {fileID: 55596479}
-  components:
-    buckets: 03000000ffffffffffffffff00000000060000000a00000002000000ffffffff050000000800000007000000ffffffff0100000009000000ffffffffffffffffffffffff
-    count: 11
-    freeCount: 0
-    freeList: -1
-    hashes: 1c30f24c36d7916cc4f731070ac7e9000ffe6a297c6d085a18c98f1b9094116db5c10636d604142fa12e9506000000000000000000000000000000000000000000000000
-    keys:
-    - credits
-    - combat
-    - dialogue
-    - inventory
-    - menu
-    - options
-    - pause
-    - prompt
-    - splash
-    - tooltip:hud
-    - tooltip:scene
-    - 
-    - 
-    - 
-    - 
-    - 
-    - 
-    next: ffffffffffffffffffffffffffffffffffffffff04000000ffffffffffffffffffffffffffffffffffffffff000000000000000000000000000000000000000000000000
-    values:
-    - {fileID: 1580912568}
-    - {fileID: 925663095}
-    - {fileID: 1051319911}
-    - {fileID: 2016795250}
-    - {fileID: 849491056}
-    - {fileID: 0}
-    - {fileID: 1676725958}
-    - {fileID: 0}
-    - {fileID: 1275258899}
-    - {fileID: 787228791}
-    - {fileID: 874582228}
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    version: 20
   immediateText: {fileID: 0}
   music: {fileID: 0}
   prompted: 0
