@@ -1,177 +1,191 @@
 #nullable enable annotations
 
-namespace PatchOdyssey /* ⟶ Class types */ {
-  public class AnimationKeyframe {
-    public                readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>? begin      =  null;
-    public ref            readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>  end        => ref this.properties;
-    public /* required */ readonly string                                                              name       =  null;
-    public /* required */ readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>  properties =  new(new System.Collections.Generic.Dictionary<string, object?>());
+namespace PatchOdyssey /* ⟶ Class types and delegates */ {
+  namespace Animation {
+    public class UIKeyframe {
+      public                readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>? begin      =  null;
+      public ref            readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>  end        => ref this.properties;
+      public /* required */ readonly string                                                              name       =  null;
+      public /* required */ readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>  properties =  new(new System.Collections.Generic.Dictionary<string, object?>());
 
-    /* … ⟶ Will modify specified `begin` and `end` properties to ensure they have the same keys */
-    internal AnimationKeyframe(in string name, in System.Collections.Generic.IDictionary<string, object?> properties) {
-      this.name = name;
+      /* … ⟶ Will modify specified `begin` and `end` properties to ensure they have the same keys */
+      internal UIKeyframe(in string name, in System.Collections.Generic.IDictionary<string, object?> properties) {
+        this.name = name;
 
-      if (null != properties)
-      this.properties = new(properties);
-    }
-
-    internal AnimationKeyframe(in string name, in System.Collections.Generic.IDictionary<string, object?> begin, in System.Collections.Generic.IDictionary<string, object?> end) {
-      this.name = name;
-
-      if (null != begin && null != end) {
-        (int begin, int end) offsets = (begin.Keys.Count, end.Keys.Count);
-        string[]             names   = new string[offsets.begin + offsets.end];
-
-        // …
-        begin.Keys.CopyTo(names, 0);
-        end  .Keys.CopyTo(names, offsets.begin);
-
-        foreach (string name in new System.ReadOnlySpan<string>(names, offsets.begin, offsets.end))   { if (!begin.ContainsKey(name)) end  .Remove(name); }
-        foreach (string name in new System.ReadOnlySpan<string>(names, 0,             offsets.begin)) { if (!end  .ContainsKey(name)) begin.Remove(name); }
-
-        this.begin      = begin;
-        this.properties = end; // ⟶ `this.end = …;`
-      }
-    }
-  }
-
-  public class AnimationSequence : PatchOdyssey.AnimationKeyframe, System.Collections.IEnumerable {
-    public  /* required */          double                                                                        delay        =  0.0;
-    public  /* required */          double                                                                        duration     =  0.0;
-    public  /* required */          System.Func<double, double>?                                                  easing       =  PatchOdyssey.AnimationFunction.Linear;
-    public  /* required */          System.Func<double, object?, object?, object?>?                               interpolator =  PatchOdyssey.AnimationSequence.Interpolate;
-    public                          bool                                                                          isDone       => UnityEngine.Time.realtimeSinceStartupAsDouble >= this.delay + this.duration + this.timestamp;
-    private /* required */ readonly System.Collections.Generic.SortedList<double, PatchOdyssey.AnimationKeyframe> keyframes    =  new(3);
-    private /* required */          double                                                                        timestamp    =  0.0;
-
-    /* … */
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence             (double duration,                                                                                                                System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   null,   null,         begin,                                                             end)                                                             {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence             (double duration,                                                                                                                System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   null,   null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence             (double duration, double delay,                                                                                                  System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   null,   null,         begin,                                                             end)                                                             {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence             (double duration, double delay,                                                                                                  System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   null,   null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence             (double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   easing, null,         begin,                                                             end)                                                             {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence             (double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   easing, null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence             (double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, delay, easing, null,         begin,                                                             end)                                                             {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence             (double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, delay, easing, null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence             (double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   null,   interpolator, begin,                                                             end)                                                             {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence             (double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   null,   interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence             (double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, delay, null,   interpolator, begin,                                                             end)                                                             {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence             (double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, delay, null,   interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence             (double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   easing, interpolator, begin,                                                             end)                                                             {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence             (double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence             (double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, delay, easing, interpolator, begin,                                                             end)                                                             {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence             (double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, delay, easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence(string name, double duration,                                                                                                                System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   null,   null,         begin,                                                             end)                                                             {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence(string name, double duration,                                                                                                                System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   null,   null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence(string name, double duration, double delay,                                                                                                  System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   null,   null,         begin,                                                             end)                                                             {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence(string name, double duration, double delay,                                                                                                  System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   null,   null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence(string name, double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   easing, null,         begin,                                                             end)                                                             {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence(string name, double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   easing, null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence(string name, double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, delay, easing, null,         begin,                                                             end)                                                             {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence(string name, double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, delay, easing, null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence(string name, double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   null,   interpolator, begin,                                                             end)                                                             {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence(string name, double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   null,   interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence(string name, double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, delay, null,   interpolator, begin,                                                             end)                                                             {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence(string name, double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, delay, null,   interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence(string name, double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   easing, interpolator, begin,                                                             end)                                                             {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence(string name, double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationSequence(string name, double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, delay, easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-    public AnimationSequence(string name, double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary<string, object?> begin, System.Collections.Generic.Dictionary<string, object?> end) : base(name, begin ?? new System.Collections.Generic.Dictionary<string, object?>(), end ?? new System.Collections.Generic.Dictionary<string, object?>()) {
-      this.delay        = delay;
-      this.duration     = duration;
-      this.easing       = easing;
-      this.interpolator = interpolator;
-      this.timestamp    = UnityEngine.Time.realtimeSinceStartupAsDouble;
-    }
-
-    /* … */
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public void Add                 (double progress, System.Collections.Generic.Dictionary <string, object?> properties) => this.Add($"#{this.keyframes.Count + 1}", progress, properties);
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public void Add                 (double progress, System.Collections.Generic.IDictionary<string, object?> properties) => this.Add($"#{this.keyframes.Count + 1}", progress, properties);
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public void Add(string keyframe, double progress, System.Collections.Generic.IDictionary<string, object?> properties) => this.Add(keyframe,                       progress, new System.Collections.Generic.Dictionary<string, object?>(properties));
-    public void Add(string keyframe, double progress, System.Collections.Generic.Dictionary<string, object?> properties) {
-      foreach (System.Collections.Generic.KeyValuePair<double, PatchOdyssey.AnimationKeyframe> enumerated in this.keyframes)  {
-        if (enumerated.Key == progress || (null == keyframe ? false : keyframe == enumerated.Value.name))
-        return;
+        if (null != properties)
+        this.properties = new(properties);
       }
 
-      this.keyframes.Add(progress, new(keyframe, properties)); // ⟶ `SortedList` keeps `::keyframes` sorted
+      internal UIKeyframe(in string name, in System.Collections.Generic.IDictionary<string, object?> begin, in System.Collections.Generic.IDictionary<string, object?> end) {
+        this.name = name;
+
+        if (null != begin && null != end) {
+          (int begin, int end) offsets = (begin.Keys.Count, end.Keys.Count);
+          string[]             names   = new string[offsets.begin + offsets.end];
+
+          // …
+          begin.Keys.CopyTo(names, 0);
+          end  .Keys.CopyTo(names, offsets.begin);
+
+          foreach (string _ in new System.ReadOnlySpan<string>(names, offsets.begin, offsets.end))   { if (!begin.ContainsKey(_)) end  .Remove(_); }
+          foreach (string _ in new System.ReadOnlySpan<string>(names, 0,             offsets.begin)) { if (!end  .ContainsKey(_)) begin.Remove(_); }
+
+          this.begin      = new(begin);
+          this.properties = new(end); // ⟶ `this.end = …;`
+        }
+      }
     }
 
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
-      return null;
-    }
+    public class UISequence : PatchOdyssey.Animation.UIKeyframe, System.Collections.IEnumerable {
+      public  /* required */          double                                                                           delay        =  0.0;
+      public  /* required */          double                                                                           duration     =  0.0;
+      public  /* required */          PatchOdyssey.AnimationFunction                                                   easing       =  PatchOdyssey.Animation.Function.Linear;
+      public  /* required */          PatchOdyssey.Interpolator                                                        interpolator =  PatchOdyssey.Animation.UISequence.Interpolate;
+      public                          bool                                                                             isDone       => UnityEngine.Time.realtimeSinceStartupAsDouble >= this.delay + this.duration + this.timestamp;
+      private /* required */ readonly System.Collections.Generic.SortedList<double, PatchOdyssey.Animation.UIKeyframe> keyframes    =  new(3);
+      private /* required */          double                                                                           timestamp    =  0.0;
 
-    private static object Interpolate(double progress, object? a, object? b) {
-      (System.Reflection.MethodInfo? multiplication, System.Reflection.MethodInfo? subtraction) operators    = (null, null);
-      System.Type                                                                               progressType = progress.GetType();
-      System.Type?                                                                              type         = a      ?.GetType();
+      /* … */
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,                                                                                                                System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   null,   null,         begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,                                                                                                                System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   null,   null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay,                                                                                                  System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   null,   null,         begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay,                                                                                                  System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   null,   null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   easing, null,         begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   easing, null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, delay, easing, null,         begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, delay, easing, null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   null,   interpolator, begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   null,   interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, delay, null,   interpolator, begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, delay, null,   interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   easing, interpolator, begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, delay, easing, interpolator, begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, delay, easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,                                                                                                                System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   null,   null,         begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,                                                                                                                System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   null,   null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay,                                                                                                  System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   null,   null,         begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay,                                                                                                  System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   null,   null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   easing, null,         begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   easing, null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, delay, easing, null,         begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, delay, easing, null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   null,   interpolator, begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   null,   interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, delay, null,   interpolator, begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, delay, null,   interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   easing, interpolator, begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, delay, easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      public UISequence(string name, double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary<string, object?> begin, System.Collections.Generic.Dictionary<string, object?> end) : base(name, begin ?? new System.Collections.Generic.Dictionary<string, object?>(), end ?? new System.Collections.Generic.Dictionary<string, object?>()) {
+        this.delay        = delay;
+        this.duration     = duration;
+        this.easing       = easing;
+        this.interpolator = interpolator;
+        this.timestamp    = UnityEngine.Time.realtimeSinceStartupAsDouble;
+      }
 
-      // … ⟶ also interpolate between eligible class types e.g. `UnityEngine.Color`, `UnityEngine.Vector3`, …
-      if (type != b?.GetType() || null == type) return null;
-      if (type == typeof(double))               return (double)  ((double) ((double)  b - (double)  a) * progress);
-      if (type == typeof(float))                return (float)   ((double) ((float)   b - (float)   a) * progress);
-      if (type == typeof(decimal))              return (decimal) ((double) ((decimal) b - (decimal) a) * progress);
-      if (type == typeof(int))                  return (int)     ((double) ((int)     b - (int)     a) * progress);
-      if (type == typeof(nint))                 return (nint)    ((double) ((nint)    b - (nint)    a) * progress);
-      if (type == typeof(long))                 return (long)    ((double) ((long)    b - (long)    a) * progress);
-      if (type == typeof(uint))                 return (uint)    ((double) ((uint)    b - (uint)    a) * progress);
-      if (type == typeof(nuint))                return (nuint)   ((double) ((nuint)   b - (nuint)   a) * progress);
-      if (type == typeof(ulong))                return (ulong)   ((double) ((ulong)   b - (ulong)   a) * progress);
-      if (type == typeof(short))                return (short)   ((double) ((short)   b - (short)   a) * progress);
-      if (type == typeof(ushort))               return (ushort)  ((double) ((ushort)  b - (ushort)  a) * progress);
-      if (type == typeof(byte))                 return (byte)    ((double) ((byte)    b - (byte)    a) * progress);
-      if (type == typeof(sbyte))                return (sbyte)   ((double) ((sbyte)   b - (sbyte)   a) * progress);
-
-      operators.subtraction    = type.GetMethod("op_Subtraction", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static, null, new[] {type, type}, null);
-      operators.multiplication = null == operators.subtraction ? null : type.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static).Find(method => {
-        System.Reflection.ParameterInfo[] parameters = method.GetParameters();
-        return method.Name == "op_Multiply" && parameters.Length == 2 && parameters[0].ParameterType == operators.subtraction?.ReturnType && null != (
-          parameters[1].ParameterType == typeof(double)  ? progressType = typeof(double)  :
-          parameters[1].ParameterType == typeof(float)   ? progressType = typeof(float)   :
-          parameters[1].ParameterType == typeof(decimal) ? progressType = typeof(decimal) :
-          parameters[1].ParameterType == typeof(int)     ? progressType = typeof(int)     :
-          parameters[1].ParameterType == typeof(nint)    ? progressType = typeof(nint)    :
-          parameters[1].ParameterType == typeof(long)    ? progressType = typeof(long)    :
-          parameters[1].ParameterType == typeof(uint)    ? progressType = typeof(uint)    :
-          parameters[1].ParameterType == typeof(nuint)   ? progressType = typeof(nuint)   :
-          parameters[1].ParameterType == typeof(ulong)   ? progressType = typeof(ulong)   :
-          parameters[1].ParameterType == typeof(short)   ? progressType = typeof(short)   :
-          parameters[1].ParameterType == typeof(ushort)  ? progressType = typeof(ushort)  :
-          parameters[1].ParameterType == typeof(byte)    ? progressType = typeof(byte)    :
-          parameters[1].ParameterType == typeof(sbyte)   ? progressType = typeof(sbyte)   :
-          null
-        );
-      });
-
-      return operators.multiplication?.Invoke(null, new[] {operators.subtraction?.Invoke(null, new[] {b, a}), System.Convert.ChangeType(progress, progressType)});
-    }
-
-    public void Reset() {
-      this.timestamp = UnityEngine.Time.realtimeSinceStartupAsDouble;
-    }
-
-    public object? this[string property] { get {
-      if (this.properties.ContainsKey(property)) {
-        System.Collections.ObjectModel.ReadOnlyDictionary<string, object?> begin    = this.begin;
-        double                                                             elapsed  = UnityEngine.Time.realtimeSinceStartupAsDouble - this.timestamp;
-        System.Collections.ObjectModel.ReadOnlyDictionary<string, object?> end      = this.end;
-        double                                                             progress = (elapsed - this.delay) / this.duration;
-
-        // …
-        foreach (PatchOdyssey.AnimationKeyframe frame in this.keyframes)
-        if (frame.properties.ContainsKey(property)) {
-          if (frame.timestamp <= progress) begin = frame.properties;
-          if (frame.timestamp >= progress) end   = frame.properties;
+      /* … */
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public void Add                 (double progress, System.Collections.Generic.Dictionary <string, object?> properties) => this.Add($"#{this.keyframes.Count + 1}", progress, properties);
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public void Add                 (double progress, System.Collections.Generic.IDictionary<string, object?> properties) => this.Add($"#{this.keyframes.Count + 1}", progress, properties);
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public void Add(string keyframe, double progress, System.Collections.Generic.IDictionary<string, object?> properties) => this.Add(keyframe,                       progress, new System.Collections.Generic.Dictionary<string, object?>(properties));
+      public void Add(string keyframe, double progress, System.Collections.Generic.Dictionary<string, object?> properties) {
+        foreach (System.Collections.Generic.KeyValuePair<double, PatchOdyssey.Animation.UIKeyframe> enumerated in this.keyframes) {
+          if (enumerated.Key == progress || (null == keyframe ? false : keyframe == enumerated.Value.name))
+          return;
         }
 
-        if (begin.ContainsKey(property) && end.ContainsKey(property))
-        return (this.interpolator ?? PatchOdyssey.AnimationSequence.Interpolate)(this.delay <= elapsed ? 0.0 : this.duration <= elapsed - this.delay ? 1.0 : (this.easing ?? PatchOdyssey.AnimationFunction.Linear)((elapsed - this.delay) / this.duration), begin[property], end[property]);
+        this.keyframes.Add(progress, new(keyframe, properties)); // ⟶ `SortedList` keeps `::keyframes` sorted
       }
 
-      return null;
-    } }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+      System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
+        return null;
+      }
+
+      private static object? Interpolate(double progress, object? a, object? b) {
+        /* TODO */
+        (System.Reflection.MethodInfo? multiplication, System.Reflection.MethodInfo? subtraction) operators    = (null, null);
+        System.Type                                                                               progressType = typeof(double);
+        System.Type?                                                                              type         = a?.GetType();
+
+        // … ⟶ also interpolate between eligible class types e.g. `UnityEngine.Color`, `UnityEngine.Vector3`, …
+        if (type != b?.GetType())    return null;
+        if (type == typeof(double))  return (double)  ((double) ((double)  b - (double)  a) * progress);
+        if (type == typeof(float))   return (float)   ((double) ((float)   b - (float)   a) * progress);
+        if (type == typeof(decimal)) return (decimal) ((double) ((decimal) b - (decimal) a) * progress);
+        if (type == typeof(int))     return (int)     ((double) ((int)     b - (int)     a) * progress);
+        if (type == typeof(nint))    return (nint)    ((double) ((nint)    b - (nint)    a) * progress);
+        if (type == typeof(long))    return (long)    ((double) ((long)    b - (long)    a) * progress);
+        if (type == typeof(uint))    return (uint)    ((double) ((uint)    b - (uint)    a) * progress);
+        if (type == typeof(nuint))   return (nuint)   ((double) ((nuint)   b - (nuint)   a) * progress);
+        if (type == typeof(ulong))   return (ulong)   ((double) ((ulong)   b - (ulong)   a) * progress);
+        if (type == typeof(short))   return (short)   ((double) ((short)   b - (short)   a) * progress);
+        if (type == typeof(ushort))  return (ushort)  ((double) ((ushort)  b - (ushort)  a) * progress);
+        if (type == typeof(byte))    return (byte)    ((double) ((byte)    b - (byte)    a) * progress);
+        if (type == typeof(sbyte))   return (sbyte)   ((double) ((sbyte)   b - (sbyte)   a) * progress);
+
+        operators.subtraction    = type?.GetMethod("op_Subtraction", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static, null, new[] {type, type}, null);
+        operators.multiplication = null == operators.subtraction ? null : type.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static).Find(method => {
+          System.Reflection.ParameterInfo[] parameters = method.GetParameters();
+          return method.Name == "op_Multiply" && parameters.Length == 2 && parameters[0].ParameterType == operators.subtraction?.ReturnType && null != (
+            parameters[1].ParameterType == typeof(double)  ? progressType = typeof(double)  :
+            parameters[1].ParameterType == typeof(float)   ? progressType = typeof(float)   :
+            parameters[1].ParameterType == typeof(decimal) ? progressType = typeof(decimal) :
+            parameters[1].ParameterType == typeof(int)     ? progressType = typeof(int)     :
+            parameters[1].ParameterType == typeof(nint)    ? progressType = typeof(nint)    :
+            parameters[1].ParameterType == typeof(long)    ? progressType = typeof(long)    :
+            parameters[1].ParameterType == typeof(uint)    ? progressType = typeof(uint)    :
+            parameters[1].ParameterType == typeof(nuint)   ? progressType = typeof(nuint)   :
+            parameters[1].ParameterType == typeof(ulong)   ? progressType = typeof(ulong)   :
+            parameters[1].ParameterType == typeof(short)   ? progressType = typeof(short)   :
+            parameters[1].ParameterType == typeof(ushort)  ? progressType = typeof(ushort)  :
+            parameters[1].ParameterType == typeof(byte)    ? progressType = typeof(byte)    :
+            parameters[1].ParameterType == typeof(sbyte)   ? progressType = typeof(sbyte)   :
+            null
+          );
+        });
+
+        return operators.multiplication?.Invoke(null, new[] {operators.subtraction?.Invoke(null, new[] {b, a}), System.Convert.ChangeType(progress, progressType)});
+      }
+
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+      public void Reset() {
+        this.timestamp = UnityEngine.Time.realtimeSinceStartupAsDouble;
+      }
+
+      public object? this[string property] { get {
+        /* TODO */
+        if (this.properties.ContainsKey(property)) {
+          System.Collections.ObjectModel.ReadOnlyDictionary<string, object?> begin    = this.begin;
+          double                                                             elapsed  = UnityEngine.Time.realtimeSinceStartupAsDouble - this.timestamp;
+          System.Collections.ObjectModel.ReadOnlyDictionary<string, object?> end      = this.end;
+          double                                                             progress = (elapsed - this.delay) / this.duration;
+
+          // …
+          foreach (System.Collections.Generic.KeyValuePair<double, PatchOdyssey.Animation.UIKeyframe> enumerated in this.keyframes) {
+            ref System.Collections.ObjectModel.ReadOnlyDictionary<string, object?> properties = ref enumerated.Value.properties;
+
+            if (properties.ContainsKey(property)) {
+              if (enumerated.Key <= progress) begin = properties;
+              if (enumerated.Key >= progress) end   = properties;
+            }
+          }
+
+          if (begin.ContainsKey(property) && end.ContainsKey(property))
+          return (this.interpolator ?? PatchOdyssey.UISequence.Interpolate)(this.delay <= elapsed ? 0.0 : this.duration <= elapsed - this.delay ? 1.0 : (this.easing ?? PatchOdyssey.Animation.Function.Linear)((elapsed - this.delay) / this.duration), begin[property], end[property]);
+        }
+
+        return null;
+      } }
+    }
   }
 
+  /* … */
+  public delegate double  AnimationFunction(double time);
+  public delegate object? Interpolator     (double progress, object? a, object? b);
+
+  /* … */
   public sealed class ReadOnlyInInspectorAttribute : UnityEngine.PropertyAttribute {}
 
   [System.AttributeUsage(System.AttributeTargets.All, AllowMultiple = false, Inherited = false)]
@@ -385,7 +399,7 @@ namespace PatchOdyssey /* ⟶ Class types */ {
         return -1;
       }
 
-      public Enumerator GetEnumerator() {
+      public SerializedDictionary<TKey, TValue>.Enumerator GetEnumerator() {
         return new(this);
       }
 
@@ -707,14 +721,14 @@ namespace PatchOdyssey /* ⟶ Class types */ {
       }
 
       public override void OnGUI(UnityEngine.Rect position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
-        System.Collections.Generic.IDictionary<TKey, TValue> dictionary           = this.Ensure(property);
-        bool                                                 dictionaryIsReadOnly = dictionary is System.Collections.ObjectModel.ReadOnlyDictionary<TKey, TValue>;
-        float                                                size                 = position.height = base.GetPropertyHeight(property, label);
-        var                                                  positions            = new {
-          add     = new UnityEngine.Rect(position.x + (position.width - Util.PercentOf(size, 200.0f)), position.y, 0.0f           + size, position.height),
-          clear   = new UnityEngine.Rect(position.x + (position.width - Util.PercentOf(size, 100.0f)), position.y, 0.0f           + size, position.height),
-          foldout = new UnityEngine.Rect(position.x,                                                   position.y, position.width - size, position.height)
-        };
+        System.Collections.Generic.IDictionary<TKey, TValue>                     dictionary           = this.Ensure(property);
+        bool                                                                     dictionaryIsReadOnly = dictionary is System.Collections.ObjectModel.ReadOnlyDictionary<TKey, TValue>;
+        float                                                                    size                 = position.height = base.GetPropertyHeight(property, label);
+        (UnityEngine.Rect add, UnityEngine.Rect clear, UnityEngine.Rect foldout) positions            = (
+          new(position.x + (position.width - Util.PercentOf(size, 200.0f)), position.y, 0.0f           + size, position.height),
+          new(position.x + (position.width - Util.PercentOf(size, 100.0f)), position.y, 0.0f           + size, position.height),
+          new(position.x,                                                   position.y, position.width - size, position.height)
+        );
 
         // …
         if (!dictionaryIsReadOnly) {
@@ -738,12 +752,12 @@ namespace PatchOdyssey /* ⟶ Class types */ {
 
         if (0 == dictionary.Count) UnityEngine.GUI.Label(new(position.x, position.y + position.height, position.width, position.height), "Dictionary is empty");
         else foreach (System.Collections.Generic.KeyValuePair<TKey, TValue> item in dictionary) {
-          (TKey key, TValue value) = (item.Key, item.Value);
-          var subpositions         = new {
-            key   = new UnityEngine.Rect(position.x                                                 + (dictionaryIsReadOnly ? size : 0.0f), position.y += position.height, Util.PercentOf(position.width - size, 40.0f), position.height),
-            value = new UnityEngine.Rect(position.x + Util.PercentOf(position.width - size,  40.0f) + (dictionaryIsReadOnly ? size : 0.0f), position.y,                    Util.PercentOf(position.width - size, 60.0f), position.height),
-            clear = new UnityEngine.Rect(position.x + Util.PercentOf(position.width - size, 100.0f),                                        position.y,                    size,                                         position.height)
-          };
+          (TKey key, TValue value)                                                            = (item.Key, item.Value);
+          (UnityEngine.Rect key, UnityEngine.Rect value, UnityEngine.Rect clear) subpositions = (
+            new(position.x                                                 + (dictionaryIsReadOnly ? size : 0.0f), position.y += position.height, Util.PercentOf(position.width - size, 40.0f), position.height),
+            new(position.x + Util.PercentOf(position.width - size,  40.0f) + (dictionaryIsReadOnly ? size : 0.0f), position.y,                    Util.PercentOf(position.width - size, 60.0f), position.height),
+            new(position.x + Util.PercentOf(position.width - size, 100.0f),                                        position.y,                    size,                                         position.height)
+          );
 
           // …
           UnityEditor.EditorGUI.BeginChangeCheck();
@@ -819,47 +833,50 @@ namespace PatchOdyssey /* ⟶ Class types */ {
 }
 
 namespace PatchOdyssey /* ⟶ …everything else */ {
-  public static partial class AnimationFunction {
-    public static double CubicBézier    (double time, double p0, double p1, double p2, double p3) { return (p0 * System.Math.Pow(1.0 - time, 3.0)) + (p1 * time * 3.0 * System.Math.Pow(1.0 - time, 2.0)) + (p2 * (1.0 - time) * 3.0 * System.Math.Pow(time, 2.0)) + (p3 * System.Math.Pow(time, 3.0)); }
-    public static double QuadraticBézier(double time, double p0, double p1, double p2)            { return (p0 * System.Math.Pow(1.0 - time, 2.0)) + (p1 * time * 2.0 * System.Math.Pow(1.0 - time, 1.0))                                                          + (p2 * System.Math.Pow(time, 2.0)); }
+  namespace Animation {
+    public static partial class Function {
+      public static double CubicBézier    (double time, double p0, double p1, double p2, double p3) { return (p0 * System.Math.Pow(1.0 - time, 3.0)) + (p1 * time * 3.0 * System.Math.Pow(1.0 - time, 2.0)) + (p2 * (1.0 - time) * 3.0 * System.Math.Pow(time, 2.0)) + (p3 * System.Math.Pow(time, 3.0)); }
+      public static double QuadraticBézier(double time, double p0, double p1, double p2)            { return (p0 * System.Math.Pow(1.0 - time, 2.0)) + (p1 * time * 2.0 * System.Math.Pow(1.0 - time, 1.0))                                                          + (p2 * System.Math.Pow(time, 2.0)); }
 
-    public static double Ease                (double time) { return PatchOdyssey.AnimationFunction.CubicBézier(time, 0.25, 0.10, 0.25, 1.00); }
-    public static double EaseIn              (double time) { return PatchOdyssey.AnimationFunction.CubicBézier(time, 0.42, 0.00, 1.00, 1.00); }
-    public static double EaseInBack          (double time) { return (System.Math.Pow(time, 3.0) * 2.70158) - (System.Math.Pow(time, 2.0) * 1.70158); }
-    public static double EaseInBounce        (double time) { return 1.0 - PatchOdyssey.AnimationFunction.EaseOutBounce(1.0 - time); }
-    public static double EaseInCircular      (double time) { return 1.0 - System.Math.Sqrt(1.0 - System.Math.Pow(time, 2.0)); }
-    public static double EaseInCubic         (double time) { return System.Math.Pow(time, 3.0); }
-    public static double EaseInElastic       (double time) { return time != 0.0 && time != 1.0 ? -System.Math.Pow(2.0, (time * 10.0) - 10.0) * System.Math.Sin(((time * 10.0) - 10.75) * ((System.Math.PI * 2.0) / 3.0)) : time; }
-    public static double EaseInExponential   (double time) { return time != 0.0 ? System.Math.Pow(2.0, (time * 10.0) - 10.0) : 0.0; }
-    public static double EaseInOut           (double time) { return PatchOdyssey.AnimationFunction.CubicBézier(time, 0.42, 0.00, 0.58, 1.00); }
-    public static double EaseInOutBack       (double time) { return (time < 0.5 ? System.Math.Pow(time * 2.0, 2.0) * ((7.189819f * time) - 2.5949095) : ((System.Math.Pow((time * 2.0) - 2.0, 2.0) * ((((time * 2.0) - 2.0) * 3.5949095) + 2.5949095)) + 2.0)) / 2.0; }
-    public static double EaseInOutBounce     (double time) { return (time < 0.5 ? (1.0 - PatchOdyssey.AnimationFunction.EaseOutBounce(1.0 - (time * 2.0))) : (1.0 + PatchOdyssey.AnimationFunction.EaseOutBounce((time * 2.0) - 1.0))) / 2.0; }
-    public static double EaseInOutCircular   (double time) { return (time < 0.5 ? (1.0 - System.Math.Sqrt(1.0 - System.Math.Pow(time * 2.0, 2.0))) : (1.0 + System.Math.Sqrt(1.0 - System.Math.Pow((time * -2.0) + 2.0, 2.0)))) / 2.0; }
-    public static double EaseInOutCubic      (double time) { return time < 0.5 ? 4.0 * System.Math.Pow(time, 3.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 3.0) / 2.0)); }
-    public static double EaseInOutElastic    (double time) { return time != 0.0 && time != 1.0 ? time < 0.5 ? -(System.Math.Pow(2.0, (time * 20.0) - 10.0) * System.Math.Sin(((time * 20.0) - 11.125) * ((System.Math.PI * 2.0) / 4.5))) / 2.0 : ((System.Math.Pow(2.0, (time * -20.0) + 10.0) * System.Math.Sin(((time * 20.0) - 11.125) * ((System.Math.PI * 2.0) / 4.5))) / 2.0 + 1.0) : time; }
-    public static double EaseInOutExponential(double time) { return time != 0.0 && time != 1.0 ? (time < 0.5 ? System.Math.Pow(2.0, (time * 20.0) - 10.0) : (2.0 - System.Math.Pow(2.0, (time * -20.0) + 10.0))) / 2.0 : time; }
-    public static double EaseInOutQuadratic  (double time) { return time < 0.5 ?  2.0 * System.Math.Pow(time, 2.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 2.0) / 2.0)); }
-    public static double EaseInOutQuartic    (double time) { return time < 0.5 ?  8.0 * System.Math.Pow(time, 4.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 4.0) / 2.0)); }
-    public static double EaseInOutQuintic    (double time) { return time < 0.5 ? 16.0 * System.Math.Pow(time, 5.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 5.0) / 2.0)); }
-    public static double EaseInOutSine       (double time) { return -(System.Math.Cos(System.Math.PI * time) - 1.0) / 2.0; }
-    public static double EaseInQuadratic     (double time) { return System.Math.Pow(time, 2.0); }
-    public static double EaseInQuartic       (double time) { return System.Math.Pow(time, 4.0); }
-    public static double EaseInQuintic       (double time) { return System.Math.Pow(time, 5.0); }
-    public static double EaseInSine          (double time) { return 1.0 - System.Math.Cos((System.Math.PI * time) / 2.0); }
-    public static double EaseOut             (double time) { return PatchOdyssey.AnimationFunction.CubicBézier(time, 0.00, 0.00, 0.58, 1.00); }
-    public static double EaseOutBack         (double time) { return 1.0 + (2.70158 * System.Math.Pow(time - 1.0, 3.0)) + (System.Math.Pow(time - 1.0, 2.0) * 1.70158); }
-    public static double EaseOutBounce       (double time) { return time < 1.0 / 2.75 ? System.Math.Pow(time, 2.0) * 7.5625 : time < 2.0 / 2.75 ? (System.Math.Pow(time - (1.5 / 2.75), 2.0) * 7.5625) + 0.75 : time < 2.5 / 2.75 ? (System.Math.Pow(time - (2.25 / 2.75), 2.0) * 7.5625) + 0.9375 : (System.Math.Pow(time - (2.625 / 2.75), 2.0) * 7.5625) + 0.984375; }
-    public static double EaseOutCircular     (double time) { return System.Math.Sqrt(1.0 - System.Math.Pow(time - 1.0, 2.0)); }
-    public static double EaseOutCubic        (double time) { return 1.0 - System.Math.Pow(1.0 - time, 3.0); }
-    public static double EaseOutElastic      (double time) { return time != 0.0 && time != 1.0 ? (System.Math.Pow(2.0, time * -10.0) * System.Math.Sin(((time * 10.0) - 0.75) * ((System.Math.PI * 2.0) / 3.0))) + 1.0 : time; }
-    public static double EaseOutExponential  (double time) { return time != 1.0 ? 1.0 - System.Math.Pow(2.0, time * -10.0) : 1.0; }
-    public static double EaseOutQuadratic    (double time) { return 1.0 - System.Math.Pow(1.0 - time, 2.0); }
-    public static double EaseOutQuartic      (double time) { return 1.0 - System.Math.Pow(1.0 - time, 4.0); }
-    public static double EaseOutQuintic      (double time) { return 1.0 - System.Math.Pow(1.0 - time, 5.0); }
-    public static double EaseOutSine         (double time) { return System.Math.Sin((System.Math.PI * time) / 2.0); }
-    public static double Linear              (double time) { return time; }
+      public static double Ease                (double time) { return PatchOdyssey.Animation.Function.CubicBézier(time, 0.25, 0.10, 0.25, 1.00); }
+      public static double EaseIn              (double time) { return PatchOdyssey.Animation.Function.CubicBézier(time, 0.42, 0.00, 1.00, 1.00); }
+      public static double EaseInBack          (double time) { return (System.Math.Pow(time, 3.0) * 2.70158) - (System.Math.Pow(time, 2.0) * 1.70158); }
+      public static double EaseInBounce        (double time) { return 1.0 - PatchOdyssey.Animation.Function.EaseOutBounce(1.0 - time); }
+      public static double EaseInCircular      (double time) { return 1.0 - System.Math.Sqrt(1.0 - System.Math.Pow(time, 2.0)); }
+      public static double EaseInCubic         (double time) { return System.Math.Pow(time, 3.0); }
+      public static double EaseInElastic       (double time) { return time != 0.0 && time != 1.0 ? -System.Math.Pow(2.0, (time * 10.0) - 10.0) * System.Math.Sin(((time * 10.0) - 10.75) * ((System.Math.PI * 2.0) / 3.0)) : time; }
+      public static double EaseInExponential   (double time) { return time != 0.0 ? System.Math.Pow(2.0, (time * 10.0) - 10.0) : 0.0; }
+      public static double EaseInOut           (double time) { return PatchOdyssey.Animation.Function.CubicBézier(time, 0.42, 0.00, 0.58, 1.00); }
+      public static double EaseInOutBack       (double time) { return (time < 0.5 ? System.Math.Pow(time * 2.0, 2.0) * ((7.189819f * time) - 2.5949095) : ((System.Math.Pow((time * 2.0) - 2.0, 2.0) * ((((time * 2.0) - 2.0) * 3.5949095) + 2.5949095)) + 2.0)) / 2.0; }
+      public static double EaseInOutBounce     (double time) { return (time < 0.5 ? (1.0 - PatchOdyssey.Animation.Function.EaseOutBounce(1.0 - (time * 2.0))) : (1.0 + PatchOdyssey.Animation.Function.EaseOutBounce((time * 2.0) - 1.0))) / 2.0; }
+      public static double EaseInOutCircular   (double time) { return (time < 0.5 ? (1.0 - System.Math.Sqrt(1.0 - System.Math.Pow(time * 2.0, 2.0))) : (1.0 + System.Math.Sqrt(1.0 - System.Math.Pow((time * -2.0) + 2.0, 2.0)))) / 2.0; }
+      public static double EaseInOutCubic      (double time) { return time < 0.5 ? 4.0 * System.Math.Pow(time, 3.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 3.0) / 2.0)); }
+      public static double EaseInOutElastic    (double time) { return time != 0.0 && time != 1.0 ? time < 0.5 ? -(System.Math.Pow(2.0, (time * 20.0) - 10.0) * System.Math.Sin(((time * 20.0) - 11.125) * ((System.Math.PI * 2.0) / 4.5))) / 2.0 : ((System.Math.Pow(2.0, (time * -20.0) + 10.0) * System.Math.Sin(((time * 20.0) - 11.125) * ((System.Math.PI * 2.0) / 4.5))) / 2.0 + 1.0) : time; }
+      public static double EaseInOutExponential(double time) { return time != 0.0 && time != 1.0 ? (time < 0.5 ? System.Math.Pow(2.0, (time * 20.0) - 10.0) : (2.0 - System.Math.Pow(2.0, (time * -20.0) + 10.0))) / 2.0 : time; }
+      public static double EaseInOutQuadratic  (double time) { return time < 0.5 ?  2.0 * System.Math.Pow(time, 2.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 2.0) / 2.0)); }
+      public static double EaseInOutQuartic    (double time) { return time < 0.5 ?  8.0 * System.Math.Pow(time, 4.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 4.0) / 2.0)); }
+      public static double EaseInOutQuintic    (double time) { return time < 0.5 ? 16.0 * System.Math.Pow(time, 5.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 5.0) / 2.0)); }
+      public static double EaseInOutSine       (double time) { return -(System.Math.Cos(System.Math.PI * time) - 1.0) / 2.0; }
+      public static double EaseInQuadratic     (double time) { return System.Math.Pow(time, 2.0); }
+      public static double EaseInQuartic       (double time) { return System.Math.Pow(time, 4.0); }
+      public static double EaseInQuintic       (double time) { return System.Math.Pow(time, 5.0); }
+      public static double EaseInSine          (double time) { return 1.0 - System.Math.Cos((System.Math.PI * time) / 2.0); }
+      public static double EaseOut             (double time) { return PatchOdyssey.Animation.Function.CubicBézier(time, 0.00, 0.00, 0.58, 1.00); }
+      public static double EaseOutBack         (double time) { return 1.0 + (2.70158 * System.Math.Pow(time - 1.0, 3.0)) + (System.Math.Pow(time - 1.0, 2.0) * 1.70158); }
+      public static double EaseOutBounce       (double time) { return time < 1.0 / 2.75 ? System.Math.Pow(time, 2.0) * 7.5625 : time < 2.0 / 2.75 ? (System.Math.Pow(time - (1.5 / 2.75), 2.0) * 7.5625) + 0.75 : time < 2.5 / 2.75 ? (System.Math.Pow(time - (2.25 / 2.75), 2.0) * 7.5625) + 0.9375 : (System.Math.Pow(time - (2.625 / 2.75), 2.0) * 7.5625) + 0.984375; }
+      public static double EaseOutCircular     (double time) { return System.Math.Sqrt(1.0 - System.Math.Pow(time - 1.0, 2.0)); }
+      public static double EaseOutCubic        (double time) { return 1.0 - System.Math.Pow(1.0 - time, 3.0); }
+      public static double EaseOutElastic      (double time) { return time != 0.0 && time != 1.0 ? (System.Math.Pow(2.0, time * -10.0) * System.Math.Sin(((time * 10.0) - 0.75) * ((System.Math.PI * 2.0) / 3.0))) + 1.0 : time; }
+      public static double EaseOutExponential  (double time) { return time != 1.0 ? 1.0 - System.Math.Pow(2.0, time * -10.0) : 1.0; }
+      public static double EaseOutQuadratic    (double time) { return 1.0 - System.Math.Pow(1.0 - time, 2.0); }
+      public static double EaseOutQuartic      (double time) { return 1.0 - System.Math.Pow(1.0 - time, 4.0); }
+      public static double EaseOutQuintic      (double time) { return 1.0 - System.Math.Pow(1.0 - time, 5.0); }
+      public static double EaseOutSine         (double time) { return System.Math.Sin((System.Math.PI * time) / 2.0); }
+      public static double Linear              (double time) { return time; }
+    }
   }
 
+  /* … */
   public static class Extensions {
     public static void Add<T>(this System.Collections.Generic.Queue<T> queue, T item) {
       // ⟶ Intended for initializer lists only
@@ -1766,6 +1783,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
       public Wait(System.Action callback, double interval, double timestamp) {
         // ⟶ `if (null == callback) return;`
+        /* `MonoBehaviour.Invoke(nameof(𝑓), delay in seconds)` and `MonoBehaviour.InvokeRepeating(nameof(𝑓), delay, interval in seconds)` */
         this.callback  = callback;
         this.interval  = interval;
         this.timestamp = timestamp;
@@ -1813,7 +1831,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
     public static object[] ArrayFrom(System.Collections.IEnumerable enumerable) {
       System.Collections.Generic.List<object> array      = new();
-      System.Collections.IEnumerator          enumerator = enumerable;
+      System.Collections.IEnumerator          enumerator = enumerable.GetEnumerator();
 
       // …
       while (enumerator.MoveNext())
@@ -1877,8 +1895,6 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         System.Collections.Generic.Stack<T> stack        => stack       .ToArray(),
         System.Memory                   <T> memory       => memory      .ToArray(),
         System.ReadOnlyMemory           <T> memory       => memory      .ToArray(),
-        System.ReadOnlySpan             <T> span         => span        .ToArray(),
-        System.Span                     <T> span         => span        .ToArray(),
         _                                                => new System.Collections.Generic.List<T>(enumerable).ToArray()
       };
     }
@@ -1919,7 +1935,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         }
       #endif
 
-      return concatenation.ToArray();
+      return Util.ArrayFrom(concatenation);
     }
 
     public static T[] ArrayFromMembers<T>(object structure) where T : class? {

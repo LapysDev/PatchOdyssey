@@ -1,3 +1,4 @@
+using Animation = PatchOdyssey.Animation;
 using PatchOdyssey;
 
 /* … */
@@ -12,7 +13,7 @@ public class UI : UnityEngine.MonoBehaviour {
   public enum T : byte {} // → Dummy type
 
   public sealed class ComponentLoadInfo {
-    public AnimationSequence      animation;
+    public Animation.UISequence   animation;
     public UnityEngine.GameObject gameObject;
     public bool                   loading = true;
   }
@@ -45,15 +46,15 @@ public class UI : UnityEngine.MonoBehaviour {
   }
 
   /* … */
-  private static readonly System.Func<double, double> TEETER_ANIMATION_FUNCTION              = PatchOdyssey.AnimationFunction.EaseInOutCircular; // → 𝑓
-  private const           float                       TEETER_ANIMATION_DURATION              = 2.00f;                                            // → in Seconds greater than `UnityEngine.Time.deltaTime`
-  private static readonly System.Func<double, double> LOAD_ANIMATION_FUNCTION                = PatchOdyssey.AnimationFunction.EaseInOutQuintic;  // → 𝑓
-  private const           float                       LOAD_ANIMATION_DURATION                = 0.40f;                                            // → in Seconds greater than `UnityEngine.Time.deltaTime`
-  private static readonly float                       IMMEDIATE_TEXT_BACKGROUND_TRANSPARENCY = Util.Percent(65.0f);                              //
-  private const           float                       COMPONENT_TAB_INITIAL_DELAY            = 1.00f;                                            // → in Seconds; UI keyboard repeat delay
-  private const           float                       BACKGROUND_UNLOAD_DURATION             = 2.00f;                                            //
-  private static readonly float                       BACKGROUND_TRANSPARENCY                = Util.Percent(65.0f);                              //
-  private const           float                       BACKGROUND_RESPONSIVENESS              = 20.00f;                                           // → Higher values are less responsive
+  private static readonly System.Func<double, double> TEETER_ANIMATION_FUNCTION              = PatchOdyssey.Animation.Function.EaseInOutCircular; // → 𝑓
+  private const           float                       TEETER_ANIMATION_DURATION              = 2.00f;                                             // → in Seconds greater than `UnityEngine.Time.deltaTime`
+  private static readonly System.Func<double, double> LOAD_ANIMATION_FUNCTION                = PatchOdyssey.Animation.Function.EaseInOutQuintic;  // → 𝑓
+  private const           float                       LOAD_ANIMATION_DURATION                = 0.40f;                                             // → in Seconds greater than `UnityEngine.Time.deltaTime`
+  private static readonly float                       IMMEDIATE_TEXT_BACKGROUND_TRANSPARENCY = Util.Percent(65.0f);                               //
+  private const           float                       COMPONENT_TAB_INITIAL_DELAY            = 1.00f;                                             // → in Seconds; UI keyboard repeat delay
+  private const           float                       BACKGROUND_UNLOAD_DURATION             = 2.00f;                                             //
+  private static readonly float                       BACKGROUND_TRANSPARENCY                = Util.Percent(65.0f);                               //
+  private const           float                       BACKGROUND_RESPONSIVENESS              = 20.00f;                                            // → Higher values are less responsive
   private static readonly (
     string BACK,
     string MENU, string MENU_CREDITS, string MENU_OPTIONS, string MENU_QUIT, string MENU_START
@@ -619,7 +620,10 @@ public class UI : UnityEngine.MonoBehaviour {
     /* System.ReadOnlySpan<UnmanagedT> bruh = stackalloc UnmanagedT[begin.Count]; like `int` */
     /* FLOAT * FLOAT * VECTOR */
     /* OBJECT POOL FOR BULLETS: INSTANTIATE OBJECTS THEN RE-CYCLE THEM.. IT'S FUCKING CUSTOM */
+    /* `interface` FOR BULLET INHERITANCE AND SIMILAR; See `NPC` class */
     /* Use `in` for const references and readonly structs (or struct properties) only */
+    /* `Transform.SetPositionAndRotation(…)` */
+    /* Consider `[System.Serializable] public class MyArgs { public int arg1; public string arg2; public bool arg3; } myArgs;` */
     this.UnloadAllComponents(UI.LoadAction.Immediately);
     this.LoadComponent      ("splash", UI.LoadAction.Immediately);
     this.LoadMusic          ("calm.mp3");
@@ -668,7 +672,7 @@ public class UI : UnityEngine.MonoBehaviour {
       // …
       componentLoad.loading    = false;
       componentLoad.gameObject = gameObject;
-      componentLoad.animation  = new("unload", 0x0u != (action & UI.LoadAction.Immediately) ? 0.0 : 0.4, PatchOdyssey.AnimationFunction.EaseInOutQuintic,
+      componentLoad.animation  = new("unload", 0x0u != (action & UI.LoadAction.Immediately) ? 0.0 : 0.4, PatchOdyssey.Animation.Function.EaseInOutQuintic,
         new() {{"position", position}},
         new() {{"position", new UnityEngine.Vector3(position.x, (float) Util.WorldRectFromRectTransform(this.transform as UnityEngine.RectTransform)?.yMin - (float) Util.WorldBoundsFromRectTransform(transform)?.extents.y, position.z)}}
       );
