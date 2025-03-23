@@ -1,13 +1,10 @@
 using PatchOdyssey;
 
 /* … */
-#nullable enable annotations
-
-/* … */
 [UnityEngine.RequireComponent(typeof(UnityEngine.CapsuleCollider))]
 public class Mount : NPC {
-  [ReadWriteInInspector] public UnityEngine.Light?  spotlight       = null;                     // TODO (Lapys)
-  [ReadOnlyInInspector]  public UnityEngine.Vector3 spotlightOrigin = UnityEngine.Vector3.zero; // TODO (Lapys)
+  [PatchOdyssey.ReadWriteInInspector] public UnityEngine.Light?  spotlight       = null;                     // TODO (Lapys)
+  [PatchOdyssey.ReadOnlyInInspector]  public UnityEngine.Vector3 spotlightOrigin = UnityEngine.Vector3.zero; // TODO (Lapys)
 
   /* … */
   new private void Start() {

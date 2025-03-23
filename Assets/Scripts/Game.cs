@@ -1,16 +1,13 @@
 using PatchOdyssey;
 
 /* … */
-#nullable enable annotations
-
-/* … */
 public class Game : UnityEngine.MonoBehaviour {
-  [ReadOnlyInInspector]  public                bool                 isLoaded          = false;
-  [ReadOnlyInInspector]  public                bool                 isPlaying         = false;
-  [ReadOnlyInInspector]  public static         Game?                main              = null;
-  [ReadWriteInInspector] public                Player?              player            = null;
-  [ReadWriteInInspector] public                GameObjectDictionary prototypeData     = new();                                                                           // TODO (Lapys)
-  [ReadOnlyInInspector]  public /* readonly */ BooleanDictionary    prototypeMetadata = new() {{"clearing:begin", false}, {"clearing:end", false}, {"mounting", false}}; // TODO (Lapys)
+  [PatchOdyssey.ReadOnlyInInspector]  public                bool                 isLoaded          = false;
+  [PatchOdyssey.ReadOnlyInInspector]  public                bool                 isPlaying         = false;
+  [PatchOdyssey.ReadOnlyInInspector]  public static         Game?                main              = null;
+  [PatchOdyssey.ReadWriteInInspector] public                Player?              player            = null;
+  [PatchOdyssey.ReadWriteInInspector] public                GameObjectDictionary prototypeData     = new();                                                                           // TODO (Lapys)
+  [PatchOdyssey.ReadOnlyInInspector]  public /* readonly */ BooleanDictionary    prototypeMetadata = new() {{"clearing:begin", false}, {"clearing:end", false}, {"mounting", false}}; // TODO (Lapys)
 
   /* … */
   private void Awake() {
@@ -107,14 +104,14 @@ public class Game : UnityEngine.MonoBehaviour {
       // TODO (Lapys)
       playerBounds.Expand(boundsErrorMargin);
 
-      if (System.Array.Exists(Util.ArrayFrom(this.prototypeData?["clearing"]?.FindHierarchyByComponent<UnityEngine.Collider>()), collider => collider.bounds.Intersects(playerBounds)))
+      if (System.Array.Exists(Util.ArrayFrom(this.prototypeData?["clearing"]?.FindHierarchyByComponent<UnityEngine.Collider>()!), collider => collider.bounds.Intersects(playerBounds)))
         this.prototypeMetadata["clearing:begin"] = true;
 
       else if (this.prototypeMetadata["clearing:begin"]) {
         this.prototypeMetadata["clearing:end"] = true;
         this.prototypeMetadata["mounting"]     = (
-          System.Array.Exists(Util.ArrayFrom(this.prototypeData?["mounting#0"]?.FindHierarchyByComponent<UnityEngine.Collider>()), collider => collider.bounds.Intersects(playerBounds)) ||
-          System.Array.Exists(Util.ArrayFrom(this.prototypeData?["mounting#1"]?.FindHierarchyByComponent<UnityEngine.Collider>()), collider => collider.bounds.Intersects(playerBounds))
+          System.Array.Exists(Util.ArrayFrom(this.prototypeData?["mounting#0"]?.FindHierarchyByComponent<UnityEngine.Collider>()!), collider => collider.bounds.Intersects(playerBounds)) ||
+          System.Array.Exists(Util.ArrayFrom(this.prototypeData?["mounting#1"]?.FindHierarchyByComponent<UnityEngine.Collider>()!), collider => collider.bounds.Intersects(playerBounds))
         );
       }
 
@@ -142,7 +139,7 @@ public class Game : UnityEngine.MonoBehaviour {
 
             else if (UI.main?.keyboards["active"].Exists(_ => UnityEngine.KeyCode.Space == _.key) ?? false) {
               if (null == player.mount)
-              player.Mount(npc as Mount);
+              player.Mount((npc as Mount)!);
             }
           }
         }

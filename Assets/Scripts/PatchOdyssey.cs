@@ -1,14 +1,15 @@
-#nullable enable annotations
+global using Animation = PatchOdyssey.Animation;
+global using PatchOdyssey.Collections;
 
 namespace PatchOdyssey /* ⟶ Class types and delegates */ {
   namespace Animation {
     public class UIKeyframe {
       public                readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>? begin      =  null;
       public ref            readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>  end        => ref this.properties;
-      public /* required */ readonly string                                                              name       =  null;
+      public /* required */ readonly string?                                                             name       =  null;
       public /* required */ readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>  properties =  new(new System.Collections.Generic.Dictionary<string, object?>());
 
-      /* … ⟶ Will modify specified `begin` and `end` properties to ensure they have the same keys */
+      /* … ⟶ Will modify specified `::begin` and `::end` properties to ensure they have the same keys */
       internal UIKeyframe(in string name, in System.Collections.Generic.IDictionary<string, object?> properties) {
         this.name = name;
 
@@ -37,55 +38,56 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
     }
 
     public class UISequence : PatchOdyssey.Animation.UIKeyframe, System.Collections.IEnumerable {
-      public  /* required */          double                                                                           delay        =  0.0;
-      public  /* required */          double                                                                           duration     =  0.0;
-      public  /* required */          PatchOdyssey.AnimationFunction                                                   easing       =  PatchOdyssey.Animation.Function.Linear;
-      public  /* required */          PatchOdyssey.Interpolator                                                        interpolator =  PatchOdyssey.Animation.UISequence.Interpolate;
-      public                          bool                                                                             isDone       => UnityEngine.Time.realtimeSinceStartupAsDouble >= this.delay + this.duration + this.timestamp;
-      private /* required */ readonly System.Collections.Generic.SortedList<double, PatchOdyssey.Animation.UIKeyframe> keyframes    =  new(3);
-      private /* required */          double                                                                           timestamp    =  0.0;
+      private                static   System.Collections.Generic.Dictionary<System.Type, (System.Reflection.MethodInfo multiplication, System.Reflection.MethodInfo subtraction)> INTERPOLATION_OPS =  new(3);
+      public  /* required */          double                                                                                                                                      delay             =  0.0;
+      public  /* required */          double                                                                                                                                      duration          =  0.0;
+      public  /* required */          PatchOdyssey.AnimationFunction                                                                                                              easing            =  PatchOdyssey.Animation.Function  .Linear;
+      public  /* required */          PatchOdyssey.Interpolator                                                                                                                   interpolator      =  PatchOdyssey.Animation.UISequence.Interpolate;
+      public                          bool                                                                                                                                        isDone            => UnityEngine.Time.realtimeSinceStartupAsDouble >= this.delay + this.duration + this.timestamp;
+      private /* required */ readonly System.Collections.Generic.SortedList<double, PatchOdyssey.Animation.UIKeyframe>                                                            keyframes         =  new(1);
+      private /* required */          double                                                                                                                                      timestamp         =  0.0;
 
-      /* … */
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,                                                                                                                System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   null,   null,         begin,                                                             end)                                                             {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,                                                                                                                System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   null,   null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay,                                                                                                  System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   null,   null,         begin,                                                             end)                                                             {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay,                                                                                                  System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   null,   null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   easing, null,         begin,                                                             end)                                                             {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   easing, null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, delay, easing, null,         begin,                                                             end)                                                             {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, delay, easing, null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   null,   interpolator, begin,                                                             end)                                                             {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   null,   interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, delay, null,   interpolator, begin,                                                             end)                                                             {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, delay, null,   interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, 0.0,   easing, interpolator, begin,                                                             end)                                                             {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, 0.0,   easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null, duration, delay, easing, interpolator, begin,                                                             end)                                                             {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null, duration, delay, easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,                                                                                                                System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   null,   null,         begin,                                                             end)                                                             {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,                                                                                                                System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   null,   null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay,                                                                                                  System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   null,   null,         begin,                                                             end)                                                             {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay,                                                                                                  System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   null,   null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   easing, null,         begin,                                                             end)                                                             {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   easing, null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, delay, easing, null,         begin,                                                             end)                                                             {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, delay, easing, null,         new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   null,   interpolator, begin,                                                             end)                                                             {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   null,   interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, delay, null,   interpolator, begin,                                                             end)                                                             {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, delay, null,   interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name, duration, 0.0,   easing, interpolator, begin,                                                             end)                                                             {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, 0.0,   easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name, duration, delay, easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      /* … ⟶ 𝑓 `UISequence([optional] name, duration, [optional] delay, [optional] easing, [optional] interpolator, begin, end) { … }` */
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,                                                                                                                System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, 0.0,   null!,  null!,        begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,                                                                                                                System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, 0.0,   null!,  null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay,                                                                                                  System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, 0.0,   null!,  null!,        begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay,                                                                                                  System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, 0.0,   null!,  null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, 0.0,   easing, null!,        begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, 0.0,   easing, null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, delay, easing, null!,        begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, delay, easing, null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, 0.0,   null!,  interpolator, begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, 0.0,   null!,  interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, delay, null!,  interpolator, begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, delay, null!,  interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, 0.0,   easing, interpolator, begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, 0.0,   easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, delay, easing, interpolator, begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence             (double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, delay, easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,                                                                                                                System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, 0.0,   null!,  null!,        begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,                                                                                                                System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, 0.0,   null!,  null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay,                                                                                                  System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, 0.0,   null!,  null!,        begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay,                                                                                                  System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, 0.0,   null!,  null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, 0.0,   easing, null!,        begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,               System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, 0.0,   easing, null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, delay, easing, null!,        begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay, System.Func<double, double> easing,                                                              System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, delay, easing, null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, 0.0,   null!,  interpolator, begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,                                                   System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, 0.0,   null!,  interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, delay, null!,  interpolator, begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay,                                     System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, delay, null!,  interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, 0.0,   easing, interpolator, begin,                                                             end)                                                             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration,               System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, 0.0,   easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UISequence(string name, double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, delay, easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
       public UISequence(string name, double duration, double delay, System.Func<double, double> easing, System.Func<double, object?, object?, object?> interpolator, System.Collections.Generic.Dictionary<string, object?> begin, System.Collections.Generic.Dictionary<string, object?> end) : base(name, begin ?? new System.Collections.Generic.Dictionary<string, object?>(), end ?? new System.Collections.Generic.Dictionary<string, object?>()) {
         this.delay        = delay;
         this.duration     = duration;
-        this.easing       = easing;
-        this.interpolator = interpolator;
+        this.easing       = null != easing       ? new(easing!)       : this.easing;
+        this.interpolator = null != interpolator ? new(interpolator!) : this.interpolator;
         this.timestamp    = UnityEngine.Time.realtimeSinceStartupAsDouble;
       }
 
-      /* … */
+      /* … ⟶ 𝑓 `void Add([optional] keyframe, progress, properties) { … }` */
       [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public void Add                 (double progress, System.Collections.Generic.Dictionary <string, object?> properties) => this.Add($"#{this.keyframes.Count + 1}", progress, properties);
       [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public void Add                 (double progress, System.Collections.Generic.IDictionary<string, object?> properties) => this.Add($"#{this.keyframes.Count + 1}", progress, properties);
       [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public void Add(string keyframe, double progress, System.Collections.Generic.IDictionary<string, object?> properties) => this.Add(keyframe,                       progress, new System.Collections.Generic.Dictionary<string, object?>(properties));
@@ -100,51 +102,59 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
 
       [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
       System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
-        return null;
+        return null!;
       }
 
-      private static object? Interpolate(double progress, object? a, object? b) {
-        /* TODO */
-        (System.Reflection.MethodInfo? multiplication, System.Reflection.MethodInfo? subtraction) operators    = (null, null);
-        System.Type                                                                               progressType = typeof(double);
-        System.Type?                                                                              type         = a?.GetType();
+      private static object? Interpolate(double progress, object? a, object? b) /* ⟶ `(b - a) * progress` */ {
+        (System.Reflection.MethodInfo multiplication, System.Reflection.MethodInfo subtraction) operators    = (null!, null!);
+        System.Type                                                                             progressType = typeof(double);
+        System.Type?                                                                            type         = a?.GetType();
 
-        // … ⟶ also interpolate between eligible class types e.g. `UnityEngine.Color`, `UnityEngine.Vector3`, …
-        if (type != b?.GetType())    return null;
-        if (type == typeof(double))  return (double)  ((double) ((double)  b - (double)  a) * progress);
-        if (type == typeof(float))   return (float)   ((double) ((float)   b - (float)   a) * progress);
-        if (type == typeof(decimal)) return (decimal) ((double) ((decimal) b - (decimal) a) * progress);
-        if (type == typeof(int))     return (int)     ((double) ((int)     b - (int)     a) * progress);
-        if (type == typeof(nint))    return (nint)    ((double) ((nint)    b - (nint)    a) * progress);
-        if (type == typeof(long))    return (long)    ((double) ((long)    b - (long)    a) * progress);
-        if (type == typeof(uint))    return (uint)    ((double) ((uint)    b - (uint)    a) * progress);
-        if (type == typeof(nuint))   return (nuint)   ((double) ((nuint)   b - (nuint)   a) * progress);
-        if (type == typeof(ulong))   return (ulong)   ((double) ((ulong)   b - (ulong)   a) * progress);
-        if (type == typeof(short))   return (short)   ((double) ((short)   b - (short)   a) * progress);
-        if (type == typeof(ushort))  return (ushort)  ((double) ((ushort)  b - (ushort)  a) * progress);
-        if (type == typeof(byte))    return (byte)    ((double) ((byte)    b - (byte)    a) * progress);
-        if (type == typeof(sbyte))   return (sbyte)   ((double) ((sbyte)   b - (sbyte)   a) * progress);
+        // …
+        if (null == type || type != b?.GetType())
+        return null;
 
-        operators.subtraction    = type?.GetMethod("op_Subtraction", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static, null, new[] {type, type}, null);
-        operators.multiplication = null == operators.subtraction ? null : type.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static).Find(method => {
+        // …
+        if (type == typeof(double))  return (double)  ((double) ((double)  b! - (double)  a!) * progress);
+        if (type == typeof(float))   return (float)   ((double) ((float)   b! - (float)   a!) * progress);
+        if (type == typeof(decimal)) return (decimal) ((double) ((decimal) b! - (decimal) a!) * progress);
+        if (type == typeof(int))     return (int)     ((double) ((int)     b! - (int)     a!) * progress);
+        if (type == typeof(nint))    return (nint)    ((double) ((nint)    b! - (nint)    a!) * progress);
+        if (type == typeof(long))    return (long)    ((double) ((long)    b! - (long)    a!) * progress);
+        if (type == typeof(uint))    return (uint)    ((double) ((uint)    b! - (uint)    a!) * progress);
+        if (type == typeof(nuint))   return (nuint)   ((double) ((nuint)   b! - (nuint)   a!) * progress);
+        if (type == typeof(ulong))   return (ulong)   ((double) ((ulong)   b! - (ulong)   a!) * progress);
+        if (type == typeof(short))   return (short)   ((double) ((short)   b! - (short)   a!) * progress);
+        if (type == typeof(ushort))  return (ushort)  ((double) ((ushort)  b! - (ushort)  a!) * progress);
+        if (type == typeof(byte))    return (byte)    ((double) ((byte)    b! - (byte)    a!) * progress);
+        if (type == typeof(sbyte))   return (sbyte)   ((double) ((sbyte)   b! - (sbyte)   a!) * progress);
+
+        // …  ⟶ also interpolate between eligible class types e.g. `UnityEngine.Color`, `UnityEngine.Vector3`, …
+        if (!INTERPOLATION_OPS.TryGetValue(type, out operators) && null != (operators.subtraction = type.GetMethod("op_Subtraction", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static, null, new[] {type, type}, null)))
+        foreach (System.Reflection.MethodInfo method in type.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)) {
           System.Reflection.ParameterInfo[] parameters = method.GetParameters();
-          return method.Name == "op_Multiply" && parameters.Length == 2 && parameters[0].ParameterType == operators.subtraction?.ReturnType && null != (
-            parameters[1].ParameterType == typeof(double)  ? progressType = typeof(double)  :
-            parameters[1].ParameterType == typeof(float)   ? progressType = typeof(float)   :
-            parameters[1].ParameterType == typeof(decimal) ? progressType = typeof(decimal) :
-            parameters[1].ParameterType == typeof(int)     ? progressType = typeof(int)     :
-            parameters[1].ParameterType == typeof(nint)    ? progressType = typeof(nint)    :
-            parameters[1].ParameterType == typeof(long)    ? progressType = typeof(long)    :
-            parameters[1].ParameterType == typeof(uint)    ? progressType = typeof(uint)    :
-            parameters[1].ParameterType == typeof(nuint)   ? progressType = typeof(nuint)   :
-            parameters[1].ParameterType == typeof(ulong)   ? progressType = typeof(ulong)   :
-            parameters[1].ParameterType == typeof(short)   ? progressType = typeof(short)   :
-            parameters[1].ParameterType == typeof(ushort)  ? progressType = typeof(ushort)  :
-            parameters[1].ParameterType == typeof(byte)    ? progressType = typeof(byte)    :
-            parameters[1].ParameterType == typeof(sbyte)   ? progressType = typeof(sbyte)   :
-            null
-          );
-        });
+
+          if (method.Name == "op_Multiply" && parameters.Length == 2 && parameters[0].ParameterType == operators.subtraction.ReturnType && (
+            parameters[1].ParameterType == (progressType = typeof(double))  ||
+            parameters[1].ParameterType == (progressType = typeof(float))   ||
+            parameters[1].ParameterType == (progressType = typeof(decimal)) ||
+            parameters[1].ParameterType == (progressType = typeof(int))     ||
+            parameters[1].ParameterType == (progressType = typeof(nint))    ||
+            parameters[1].ParameterType == (progressType = typeof(long))    ||
+            parameters[1].ParameterType == (progressType = typeof(uint))    ||
+            parameters[1].ParameterType == (progressType = typeof(nuint))   ||
+            parameters[1].ParameterType == (progressType = typeof(ulong))   ||
+            parameters[1].ParameterType == (progressType = typeof(short))   ||
+            parameters[1].ParameterType == (progressType = typeof(ushort))  ||
+            parameters[1].ParameterType == (progressType = typeof(byte))    ||
+            parameters[1].ParameterType == (progressType = typeof(sbyte))
+          )) {
+            operators.multiplication = method;
+            INTERPOLATION_OPS.Add(type, operators);
+
+            break;
+          }
+        }
 
         return operators.multiplication?.Invoke(null, new[] {operators.subtraction?.Invoke(null, new[] {b, a}), System.Convert.ChangeType(progress, progressType)});
       }
@@ -154,26 +164,23 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         this.timestamp = UnityEngine.Time.realtimeSinceStartupAsDouble;
       }
 
+      /* … ⟶ Simultaneous (un-)boxing is minimally slow 🐢 */
       public object? this[string property] { get {
-        /* TODO */
-        if (this.properties.ContainsKey(property)) {
-          System.Collections.ObjectModel.ReadOnlyDictionary<string, object?> begin    = this.begin;
+        if (null != property && this.end.ContainsKey(property)) {
+          System.Collections.ObjectModel.ReadOnlyDictionary<string, object?> begin    = this.begin!;
           double                                                             elapsed  = UnityEngine.Time.realtimeSinceStartupAsDouble - this.timestamp;
           System.Collections.ObjectModel.ReadOnlyDictionary<string, object?> end      = this.end;
           double                                                             progress = (elapsed - this.delay) / this.duration;
 
           // …
-          foreach (System.Collections.Generic.KeyValuePair<double, PatchOdyssey.Animation.UIKeyframe> enumerated in this.keyframes) {
-            ref System.Collections.ObjectModel.ReadOnlyDictionary<string, object?> properties = ref enumerated.Value.properties;
-
-            if (properties.ContainsKey(property)) {
-              if (enumerated.Key <= progress) begin = properties;
-              if (enumerated.Key >= progress) end   = properties;
-            }
+          foreach (System.Collections.Generic.KeyValuePair<double, PatchOdyssey.Animation.UIKeyframe> enumerated in this.keyframes)
+          if (enumerated.Value.properties.ContainsKey(property)) {
+            if      (enumerated.Key <= progress) begin = enumerated.Value.properties;
+            else if (enumerated.Key >= progress) end   = enumerated.Value.properties;
           }
 
-          if (begin.ContainsKey(property) && end.ContainsKey(property))
-          return (this.interpolator ?? PatchOdyssey.UISequence.Interpolate)(this.delay <= elapsed ? 0.0 : this.duration <= elapsed - this.delay ? 1.0 : (this.easing ?? PatchOdyssey.Animation.Function.Linear)((elapsed - this.delay) / this.duration), begin[property], end[property]);
+          if (begin.ContainsKey(property))
+          return (this.interpolator ?? PatchOdyssey.Animation.UISequence.Interpolate)(this.delay <= elapsed ? 0.0 : this.duration <= elapsed - this.delay ? 1.0 : (this.easing ?? PatchOdyssey.Animation.Function.Linear)((elapsed - this.delay) / this.duration), begin[property], end[property]);
         }
 
         return null;
@@ -181,158 +188,143 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
     }
   }
 
-  /* … */
-  public delegate double  AnimationFunction(double time);
-  public delegate object? Interpolator     (double progress, object? a, object? b);
-
-  /* … */
-  public sealed class ReadOnlyInInspectorAttribute : UnityEngine.PropertyAttribute {}
-
-  [System.AttributeUsage(System.AttributeTargets.All, AllowMultiple = false, Inherited = false)]
-  public sealed class ReadWriteInInspectorAttribute : System.Attribute {}
-
-  [System.Serializable]
-  #if false
-    public class SerializedDictionary<TKey, TValue> : System.Collections.Generic.Dictionary<TKey, TValue> {
-      public SerializedDictionary()                                                                                                                                                                            : base()                     { this.Ensure(); }
-      public SerializedDictionary(int                                                                                                 capacity)                                                                : base(capacity)             { this.Ensure(); }
-      public SerializedDictionary(System.Collections.Generic.IEqualityComparer<TKey>                                                  comparer)                                                                : base(comparer)             { this.Ensure(); }
-      public SerializedDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary)                                                              : base(dictionary)           { this.Ensure(); }
-      public SerializedDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable)                                                              : base(enumerable)           { this.Ensure(); }
-      public SerializedDictionary(int                                                                                                 capacity,   System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(capacity,   comparer) { this.Ensure(); }
-      public SerializedDictionary(System.Collections.Generic.IDictionary<TKey, TValue>                                                dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(dictionary, comparer) { this.Ensure(); }
-      public SerializedDictionary(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>       enumerable, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(enumerable, comparer) { this.Ensure(); }
-    }
-  #else
-    public class SerializedDictionary<TKey, TValue> : System.Collections.Generic.IDictionary<TKey, TValue> /* ⟶ `https://discussions.unity.com/t/finally-a-serializable-dictionary-for-unity-extracted-from-system-collections-generic/586385/1` */ {
+  namespace Collections {
+    [System.Serializable]
+    public class EditorDictionary<TKey, TValue> : System.Collections.Generic.IDictionary<TKey, TValue> /* ⟶ `https://discussions.unity.com/t/finally-a-serializable-dictionary-for-unity-extracted-from-system-collections-generic/586385/1` */ {
       public struct Enumerator : System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<TKey, TValue>> {
-        public           System.Collections.Generic.KeyValuePair<TKey, TValue> Current => this.current;
-        private          System.Collections.Generic.KeyValuePair<TKey, TValue> current;
-        private readonly PatchOdyssey.SerializedDictionary      <TKey, TValue> dictionary;
-        private          int                                                   index;
-        public           int                                                   version;
-        object                                                                 System.Collections.IEnumerator.Current => Current;
+        public                          System.Collections.Generic.KeyValuePair  <TKey, TValue>  Current => (System.Collections.Generic.KeyValuePair<TKey, TValue>) this.current!;
+        private                         System.Collections.Generic.KeyValuePair  <TKey, TValue>? current;
+        private /* required */ readonly PatchOdyssey.Collections.EditorDictionary<TKey, TValue>  dictionary;
+        private                         uint                                                     index;
+        private                readonly uint                                                     version;
+        object                                                                                   System.Collections.IEnumerator.Current => this.Current;
 
         /* … */
-        internal Enumerator(PatchOdyssey.SerializedDictionary<TKey, TValue> dictionary) {
-          this.current    = default;
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        internal Enumerator(PatchOdyssey.Collections.EditorDictionary<TKey, TValue> dictionary) {
+          this.current    = null;
           this.dictionary = dictionary;
-          this.index      = 0;
+          this.index      = 0u;
           this.version    = dictionary.version;
         }
 
         /* … */
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void Dispose() {}
 
         public bool MoveNext() {
           if (this.dictionary.version != this.version)
-          throw new System.InvalidOperationException($"Dictionary changed during enumeration");
+          throw new System.InvalidOperationException("Dictionary changed during enumeration");
 
           for (; this.dictionary.count > this.index; ++this.index)
           if (this.dictionary.hashes[this.index] >= 0) {
-            this.current = new(this.dictionary.keys[index], this.dictionary.values[index]);
-            this.index  += 1;
+            this.current = new(this.dictionary.keys[this.index], this.dictionary.values[this.index]);
+            this.index  += 1u;
 
             return true;
           }
 
-          this.current = default;
-          this.index   = this.dictionary.count + 1;
+          this.current = null;
+          this.index   = this.dictionary.count + 1u;
 
           return false;
         }
 
         void System.Collections.IEnumerator.Reset() {
           if (this.dictionary.version != this.version)
-            throw new System.InvalidOperationException($"Dictionary changed during enumeration");
+          throw new System.InvalidOperationException("Dictionary changed during enumeration");
 
-          this.current = default;
+          this.current = null;
           this.index   = 0;
         }
       }
 
       /* … */
-      private const           int                                                    CapacityMaximum = 0x7FEFFFFD;
-      private static readonly System.Collections.ObjectModel.ReadOnlyCollection<int> Primes          = new[] {3, 7, 11, 17, 23, 29, 37, 47, 59, 71, 89, 107, 131, 163, 197, 239, 293, 353, 431, 521, 631, 761, 919, 1103, 1327, 1597, 1931, 2333, 2801, 3371, 4049, 4861, 5839, 7013, 8419, 10103, 12143, 14591, 17519, 21023, 25229, 30293, 36353, 43627, 52361, 62851, 75431, 90523, 108631, 130363, 156437, 187751, 225307, 270371, 324449, 389357, 467237, 560689, 672827, 807403, 968897, 1162687, 1395263, 1674319, 2009191, 2411033, 2893249, 3471899, 4166287, 4999559, 5999471, 7199369}.AsReadOnly();
-      private const           int                                                    PrimeMaximum    = 0x7FFFFFFF;
+      internal const           uint                                                    CapacityMaximum = 0x7FEFFFFDu;
+      internal static readonly System.Collections.ObjectModel.ReadOnlyCollection<uint> Primes          = new[] {3u, 7u, 11u, 17u, 23u, 29u, 37u, 47u, 59u, 71u, 89u, 107u, 131u, 163u, 197u, 239u, 293u, 353u, 431u, 521u, 631u, 761u, 919u, 1103u, 1327u, 1597u, 1931u, 2333u, 2801u, 3371u, 4049u, 4861u, 5839u, 7013u, 8419u, 10103u, 12143u, 14591u, 17519u, 21023u, 25229u, 30293u, 36353u, 43627u, 52361u, 62851u, 75431u, 90523u, 108631u, 130363u, 156437u, 187751u, 225307u, 270371u, 324449u, 389357u, 467237u, 560689u, 672827u, 807403u, 968897u, 1162687u, 1395263u, 1674319u, 2009191u, 2411033u, 2893249u, 3471899u, 4166287u, 4999559u, 5999471u, 7199369u}.AsReadOnly();
+      internal const           uint                                                    PrimeMaximum    = 0x7FFFFFFFu;
 
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private int[]                                              buckets                                                                                                 =  null;
-      private readonly                                                  System.Collections.Generic.IEqualityComparer<TKey> comparer                                                                                                =  System.Collections.Generic.EqualityComparer<TKey>.Default;
-      public                                                            int                                                Count                                                                                                   => this.count - this.freeCount;
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private int                                                count                                                                                                   =  0;
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private int                                                freeCount                                                                                               =  0;
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private int                                                freeList                                                                                                =  0;
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private int[]                                              hashes                                                                                                  =  null;
-      public                                                            System.Collections.Generic.ICollection<TKey>       Keys                                                                                                    { get { TKey[] keys = new TKey[this.Count]; System.Array.Copy(this.keys, 0, keys, 0, this.Count); return keys; } }
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private TKey[]                                             keys                                                                                                    = null;
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private int []                                             next                                                                                                    = null;
-      public                                                            System.Collections.Generic.ICollection<TValue>     Values                                                                                                  { get { TValue[] values = new TValue[this.Count]; System.Array.Copy(this.values, 0, values, 0, this.Count); return values; } }
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private TValue[]                                           values                                                                                                  =  null;
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] public  int                                                version                                                                                                 =  0;
-      bool                                                                                                                 System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<TKey,TValue>>.IsReadOnly => false;
+      public                                                            int                                                Count                                                                                                    => (int) (this.count - this.freeCount);
+      public                                                            System.Collections.Generic.ICollection<TKey>       Keys                                                                                                     { get { TKey[]   keys   = new TKey  [this.Count]; System.Array.Copy(this.keys,   0, keys,   0, this.Count); return keys;   } }
+      public                                                            System.Collections.Generic.ICollection<TValue>     Values                                                                                                   { get { TValue[] values = new TValue[this.Count]; System.Array.Copy(this.values, 0, values, 0, this.Count); return values; } }
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private int[]                                              buckets                                                                                                  =  new int[0];
+      private readonly                                                  System.Collections.Generic.IEqualityComparer<TKey> comparer                                                                                                 =  System.Collections.Generic.EqualityComparer<TKey>.Default;
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private uint                                               count                                                                                                    =  0u;
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private uint                                               freeCount                                                                                                =  0u;
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private int                                                freeList                                                                                                 =  0;
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private int   []                                           hashes                                                                                                   =  new int   [0];
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private TKey  []                                           keys                                                                                                     =  new TKey  [0];
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private int   []                                           next                                                                                                     =  new int   [0];
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private TValue[]                                           values                                                                                                   =  new TValue[0];
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] public  uint                                               version                                                                                                  =  0u;
+      bool                                                                                                                 System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<TKey, TValue>>.IsReadOnly => false;
 
       /* … */
-      public SerializedDictionary()                                                                : this(0,          null)     {}
-      public SerializedDictionary(int                                                  capacity)   : this(capacity,   null)     {}
-      public SerializedDictionary(System.Collections.Generic.IEqualityComparer<TKey>   comparer)   : this(0,          comparer) {}
-      public SerializedDictionary(System.Collections.Generic.IDictionary<TKey, TValue> dictionary) : this(dictionary, null)     {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public EditorDictionary()                                                                : this(0,          null!)    {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public EditorDictionary(int                                                  capacity)   : this(capacity,   null!)    {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public EditorDictionary(System.Collections.Generic.IEqualityComparer<TKey>   comparer)   : this(0,          comparer) {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public EditorDictionary(System.Collections.Generic.IDictionary<TKey, TValue> dictionary) : this(dictionary, null!)    {}
 
-      public SerializedDictionary(System.Collections.Generic.IDictionary<TKey, TValue> dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : this(null != dictionary ? dictionary.Count : 0, comparer) {
-        if (null == dictionary) throw new System.ArgumentNullException($"Source dictionary provided is null");
-        foreach (System.Collections.Generic.KeyValuePair<TKey, TValue> current in dictionary) this.Add(current.Key, current.Value);
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+      public EditorDictionary(System.Collections.Generic.IDictionary<TKey, TValue> dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : this(dictionary?.Count ?? 0, comparer) {
+        if (null == dictionary)
+        throw new System.ArgumentNullException($"Source dictionary provided is null");
+
+        foreach (System.Collections.Generic.KeyValuePair<TKey, TValue> current in dictionary)
+        this.Add(current.Key, current.Value);
       }
 
-      public SerializedDictionary(int capacity, System.Collections.Generic.IEqualityComparer<TKey> comparer) {
+      public EditorDictionary(int capacity, System.Collections.Generic.IEqualityComparer<TKey> comparer) {
         if (capacity < 0)
           throw new System.ArgumentOutOfRangeException($"Expected positive dictionary capacity");
 
-        this.Ensure    ();
-        this.Initialize(capacity);
-
+        EditorDictionary<TKey, TValue>.Ensure();
+        this.Initialize((uint) capacity);
         this.comparer = comparer ?? System.Collections.Generic.EqualityComparer<TKey>.Default;
       }
 
       /* … */
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
       public void Add(System.Collections.Generic.KeyValuePair<TKey, TValue> item) {
         this.Add(item.Key, item.Value);
       }
 
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
       public void Add(TKey key, TValue value) {
         this.Insert(key, value, true);
       }
 
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
       public void Clear() {
-        if (this.count <= 0)
+        if (0u == this.count)
         return;
 
-        for (int index = 0; index != this.buckets.Length; ++index)
-          this.buckets[index] = -1;
+        this.buckets.Fill(-1);
+        this.hashes .Clear(0, (int) this.count);
+        this.keys   .Clear(0, (int) this.count);
+        this.next   .Clear(0, (int) this.count);
+        this.values .Clear(0, (int) this.count);
 
-        this.hashes.Clear(0, this.count);
-        this.keys  .Clear(0, this.count);
-        this.next  .Clear(0, this.count);
-        this.values.Clear(0, this.count);
-
-        this.count     = 0;
-        this.freeCount = 0;
+        this.count     =  0;
+        this.freeCount =  0;
         this.freeList  = -1;
-        this.version  += 1;
+        this.version  += +1;
       }
 
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
       public bool Contains(System.Collections.Generic.KeyValuePair<TKey, TValue> item) {
         int index = this.FindIndex(item.Key);
-        return index >= 0 && System.Collections.Generic.EqualityComparer<TValue>.Default.Equals(this.values[index], item.Value);
+        return index != -1 && System.Collections.Generic.EqualityComparer<TValue>.Default.Equals(this.values[index], item.Value);
       }
 
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
       public bool ContainsKey(TKey key) {
-        return this.FindIndex(key) >= 0;
+        return this.FindIndex(key) != -1;
       }
 
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
       public bool ContainsValue(TValue value) {
-        System.Func<TValue?, TValue?, bool> comparer = null == value ? static (value, _) => null == value : System.Collections.Generic.EqualityComparer<TValue>.Default.Equals;
-
-        // …
-        for (int index = 0; index != this.count; ++index) {
+        for ((uint index, System.Func<TValue, TValue, bool> comparer) = (this.count, null == value ? static (value, _) => null == value : System.Collections.Generic.EqualityComparer<TValue>.Default.Equals); 0u != index--; ) {
           if (this.hashes[index] >= 0 && comparer(this.values[index], value))
           return true;
         }
@@ -342,8 +334,8 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
 
       public void CopyTo(System.Collections.Generic.KeyValuePair<TKey, TValue>[] array, int offset) {
         if (null == array)                       throw new System.ArgumentNullException      ($"Destination array provided is null");
-        if (offset < 0 || offset > array.Length) throw new System.ArgumentOutOfRangeException($"Invalid offset provided");
-        if (Count > array.Length - offset)       throw new System.ArgumentException          ($"Dictionary item count is more than the specified space provided");
+        if (offset < 0 || array.Length < offset) throw new System.ArgumentOutOfRangeException($"Invalid offset provided");
+        if (this.Count >  array.Length - offset) throw new System.ArgumentException          ($"Dictionary item count is more than the specified space provided");
 
         for (int index = 0; index != this.count; ++index) {
           if (this.hashes[index] >= 0)
@@ -351,46 +343,47 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         }
       }
 
-      public static System.Func<UnityEngine.Rect, object, object> DelegateGUIField<T>() {
-        return (System.Func<UnityEngine.Rect, object, object>) Util.Switch(typeof(T), new() {
-          {typeof(bool),                       (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Toggle         (position,                              (System.Boolean)             value) as object)},
-          {typeof(double),                     (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.DoubleField    (position,                              (System.Double)              value) as object)},
-          {typeof(float),                      (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.FloatField     (position,                              (System.Single)              value) as object)},
-          {typeof(int),                        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.IntField       (position,                              (System.Int32)               value) as object)},
-          {typeof(long),                       (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.LongField      (position,                              (System.Int64)               value) as object)},
-          {typeof(string),                     (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.TextField      (position,                              (System.String)              value) as object)},
-          {typeof(UnityEngine.AnimationCurve), (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.CurveField     (position,                              (UnityEngine.AnimationCurve) value) as object)},
-          {typeof(UnityEngine.Bounds),         (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.BoundsField    (position,                              (UnityEngine.Bounds)         value) as object)},
-          {typeof(UnityEngine.BoundsInt),      (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.BoundsIntField (position,                              (UnityEngine.BoundsInt)      value) as object)},
-          {typeof(UnityEngine.Color),          (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.ColorField     (position,                              (UnityEngine.Color)          value) as object)},
-          {typeof(UnityEngine.Gradient),       (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.GradientField  (position,                              (UnityEngine.Gradient)       value) as object)},
-          {typeof(UnityEngine.Rect),           (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.RectField      (position,                              (UnityEngine.Rect)           value) as object)},
-          {typeof(UnityEngine.RectInt),        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.RectIntField   (position,                              (UnityEngine.RectInt)        value) as object)},
-          {typeof(UnityEngine.Vector2),        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector2Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector2)        value) as object)},
-          {typeof(UnityEngine.Vector2Int),     (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector2IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector2Int)     value) as object)},
-          {typeof(UnityEngine.Vector3),        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector3Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector3)        value) as object)},
-          {typeof(UnityEngine.Vector3Int),     (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector3IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector3Int)     value) as object)},
-          {typeof(UnityEngine.Vector4),        (System.Func<UnityEngine.Rect, object, object>) (static (position, value) => UnityEditor.EditorGUI.Vector4Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector4)        value) as object)}
-        }) ?? (
-          typeof(T).IsEnum                                       ? static (position, value) => UnityEditor.EditorGUI.EnumPopup  (position, (System.Enum)        value)                  as object :
-          typeof(UnityEngine.Object).IsAssignableFrom(typeof(T)) ? static (position, value) => UnityEditor.EditorGUI.ObjectField(position, (UnityEngine.Object) value, typeof(T), true) as object :
-          null
-        );
+      public static System.Func<UnityEngine.Rect, object, object>? DelegateGUIField<T>() {
+        if (typeof(T) == typeof(bool))                              return static (position, value) => UnityEditor.EditorGUI.Toggle         (position,                              (System.Boolean)             value)                  as object;
+        if (typeof(T) == typeof(double))                            return static (position, value) => UnityEditor.EditorGUI.DoubleField    (position,                              (System.Double)              value)                  as object;
+        if (typeof(T) == typeof(float))                             return static (position, value) => UnityEditor.EditorGUI.FloatField     (position,                              (System.Single)              value)                  as object;
+        if (typeof(T) == typeof(int))                               return static (position, value) => UnityEditor.EditorGUI.IntField       (position,                              (System.Int32)               value)                  as object;
+        if (typeof(T) == typeof(long))                              return static (position, value) => UnityEditor.EditorGUI.LongField      (position,                              (System.Int64)               value)                  as object;
+        if (typeof(T) == typeof(string))                            return static (position, value) => UnityEditor.EditorGUI.TextField      (position,                              (System.String)              value)                  as object;
+        if (typeof(T) == typeof(UnityEngine.AnimationCurve))        return static (position, value) => UnityEditor.EditorGUI.CurveField     (position,                              (UnityEngine.AnimationCurve) value)                  as object;
+        if (typeof(T) == typeof(UnityEngine.Bounds))                return static (position, value) => UnityEditor.EditorGUI.BoundsField    (position,                              (UnityEngine.Bounds)         value)                  as object;
+        if (typeof(T) == typeof(UnityEngine.BoundsInt))             return static (position, value) => UnityEditor.EditorGUI.BoundsIntField (position,                              (UnityEngine.BoundsInt)      value)                  as object;
+        if (typeof(T) == typeof(UnityEngine.Color))                 return static (position, value) => UnityEditor.EditorGUI.ColorField     (position,                              (UnityEngine.Color)          value)                  as object;
+        if (typeof(T) == typeof(UnityEngine.Gradient))              return static (position, value) => UnityEditor.EditorGUI.GradientField  (position,                              (UnityEngine.Gradient)       value)                  as object;
+        if (typeof(T) == typeof(UnityEngine.Rect))                  return static (position, value) => UnityEditor.EditorGUI.RectField      (position,                              (UnityEngine.Rect)           value)                  as object;
+        if (typeof(T) == typeof(UnityEngine.RectInt))               return static (position, value) => UnityEditor.EditorGUI.RectIntField   (position,                              (UnityEngine.RectInt)        value)                  as object;
+        if (typeof(T) == typeof(UnityEngine.Vector2))               return static (position, value) => UnityEditor.EditorGUI.Vector2Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector2)        value)                  as object;
+        if (typeof(T) == typeof(UnityEngine.Vector2Int))            return static (position, value) => UnityEditor.EditorGUI.Vector2IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector2Int)     value)                  as object;
+        if (typeof(T) == typeof(UnityEngine.Vector3))               return static (position, value) => UnityEditor.EditorGUI.Vector3Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector3)        value)                  as object;
+        if (typeof(T) == typeof(UnityEngine.Vector3Int))            return static (position, value) => UnityEditor.EditorGUI.Vector3IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector3Int)     value)                  as object;
+        if (typeof(T) == typeof(UnityEngine.Vector4))               return static (position, value) => UnityEditor.EditorGUI.Vector4Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector4)        value)                  as object;
+        if (typeof(T).IsEnum)                                       return static (position, value) => UnityEditor.EditorGUI.EnumPopup      (position,                              (System.Enum)                value)                  as object;
+        if (typeof(UnityEngine.Object).IsAssignableFrom(typeof(T))) return static (position, value) => UnityEditor.EditorGUI.ObjectField    (position,                              (UnityEngine.Object)         value, typeof(T), true) as object;
+
+        return null;
       }
 
-      public void Ensure() {
-        if (null == PatchOdyssey.SerializedDictionary<TKey, TValue>.DelegateGUIField<TKey>  ()) throw new System.NotSupportedException($"[{UnityEngine.Application.productName}]: Type `{typeof(TKey)}` is not supported for `System.*.IDictionary` object");
-        if (null == PatchOdyssey.SerializedDictionary<TKey, TValue>.DelegateGUIField<TValue>()) throw new System.NotSupportedException($"[{UnityEngine.Application.productName}]: Type `{typeof(TValue)}` is not supported for `System.*.IDictionary` object");
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+      public static void Ensure() {
+        if (null == PatchOdyssey.Collections.EditorDictionary<TKey, TValue>.DelegateGUIField<TKey>  ()) throw new System.NotSupportedException($"[{"sussy"/*UnityEngine.Application.productName*/}]: Type `{typeof(TKey)}` is not supported for `EditorDictionary`");
+        if (null == PatchOdyssey.Collections.EditorDictionary<TKey, TValue>.DelegateGUIField<TValue>()) throw new System.NotSupportedException($"[{"sussy"/*UnityEngine.Application.productName*/}]: Type `{typeof(TValue)}` is not supported for `EditorDictionary`");
       }
 
       private int FindIndex(TKey key) {
         if (null == key)
         throw new System.ArgumentNullException($"Dictionary key is null");
 
-        if (null != this.buckets) {
-          int hash = this.comparer.GetHashCode(key) & SerializedDictionary<TKey, TValue>.PrimeMaximum;
+        if (0 != this.buckets.Length) {
+          int hash  = this.comparer.GetHashCode(key) & (int) EditorDictionary<TKey, TValue>.PrimeMaximum;
+          int index = this.buckets[hash % this.buckets.Length];
 
-          for (int index = this.buckets[hash % this.buckets.Length]; index >= 0; index = this.next[index]) {
+          // …
+          for (; index >= 0; index = this.next[index]) {
             if (hash == this.hashes[index] && this.comparer.Equals(this.keys[index], key))
             return index;
           }
@@ -399,44 +392,66 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         return -1;
       }
 
-      public SerializedDictionary<TKey, TValue>.Enumerator GetEnumerator() {
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+      public EditorDictionary<TKey, TValue>.Enumerator GetEnumerator() {
         return new(this);
       }
 
-      public static int GetPrime(int minimum) {
-        if (minimum < 0)
+      public static uint GetPrime(uint minimum) {
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        static uint Sqrt(uint number) {
+          uint residue = 1u;
+          uint root    = 0u;
+          uint term;
+
+          // …
+          while (residue <= number)
+          residue <<= 2;
+
+          while (residue > 1u) {
+            residue >>= 2;
+            term      = number - residue - root;
+            root    >>= 1;
+
+            if (term >= 0u) {
+              number = term;
+              root  += residue;
+            }
+          }
+
+          return root;
+        }
+
+        /* … */
+        if (minimum < 0u)
         throw new System.ArgumentException($"Expected positive dictionary prime");
 
-        foreach (int prime in SerializedDictionary<TKey, TValue>.Primes) {
+        foreach (uint prime in EditorDictionary<TKey, TValue>.Primes) {
           if (minimum <= prime)
           return prime;
         }
 
-        for (int index = minimum | 1; index < SerializedDictionary<TKey, TValue>.PrimeMaximum; index += 2) {
-          if (index == 2)
-          return index;
+        for (uint index = minimum | 1u; index < EditorDictionary<TKey, TValue>.PrimeMaximum; index += 2u)
+        if (0 != (index & 1u)) {
+          uint limit  = Sqrt(index);
+          bool primed = true;
 
-          if (0 != (index & 1)) {
-            int  limit  = (int) System.Math.Sqrt((double) index);
-            bool primed = true;
-
-            // …
-            for (int subindex = 3; limit >= subindex; subindex += 2)
-            if (0 == index % subindex) {
-              primed = false;
-              break;
-            }
-
-            if (primed && 0 != (index - 1) % 101)
-            return index;
+          // … ⟶ Magic numbers here — “Bippity bappity boo”! 🪄
+          for (uint subindex = 3u; limit >= subindex; subindex += 2u)
+          if (0u == index % subindex) {
+            primed = false;
+            break;
           }
+
+          if (primed && 0u != (index - 1u) % 101u)
+          return index;
         }
 
         return minimum;
       }
 
-      private void Initialize(int capacity) {
-        int prime = SerializedDictionary<TKey, TValue>.GetPrime(capacity);
+      private void Initialize(uint capacity) {
+        uint prime = EditorDictionary<TKey, TValue>.GetPrime(capacity);
 
         // …
         this.buckets  = new int[prime];
@@ -446,85 +461,77 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         this.next     = new int   [prime];
         this.values   = new TValue[prime];
 
-        for (int index = 0; index != this.buckets.Length; ++index)
-        this.buckets[index] = -1;
+        this.buckets.Fill(-1);
       }
 
-      private void Insert(TKey key, TValue value, bool insert) {
+      private void Insert(TKey key, TValue value, bool strict) {
+        int freeIndex = 0;
         int hash      = 0;
         int hashIndex = 0;
-        int number    = 0;
 
         // …
-        if (null == key)
-          throw new System.ArgumentNullException($"Dictionary key is `null`");
+        if (null == key)                 throw new System.ArgumentNullException($"Dictionary key is null");
+        if (0    == this.buckets.Length) this.Initialize(0u);
 
-        if (null == this.buckets)
-          this.Initialize(0);
-
-        hash      = this.comparer.GetHashCode(key) & 0x7FFFFFFF;
+        hash      = this.comparer.GetHashCode(key) & (int) EditorDictionary<TKey, TValue>.PrimeMaximum;
         hashIndex = hash % this.buckets.Length;
 
-        for (int index = this.buckets[hashIndex]; index >= 0; index = next[index]) {
-          if (hash == this.hashes[index] && this.comparer.Equals(this.keys[index], key)) {
-            if (insert) throw new System.ArgumentException($"Dictionary key already exists: `{key}`");
-
+        for (int index = this.buckets[hashIndex]; index >= 0; ++freeIndex, index = next[index])
+        if (hash == this.hashes[index] && this.comparer.Equals(this.keys[index], key)) {
+          if (!strict) {
             this.values[index] = value;
-            this.version      += 1;
+            this.version      += 1u;
+
             return;
           }
 
-          ++number;
+          throw new System.ArgumentException($"Dictionary key already exists: `{key}`");
         }
 
-        if (this.freeCount > 0) {
-          number          = this.freeList;
-          this.freeCount -= 1;
-          this.freeList   = this.next[number];
+        if (0u != this.freeCount) {
+          this.freeCount -= 1u;
+          this.freeList   = this.next[freeIndex = this.freeList];
         }
 
         else {
-          if (this.count == this.keys.Length) {
-            this.Resize();
-            hashIndex = hash % this.buckets.Length;
-          }
+          if (this.count == this.keys.Length)
+            this.Resize(EditorDictionary<TKey, TValue>.CapacityMaximum >> 0 > this.count && EditorDictionary<TKey, TValue>.CapacityMaximum >> 1 < this.count ? EditorDictionary<TKey, TValue>.CapacityMaximum : EditorDictionary<TKey, TValue>.GetPrime(this.count << 1));
 
-          number      = this.count;
-          this.count += 1;
+          freeIndex = (int) this.count++;
         }
 
-        this.next   [number]    = this.buckets[hashIndex];
-        this.buckets[hashIndex] = number;
-        this.hashes [number]    = hash;
-        this.keys   [number]    = key;
-        this.values [number]    = value;
-        this.version           += 1;
+        this.next   [freeIndex] = this.buckets[hashIndex];
+        this.buckets[hashIndex] = freeIndex;
+        this.hashes [freeIndex] = hash;
+        this.keys   [freeIndex] = key;
+        this.values [freeIndex] = value;
+        this.version           += 1u;
       }
 
       public bool Remove(TKey key) {
-        int hash      = 0;
-        int hashIndex = 0;
-        int number    = -1;
+        int freeIndex = -1;
+        int hash      =  0;
+        int hashIndex =  0;
 
         // …
-        if (key == null)
+        if (null == key)
           throw new System.ArgumentNullException($"Dictionary key is null");
 
-        hash      = this.comparer.GetHashCode(key) & 0x7FFFFFFF;
+        hash      = this.comparer.GetHashCode(key) & (int) EditorDictionary<TKey, TValue>.PrimeMaximum;
         hashIndex = hash % this.buckets.Length;
 
-        for (int index = this.buckets[hashIndex]; index >= 0; index = this.next[index], number = index)
+        for (int index = this.buckets[hashIndex]; index >= 0; freeIndex = index = this.next[index])
         if (hash == this.hashes[index] && this.comparer.Equals(this.keys[index], key)) {
-          if (number < 0) this.buckets[hashIndex] = this.next[index];
-          else            this.next   [number]    = this.next[index];
+          if (freeIndex < 0) this.buckets[hashIndex] = this.next[index];
+          else               this.next   [freeIndex] = this.next[index];
 
-          this.version      += 1;
-          this.values[index] = default;
+          this.version      += 1u;
+          this.values[index] = default!;
           this.next  [index] = this.freeList;
-          this.keys  [index] = default;
+          this.keys  [index] = default!;
           this.hashes[index] = -1;
           this.freeList      = index;
-          this.freeCount    += 1;
+          this.freeCount    += 1u;
 
           return true;
         }
@@ -532,15 +539,12 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         return false;
       }
 
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
       public bool Remove(System.Collections.Generic.KeyValuePair<TKey, TValue> item) {
         return this.Remove(item.Key);
       }
 
-      private void Resize() {
-        this.Resize(SerializedDictionary<TKey, TValue>.CapacityMaximum > this.count && SerializedDictionary<TKey, TValue>.CapacityMaximum < this.count * 2 ? SerializedDictionary<TKey, TValue>.CapacityMaximum : SerializedDictionary<TKey, TValue>.GetPrime(this.count * 2), false);
-      }
-
-      private void Resize(int capacity, bool rehash) {
+      private void Resize(uint capacity) {
         int[]    buckets = new int   [capacity];
         int[]    hashes  = new int   [capacity];
         TKey[]   keys    = new TKey  [capacity];
@@ -548,22 +552,15 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         TValue[] values  = new TValue[capacity];
 
         // …
-        for (int index = 0; buckets.Length != index; ++index)
-          buckets[index] = -1;
+        buckets.Fill(-1);
 
         System.Array.Copy(this.hashes, 0, hashes, 0, this.count);
         System.Array.Copy(this.keys,   0, keys,   0, this.count);
         System.Array.Copy(this.next,   0, next,   0, this.count);
         System.Array.Copy(this.values, 0, values, 0, this.count);
 
-        if (rehash)
         for (int index = 0; index != this.count; ++index) {
-          if (hashes[index] != -1)
-          hashes[index] = this.comparer.GetHashCode(keys[index]) & SerializedDictionary<TKey, TValue>.PrimeMaximum;
-        }
-
-        for (int index = 0; index != this.count; ++index) {
-          int hashIndex = hashes[index] % capacity;
+          int hashIndex = hashes[index] % (int) capacity;
 
           // …
           next   [index]     = buckets[hashIndex];
@@ -577,120 +574,259 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         this.values  = values;
       }
 
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
       System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
         return this.GetEnumerator();
       }
 
-      System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<TKey,TValue>> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey,TValue>>.GetEnumerator() {
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+      System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<TKey, TValue>> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>.GetEnumerator() {
         return this.GetEnumerator();
       }
 
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
       public bool TryGetValue(TKey key, out TValue value) {
         int index = this.FindIndex(key);
 
-        // …
-        if (index >= 0) {
-          value = this.values[index];
-          return true;
-        }
-
-        value = default;
-        return false;
+        value = index != -1 ? this.values[index] : default!;
+        return index != -1;
       }
 
       public TValue this[TKey key] {
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         get {
           int index = this.FindIndex(key);
 
-          if (index >= 0) return this.values[index];
-          throw new System.Collections.Generic.KeyNotFoundException(key.ToString());
+          if (index != -1) return this.values[index];
+          throw new System.Collections.Generic.KeyNotFoundException(key?.ToString() ?? "");
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         set {
           this.Insert(key, value, false);
         }
       }
 
       public TValue this[TKey key, TValue _] {
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         get {
           int index = this.FindIndex(key);
-          return index >= 0 ? this.values[index] : _;
+          return index != -1 ? this.values[index] : _;
         }
       }
     }
-  #endif
-    [System.Serializable] public class AnimationCurveDictionary : PatchOdyssey.SerializedDictionary<string, UnityEngine.AnimationCurve> { public AnimationCurveDictionary() : base() {} public AnimationCurveDictionary(int capacity) : base(capacity) {} public AnimationCurveDictionary(System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public AnimationCurveDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary) : base(dictionary) {} public AnimationCurveDictionary(int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public AnimationCurveDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class BooleanDictionary        : PatchOdyssey.SerializedDictionary<string, System.Boolean>             { public BooleanDictionary       () : base() {} public BooleanDictionary       (int capacity) : base(capacity) {} public BooleanDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public BooleanDictionary       (System.Collections.Generic.IDictionary<string, System.Boolean>             dictionary) : base(dictionary) {} public BooleanDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public BooleanDictionary       (System.Collections.Generic.IDictionary<string, System.Boolean>             dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class BoundsDictionary         : PatchOdyssey.SerializedDictionary<string, UnityEngine.Bounds>         { public BoundsDictionary        () : base() {} public BoundsDictionary        (int capacity) : base(capacity) {} public BoundsDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public BoundsDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary) : base(dictionary) {} public BoundsDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public BoundsDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class BoundsIntDictionary      : PatchOdyssey.SerializedDictionary<string, UnityEngine.BoundsInt>      { public BoundsIntDictionary     () : base() {} public BoundsIntDictionary     (int capacity) : base(capacity) {} public BoundsIntDictionary     (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public BoundsIntDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary) : base(dictionary) {} public BoundsIntDictionary     (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public BoundsIntDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class ColorDictionary          : PatchOdyssey.SerializedDictionary<string, UnityEngine.Color>          { public ColorDictionary         () : base() {} public ColorDictionary         (int capacity) : base(capacity) {} public ColorDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public ColorDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary) : base(dictionary) {} public ColorDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public ColorDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class DoubleDictionary         : PatchOdyssey.SerializedDictionary<string, System.Double>              { public DoubleDictionary        () : base() {} public DoubleDictionary        (int capacity) : base(capacity) {} public DoubleDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public DoubleDictionary        (System.Collections.Generic.IDictionary<string, System.Double>              dictionary) : base(dictionary) {} public DoubleDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public DoubleDictionary        (System.Collections.Generic.IDictionary<string, System.Double>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class FloatDictionary          : PatchOdyssey.SerializedDictionary<string, System.Single>              { public FloatDictionary         () : base() {} public FloatDictionary         (int capacity) : base(capacity) {} public FloatDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public FloatDictionary         (System.Collections.Generic.IDictionary<string, System.Single>              dictionary) : base(dictionary) {} public FloatDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public FloatDictionary         (System.Collections.Generic.IDictionary<string, System.Single>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class GameObjectDictionary     : PatchOdyssey.SerializedDictionary<string, UnityEngine.GameObject>     { public GameObjectDictionary    () : base() {} public GameObjectDictionary    (int capacity) : base(capacity) {} public GameObjectDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public GameObjectDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary) : base(dictionary) {} public GameObjectDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public GameObjectDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class GradientDictionary       : PatchOdyssey.SerializedDictionary<string, UnityEngine.Gradient>       { public GradientDictionary      () : base() {} public GradientDictionary      (int capacity) : base(capacity) {} public GradientDictionary      (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public GradientDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary) : base(dictionary) {} public GradientDictionary      (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public GradientDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class IntDictionary            : PatchOdyssey.SerializedDictionary<string, System.Int32>               { public IntDictionary           () : base() {} public IntDictionary           (int capacity) : base(capacity) {} public IntDictionary           (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public IntDictionary           (System.Collections.Generic.IDictionary<string, System.Int32>               dictionary) : base(dictionary) {} public IntDictionary           (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public IntDictionary           (System.Collections.Generic.IDictionary<string, System.Int32>               dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class LongDictionary           : PatchOdyssey.SerializedDictionary<string, System.Int64>               { public LongDictionary          () : base() {} public LongDictionary          (int capacity) : base(capacity) {} public LongDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public LongDictionary          (System.Collections.Generic.IDictionary<string, System.Int64>               dictionary) : base(dictionary) {} public LongDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public LongDictionary          (System.Collections.Generic.IDictionary<string, System.Int64>               dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class RectDictionary           : PatchOdyssey.SerializedDictionary<string, UnityEngine.Rect>           { public RectDictionary          () : base() {} public RectDictionary          (int capacity) : base(capacity) {} public RectDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public RectDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary) : base(dictionary) {} public RectDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public RectDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class RectIntDictionary        : PatchOdyssey.SerializedDictionary<string, UnityEngine.RectInt>        { public RectIntDictionary       () : base() {} public RectIntDictionary       (int capacity) : base(capacity) {} public RectIntDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public RectIntDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary) : base(dictionary) {} public RectIntDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public RectIntDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class StringDictionary         : PatchOdyssey.SerializedDictionary<string, System.String>              { public StringDictionary        () : base() {} public StringDictionary        (int capacity) : base(capacity) {} public StringDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public StringDictionary        (System.Collections.Generic.IDictionary<string, System.String>              dictionary) : base(dictionary) {} public StringDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public StringDictionary        (System.Collections.Generic.IDictionary<string, System.String>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class UIntDictionary           : PatchOdyssey.SerializedDictionary<string, System.UInt32>              { public UIntDictionary          () : base() {} public UIntDictionary          (int capacity) : base(capacity) {} public UIntDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public UIntDictionary          (System.Collections.Generic.IDictionary<string, System.UInt32>              dictionary) : base(dictionary) {} public UIntDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public UIntDictionary          (System.Collections.Generic.IDictionary<string, System.UInt32>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class ULongDictionary          : PatchOdyssey.SerializedDictionary<string, System.UInt64>              { public ULongDictionary         () : base() {} public ULongDictionary         (int capacity) : base(capacity) {} public ULongDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public ULongDictionary         (System.Collections.Generic.IDictionary<string, System.UInt64>              dictionary) : base(dictionary) {} public ULongDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public ULongDictionary         (System.Collections.Generic.IDictionary<string, System.UInt64>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class Vector2Dictionary        : PatchOdyssey.SerializedDictionary<string, UnityEngine.Vector2>        { public Vector2Dictionary       () : base() {} public Vector2Dictionary       (int capacity) : base(capacity) {} public Vector2Dictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector2Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary) : base(dictionary) {} public Vector2Dictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector2Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class Vector2IntDictionary     : PatchOdyssey.SerializedDictionary<string, UnityEngine.Vector2Int>     { public Vector2IntDictionary    () : base() {} public Vector2IntDictionary    (int capacity) : base(capacity) {} public Vector2IntDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector2IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary) : base(dictionary) {} public Vector2IntDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector2IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class Vector3Dictionary        : PatchOdyssey.SerializedDictionary<string, UnityEngine.Vector3>        { public Vector3Dictionary       () : base() {} public Vector3Dictionary       (int capacity) : base(capacity) {} public Vector3Dictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector3Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary) : base(dictionary) {} public Vector3Dictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector3Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class Vector3IntDictionary     : PatchOdyssey.SerializedDictionary<string, UnityEngine.Vector3Int>     { public Vector3IntDictionary    () : base() {} public Vector3IntDictionary    (int capacity) : base(capacity) {} public Vector3IntDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector3IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary) : base(dictionary) {} public Vector3IntDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector3IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-    [System.Serializable] public class Vector4Dictionary        : PatchOdyssey.SerializedDictionary<string, UnityEngine.Vector4>        { public Vector4Dictionary       () : base() {} public Vector4Dictionary       (int capacity) : base(capacity) {} public Vector4Dictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector4Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary) : base(dictionary) {} public Vector4Dictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector4Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class AnimationCurveDictionary : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.AnimationCurve> { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationCurveDictionary() : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationCurveDictionary(int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationCurveDictionary(System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationCurveDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationCurveDictionary(int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationCurveDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class BooleanDictionary        : PatchOdyssey.Collections.EditorDictionary<string, System     .Boolean>        { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BooleanDictionary       () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BooleanDictionary       (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BooleanDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BooleanDictionary       (System.Collections.Generic.IDictionary<string, System     .Boolean>        dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BooleanDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BooleanDictionary       (System.Collections.Generic.IDictionary<string, System     .Boolean>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class BoundsDictionary         : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.Bounds>         { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsDictionary        () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsDictionary        (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class BoundsIntDictionary      : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.BoundsInt>      { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsIntDictionary     () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsIntDictionary     (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsIntDictionary     (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsIntDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsIntDictionary     (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsIntDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class ColorDictionary          : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.Color>          { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ColorDictionary         () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ColorDictionary         (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ColorDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ColorDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ColorDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ColorDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class DoubleDictionary         : PatchOdyssey.Collections.EditorDictionary<string, System     .Double>         { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public DoubleDictionary        () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public DoubleDictionary        (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public DoubleDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public DoubleDictionary        (System.Collections.Generic.IDictionary<string, System     .Double>         dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public DoubleDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public DoubleDictionary        (System.Collections.Generic.IDictionary<string, System     .Double>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class FloatDictionary          : PatchOdyssey.Collections.EditorDictionary<string, System     .Single>         { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public FloatDictionary         () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public FloatDictionary         (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public FloatDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public FloatDictionary         (System.Collections.Generic.IDictionary<string, System     .Single>         dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public FloatDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public FloatDictionary         (System.Collections.Generic.IDictionary<string, System     .Single>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class GameObjectDictionary     : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.GameObject>     { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GameObjectDictionary    () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GameObjectDictionary    (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GameObjectDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GameObjectDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GameObjectDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GameObjectDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class GradientDictionary       : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.Gradient>       { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GradientDictionary      () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GradientDictionary      (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GradientDictionary      (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GradientDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GradientDictionary      (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GradientDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class IntDictionary            : PatchOdyssey.Collections.EditorDictionary<string, System     .Int32>          { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public IntDictionary           () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public IntDictionary           (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public IntDictionary           (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public IntDictionary           (System.Collections.Generic.IDictionary<string, System     .Int32>          dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public IntDictionary           (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public IntDictionary           (System.Collections.Generic.IDictionary<string, System     .Int32>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class LongDictionary           : PatchOdyssey.Collections.EditorDictionary<string, System     .Int64>          { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public LongDictionary          () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public LongDictionary          (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public LongDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public LongDictionary          (System.Collections.Generic.IDictionary<string, System     .Int64>          dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public LongDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public LongDictionary          (System.Collections.Generic.IDictionary<string, System     .Int64>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class RectDictionary           : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.Rect>           { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectDictionary          () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectDictionary          (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class RectIntDictionary        : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.RectInt>        { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectIntDictionary       () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectIntDictionary       (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectIntDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectIntDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectIntDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectIntDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class StringDictionary         : PatchOdyssey.Collections.EditorDictionary<string, System     .String>         { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public StringDictionary        () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public StringDictionary        (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public StringDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public StringDictionary        (System.Collections.Generic.IDictionary<string, System     .String>         dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public StringDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public StringDictionary        (System.Collections.Generic.IDictionary<string, System     .String>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class UIntDictionary           : PatchOdyssey.Collections.EditorDictionary<string, System     .UInt32>         { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UIntDictionary          () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UIntDictionary          (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UIntDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UIntDictionary          (System.Collections.Generic.IDictionary<string, System     .UInt32>         dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UIntDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UIntDictionary          (System.Collections.Generic.IDictionary<string, System     .UInt32>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class ULongDictionary          : PatchOdyssey.Collections.EditorDictionary<string, System     .UInt64>         { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ULongDictionary         () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ULongDictionary         (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ULongDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ULongDictionary         (System.Collections.Generic.IDictionary<string, System     .UInt64>         dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ULongDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ULongDictionary         (System.Collections.Generic.IDictionary<string, System     .UInt64>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector2Dictionary        : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.Vector2>        { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2Dictionary       () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2Dictionary       (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2Dictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2Dictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector2IntDictionary     : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.Vector2Int>     { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2IntDictionary    () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2IntDictionary    (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2IntDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2IntDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector3Dictionary        : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.Vector3>        { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3Dictionary       () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3Dictionary       (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3Dictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3Dictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector3IntDictionary     : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.Vector3Int>     { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3IntDictionary    () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3IntDictionary    (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3IntDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3IntDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector4Dictionary        : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.Vector4>        { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector4Dictionary       () : base() {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector4Dictionary       (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector4Dictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector4Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector4Dictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector4Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
 
-  [System.Serializable]
-  public class SerializedReadOnlyDictionary<TKey, TValue> : System.Collections.ObjectModel.ReadOnlyDictionary<TKey, TValue> {
-    #pragma warning disable CS0108
-    public readonly int Capacity = 0;
-    #pragma warning restore CS0108
+    [System.Serializable]
+    public class EditorReadOnlyDictionary<TKey, TValue> : PatchOdyssey.Collections.EditorDictionary<TKey, TValue> {
+      private uint initializerListCount = 0u;
 
-    /* … */
-    public SerializedReadOnlyDictionary(int                                                                                                 capacity)                                                                : base(new System.Collections.Generic.Dictionary<TKey, TValue>(capacity))             { this.Capacity = capacity; }
-    public SerializedReadOnlyDictionary(System.Collections.Generic.IEqualityComparer<TKey>                                                  comparer)                                                                : base(new System.Collections.Generic.Dictionary<TKey, TValue>(comparer))             {}
-    public SerializedReadOnlyDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary)                                                              : base(dictionary)                                                                    {}
-    public SerializedReadOnlyDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable)                                                              : base(new System.Collections.Generic.Dictionary<TKey, TValue>(enumerable))           {}
-    public SerializedReadOnlyDictionary(int                                                                                                 capacity,   System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(new System.Collections.Generic.Dictionary<TKey, TValue>(capacity,   comparer)) { this.Capacity = capacity; }
-    public SerializedReadOnlyDictionary(System.Collections.Generic.IDictionary<TKey, TValue>                                                dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(new System.Collections.Generic.Dictionary<TKey, TValue>(dictionary, comparer)) {}
-    public SerializedReadOnlyDictionary(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>       enumerable, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(new System.Collections.Generic.Dictionary<TKey, TValue>(enumerable, comparer)) {}
+      /* … */
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public EditorReadOnlyDictionary()                                                                                                                                   : base()                     {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public EditorReadOnlyDictionary(int                                                        capacity)                                                                : base(capacity)             { this.initializerListCount = (uint) capacity; }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public EditorReadOnlyDictionary(System.Collections.Generic.IEqualityComparer<TKey>         comparer)                                                                : base(comparer)             {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public EditorReadOnlyDictionary(System.Collections.Generic.IDictionary      <TKey, TValue> dictionary)                                                              : base(dictionary)           {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public EditorReadOnlyDictionary(int                                                        capacity,   System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(capacity,   comparer) { this.initializerListCount = (uint) capacity; }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public EditorReadOnlyDictionary(System.Collections.Generic.IDictionary<TKey, TValue>       dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(dictionary, comparer) {}
 
-    /* … */
-    public void Add(TKey key, TValue value) {
-      // ⟶ Intended for initializer lists only
-      if (this.Capacity > this.Count) this.Dictionary.Add(key, value);
-      else throw new System.NotSupportedException("Can not add item to `SerializedReadOnlyDictionary`");
+      /* … ⟶ Intended for initializer lists only */
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+      public new void Add(TKey key, TValue value) {
+        if (0u != this.initializerListCount--) base.Add(key, value);
+        else throw new System.NotSupportedException("Can not add item to `EditorReadOnlyDictionary`");
+      }
+
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] private new void Clear ()                                                           {}
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] private new bool Remove(TKey                                                  key)  { return false; }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] private new bool Remove(System.Collections.Generic.KeyValuePair<TKey, TValue> item) { return false; }
     }
-
-    public new TValue this[TKey key] {
-      get => this.Dictionary[key];
-      set => this.Dictionary[key] = value;
-    }
+      [System.Serializable] public class AnimationCurveReadOnlyDictionary : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.AnimationCurve> { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationCurveReadOnlyDictionary(int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationCurveReadOnlyDictionary(int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class BooleanReadOnlyDictionary        : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, System     .Boolean>        { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BooleanReadOnlyDictionary       (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BooleanReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BooleanReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, System     .Boolean>        dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BooleanReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BooleanReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, System     .Boolean>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class BoundsReadOnlyDictionary         : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Bounds>         { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsReadOnlyDictionary        (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsReadOnlyDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsReadOnlyDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class BoundsIntReadOnlyDictionary      : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.BoundsInt>      { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsIntReadOnlyDictionary     (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsIntReadOnlyDictionary     (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class ColorReadOnlyDictionary          : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Color>          { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ColorReadOnlyDictionary         (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ColorReadOnlyDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ColorReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ColorReadOnlyDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ColorReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class DoubleReadOnlyDictionary         : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, System     .Double>         { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public DoubleReadOnlyDictionary        (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public DoubleReadOnlyDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public DoubleReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System     .Double>         dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public DoubleReadOnlyDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public DoubleReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System     .Double>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class FloatReadOnlyDictionary          : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, System     .Single>         { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public FloatReadOnlyDictionary         (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public FloatReadOnlyDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public FloatReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System     .Single>         dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public FloatReadOnlyDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public FloatReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System     .Single>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class GameObjectReadOnlyDictionary     : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.GameObject>     { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GameObjectReadOnlyDictionary    (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GameObjectReadOnlyDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GameObjectReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GameObjectReadOnlyDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GameObjectReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class GradientReadOnlyDictionary       : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Gradient>       { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GradientReadOnlyDictionary      (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GradientReadOnlyDictionary      (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GradientReadOnlyDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GradientReadOnlyDictionary      (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public GradientReadOnlyDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class IntReadOnlyDictionary            : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, System     .Int32>          { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public IntReadOnlyDictionary           (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public IntReadOnlyDictionary           (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public IntReadOnlyDictionary           (System.Collections.Generic.IDictionary<string, System     .Int32>          dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public IntReadOnlyDictionary           (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public IntReadOnlyDictionary           (System.Collections.Generic.IDictionary<string, System     .Int32>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class LongReadOnlyDictionary           : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, System     .Int64>          { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public LongReadOnlyDictionary          (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public LongReadOnlyDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public LongReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System     .Int64>          dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public LongReadOnlyDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public LongReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System     .Int64>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class RectReadOnlyDictionary           : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Rect>           { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectReadOnlyDictionary          (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectReadOnlyDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectReadOnlyDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class RectIntReadOnlyDictionary        : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.RectInt>        { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectIntReadOnlyDictionary       (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectIntReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectIntReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectIntReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public RectIntReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class StringReadOnlyDictionary         : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, System     .String>         { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public StringReadOnlyDictionary        (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public StringReadOnlyDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public StringReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System     .String>         dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public StringReadOnlyDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public StringReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System     .String>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class UIntReadOnlyDictionary           : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, System     .UInt32>         { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UIntReadOnlyDictionary          (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UIntReadOnlyDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UIntReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System     .UInt32>         dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UIntReadOnlyDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public UIntReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System     .UInt32>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class ULongReadOnlyDictionary          : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, System     .UInt64>         { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ULongReadOnlyDictionary         (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ULongReadOnlyDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ULongReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System     .UInt64>         dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ULongReadOnlyDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public ULongReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System     .UInt64>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector2ReadOnlyDictionary        : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Vector2>        { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2ReadOnlyDictionary       (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2ReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2ReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector2IntReadOnlyDictionary     : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Vector2Int>     { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2IntReadOnlyDictionary    (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2IntReadOnlyDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector3ReadOnlyDictionary        : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Vector3>        { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3ReadOnlyDictionary       (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3ReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3ReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector3IntReadOnlyDictionary     : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Vector3Int>     { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3IntReadOnlyDictionary    (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3IntReadOnlyDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector4ReadOnlyDictionary        : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Vector4>        { [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector4ReadOnlyDictionary       (int capacity) : base(capacity) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector4ReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector4ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary) : base(dictionary) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector4ReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public Vector4ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
   }
-    [System.Serializable] public class AnimationCurveReadOnlyDictionary : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.AnimationCurve> { public AnimationCurveReadOnlyDictionary(int capacity) : base(capacity) {} public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary) : base(dictionary) {} public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.AnimationCurve>> enumerable) : base(enumerable) {} public AnimationCurveReadOnlyDictionary(int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.AnimationCurve>> enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class BooleanReadOnlyDictionary        : PatchOdyssey.SerializedReadOnlyDictionary<string, System.Boolean>             { public BooleanReadOnlyDictionary       (int capacity) : base(capacity) {} public BooleanReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public BooleanReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, System.Boolean>             dictionary) : base(dictionary) {} public BooleanReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Boolean>>             enumerable) : base(enumerable) {} public BooleanReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public BooleanReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, System.Boolean>             dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public BooleanReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Boolean>>             enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class BoundsReadOnlyDictionary         : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Bounds>         { public BoundsReadOnlyDictionary        (int capacity) : base(capacity) {} public BoundsReadOnlyDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public BoundsReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary) : base(dictionary) {} public BoundsReadOnlyDictionary        (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Bounds>>         enumerable) : base(enumerable) {} public BoundsReadOnlyDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public BoundsReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public BoundsReadOnlyDictionary        (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Bounds>>         enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class BoundsIntReadOnlyDictionary      : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.BoundsInt>      { public BoundsIntReadOnlyDictionary     (int capacity) : base(capacity) {} public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary) : base(dictionary) {} public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.BoundsInt>>      enumerable) : base(enumerable) {} public BoundsIntReadOnlyDictionary     (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.BoundsInt>>      enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class ColorReadOnlyDictionary          : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Color>          { public ColorReadOnlyDictionary         (int capacity) : base(capacity) {} public ColorReadOnlyDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public ColorReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary) : base(dictionary) {} public ColorReadOnlyDictionary         (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Color>>          enumerable) : base(enumerable) {} public ColorReadOnlyDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public ColorReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public ColorReadOnlyDictionary         (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Color>>          enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class DoubleReadOnlyDictionary         : PatchOdyssey.SerializedReadOnlyDictionary<string, System.Double>              { public DoubleReadOnlyDictionary        (int capacity) : base(capacity) {} public DoubleReadOnlyDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public DoubleReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System.Double>              dictionary) : base(dictionary) {} public DoubleReadOnlyDictionary        (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Double>>              enumerable) : base(enumerable) {} public DoubleReadOnlyDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public DoubleReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System.Double>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public DoubleReadOnlyDictionary        (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Double>>              enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class FloatReadOnlyDictionary          : PatchOdyssey.SerializedReadOnlyDictionary<string, System.Single>              { public FloatReadOnlyDictionary         (int capacity) : base(capacity) {} public FloatReadOnlyDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public FloatReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System.Single>              dictionary) : base(dictionary) {} public FloatReadOnlyDictionary         (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Single>>              enumerable) : base(enumerable) {} public FloatReadOnlyDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public FloatReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System.Single>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public FloatReadOnlyDictionary         (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Single>>              enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class GameObjectReadOnlyDictionary     : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.GameObject>     { public GameObjectReadOnlyDictionary    (int capacity) : base(capacity) {} public GameObjectReadOnlyDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public GameObjectReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary) : base(dictionary) {} public GameObjectReadOnlyDictionary    (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.GameObject>>     enumerable) : base(enumerable) {} public GameObjectReadOnlyDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public GameObjectReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public GameObjectReadOnlyDictionary    (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.GameObject>>     enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class GradientReadOnlyDictionary       : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Gradient>       { public GradientReadOnlyDictionary      (int capacity) : base(capacity) {} public GradientReadOnlyDictionary      (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public GradientReadOnlyDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary) : base(dictionary) {} public GradientReadOnlyDictionary      (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Gradient>>       enumerable) : base(enumerable) {} public GradientReadOnlyDictionary      (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public GradientReadOnlyDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public GradientReadOnlyDictionary      (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Gradient>>       enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class IntReadOnlyDictionary            : PatchOdyssey.SerializedReadOnlyDictionary<string, System.Int32>               { public IntReadOnlyDictionary           (int capacity) : base(capacity) {} public IntReadOnlyDictionary           (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public IntReadOnlyDictionary           (System.Collections.Generic.IDictionary<string, System.Int32>               dictionary) : base(dictionary) {} public IntReadOnlyDictionary           (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Int32>>               enumerable) : base(enumerable) {} public IntReadOnlyDictionary           (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public IntReadOnlyDictionary           (System.Collections.Generic.IDictionary<string, System.Int32>               dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public IntReadOnlyDictionary           (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Int32>>               enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class LongReadOnlyDictionary           : PatchOdyssey.SerializedReadOnlyDictionary<string, System.Int64>               { public LongReadOnlyDictionary          (int capacity) : base(capacity) {} public LongReadOnlyDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public LongReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System.Int64>               dictionary) : base(dictionary) {} public LongReadOnlyDictionary          (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Int64>>               enumerable) : base(enumerable) {} public LongReadOnlyDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public LongReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System.Int64>               dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public LongReadOnlyDictionary          (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Int64>>               enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class RectReadOnlyDictionary           : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Rect>           { public RectReadOnlyDictionary          (int capacity) : base(capacity) {} public RectReadOnlyDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public RectReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary) : base(dictionary) {} public RectReadOnlyDictionary          (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Rect>>           enumerable) : base(enumerable) {} public RectReadOnlyDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public RectReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public RectReadOnlyDictionary          (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Rect>>           enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class RectIntReadOnlyDictionary        : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.RectInt>        { public RectIntReadOnlyDictionary       (int capacity) : base(capacity) {} public RectIntReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public RectIntReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary) : base(dictionary) {} public RectIntReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.RectInt>>        enumerable) : base(enumerable) {} public RectIntReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public RectIntReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public RectIntReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.RectInt>>        enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class StringReadOnlyDictionary         : PatchOdyssey.SerializedReadOnlyDictionary<string, System.String>              { public StringReadOnlyDictionary        (int capacity) : base(capacity) {} public StringReadOnlyDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public StringReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System.String>              dictionary) : base(dictionary) {} public StringReadOnlyDictionary        (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.String>>              enumerable) : base(enumerable) {} public StringReadOnlyDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public StringReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System.String>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public StringReadOnlyDictionary        (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.String>>              enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class UIntReadOnlyDictionary           : PatchOdyssey.SerializedReadOnlyDictionary<string, System.UInt32>              { public UIntReadOnlyDictionary          (int capacity) : base(capacity) {} public UIntReadOnlyDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public UIntReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System.UInt32>              dictionary) : base(dictionary) {} public UIntReadOnlyDictionary          (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.UInt32>>              enumerable) : base(enumerable) {} public UIntReadOnlyDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public UIntReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System.UInt32>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public UIntReadOnlyDictionary          (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.UInt32>>              enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class ULongReadOnlyDictionary          : PatchOdyssey.SerializedReadOnlyDictionary<string, System.UInt64>              { public ULongReadOnlyDictionary         (int capacity) : base(capacity) {} public ULongReadOnlyDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public ULongReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System.UInt64>              dictionary) : base(dictionary) {} public ULongReadOnlyDictionary         (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.UInt64>>              enumerable) : base(enumerable) {} public ULongReadOnlyDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public ULongReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System.UInt64>              dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public ULongReadOnlyDictionary         (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.UInt64>>              enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class Vector2ReadOnlyDictionary        : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Vector2>        { public Vector2ReadOnlyDictionary       (int capacity) : base(capacity) {} public Vector2ReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector2ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary) : base(dictionary) {} public Vector2ReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector2>>        enumerable) : base(enumerable) {} public Vector2ReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector2ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public Vector2ReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector2>>        enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class Vector2IntReadOnlyDictionary     : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Vector2Int>     { public Vector2IntReadOnlyDictionary    (int capacity) : base(capacity) {} public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary) : base(dictionary) {} public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector2Int>>     enumerable) : base(enumerable) {} public Vector2IntReadOnlyDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector2Int>>     enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class Vector3ReadOnlyDictionary        : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Vector3>        { public Vector3ReadOnlyDictionary       (int capacity) : base(capacity) {} public Vector3ReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector3ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary) : base(dictionary) {} public Vector3ReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector3>>        enumerable) : base(enumerable) {} public Vector3ReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector3ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public Vector3ReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector3>>        enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class Vector3IntReadOnlyDictionary     : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Vector3Int>     { public Vector3IntReadOnlyDictionary    (int capacity) : base(capacity) {} public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary) : base(dictionary) {} public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector3Int>>     enumerable) : base(enumerable) {} public Vector3IntReadOnlyDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector3Int>>     enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
-    [System.Serializable] public class Vector4ReadOnlyDictionary        : PatchOdyssey.SerializedReadOnlyDictionary<string, UnityEngine.Vector4>        { public Vector4ReadOnlyDictionary       (int capacity) : base(capacity) {} public Vector4ReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} public Vector4ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary) : base(dictionary) {} public Vector4ReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector4>>        enumerable) : base(enumerable) {} public Vector4ReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} public Vector4ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} public Vector4ReadOnlyDictionary       (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, UnityEngine.Vector4>>        enumerable, System.Collections.Generic.IEqualityComparer<string> comparer) : base(enumerable, comparer) {} }
 
+  /* … */
+  public delegate double  AnimationFunction(double time);
+  public delegate object? Interpolator     (double progress, object? a, object? b);
+
+  public sealed class ReadOnlyInInspectorAttribute : UnityEngine.PropertyAttribute {
+    /* ⟶ Display property in Unity Inspector as “read-only” */
+  }
+
+  [System.AttributeUsage(System.AttributeTargets.All, AllowMultiple = false, Inherited = false)]
+  public sealed class ReadWriteInInspectorAttribute : UnityEngine.PropertyAttribute /* ⟶ System.Attribute */ {
+    /* ⟶ Display property in Unity Inspector as “read-write” */
+  }
+
+  /* … */
   #if UNITY_EDITOR
+    public class EditorDictionaryDrawer<TKey, TValue> : UnityEditor.PropertyDrawer {
+      private bool foldout = false;
+
+      /* … */
+      private System.Collections.Generic.IDictionary<TKey, TValue> Ensure(UnityEditor.SerializedProperty property) {
+        System.Collections.Generic.IDictionary<TKey, TValue> dictionary = this.fieldInfo.GetValue(property.serializedObject.targetObject) as System.Collections.Generic.IDictionary<TKey, TValue> ?? new PatchOdyssey.Collections.EditorDictionary<TKey, TValue>();
+
+        this.fieldInfo.SetValue(property.serializedObject.targetObject, dictionary);
+        return dictionary;
+      }
+
+      public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
+        return base.GetPropertyHeight(property, label) * (this.foldout || UnityEditor.EditorPrefs.GetBool(label.text) ? System.Math.Max(this.Ensure(property).Count, 1) + 1 : 1);
+      }
+
+      public override void OnGUI(UnityEngine.Rect position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
+        System.Collections.Generic.IDictionary<TKey, TValue>                     dictionary           = this.Ensure(property);
+        bool                                                                     dictionaryIsReadOnly = dictionary is PatchOdyssey.Collections.EditorReadOnlyDictionary<TKey, TValue> || dictionary is System.Collections.ObjectModel.ReadOnlyDictionary<TKey, TValue>;
+        float                                                                    size                 = position.height = base.GetPropertyHeight(property, label);
+        (UnityEngine.Rect add, UnityEngine.Rect clear, UnityEngine.Rect foldout) positions            = (
+          add    : new(position.x + (position.width - Util.PercentOf(size, 200.0f)), position.y, 0.0f           + size, position.height),
+          clear  : new(position.x + (position.width - Util.PercentOf(size, 100.0f)), position.y, 0.0f           + size, position.height),
+          foldout: new(position.x,                                                   position.y, position.width - size, position.height)
+        );
+
+        // …
+        if (!dictionaryIsReadOnly) {
+          if (UnityEngine.GUI.Button(positions.add, new UnityEngine.GUIContent("+", "Add field"), UnityEditor.EditorStyles.miniButton))
+          dictionary.TryAdd(
+            typeof(TKey) != typeof(string) ? System.Activator.CreateInstance<TKey>  () : (TKey)   (""   as object),
+            typeof(TValue).IsValueType     ? System.Activator.CreateInstance<TValue>() : (TValue) (null as object)!
+          );
+
+          if (UnityEngine.GUI.Button(positions.clear, new UnityEngine.GUIContent("×", "Clear dictionary"), UnityEditor.EditorStyles.miniButtonRight))
+          dictionary.Clear();
+        }
+
+        UnityEditor.EditorGUI.BeginChangeCheck();
+          this.foldout = UnityEditor.EditorPrefs.GetBool(label.text);
+          this.foldout = UnityEditor.EditorGUI.  Foldout(positions.foldout, this.foldout, label, true);
+        if (UnityEditor.EditorGUI.EndChangeCheck()) UnityEditor.EditorPrefs.SetBool(label.text, this.foldout);
+
+        // …
+        if (!this.foldout)
+        return;
+
+        if (0 == dictionary.Count) {
+          UnityEngine.GUI.Label(new(position.x, position.y + position.height, position.width, position.height), "Dictionary is empty");
+          return;
+        }
+
+        foreach (System.Collections.Generic.KeyValuePair<TKey, TValue> item in dictionary)
+        if (null != item.Key) {
+          (TKey key, TValue value)                                                            = (item.Key, item.Value);
+          (UnityEngine.Rect key, UnityEngine.Rect value, UnityEngine.Rect clear) subpositions = (
+            key  : new(position.x                                                 + (dictionaryIsReadOnly ? size : 0.0f), position.y += position.height, Util.PercentOf(position.width - size, 40.0f), position.height),
+            value: new(position.x + Util.PercentOf(position.width - size,  40.0f) + (dictionaryIsReadOnly ? size : 0.0f), position.y,                    Util.PercentOf(position.width - size, 60.0f), position.height),
+            clear: new(position.x + Util.PercentOf(position.width - size, 100.0f),                                        position.y,                    size,                                         position.height)
+          );
+
+          // …
+          UnityEditor.EditorGUI.BeginChangeCheck();
+            if (dictionaryIsReadOnly) UnityEngine.GUI.Label(subpositions.key, key.ToString());
+            else key = (TKey) PatchOdyssey.Collections.EditorDictionary<TKey, TValue>.DelegateGUIField<TKey>()!(subpositions.key, key);
+          if (UnityEditor.EditorGUI.EndChangeCheck()) {
+            dictionary.Remove(item.Key);
+            dictionary.Add   (key, value);
+
+            break;
+          }
+
+          UnityEditor.EditorGUI.BeginChangeCheck();
+            value = (TValue) PatchOdyssey.Collections.EditorDictionary<TKey, TValue>.DelegateGUIField<TValue>()!(subpositions.value, value!);
+          if (UnityEditor.EditorGUI.EndChangeCheck()) {
+            dictionary[key] = value;
+            break;
+          }
+
+          if (!dictionaryIsReadOnly)
+          if (UnityEngine.GUI.Button(subpositions.clear, new UnityEngine.GUIContent("×", "Clear item"), UnityEditor.EditorStyles.miniButtonRight)) {
+            dictionary.Remove(key);
+            break;
+          }
+        }
+      }
+    }
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.AnimationCurveDictionary))]         public class AnimationCurveDictionaryDrawer         : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.AnimationCurve> {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.AnimationCurveReadOnlyDictionary))] public class AnimationCurveReadOnlyDictionaryDrawer : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.AnimationCurve> {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.BooleanDictionary))]                public class BooleanDictionaryDrawer                : PatchOdyssey.EditorDictionaryDrawer<string, System     .Boolean>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.BooleanReadOnlyDictionary))]        public class BooleanReadOnlyDictionaryDrawer        : PatchOdyssey.EditorDictionaryDrawer<string, System     .Boolean>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.BoundsDictionary))]                 public class BoundsDictionaryDrawer                 : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Bounds>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.BoundsReadOnlyDictionary))]         public class BoundsReadOnlyDictionaryDrawer         : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Bounds>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.BoundsIntDictionary))]              public class BoundsIntDictionaryDrawer              : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.BoundsInt>      {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.BoundsIntReadOnlyDictionary))]      public class BoundsIntReadOnlyDictionaryDrawer      : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.BoundsInt>      {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.ColorDictionary))]                  public class ColorDictionaryDrawer                  : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Color>          {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.ColorReadOnlyDictionary))]          public class ColorReadOnlyDictionaryDrawer          : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Color>          {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.DoubleDictionary))]                 public class DoubleDictionaryDrawer                 : PatchOdyssey.EditorDictionaryDrawer<string, System     .Double>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.DoubleReadOnlyDictionary))]         public class DoubleReadOnlyDictionaryDrawer         : PatchOdyssey.EditorDictionaryDrawer<string, System     .Double>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.FloatDictionary))]                  public class FloatDictionaryDrawer                  : PatchOdyssey.EditorDictionaryDrawer<string, System     .Single>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.FloatReadOnlyDictionary))]          public class FloatReadOnlyDictionaryDrawer          : PatchOdyssey.EditorDictionaryDrawer<string, System     .Single>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.GameObjectDictionary))]             public class GameObjectDictionaryDrawer             : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.GameObject>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.GameObjectReadOnlyDictionary))]     public class GameObjectReadOnlyDictionaryDrawer     : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.GameObject>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.GradientDictionary))]               public class GradientDictionaryDrawer               : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Gradient>       {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.GradientReadOnlyDictionary))]       public class GradientReadOnlyDictionaryDrawer       : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Gradient>       {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.IntDictionary))]                    public class IntDictionaryDrawer                    : PatchOdyssey.EditorDictionaryDrawer<string, System     .Int32>          {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.IntReadOnlyDictionary))]            public class IntReadOnlyDictionaryDrawer            : PatchOdyssey.EditorDictionaryDrawer<string, System     .Int32>          {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.LongDictionary))]                   public class LongDictionaryDrawer                   : PatchOdyssey.EditorDictionaryDrawer<string, System     .Int64>          {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.LongReadOnlyDictionary))]           public class LongReadOnlyDictionaryDrawer           : PatchOdyssey.EditorDictionaryDrawer<string, System     .Int64>          {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.RectDictionary))]                   public class RectDictionaryDrawer                   : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Rect>           {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.RectReadOnlyDictionary))]           public class RectReadOnlyDictionaryDrawer           : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Rect>           {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.RectIntDictionary))]                public class RectIntDictionaryDrawer                : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.RectInt>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.RectIntReadOnlyDictionary))]        public class RectIntReadOnlyDictionaryDrawer        : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.RectInt>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.StringDictionary))]                 public class StringDictionaryDrawer                 : PatchOdyssey.EditorDictionaryDrawer<string, System     .String>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.StringReadOnlyDictionary))]         public class StringReadOnlyDictionaryDrawer         : PatchOdyssey.EditorDictionaryDrawer<string, System     .String>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.UIntDictionary))]                   public class UIntDictionaryDrawer                   : PatchOdyssey.EditorDictionaryDrawer<string, System     .UInt32>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.UIntReadOnlyDictionary))]           public class UIntReadOnlyDictionaryDrawer           : PatchOdyssey.EditorDictionaryDrawer<string, System     .UInt32>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.ULongDictionary))]                  public class ULongDictionaryDrawer                  : PatchOdyssey.EditorDictionaryDrawer<string, System     .UInt64>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.ULongReadOnlyDictionary))]          public class ULongReadOnlyDictionaryDrawer          : PatchOdyssey.EditorDictionaryDrawer<string, System     .UInt64>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector2Dictionary))]                public class Vector2DictionaryDrawer                : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector2>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector2ReadOnlyDictionary))]        public class Vector2ReadOnlyDictionaryDrawer        : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector2>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector2IntDictionary))]             public class Vector2IntDictionaryDrawer             : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector2Int>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector2IntReadOnlyDictionary))]     public class Vector2IntReadOnlyDictionaryDrawer     : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector2Int>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector3Dictionary))]                public class Vector3DictionaryDrawer                : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector3>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector3ReadOnlyDictionary))]        public class Vector3ReadOnlyDictionaryDrawer        : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector3>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector3IntDictionary))]             public class Vector3IntDictionaryDrawer             : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector3Int>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector3IntReadOnlyDictionary))]     public class Vector3IntReadOnlyDictionaryDrawer     : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector3Int>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector4Dictionary))]                public class Vector4DictionaryDrawer                : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector4>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector4ReadOnlyDictionary))]        public class Vector4ReadOnlyDictionaryDrawer        : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector4>        {}
+
     [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ReadOnlyInInspectorAttribute))]
     public class ReadOnlyInInspectorDrawer : UnityEditor.PropertyDrawer {
       public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
@@ -704,224 +840,89 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       }
     }
 
-    public class SerializedDictionaryDrawer<TKey, TValue> : UnityEditor.PropertyDrawer {
-      private bool foldout = false;
-
-      /* … */
-      private System.Collections.Generic.IDictionary<TKey, TValue> Ensure(UnityEditor.SerializedProperty property) {
-        System.Collections.Generic.IDictionary<TKey, TValue> dictionary = (this.fieldInfo.GetValue(property.serializedObject.targetObject) ?? new PatchOdyssey.SerializedDictionary<TKey, TValue>()) as System.Collections.Generic.IDictionary<TKey, TValue>;
-
-        // …
-        this.fieldInfo.SetValue(property.serializedObject.targetObject, dictionary);
-        return dictionary;
-      }
-
+    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ReadWriteInInspectorAttribute))]
+    public class ReadWriteInInspectorDrawer : UnityEditor.PropertyDrawer {
       public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
-        return base.GetPropertyHeight(property, label) * (this.foldout || UnityEditor.EditorPrefs.GetBool(label.text) ? Util.Max(this.Ensure(property).Count, 1) + 1 : 1);
+        return UnityEditor.EditorGUI.GetPropertyHeight(property, label, true);
       }
 
       public override void OnGUI(UnityEngine.Rect position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
-        System.Collections.Generic.IDictionary<TKey, TValue>                     dictionary           = this.Ensure(property);
-        bool                                                                     dictionaryIsReadOnly = dictionary is System.Collections.ObjectModel.ReadOnlyDictionary<TKey, TValue>;
-        float                                                                    size                 = position.height = base.GetPropertyHeight(property, label);
-        (UnityEngine.Rect add, UnityEngine.Rect clear, UnityEngine.Rect foldout) positions            = (
-          new(position.x + (position.width - Util.PercentOf(size, 200.0f)), position.y, 0.0f           + size, position.height),
-          new(position.x + (position.width - Util.PercentOf(size, 100.0f)), position.y, 0.0f           + size, position.height),
-          new(position.x,                                                   position.y, position.width - size, position.height)
-        );
-
-        // …
-        if (!dictionaryIsReadOnly) {
-          if (UnityEngine.GUI.Button(positions.add, new UnityEngine.GUIContent("+", "Add field"), UnityEditor.EditorStyles.miniButton))
-          dictionary.TryAdd(
-            typeof(TKey) != typeof(string) ? System.Activator.CreateInstance<TKey>  () : (TKey)   (""   as object),
-            typeof(TValue).IsValueType     ? System.Activator.CreateInstance<TValue>() : (TValue) (null as object)
-          );
-
-          if (UnityEngine.GUI.Button(positions.clear, new UnityEngine.GUIContent("×", "Clear dictionary"), UnityEditor.EditorStyles.miniButtonRight))
-          dictionary.Clear();
-        }
-
-        UnityEditor.EditorGUI.BeginChangeCheck(); {
-          this.foldout = UnityEditor.EditorPrefs.GetBool(label.text);
-          this.foldout = UnityEditor.EditorGUI.  Foldout(positions.foldout, this.foldout, label, true);
-        } if (UnityEditor.EditorGUI.EndChangeCheck()) UnityEditor.EditorPrefs.SetBool(label.text, this.foldout);
-
-        if (!this.foldout)
-        return;
-
-        if (0 == dictionary.Count) UnityEngine.GUI.Label(new(position.x, position.y + position.height, position.width, position.height), "Dictionary is empty");
-        else foreach (System.Collections.Generic.KeyValuePair<TKey, TValue> item in dictionary) {
-          (TKey key, TValue value)                                                            = (item.Key, item.Value);
-          (UnityEngine.Rect key, UnityEngine.Rect value, UnityEngine.Rect clear) subpositions = (
-            new(position.x                                                 + (dictionaryIsReadOnly ? size : 0.0f), position.y += position.height, Util.PercentOf(position.width - size, 40.0f), position.height),
-            new(position.x + Util.PercentOf(position.width - size,  40.0f) + (dictionaryIsReadOnly ? size : 0.0f), position.y,                    Util.PercentOf(position.width - size, 60.0f), position.height),
-            new(position.x + Util.PercentOf(position.width - size, 100.0f),                                        position.y,                    size,                                         position.height)
-          );
-
-          // …
-          UnityEditor.EditorGUI.BeginChangeCheck();
-            if (dictionaryIsReadOnly) UnityEngine.GUI.Label(subpositions.key, key.ToString());
-            else key = (TKey) PatchOdyssey.SerializedDictionary<TKey, TValue>.DelegateGUIField<TKey>()(subpositions.key, key);
-          if (UnityEditor.EditorGUI.EndChangeCheck()) {
-            dictionary.Remove(item.Key);
-            dictionary.Add   (key, value);
-
-            break;
-          }
-
-          UnityEditor.EditorGUI.BeginChangeCheck();
-            value = (TValue) PatchOdyssey.SerializedDictionary<TKey, TValue>.DelegateGUIField<TValue>()(subpositions.value, value);
-          if (UnityEditor.EditorGUI.EndChangeCheck()) {
-            if (dictionaryIsReadOnly && dictionary is PatchOdyssey.SerializedReadOnlyDictionary<TKey, TValue>) (dictionary as PatchOdyssey.SerializedReadOnlyDictionary<TKey, TValue>)[key] = value;
-            else                                                                                               dictionary[key]                                                              = value;
-
-            break;
-          }
-
-          if (!dictionaryIsReadOnly)
-          if (UnityEngine.GUI.Button(subpositions.clear, new UnityEngine.GUIContent("×", "Clear item"), UnityEditor.EditorStyles.miniButtonRight)) {
-            dictionary.Remove(key);
-            break;
-          }
-        }
+        UnityEditor.EditorGUI.PropertyField(position, property, label, true);
       }
     }
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.AnimationCurveDictionary))]         public class AnimationCurveDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.AnimationCurve> {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.AnimationCurveReadOnlyDictionary))] public class AnimationCurveReadOnlyDictionaryDrawer : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.AnimationCurve> {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BooleanDictionary))]                public class BooleanDictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<string, System.Boolean>             {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BooleanReadOnlyDictionary))]        public class BooleanReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<string, System.Boolean>             {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsDictionary))]                 public class BoundsDictionaryDrawer                 : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Bounds>         {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsReadOnlyDictionary))]         public class BoundsReadOnlyDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Bounds>         {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsIntDictionary))]              public class BoundsIntDictionaryDrawer              : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.BoundsInt>      {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.BoundsIntReadOnlyDictionary))]      public class BoundsIntReadOnlyDictionaryDrawer      : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.BoundsInt>      {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ColorDictionary))]                  public class ColorDictionaryDrawer                  : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Color>          {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ColorReadOnlyDictionary))]          public class ColorReadOnlyDictionaryDrawer          : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Color>          {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.DoubleDictionary))]                 public class DoubleDictionaryDrawer                 : PatchOdyssey.SerializedDictionaryDrawer<string, System.Double>              {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.DoubleReadOnlyDictionary))]         public class DoubleReadOnlyDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<string, System.Double>              {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.FloatDictionary))]                  public class FloatDictionaryDrawer                  : PatchOdyssey.SerializedDictionaryDrawer<string, System.Single>              {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.FloatReadOnlyDictionary))]          public class FloatReadOnlyDictionaryDrawer          : PatchOdyssey.SerializedDictionaryDrawer<string, System.Single>              {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GameObjectDictionary))]             public class GameObjectDictionaryDrawer             : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.GameObject>     {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GameObjectReadOnlyDictionary))]     public class GameObjectReadOnlyDictionaryDrawer     : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.GameObject>     {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GradientDictionary))]               public class GradientDictionaryDrawer               : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Gradient>       {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.GradientReadOnlyDictionary))]       public class GradientReadOnlyDictionaryDrawer       : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Gradient>       {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.IntDictionary))]                    public class IntDictionaryDrawer                    : PatchOdyssey.SerializedDictionaryDrawer<string, System.Int32>               {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.IntReadOnlyDictionary))]            public class IntReadOnlyDictionaryDrawer            : PatchOdyssey.SerializedDictionaryDrawer<string, System.Int32>               {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.LongDictionary))]                   public class LongDictionaryDrawer                   : PatchOdyssey.SerializedDictionaryDrawer<string, System.Int64>               {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.LongReadOnlyDictionary))]           public class LongReadOnlyDictionaryDrawer           : PatchOdyssey.SerializedDictionaryDrawer<string, System.Int64>               {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectDictionary))]                   public class RectDictionaryDrawer                   : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Rect>           {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectReadOnlyDictionary))]           public class RectReadOnlyDictionaryDrawer           : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Rect>           {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectIntDictionary))]                public class RectIntDictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.RectInt>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.RectIntReadOnlyDictionary))]        public class RectIntReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.RectInt>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.StringDictionary))]                 public class StringDictionaryDrawer                 : PatchOdyssey.SerializedDictionaryDrawer<string, System.String>              {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.StringReadOnlyDictionary))]         public class StringReadOnlyDictionaryDrawer         : PatchOdyssey.SerializedDictionaryDrawer<string, System.String>              {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.UIntDictionary))]                   public class UIntDictionaryDrawer                   : PatchOdyssey.SerializedDictionaryDrawer<string, System.UInt32>              {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.UIntReadOnlyDictionary))]           public class UIntReadOnlyDictionaryDrawer           : PatchOdyssey.SerializedDictionaryDrawer<string, System.UInt32>              {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ULongDictionary))]                  public class ULongDictionaryDrawer                  : PatchOdyssey.SerializedDictionaryDrawer<string, System.UInt64>              {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ULongReadOnlyDictionary))]          public class ULongReadOnlyDictionaryDrawer          : PatchOdyssey.SerializedDictionaryDrawer<string, System.UInt64>              {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2Dictionary))]                public class Vector2DictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector2>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2ReadOnlyDictionary))]        public class Vector2ReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector2>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2IntDictionary))]             public class Vector2IntDictionaryDrawer             : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector2Int>     {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector2IntReadOnlyDictionary))]     public class Vector2IntReadOnlyDictionaryDrawer     : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector2Int>     {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3Dictionary))]                public class Vector3DictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector3>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3ReadOnlyDictionary))]        public class Vector3ReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector3>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3IntDictionary))]             public class Vector3IntDictionaryDrawer             : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector3Int>     {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector3IntReadOnlyDictionary))]     public class Vector3IntReadOnlyDictionaryDrawer     : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector3Int>     {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector4Dictionary))]                public class Vector4DictionaryDrawer                : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector4>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Vector4ReadOnlyDictionary))]        public class Vector4ReadOnlyDictionaryDrawer        : PatchOdyssey.SerializedDictionaryDrawer<string, UnityEngine.Vector4>        {}
   #endif
 }
 
 namespace PatchOdyssey /* ⟶ …everything else */ {
   namespace Animation {
     public static partial class Function {
-      public static double CubicBézier    (double time, double p0, double p1, double p2, double p3) { return (p0 * System.Math.Pow(1.0 - time, 3.0)) + (p1 * time * 3.0 * System.Math.Pow(1.0 - time, 2.0)) + (p2 * (1.0 - time) * 3.0 * System.Math.Pow(time, 2.0)) + (p3 * System.Math.Pow(time, 3.0)); }
-      public static double QuadraticBézier(double time, double p0, double p1, double p2)            { return (p0 * System.Math.Pow(1.0 - time, 2.0)) + (p1 * time * 2.0 * System.Math.Pow(1.0 - time, 1.0))                                                          + (p2 * System.Math.Pow(time, 2.0)); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double CubicBézier    (double time, double p0, double p1, double p2, double p3) { return (p0 * System.Math.Pow(1.0 - time, 3.0)) + (p1 * time * 3.0 * System.Math.Pow(1.0 - time, 2.0)) + (p2 * (1.0 - time) * 3.0 * System.Math.Pow(time, 2.0)) + (p3 * System.Math.Pow(time, 3.0)); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double QuadraticBézier(double time, double p0, double p1, double p2)            { return (p0 * System.Math.Pow(1.0 - time, 2.0)) + (p1 * time * 2.0 * System.Math.Pow(1.0 - time, 1.0))                                                          + (p2 * System.Math.Pow(time, 2.0)); }
 
-      public static double Ease                (double time) { return PatchOdyssey.Animation.Function.CubicBézier(time, 0.25, 0.10, 0.25, 1.00); }
-      public static double EaseIn              (double time) { return PatchOdyssey.Animation.Function.CubicBézier(time, 0.42, 0.00, 1.00, 1.00); }
-      public static double EaseInBack          (double time) { return (System.Math.Pow(time, 3.0) * 2.70158) - (System.Math.Pow(time, 2.0) * 1.70158); }
-      public static double EaseInBounce        (double time) { return 1.0 - PatchOdyssey.Animation.Function.EaseOutBounce(1.0 - time); }
-      public static double EaseInCircular      (double time) { return 1.0 - System.Math.Sqrt(1.0 - System.Math.Pow(time, 2.0)); }
-      public static double EaseInCubic         (double time) { return System.Math.Pow(time, 3.0); }
-      public static double EaseInElastic       (double time) { return time != 0.0 && time != 1.0 ? -System.Math.Pow(2.0, (time * 10.0) - 10.0) * System.Math.Sin(((time * 10.0) - 10.75) * ((System.Math.PI * 2.0) / 3.0)) : time; }
-      public static double EaseInExponential   (double time) { return time != 0.0 ? System.Math.Pow(2.0, (time * 10.0) - 10.0) : 0.0; }
-      public static double EaseInOut           (double time) { return PatchOdyssey.Animation.Function.CubicBézier(time, 0.42, 0.00, 0.58, 1.00); }
-      public static double EaseInOutBack       (double time) { return (time < 0.5 ? System.Math.Pow(time * 2.0, 2.0) * ((7.189819f * time) - 2.5949095) : ((System.Math.Pow((time * 2.0) - 2.0, 2.0) * ((((time * 2.0) - 2.0) * 3.5949095) + 2.5949095)) + 2.0)) / 2.0; }
-      public static double EaseInOutBounce     (double time) { return (time < 0.5 ? (1.0 - PatchOdyssey.Animation.Function.EaseOutBounce(1.0 - (time * 2.0))) : (1.0 + PatchOdyssey.Animation.Function.EaseOutBounce((time * 2.0) - 1.0))) / 2.0; }
-      public static double EaseInOutCircular   (double time) { return (time < 0.5 ? (1.0 - System.Math.Sqrt(1.0 - System.Math.Pow(time * 2.0, 2.0))) : (1.0 + System.Math.Sqrt(1.0 - System.Math.Pow((time * -2.0) + 2.0, 2.0)))) / 2.0; }
-      public static double EaseInOutCubic      (double time) { return time < 0.5 ? 4.0 * System.Math.Pow(time, 3.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 3.0) / 2.0)); }
-      public static double EaseInOutElastic    (double time) { return time != 0.0 && time != 1.0 ? time < 0.5 ? -(System.Math.Pow(2.0, (time * 20.0) - 10.0) * System.Math.Sin(((time * 20.0) - 11.125) * ((System.Math.PI * 2.0) / 4.5))) / 2.0 : ((System.Math.Pow(2.0, (time * -20.0) + 10.0) * System.Math.Sin(((time * 20.0) - 11.125) * ((System.Math.PI * 2.0) / 4.5))) / 2.0 + 1.0) : time; }
-      public static double EaseInOutExponential(double time) { return time != 0.0 && time != 1.0 ? (time < 0.5 ? System.Math.Pow(2.0, (time * 20.0) - 10.0) : (2.0 - System.Math.Pow(2.0, (time * -20.0) + 10.0))) / 2.0 : time; }
-      public static double EaseInOutQuadratic  (double time) { return time < 0.5 ?  2.0 * System.Math.Pow(time, 2.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 2.0) / 2.0)); }
-      public static double EaseInOutQuartic    (double time) { return time < 0.5 ?  8.0 * System.Math.Pow(time, 4.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 4.0) / 2.0)); }
-      public static double EaseInOutQuintic    (double time) { return time < 0.5 ? 16.0 * System.Math.Pow(time, 5.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 5.0) / 2.0)); }
-      public static double EaseInOutSine       (double time) { return -(System.Math.Cos(System.Math.PI * time) - 1.0) / 2.0; }
-      public static double EaseInQuadratic     (double time) { return System.Math.Pow(time, 2.0); }
-      public static double EaseInQuartic       (double time) { return System.Math.Pow(time, 4.0); }
-      public static double EaseInQuintic       (double time) { return System.Math.Pow(time, 5.0); }
-      public static double EaseInSine          (double time) { return 1.0 - System.Math.Cos((System.Math.PI * time) / 2.0); }
-      public static double EaseOut             (double time) { return PatchOdyssey.Animation.Function.CubicBézier(time, 0.00, 0.00, 0.58, 1.00); }
-      public static double EaseOutBack         (double time) { return 1.0 + (2.70158 * System.Math.Pow(time - 1.0, 3.0)) + (System.Math.Pow(time - 1.0, 2.0) * 1.70158); }
-      public static double EaseOutBounce       (double time) { return time < 1.0 / 2.75 ? System.Math.Pow(time, 2.0) * 7.5625 : time < 2.0 / 2.75 ? (System.Math.Pow(time - (1.5 / 2.75), 2.0) * 7.5625) + 0.75 : time < 2.5 / 2.75 ? (System.Math.Pow(time - (2.25 / 2.75), 2.0) * 7.5625) + 0.9375 : (System.Math.Pow(time - (2.625 / 2.75), 2.0) * 7.5625) + 0.984375; }
-      public static double EaseOutCircular     (double time) { return System.Math.Sqrt(1.0 - System.Math.Pow(time - 1.0, 2.0)); }
-      public static double EaseOutCubic        (double time) { return 1.0 - System.Math.Pow(1.0 - time, 3.0); }
-      public static double EaseOutElastic      (double time) { return time != 0.0 && time != 1.0 ? (System.Math.Pow(2.0, time * -10.0) * System.Math.Sin(((time * 10.0) - 0.75) * ((System.Math.PI * 2.0) / 3.0))) + 1.0 : time; }
-      public static double EaseOutExponential  (double time) { return time != 1.0 ? 1.0 - System.Math.Pow(2.0, time * -10.0) : 1.0; }
-      public static double EaseOutQuadratic    (double time) { return 1.0 - System.Math.Pow(1.0 - time, 2.0); }
-      public static double EaseOutQuartic      (double time) { return 1.0 - System.Math.Pow(1.0 - time, 4.0); }
-      public static double EaseOutQuintic      (double time) { return 1.0 - System.Math.Pow(1.0 - time, 5.0); }
-      public static double EaseOutSine         (double time) { return System.Math.Sin((System.Math.PI * time) / 2.0); }
-      public static double Linear              (double time) { return time; }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double Ease                (double time) { return PatchOdyssey.Animation.Function.CubicBézier(time, 0.25, 0.10, 0.25, 1.00); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseIn              (double time) { return PatchOdyssey.Animation.Function.CubicBézier(time, 0.42, 0.00, 1.00, 1.00); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInBack          (double time) { return (System.Math.Pow(time, 3.0) * 2.70158) - (System.Math.Pow(time, 2.0) * 1.70158); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInBounce        (double time) { return 1.0 - PatchOdyssey.Animation.Function.EaseOutBounce(1.0 - time); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInCircular      (double time) { return 1.0 - System.Math.Sqrt(1.0 - System.Math.Pow(time, 2.0)); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInCubic         (double time) { return System.Math.Pow(time, 3.0); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInElastic       (double time) { return time != 0.0 && time != 1.0 ? -System.Math.Pow(2.0, (time * 10.0) - 10.0) * System.Math.Sin(((time * 10.0) - 10.75) * ((System.Math.PI * 2.0) / 3.0)) : time; }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInExponential   (double time) { return time != 0.0 ? System.Math.Pow(2.0, (time * 10.0) - 10.0) : 0.0; }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInOut           (double time) { return PatchOdyssey.Animation.Function.CubicBézier(time, 0.42, 0.00, 0.58, 1.00); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInOutBack       (double time) { return (time < 0.5 ? System.Math.Pow(time * 2.0, 2.0) * ((7.189819f * time) - 2.5949095) : ((System.Math.Pow((time * 2.0) - 2.0, 2.0) * ((((time * 2.0) - 2.0) * 3.5949095) + 2.5949095)) + 2.0)) / 2.0; }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInOutBounce     (double time) { return (time < 0.5 ? (1.0 - PatchOdyssey.Animation.Function.EaseOutBounce(1.0 - (time * 2.0))) : (1.0 + PatchOdyssey.Animation.Function.EaseOutBounce((time * 2.0) - 1.0))) / 2.0; }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInOutCircular   (double time) { return (time < 0.5 ? (1.0 - System.Math.Sqrt(1.0 - System.Math.Pow(time * 2.0, 2.0))) : (1.0 + System.Math.Sqrt(1.0 - System.Math.Pow((time * -2.0) + 2.0, 2.0)))) / 2.0; }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInOutCubic      (double time) { return time < 0.5 ? 4.0 * System.Math.Pow(time, 3.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 3.0) / 2.0)); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInOutElastic    (double time) { return time != 0.0 && time != 1.0 ? time < 0.5 ? -(System.Math.Pow(2.0, (time * 20.0) - 10.0) * System.Math.Sin(((time * 20.0) - 11.125) * ((System.Math.PI * 2.0) / 4.5))) / 2.0 : ((System.Math.Pow(2.0, (time * -20.0) + 10.0) * System.Math.Sin(((time * 20.0) - 11.125) * ((System.Math.PI * 2.0) / 4.5))) / 2.0 + 1.0) : time; }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInOutExponential(double time) { return time != 0.0 && time != 1.0 ? (time < 0.5 ? System.Math.Pow(2.0, (time * 20.0) - 10.0) : (2.0 - System.Math.Pow(2.0, (time * -20.0) + 10.0))) / 2.0 : time; }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInOutQuadratic  (double time) { return time < 0.5 ?  2.0 * System.Math.Pow(time, 2.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 2.0) / 2.0)); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInOutQuartic    (double time) { return time < 0.5 ?  8.0 * System.Math.Pow(time, 4.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 4.0) / 2.0)); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInOutQuintic    (double time) { return time < 0.5 ? 16.0 * System.Math.Pow(time, 5.0) : (1.0 - (System.Math.Pow((time * -2.0) + 2.0, 5.0) / 2.0)); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInOutSine       (double time) { return -(System.Math.Cos(System.Math.PI * time) - 1.0) / 2.0; }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInQuadratic     (double time) { return System.Math.Pow(time, 2.0); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInQuartic       (double time) { return System.Math.Pow(time, 4.0); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInQuintic       (double time) { return System.Math.Pow(time, 5.0); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseInSine          (double time) { return 1.0 - System.Math.Cos((System.Math.PI * time) / 2.0); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseOut             (double time) { return PatchOdyssey.Animation.Function.CubicBézier(time, 0.00, 0.00, 0.58, 1.00); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseOutBack         (double time) { return 1.0 + (2.70158 * System.Math.Pow(time - 1.0, 3.0)) + (System.Math.Pow(time - 1.0, 2.0) * 1.70158); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseOutBounce       (double time) { return time < 1.0 / 2.75 ? System.Math.Pow(time, 2.0) * 7.5625 : time < 2.0 / 2.75 ? (System.Math.Pow(time - (1.5 / 2.75), 2.0) * 7.5625) + 0.75 : time < 2.5 / 2.75 ? (System.Math.Pow(time - (2.25 / 2.75), 2.0) * 7.5625) + 0.9375 : (System.Math.Pow(time - (2.625 / 2.75), 2.0) * 7.5625) + 0.984375; }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseOutCircular     (double time) { return System.Math.Sqrt(1.0 - System.Math.Pow(time - 1.0, 2.0)); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseOutCubic        (double time) { return 1.0 - System.Math.Pow(1.0 - time, 3.0); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseOutElastic      (double time) { return time != 0.0 && time != 1.0 ? (System.Math.Pow(2.0, time * -10.0) * System.Math.Sin(((time * 10.0) - 0.75) * ((System.Math.PI * 2.0) / 3.0))) + 1.0 : time; }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseOutExponential  (double time) { return time != 1.0 ? 1.0 - System.Math.Pow(2.0, time * -10.0) : 1.0; }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseOutQuadratic    (double time) { return 1.0 - System.Math.Pow(1.0 - time, 2.0); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseOutQuartic      (double time) { return 1.0 - System.Math.Pow(1.0 - time, 4.0); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseOutQuintic      (double time) { return 1.0 - System.Math.Pow(1.0 - time, 5.0); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double EaseOutSine         (double time) { return System.Math.Sin((System.Math.PI * time) / 2.0); }
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static double Linear              (double time) { return time; }
     }
   }
 
   /* … */
   public static class Extensions {
-    public static void Add<T>(this System.Collections.Generic.Queue<T> queue, T item) {
-      // ⟶ Intended for initializer lists only
-      queue.Enqueue(item);
-    }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static void Add<T>(this System.Collections.Generic.Queue<T> queue, T item) { queue.Enqueue(item); } // ⟶ Intended for initializer lists only e.g. `new System.Collections.Generic.Queue<T>() {…}`
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static void Add<T>(this System.Collections.Generic.Stack<T> stack, T item) { stack.Push(item); } // ⟶ Intended for initializer lists only e.g. `new System.Collections.Generic.Stack<T>() {…}`
 
-    public static void Add<T>(this System.Collections.Generic.Stack<T> stack, T item) {
-      // ⟶ Intended for initializer lists only
-      stack.Push(item);
-    }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static T Append<T>(this System.Collections.Generic.LinkedList<T> list, T value) { list.AddLast  (value); return value; }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static T Append<T>(this System.Collections.Generic.List      <T> list, T value) { list.Insert(0, value); return value; }
 
-    public static T Append<T>(this System.Collections.Generic.List<T> list, T value) {
-      list.Insert(list.Count - 1, value); // ⟶ `list.Add(value);`
-      return value;
-    }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyCollection<T>            AsReadOnly<T>           (this T[]                                                  array)      { return System.Array.AsReadOnly<T>(array); }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyCollection<T>            AsReadOnly<T>           (this System.Collections.Generic.IList      <T>            list)       { return new(list); }       // ⟶ `System.Collections.Generic.CollectionExtensions.AsReadOnly<T>(list);`
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyDictionary<TKey, TValue> AsReadOnly<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary) { return new(dictionary); } // ⟶ `System.Collections.Generic.CollectionExtensions.AsReadOnly<TKey, TValue>(dictionary);`
 
-    public static System.Collections.ObjectModel.ReadOnlyCollection<T> AsReadOnly<T>(this T[] array) {
-      return System.Array.AsReadOnly<T>(array);
-    }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static int BinarySearch   (this System.Array array,                        object? value)                                         { return System.Array.BinarySearch(array, value); }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static int BinarySearch   (this System.Array array,                        object? value, System.Collections.IComparer? comparer) { return System.Array.BinarySearch(array, value, comparer); }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static int BinarySearch   (this System.Array array, int index, int length, object? value)                                         { return System.Array.BinarySearch(array, index, length, value); }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static int BinarySearch   (this System.Array array, int index, int length, object? value, System.Collections.IComparer? comparer) { return System.Array.BinarySearch(array, index, length, value, comparer); }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static int BinarySearch<T>(this T[]          array,                        T       value)                                         { return System.Array.BinarySearch(array, value); }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static int BinarySearch<T>(this T[]          array,                        T       value, System.Collections.IComparer? comparer) { return System.Array.BinarySearch(array, value, comparer); }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static int BinarySearch<T>(this T[]          array, int index, int length, T       value)                                         { return System.Array.BinarySearch(array, index, length, value); }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static int BinarySearch<T>(this T[]          array, int index, int length, T       value, System.Collections.IComparer? comparer) { return System.Array.BinarySearch(array, index, length, value, comparer); }
 
-    public static System.Collections.ObjectModel.ReadOnlyCollection<T> AsReadOnly<T>(this System.Collections.Generic.IList<T> list) {
-      return new(list); // ⟶ `System.Collections.Generic.CollectionExtensions.AsReadOnly<T>(list);`
-    }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static void Clear              (this System.Array                                         array)                        => array.Clear(0, array.Length);
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static void Clear              (this System.Array                                         array, int index, int length) { System.Array.Clear(array, index, length); }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static void Clear<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary)                   { foreach (TKey key in dictionary.Keys) dictionary.Remove(key); } // ⟶ `::Capacity` remains unchanged
 
-    public static System.Collections.ObjectModel.ReadOnlyDictionary<TKey, TValue> AsReadOnly<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary) {
-      return new(dictionary); // ⟶ `System.Collections.Generic.CollectionExtensions.AsReadOnly<TKey, TValue>(dictionary);`
-    }
-
-    public static int BinarySearch   (this System.Array array,                        object? value)                                         { return System.Array.BinarySearch(array, value); }
-    public static int BinarySearch   (this System.Array array,                        object? value, System.Collections.IComparer? comparer) { return System.Array.BinarySearch(array, value, comparer); }
-    public static int BinarySearch   (this System.Array array, int index, int length, object? value)                                         { return System.Array.BinarySearch(array, index, length, value); }
-    public static int BinarySearch   (this System.Array array, int index, int length, object? value, System.Collections.IComparer? comparer) { return System.Array.BinarySearch(array, index, length, value, comparer); }
-    public static int BinarySearch<T>(this T[]          array,                        T       value)                                         { return System.Array.BinarySearch(array, value); }
-    public static int BinarySearch<T>(this T[]          array,                        T       value, System.Collections.IComparer? comparer) { return System.Array.BinarySearch(array, value, comparer); }
-    public static int BinarySearch<T>(this T[]          array, int index, int length, T       value)                                         { return System.Array.BinarySearch(array, index, length, value); }
-    public static int BinarySearch<T>(this T[]          array, int index, int length, T       value, System.Collections.IComparer? comparer) { return System.Array.BinarySearch(array, index, length, value, comparer); }
-
-    public static void Clear(this System.Array array)                        => array.Clear(0, array.Length);
-    public static void Clear(this System.Array array, int index, int length) { System.Array.Clear(array, index, length); }
-
-    public static void Clear<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary) {
-      foreach (TKey key in dictionary.Keys)
-      dictionary.Remove(key); // ⟶ `::Capacity` remains unchanged
-    }
-
+    /* TODO */
     public static bool Contains(this System.Array array, object value) => array.Contains(value, null as System.Collections.IEqualityComparer);
     public static bool Contains(this System.Array array, object value, System.Collections.IEqualityComparer? comparer) {
       for (System.Collections.IEnumerator enumerator = array.GetEnumerator(); enumerator.MoveNext(); ) {
@@ -944,7 +945,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
     public static bool ContainsValue<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, TValue value) {
       foreach (TValue dictionaryValue in dictionary.Values) {
-        if ((value as System.IEquatable<TValue>)?.Equals(dictionaryValue) ?? (object) value == (object) dictionaryValue)
+        if ((value as System.IEquatable<TValue>)?.Equals(dictionaryValue) ?? (object) value! == (object) dictionaryValue!)
         return true;
       }
 
@@ -1116,6 +1117,14 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
     public static bool Exists<T>(this T[] array, System.Predicate<T> match) {
       return System.Array.Exists<T>(array, match);
+    }
+
+    public static void Fill<T>(this T[] array, T value) {
+      System.Array.Fill<T>(array, value);
+    }
+
+    public static void Fill<T>(this T[] array, T value, int index, int count) {
+      System.Array.Fill<T>(array, value, index, count);
     }
 
     public static T? Find<T>(this T[] array, System.Predicate<T> match) {
@@ -1528,27 +1537,27 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       return Util.ArrayFrom(descendants);
     }
 
-    public static UnityEngine.Component [] FindHierarchy   (this UnityEngine.Component  component,  System.Predicate<UnityEngine.Component>  predicate)                                 { return Util.ArrayFrom(new[] {component},                                     component .FindDescendants   (predicate)); }
-    public static T                     [] FindHierarchy<T>(this UnityEngine.Component  component,  System.Predicate<T>                      predicate) where T : UnityEngine.Component { return Util.ArrayFrom(component is T        ? new[] {component as T} : null, component .FindDescendants<T>(predicate)); }
-    public static UnityEngine.GameObject[] FindHierarchy   (this UnityEngine.GameObject gameObject, System.Predicate<UnityEngine.GameObject> predicate)                                 { return Util.ArrayFrom(predicate(gameObject) ? new[] {gameObject}     : null, gameObject.FindDescendants   (predicate)); }
+    public static UnityEngine.Component [] FindHierarchy   (this UnityEngine.Component  component,  System.Predicate<UnityEngine.Component>  predicate)                                 { return Util.ArrayFrom(new[] {component},                                      component .FindDescendants   (predicate));  }
+    public static T                     [] FindHierarchy<T>(this UnityEngine.Component  component,  System.Predicate<T>                      predicate) where T : UnityEngine.Component { return Util.ArrayFrom(component is T        ? new[] {component as T} : null!, component .FindDescendants<T>(predicate))!; }
+    public static UnityEngine.GameObject[] FindHierarchy   (this UnityEngine.GameObject gameObject, System.Predicate<UnityEngine.GameObject> predicate)                                 { return Util.ArrayFrom(predicate(gameObject) ? new[] {gameObject}     : null!, gameObject.FindDescendants   (predicate));  }
 
     public static T[] FindHierarchyByComponent<T>(this UnityEngine.Component  component)  where T : UnityEngine.Component => component.gameObject.FindHierarchyByComponent<T>();
     public static T[] FindHierarchyByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component {
       T? component = gameObject.GetComponent<T>();
-      return Util.ArrayFrom(null != component ? new[] {component} : null, gameObject.FindDescendantsByComponent<T>());
+      return Util.ArrayFrom(null != component ? new[] {component} : null!, gameObject.FindDescendantsByComponent<T>());
     }
 
     public static UnityEngine.Component[] FindHierarchyByComponent(this UnityEngine.Component  component,  System.Type type) => component.gameObject.FindHierarchyByComponent(type);
     public static UnityEngine.Component[] FindHierarchyByComponent(this UnityEngine.GameObject gameObject, System.Type type) {
       UnityEngine.Component? component = gameObject.GetComponent(type);
-      return Util.ArrayFrom(null != component ? new[] {component} : null, gameObject.FindDescendantsByComponent(type));
+      return Util.ArrayFrom(null != component ? new[] {component} : null!, gameObject.FindDescendantsByComponent(type));
     }
 
     public static UnityEngine.GameObject[] FindHierarchyByName(this UnityEngine.Component  component,  string name) => component.gameObject.FindHierarchyByName(name);
-    public static UnityEngine.GameObject[] FindHierarchyByName(this UnityEngine.GameObject gameObject, string name) { return Util.ArrayFrom(gameObject.name == name ? new[] {gameObject} : null, gameObject.FindDescendantsByName(name)); }
+    public static UnityEngine.GameObject[] FindHierarchyByName(this UnityEngine.GameObject gameObject, string name) { return Util.ArrayFrom(gameObject.name == name ? new[] {gameObject} : null!, gameObject.FindDescendantsByName(name)); }
 
     public static UnityEngine.GameObject[] FindHierarchyByTag(this UnityEngine.Component  component,  string tag) => component.gameObject.FindHierarchyByTag(tag);
-    public static UnityEngine.GameObject[] FindHierarchyByTag(this UnityEngine.GameObject gameObject, string tag) { return Util.ArrayFrom(gameObject.tag == tag ? new[] {gameObject} : null, gameObject.FindDescendantsByTag(tag)); }
+    public static UnityEngine.GameObject[] FindHierarchyByTag(this UnityEngine.GameObject gameObject, string tag) { return Util.ArrayFrom(gameObject.tag == tag ? new[] {gameObject} : null!, gameObject.FindDescendantsByTag(tag)); }
 
     public static int FindIndex<T>(this T[] array,                       System.Predicate<T> match) { return System.Array.FindIndex<T>(array, match); }
     public static int FindIndex<T>(this T[] array, int index,            System.Predicate<T> match) { return System.Array.FindIndex<T>(array, index, match); }
@@ -1651,9 +1660,9 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       return Util.ArrayFrom(descendants);
     }
 
-    public static UnityEngine.Component [] GetHierarchy   (this UnityEngine.Component  component)                                 { return Util.ArrayFrom(new[] {component},      component .GetDescendants   ()); }
-    public static T                     [] GetHierarchy<T>(this UnityEngine.Component  component) where T : UnityEngine.Component { return Util.ArrayFrom(new[] {component as T}, component .GetDescendants<T>()); }
-    public static UnityEngine.GameObject[] GetHierarchy   (this UnityEngine.GameObject gameObject)                                { return Util.ArrayFrom(new[] {gameObject},     gameObject.GetDescendants   ()); }
+    public static UnityEngine.Component [] GetHierarchy   (this UnityEngine.Component  component)                                 { return Util.ArrayFrom(new[] {component},      component .GetDescendants   ());  }
+    public static T                     [] GetHierarchy<T>(this UnityEngine.Component  component) where T : UnityEngine.Component { return Util.ArrayFrom(new[] {component as T}, component .GetDescendants<T>())!; }
+    public static UnityEngine.GameObject[] GetHierarchy   (this UnityEngine.GameObject gameObject)                                { return Util.ArrayFrom(new[] {gameObject},     gameObject.GetDescendants   ());  }
 
     public static UnityEngine.GameObject GetParent(this UnityEngine.Component  component) => component.gameObject.GetParent();
     public static UnityEngine.GameObject GetParent(this UnityEngine.GameObject gameObject) { return gameObject.transform.parent.gameObject; }
@@ -1699,10 +1708,8 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     public static int LastIndexOf<T>(this T[]          array, T       value, int index)            { return System.Array.LastIndexOf<T>(array, value, index); }
     public static int LastIndexOf<T>(this T[]          array, T       value, int index, int count) { return System.Array.LastIndexOf<T>(array, value, index, count); }
 
-    public static T Prepend<T>(this System.Collections.Generic.List<T> list, T value) {
-      list.Insert(0, value);
-      return value;
-    }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static T Prepend<T>(this System.Collections.Generic.LinkedList<T> list, T value) { list.AddFirst (value); return value; }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static T Prepend<T>(this System.Collections.Generic.List      <T> list, T value) { list.Insert(0, value); return value; }
 
     public static void Reset(this UnityEngine.Transform transform) {
       transform.localRotation = UnityEngine.Quaternion.identity;
@@ -1939,7 +1946,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     }
 
     public static T[] ArrayFromMembers<T>(object structure) where T : class? {
-      static System.Func<object?, object?[]?, object?>? DelegateCast<U>() where U : class {
+      static System.Func<object?, object?[]?, object?> DelegateCast<U>() where U : class? {
         foreach (System.Reflection.MethodInfo method in typeof(U).GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)) {
           System.Reflection.ParameterInfo[] parameters = method.GetParameters();
 
@@ -1947,7 +1954,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
           return method.Invoke;
         }
 
-        return static (object target, object?[]? parameters) => (object?) (parameters[0] as U);
+        return static (object? target, object?[]? parameters) => (object?) (parameters![0] as U); // ⟶ `𝑓 delegate::Invoke(…)`
       }
 
       if (null != structure) {
@@ -1958,9 +1965,9 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
           System.Type? type  = value?.GetType();
 
           // … ⟶ Decompose array field/ property members also
-          if (Util.IsConvertibleType(type, typeof(T)))                    return new[]         {DelegateCast<T>   ().Invoke(null, new[] {value}) as T};
-          if (Util.IsConvertibleType(type, typeof(T [])) && value is T[]) return Util.ArrayFrom(DelegateCast<T []>().Invoke(null, new[] {value}) as T []);
-          if (Util.IsConvertibleType(type, typeof(T?[])))                 return Util.ArrayFrom(DelegateCast<T?[]>().Invoke(null, new[] {value}) as T?[]);
+          if (Util.IsConvertibleType(type!, typeof(T)))                    return new[]          {DelegateCast<T>   ().Invoke(null, new[] {value}) as T};
+          if (Util.IsConvertibleType(type!, typeof(T [])) && value is T[]) return Util.ArrayFrom((DelegateCast<T []>().Invoke(null, new[] {value}) as T [])!);
+          if (Util.IsConvertibleType(type!, typeof(T?[])))                 return Util.ArrayFrom((DelegateCast<T?[]>().Invoke(null, new[] {value}) as T?[])!);
 
           return new T?[0];
         });
@@ -1975,7 +1982,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         return Util.ArrayFrom(decomposed);
       }
 
-      return null;
+      return null!; // ⟶ `structure` is null
     }
 
     public static UnityEngine.Vector3[] CornersFromRect(UnityEngine.Rect rectangle) {
@@ -1988,7 +1995,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       };
     }
 
-    public static UnityEngine.Vector3[]? CornersFromRectTransform(System.Action<UnityEngine.Vector3[]>? transformMethod) {
+    public static UnityEngine.Vector3[]? CornersFromRectTransform(System.Action<UnityEngine.Vector3[]?>? transformMethod) {
       UnityEngine.Vector3[]? corners = null;
 
       // …
@@ -2007,7 +2014,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     }
 
     public static System.Predicate<T> DelegateEquals<T>(T value) {
-      return subvalue => (value as System.IEquatable<T>)?.Equals(subvalue) ?? (object) value == (object) subvalue;
+      return subvalue => (value as System.IEquatable<T>)?.Equals(subvalue) ?? (object) value! == (object) subvalue!;
     }
 
     public static UnityEngine.Vector2    ExcludeVectorAxes       (UnityEngine.Vector2    vector, UnityEngine.Vector2    axes) { return new(axes.x != 1.0f ? vector.x : 0.0f, axes.y != 1.0f ? vector.y : 0.0f); }
@@ -2229,11 +2236,11 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         }))) return true;
 
         foreach (System.Type? subtype in Util.ArrayFrom(
-          new[] {(type.IsEnum ? System.Enum    .GetUnderlyingType : (System.Func<System.Type, System.Type>) null)?.Invoke(type)},
-          new[] {(true        ? System.Nullable.GetUnderlyingType : (System.Func<System.Type, System.Type>) null)?.Invoke(type)},
+          new[] {(type.IsEnum ? System.Enum    .GetUnderlyingType : (System.Func<System.Type, System.Type>) null!)?.Invoke(type)},
+          new[] {(true        ? System.Nullable.GetUnderlyingType : (System.Func<System.Type, System.Type>) null!)?.Invoke(type)},
           IMPLICIT_TYPE_CONVERTS.TryGetValue(typeA, out System.Type[] types) && types.Contains(typeB) ? types : new System.Type[0]
         )) {
-          if (!pending.Contains(subtype) && null != subtype)
+          if (null != subtype && !pending.Contains(subtype))
           pending.Enqueue(subtype);
         }
       }
@@ -2245,7 +2252,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       return IMPLICIT_TYPE_CONVERTS.TryGetValue(typeA, out System.Type[] types) && types.Contains(typeB);
     }
 
-    private static object LoadURI(
+    private static object? LoadURI(
       string id, string path, System.Action<object?> callback, double? loadDurationMaximum, bool nocache,
       System.Func<object, object>                                  preparser, // ⟶ `Util.LoadURI(…)` cache hit on `LOADS` for desired URI data
       System.Func<string, UnityEngine.Networking.UnityWebRequest>  requester, // ⟶ Map `path` URI to preempted `UnityEngine.Networking.UnityWebRequest`
@@ -2311,7 +2318,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
           stopwatch.Stop();
           operation.completed += operation => {
-            UnityEngine.Networking.UnityWebRequest request = (operation as UnityEngine.Networking.UnityWebRequestAsyncOperation).webRequest;
+            UnityEngine.Networking.UnityWebRequest request = ((UnityEngine.Networking.UnityWebRequestAsyncOperation) operation).webRequest!;
 
             // …
             load.pending = false;
@@ -2328,7 +2335,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       return HandleURIRequest(ref load, ref request);
     }
 
-    public static byte[] LoadURI(string path, System.Action<byte[]?>? callback = null, double? loadDurationMaximum = null, bool nocache = Util.LoadCached) {
+    public static byte[]? LoadURI(string path, System.Action<byte[]?>? callback = null, double? loadDurationMaximum = null, bool nocache = Util.LoadCached) {
       return Util.LoadURI(
         typeof(byte[]).ToString(), path, null == callback ? static _ => {} : _ => callback(_ as byte[]), loadDurationMaximum, nocache,
         static predata => predata, // ⟶ `(predata as byte[]).Clone() as byte[]`
@@ -2373,10 +2380,10 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         static predata => predata, // ⟶ `new string((predata as string).ToCharArray())`
         static path    => UnityEngine.Networking.UnityWebRequest.Get(path),
         request        => {
-          string text = null != encoding ? null : request.downloadHandler.text; // ⟶ UTF-8
+          string? text = null != encoding ? null : request.downloadHandler.text; // ⟶ UTF-8
 
           // …
-          try { text ??= encoding.GetString(request.downloadHandler.data); }
+          try { text ??= encoding!.GetString(request.downloadHandler.data); }
           catch (System.Exception exception) when (exception is System.ArgumentException || exception is System.ArgumentNullException || exception is System.Text.DecoderFallbackException) {}
 
           return text;
@@ -2409,7 +2416,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
     public static UnityEngine.Bounds? LocalBoundsFromRectTransform(UnityEngine.RectTransform? transform) {
       UnityEngine.Rect? rectangle = Util.LocalRectFromRectTransform(transform);
-      return null == rectangle ? null : new(transform.position, new(rectangle?.width ?? 0.0f, rectangle?.height ?? 0.0f, 0.0f));
+      return null == rectangle ? null : new(transform!.position, new(rectangle?.width ?? 0.0f, rectangle?.height ?? 0.0f, 0.0f));
     }
 
     public static UnityEngine.Vector3[]? LocalCornersFromRectTransform(UnityEngine.RectTransform? transform) {
@@ -2442,7 +2449,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     }
 
     public static void Loop<T>(System.Collections.Generic.IEnumerable<T> enumerable, System.Delegate callback) {
-      object[]                          arguments  = new object[] {null, 0};
+      object[]                          arguments  = new object[] {null!, 0};
       int                               index      = 0;
       System.Reflection.ParameterInfo[] parameters = callback.Method.GetParameters();
 
@@ -2451,7 +2458,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       catch (System.Exception) { throw new System.NotSupportedException("Cannot `Loop(…)` given specified callback; Too many parameters"); }
 
       foreach (T value in enumerable) {
-        if (parameters.Length > 0) arguments[0] = value;
+        if (parameters.Length > 0) arguments[0] = value!;
         if (parameters.Length > 1) arguments[1] = Util.DelegateConvert(typeof(int), parameters[1].ParameterType).DynamicInvoke(index++);
 
         callback.DynamicInvoke(arguments);
@@ -2469,7 +2476,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     public static void Loop<T>(System.Collections.Generic.IEnumerable<T> enumerable, System.Action<T, int>             callback) => Util.Loop(enumerable, (System.Delegate) callback);
 
     public static T Max<T>(System.Collections.Generic.IEnumerable<T> enumerable) where T : System.IComparable<T> {
-      T[] maximum = null;
+      T[] maximum = null!;
 
       // …
       foreach (T value in enumerable) {
@@ -2477,13 +2484,13 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         if (value.CompareTo(maximum[0]) > 0) maximum[0] = value;
       }
 
-      return maximum[0]; // ⟶ `System.IndexOutOfRangeException`
+      return maximum![0]; // ⟶ `System.IndexOutOfRangeException`
     }
       public static T Max<T>(T valueA, T valueB) where T : System.IComparable<T> => valueA.CompareTo(valueB) > 0 ? valueA : valueB;
       public static T Max<T>(params T[] values)                                  => Util.Max(values);
 
     public static T Min<T>(System.Collections.Generic.IEnumerable<T> enumerable) where T : System.IComparable<T> {
-      T[] minimum = null;
+      T[] minimum = null!;
 
       // …
       foreach (T value in enumerable) {
@@ -2491,7 +2498,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         if (value.CompareTo(minimum[0]) < 0) minimum[0] = value;
       }
 
-      return minimum[0]; // ⟶ `System.IndexOutOfRangeException`
+      return minimum![0]; // ⟶ `System.IndexOutOfRangeException`
     }
       public static T Min<T>(T valueA, T valueB) where T : System.IComparable<T> => valueA.CompareTo(valueB) < 0 ? valueA : valueB;
       public static T Min<T>(params T[] values)                                  => Util.Min(values);
@@ -2651,7 +2658,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
     public static UnityEngine.Bounds? WorldBoundsFromRectTransform(UnityEngine.RectTransform? transform) {
       UnityEngine.Rect? rectangle = Util.WorldRectFromRectTransform(transform);
-      return null == rectangle ? null : new(transform.position, new(rectangle?.width ?? 0.0f, rectangle?.height ?? 0.0f, 0.0f));
+      return null == rectangle ? null : new(transform!.position, new(rectangle?.width ?? 0.0f, rectangle?.height ?? 0.0f, 0.0f));
     }
 
     public static UnityEngine.Vector3[]? WorldCornersFromRectTransform(UnityEngine.RectTransform? transform) {

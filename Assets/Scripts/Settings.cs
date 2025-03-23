@@ -1,9 +1,6 @@
 using PatchOdyssey;
 
 /* … */
-#nullable enable annotations
-
-/* … */
 public static class Settings {
   public  static          float  DELAY_MAXIMUM = 2.0f;
   private static readonly string RESET_URI     = System.IO.Path.Combine(new[] {Util.GetAssetPath(), "Settings.xml"});
@@ -39,15 +36,15 @@ public static class Settings {
             try {
               if (
                 null != subnode
-                ? element == subnode.AppendChild(element) ? node == prenode.AppendChild(node) : false
-                : element == node   .AppendChild(element)
+                ? element == subnode!.AppendChild(element) ? node == prenode!.AppendChild(node!) : false
+                : element == node   !.AppendChild(element)
               ) return Settings.Update(data);
             } catch (System.Exception exception) when (exception is System.ArgumentException || exception is System.InvalidOperationException) {}
 
             continue;
           }
 
-          prenode = node;
+          prenode = node!;
           path   += components[index];
 
           try { node = data.SelectSingleNode($"/Settings/{path}"); }
@@ -79,7 +76,7 @@ public static class Settings {
     return false;
   }
 
-  private static byte[] Ensure() {
+  private static byte[]? Ensure() {
     if (!System.IO.File.Exists(URI)) {
       if (!Settings.Reset(DELAY_MAXIMUM))
       return null;
@@ -109,7 +106,7 @@ public static class Settings {
     return null;
   }
 
-  public static byte[]  GetProperty         (string path) => default;
+  public static byte[]  GetProperty         (string path) => default!;
   public static bool?   GetPropertyAsBoolean(string path) { string? property = Settings.GetPropertyAsString(path); return null != property ? !System.String.IsNullOrWhiteSpace(property) && property.Trim().ToLower() != "false" : null; }
   public static double? GetPropertyAsDouble (string path) { string? property = Settings.GetPropertyAsString(path); return null != property ? double.TryParse(property, out double value) ? value : double.NaN                    : null; }
   public static float?  GetPropertyAsFloat  (string path) { string? property = Settings.GetPropertyAsString(path); return null != property ? float .TryParse(property, out float  value) ? value : float .NaN                    : null; }
@@ -164,7 +161,7 @@ public static class Settings {
       // …
       if (null != property ? null != property.ParentNode : false) {
         if (property == property.ParentNode.RemoveChild(property))
-        return Settings.Update(data);
+        return Settings.Update(data!);
       }
     } catch (System.Exception exception) when (exception is System.ArgumentException || exception is System.Xml.XmlException || exception is System.Xml.XPath.XPathException) {}
 
@@ -172,14 +169,14 @@ public static class Settings {
   }
 
   public static bool Reset(float? loadDurationMaximum = null) {
-    byte[] data = Util.LoadURI(RESET_URI, null, loadDurationMaximum ?? DELAY_MAXIMUM, Util.LoadDirectly);
-    return null != data ? Settings.Update(data) : false;
+    byte[] data = Util.LoadURI(RESET_URI, null, loadDurationMaximum ?? DELAY_MAXIMUM, Util.LoadDirectly)!;
+    return null != data && Settings.Update(data);
   }
 
   public static bool SetProperty<T>(string path, T value) where T : System.IConvertible {
     if (Settings.HasProperty(path)) {
       if (null != path) {
-        try { return Settings.SetPropertyAsXML(Settings.EnsureAsXML()?.SelectSingleNode($"/Settings/{path}"), value); }
+        try { return Settings.SetPropertyAsXML(Settings.EnsureAsXML()?.SelectSingleNode($"/Settings/{path}")!, value); }
         catch (System.Xml.XPath.XPathException) {}
       }
 
@@ -216,7 +213,7 @@ public static class Settings {
         case System.Xml.XmlNodeType.ProcessingInstruction: node.InnerText = System.Convert.ToString(value); break;
       }
 
-      return System.Xml.XmlNodeType.Document == node.NodeType ? Settings.Update(node as System.Xml.XmlDocument) : Settings.Update(node.OwnerDocument);
+      return System.Xml.XmlNodeType.Document == node.NodeType ? Settings.Update((node as System.Xml.XmlDocument)!) : Settings.Update(node.OwnerDocument);
     } catch (System.Exception exception) when (exception is System.ArgumentException || exception is System.InvalidOperationException) {}
 
     return false;
@@ -237,7 +234,7 @@ public static class Settings {
   }
 
   private static bool Update(System.Xml.XmlDocument content) {
-    return Settings.Update(content?.OuterXml);
+    return Settings.Update(content?.OuterXml!);
   }
 
   /* … → Game-specific */

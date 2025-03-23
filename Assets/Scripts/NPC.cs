@@ -1,9 +1,6 @@
 using PatchOdyssey;
 
 /* … */
-#nullable enable annotations
-
-/* … */
 [UnityEngine.RequireComponent(typeof(UnityEngine.Collider))]
 [UnityEngine.RequireComponent(typeof(UnityEngine.Rigidbody))]
 public class NPC : UnityEngine.MonoBehaviour {
@@ -18,24 +15,24 @@ public class NPC : UnityEngine.MonoBehaviour {
   private const float MOVEMENT_ACCELERATION = 4.0e1f;
   private const float MOVEMENT_DECELERATION = 2.5e0f;
 
-  [ReadWriteInInspector]    new public  UnityEngine.Camera? camera                    =  null;
-  [ReadWriteInInspector]        public  UnityEngine.Vector3 cameraAngle               =  new(35.0f, -90.0f, 0.0f);
-  [ReadWriteInInspector]        public  UnityEngine.Vector3 cameraOffset              =  new(12.5f,  10.0f, 0.0f);
-  [ReadWriteInInspector]        public  UnityEngine.Light?  glowlight                 =  null;                     // TODO (Lapys)
-  [ReadOnlyInInspector]         public  float               glowlightIntensity        =  5.0f;                     // TODO (Lapys)
-  [ReadOnlyInInspector]         public  UnityEngine.Vector3 glowlightOrigin           =  UnityEngine.Vector3.zero; // TODO (Lapys)
-  [ReadOnlyInInspector]         public  float               glowlightRange            =  10.0f;                    // TODO (Lapys)
-  [ReadWriteInInspector]        public  NPC.Mode            mode                      =  NPC.Mode.Idle;
-  [ReadWriteInInspector]        public  Mount               mount                     =  null;
-  [ReadOnlyInInspector]         public  bool                mountIsChanged            =  false; // → Prevent spamming `NPC::Dismount(…)` and `NPC::Mount(…)` calls
-  [ReadOnlyInInspector]         public  NPC.Mode            mountMode                 =  NPC.Mode.Idle;
-  [UnityEngine.HideInInspector] public  UnityEngine.Vector3 movement                  =  UnityEngine.Vector3.zero; // → Preserves scale of movement direction
-  [ReadWriteInInspector]        public  UnityEngine.Vector3 movementDirection         => this.movement / Util.Max(System.Math.Abs(this.movement.x), System.Math.Abs(this.movement.y), System.Math.Abs(this.movement.z));
-  [UnityEngine.HideInInspector] public  float               movementDurationElapsed   =  0.0f;
-  [ReadWriteInInspector]        private UnityEngine.Vector3 movementOrigin            =  UnityEngine.Vector3.zero; // → Recent `….transform.position` before `NPC::MoveBy(…)`, …
-  [ReadWriteInInspector]        public  float               movementSpeed             =  1.0f;
-  [UnityEngine.HideInInspector] public  float               noMovementDurationElapsed =  0.0f;
-  [ReadWriteInInspector]        public  float               rotationSpeed             =  360.0f; // → in Degrees per Second
+  [PatchOdyssey.ReadWriteInInspector]    new public  UnityEngine.Camera? camera                    =  null;
+  [PatchOdyssey.ReadWriteInInspector]        public  UnityEngine.Vector3 cameraAngle               =  new(35.0f, -90.0f, 0.0f);
+  [PatchOdyssey.ReadWriteInInspector]        public  UnityEngine.Vector3 cameraOffset              =  new(12.5f,  10.0f, 0.0f);
+  [PatchOdyssey.ReadWriteInInspector]        public  UnityEngine.Light?  glowlight                 =  null;                     // TODO (Lapys)
+  [PatchOdyssey.ReadOnlyInInspector]         public  float               glowlightIntensity        =  5.0f;                     // TODO (Lapys)
+  [PatchOdyssey.ReadOnlyInInspector]         public  UnityEngine.Vector3 glowlightOrigin           =  UnityEngine.Vector3.zero; // TODO (Lapys)
+  [PatchOdyssey.ReadOnlyInInspector]         public  float               glowlightRange            =  10.0f;                    // TODO (Lapys)
+  [PatchOdyssey.ReadWriteInInspector]        public  NPC.Mode            mode                      =  NPC.Mode.Idle;
+  [PatchOdyssey.ReadWriteInInspector]        public  Mount?              mount                     =  null;
+  [PatchOdyssey.ReadOnlyInInspector]         public  bool                mountIsChanged            =  false; // → Prevent spamming `NPC::Dismount(…)` and `NPC::Mount(…)` calls
+  [PatchOdyssey.ReadOnlyInInspector]         public  NPC.Mode            mountMode                 =  NPC.Mode.Idle;
+  [UnityEngine .HideInInspector] public  UnityEngine.Vector3 movement                  =  UnityEngine.Vector3.zero; // → Preserves scale of movement direction
+  [PatchOdyssey.ReadWriteInInspector]        public  UnityEngine.Vector3 movementDirection         => this.movement / Util.Max(System.Math.Abs(this.movement.x), System.Math.Abs(this.movement.y), System.Math.Abs(this.movement.z));
+  [UnityEngine .HideInInspector] public  float               movementDurationElapsed   =  0.0f;
+  [PatchOdyssey.ReadWriteInInspector]        private UnityEngine.Vector3 movementOrigin            =  UnityEngine.Vector3.zero; // → Recent `….transform.position` before `NPC::MoveBy(…)`, …
+  [PatchOdyssey.ReadWriteInInspector]        public  float               movementSpeed             =  1.0f;
+  [UnityEngine .HideInInspector] public  float               noMovementDurationElapsed =  0.0f;
+  [PatchOdyssey.ReadWriteInInspector]        public  float               rotationSpeed             =  360.0f; // → in Degrees per Second
 
   /* … */
   private void Awake() {
@@ -53,7 +50,7 @@ public class NPC : UnityEngine.MonoBehaviour {
   }
 
   public void Ensure() {
-    for (Mount mount = this.mount; null != mount; mount = null != mount ? mount.mount : null)
+    for (Mount? mount = this.mount; null != mount; mount = null != mount ? mount.mount : null)
     if (mount == this) {
       this.mount = null;
       break;
