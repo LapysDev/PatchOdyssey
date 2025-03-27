@@ -922,18 +922,19 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static void Clear              (this System.Array                                         array, int index, int length) { System.Array.Clear(array, index, length); }
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static void Clear<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary)                   { foreach (TKey key in dictionary.Keys) dictionary.Remove(key); } // ⟶ `::Capacity` remains unchanged
 
-    /* TODO */
-    public static bool Contains(this System.Array array, object value) => array.Contains(value, null as System.Collections.IEqualityComparer);
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static bool Contains(this System.Array array, object value) => array.Contains(value, null as System.Collections.IEqualityComparer);
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
     public static bool Contains(this System.Array array, object value, System.Collections.IEqualityComparer? comparer) {
       for (System.Collections.IEnumerator enumerator = array.GetEnumerator(); enumerator.MoveNext(); ) {
-        if (comparer?.Equals(enumerator.Current, value) ?? (object) enumerator.Current == (object) value)
-        return true;
+        if (comparer?.Equals(enumerator.Current, value) ?? System.Object.ReferenceEquals(enumerator.Current, value))
+        return true; // ⟶ `enumerator.Dispose()` unneeded
       }
 
       return false;
     }
 
-    public static bool Contains<T>(this T[] array, T value) => array.Contains<T>(value, null as System.Collections.Generic.IEqualityComparer<T>);
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static bool Contains<T>(this T[] array, T value) => array.Contains<T>(value, null as System.Collections.Generic.IEqualityComparer<T>);
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
     public static bool Contains<T>(this T[] array, T value, System.Collections.Generic.IEqualityComparer<T>? comparer) {
       foreach (T element in array) {
         if ((comparer ?? System.Collections.Generic.EqualityComparer<T>.Default).Equals(element, value)) // ⟶ Benefits from devirtualization and likely inlining
@@ -943,35 +944,27 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       return false;
     }
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
     public static bool ContainsValue<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, TValue value) {
       foreach (TValue dictionaryValue in dictionary.Values) {
-        if ((value as System.IEquatable<TValue>)?.Equals(dictionaryValue) ?? (object) value! == (object) dictionaryValue!)
+        if ((value as System.IEquatable<TValue>)?.Equals(dictionaryValue) ?? System.Object.ReferenceEquals(value, dictionaryValue))
         return true;
       }
 
       return false;
     }
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
     public static U[] ConvertAll<T, U>(this T[] array, System.Converter<T, U> converter) {
       return System.Array.ConvertAll<T, U>(array, converter);
     }
 
-    public static uint CountChildren(this UnityEngine.Component  component) => component.CountChildrenByComponent(component.GetType());
-    public static uint CountChildren(this UnityEngine.Transform  transform) => transform.gameObject.CountChildren();
-    public static uint CountChildren(this UnityEngine.GameObject gameObject) {
-      #if false // ⟶ Was unaware of `UnityEngine.Transform::childCount` prior
-        uint count = 0u;
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static uint CountChildren(this UnityEngine.Component  component) => component.CountChildrenByComponent(component.GetType());
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static uint CountChildren(this UnityEngine.Transform  transform) => transform.gameObject.CountChildren();
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static uint CountChildren(this UnityEngine.GameObject gameObject) { return (uint) gameObject.transform.childCount; }
 
-        // …
-        for (System.Collections.IEnumerator enumerator = gameObject.transform.GetEnumerator(); enumerator.MoveNext(); )
-          ++count; // ⟶ `enumerator.Dispose()` unneeded
-
-        return count;
-      #endif
-      return (uint) gameObject.transform.childCount;
-    }
-
-    public static uint CountChildrenByComponent<T>(this UnityEngine.Component  component) => component.gameObject.CountChildrenByComponent<T>();
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static uint CountChildrenByComponent<T>(this UnityEngine.Component component) => component.gameObject.CountChildrenByComponent<T>();
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
     public static uint CountChildrenByComponent<T>(this UnityEngine.GameObject gameObject) {
       uint count = 0u;
 
@@ -982,7 +975,8 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       return count;
     }
 
-    public static uint CountChildrenByComponent(this UnityEngine.Component  component,  System.Type type) => component.gameObject.CountChildrenByComponent(type);
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static uint CountChildrenByComponent(this UnityEngine.Component component, System.Type type) => component.gameObject.CountChildrenByComponent(type);
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
     public static uint CountChildrenByComponent(this UnityEngine.GameObject gameObject, System.Type type) {
       uint count = 0u;
 
@@ -993,7 +987,8 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       return count;
     }
 
-    public static uint CountChildrenByName(this UnityEngine.Component  component,  string name) => component.gameObject.CountChildrenByName(name);
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static uint CountChildrenByName(this UnityEngine.Component component, string name) => component.gameObject.CountChildrenByName(name);
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
     public static uint CountChildrenByName(this UnityEngine.GameObject gameObject, string name) {
       uint count = 0u;
 
@@ -1004,7 +999,8 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       return count;
     }
 
-    public static uint CountChildrenByTag(this UnityEngine.Component  component,  string tag) => component.gameObject.CountChildrenByTag(tag);
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static uint CountChildrenByTag(this UnityEngine.Component component, string tag) => component.gameObject.CountChildrenByTag(tag);
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
     public static uint CountChildrenByTag(this UnityEngine.GameObject gameObject, string tag) {
       uint count = 0u;
 
@@ -1015,47 +1011,35 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       return count;
     }
 
-    public static uint CountDescendants(this UnityEngine.Component  component) => component.CountDescendantsByComponent(component.GetType());
-    public static uint CountDescendants(this UnityEngine.Transform  transform) => transform.gameObject.CountDescendants();
-    public static uint CountDescendants(this UnityEngine.GameObject gameObject) {
-      #if false // ⟶ Was unaware of `UnityEngine.Transform::hierarchyCount` prior
-        uint count = 0u;
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static uint CountDescendants(this UnityEngine.Component component) => component.CountDescendantsByComponent(component.GetType());
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static uint CountDescendants(this UnityEngine.Transform transform) => transform.gameObject.CountDescendants();
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static uint CountDescendants(this UnityEngine.GameObject gameObject) { return (uint) gameObject.transform.hierarchyCount - 1; }
 
-        // …
-        for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
-        foreach (UnityEngine.Transform transform in pending.Dequeue()) {
-          ++count;
-          pending.Enqueue(transform);
-        }
-
-        return count;
-      #endif
-      return (uint) gameObject.transform.hierarchyCount - 1;
-    }
-
-    public static uint CountDescendantsByComponent<T>(this UnityEngine.Component  component) => component.gameObject.CountDescendantsByComponent<T>();
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public static uint CountDescendantsByComponent<T>(this UnityEngine.Component component) => component.gameObject.CountDescendantsByComponent<T>();
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
     public static uint CountDescendantsByComponent<T>(this UnityEngine.GameObject gameObject) {
       uint count = 0u;
 
       // …
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         count += null != transform.GetComponent<T>() ? 1u : 0u;
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return count;
     }
 
+    /* TODO */
     public static uint CountDescendantsByComponent(this UnityEngine.Component  component,  System.Type type) => component.gameObject.CountDescendantsByComponent(type);
     public static uint CountDescendantsByComponent(this UnityEngine.GameObject gameObject, System.Type type) {
       uint count = 0u;
 
       // …
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         count += null != transform.GetComponent(type) ? 1u : 0u;
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return count;
@@ -1066,10 +1050,10 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       uint count = 0u;
 
       // …
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         count += name == transform.name ? 1u : 0u;
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return count;
@@ -1080,10 +1064,10 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       uint count = 0u;
 
       // …
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         count += tag == transform.tag ? 1u : 0u;
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return count;
@@ -1316,42 +1300,42 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       System.Type type = component.GetType();
 
       // …
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(component.transform.hierarchyCapacity) {component.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(component.transform.hierarchyCapacity) {component.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         UnityEngine.Component? subcomponent = transform.GetComponent(type);
 
         // …
         if (null != subcomponent && predicate(subcomponent))
         return subcomponent;
 
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return null;
     }
 
     public static T? FindDescendant<T>(this UnityEngine.Component component, System.Predicate<T> predicate) where T : UnityEngine.Component {
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(component.transform.hierarchyCapacity) {component.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(component.transform.hierarchyCapacity) {component.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         T? subcomponent = transform.GetComponent<T>();
 
         // …
         if (null != subcomponent && predicate(subcomponent))
         return subcomponent;
 
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return null;
     }
 
     public static UnityEngine.GameObject? FindDescendant(this UnityEngine.GameObject gameObject, System.Predicate<UnityEngine.GameObject> predicate) {
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         if (predicate(transform.gameObject))
         return transform.gameObject;
 
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return null;
@@ -1359,15 +1343,15 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
     public static T? FindDescendantByComponent<T>(this UnityEngine.Component  component)  where T : UnityEngine.Component => component.gameObject.FindDescendantByComponent<T>();
     public static T? FindDescendantByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component {
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         T? component = transform.GetComponent<T>();
 
         // …
         if (null != component)
         return component;
 
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return null;
@@ -1375,15 +1359,15 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
     public static UnityEngine.Component? FindDescendantByComponent(this UnityEngine.Component  component,  System.Type type) => component.gameObject.FindDescendantByComponent(type);
     public static UnityEngine.Component? FindDescendantByComponent(this UnityEngine.GameObject gameObject, System.Type type) {
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         UnityEngine.Component? component = transform.GetComponent(type);
 
         // …
         if (null != component)
         return component;
 
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return null;
@@ -1391,12 +1375,12 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
     public static UnityEngine.GameObject? FindDescendantByName(this UnityEngine.Component  component,  string name) => component.gameObject.FindDescendantByName(name);
     public static UnityEngine.GameObject? FindDescendantByName(this UnityEngine.GameObject gameObject, string name) {
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         if (name == transform.name)
         return transform.gameObject;
 
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return null;
@@ -1404,12 +1388,12 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
     public static UnityEngine.GameObject? FindDescendantByTag(this UnityEngine.Component  component,  string tag) => component.gameObject.FindDescendantByTag(tag);
     public static UnityEngine.GameObject? FindDescendantByTag(this UnityEngine.GameObject gameObject, string tag) {
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         if (tag == transform.tag)
         return transform.gameObject;
 
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return null;
@@ -1420,15 +1404,15 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       System.Type                                            type        = component.GetType();
 
       // …
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(component.transform.hierarchyCapacity) {component.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(component.transform.hierarchyCapacity) {component.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         UnityEngine.Component? subcomponent = transform.GetComponent(type);
 
         // …
         if (null != subcomponent && predicate(subcomponent))
           descendants.Add(subcomponent);
 
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return Util.ArrayFrom(descendants);
@@ -1438,15 +1422,15 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       System.Collections.Generic.List<T> descendants = new(component.transform.hierarchyCapacity);
 
       // …
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(component.transform.hierarchyCapacity) {component.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(component.transform.hierarchyCapacity) {component.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         T? subcomponent = transform.GetComponent<T>();
 
         // …
         if (null != subcomponent && predicate(subcomponent))
           descendants.Add(subcomponent);
 
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return Util.ArrayFrom(descendants);
@@ -1456,12 +1440,12 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       System.Collections.Generic.List<UnityEngine.GameObject> descendants = new(gameObject.transform.hierarchyCapacity);
 
       // …
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         if (predicate(transform.gameObject))
           descendants.Add(transform.gameObject);
 
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return Util.ArrayFrom(descendants);
@@ -1472,15 +1456,15 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       System.Collections.Generic.List<T> descendants = new(gameObject.transform.hierarchyCapacity);
 
       // …
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         T? component = transform.GetComponent<T>();
 
         // …
         if (null != component)
           descendants.Add(component);
 
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return Util.ArrayFrom(descendants);
@@ -1491,15 +1475,15 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       System.Collections.Generic.List<UnityEngine.Component> descendants = new(gameObject.transform.hierarchyCapacity);
 
       // …
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         UnityEngine.Component? component = transform.GetComponent(type);
 
         // …
         if (null != component)
           descendants.Add(component);
 
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return Util.ArrayFrom(descendants);
@@ -1510,12 +1494,12 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       System.Collections.Generic.List<UnityEngine.GameObject> descendants = new(gameObject.transform.hierarchyCapacity);
 
       // …
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         if (name == transform.name)
           descendants.Add(transform.gameObject);
 
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return Util.ArrayFrom(descendants);
@@ -1526,12 +1510,12 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       System.Collections.Generic.List<UnityEngine.GameObject> descendants = new(gameObject.transform.hierarchyCapacity);
 
       // …
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         if (tag == transform.tag)
           descendants.Add(transform.gameObject);
 
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return Util.ArrayFrom(descendants);
@@ -1615,15 +1599,15 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       System.Type                                            type        = component.GetType();
 
       // …
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(component.transform.hierarchyCapacity) {component.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(component.transform.hierarchyCapacity) {component.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         UnityEngine.Component? subcomponent = transform.GetComponent(type);
 
         // …
         if (null != subcomponent)
           descendants.Add(subcomponent);
 
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return Util.ArrayFrom(descendants);
@@ -1633,15 +1617,15 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       System.Collections.Generic.List<T> descendants = new(component.transform.hierarchyCapacity);
 
       // …
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(component.transform.hierarchyCapacity) {component.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(component.transform.hierarchyCapacity) {component.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         T? subcomponent = transform.GetComponent<T>();
 
         // …
         if (null != subcomponent)
           descendants.Add(subcomponent);
 
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return Util.ArrayFrom(descendants);
@@ -1651,10 +1635,10 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       System.Collections.Generic.List<UnityEngine.GameObject> descendants = new(gameObject.transform.hierarchyCapacity);
 
       // …
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         descendants.Add(transform.gameObject);
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return Util.ArrayFrom(descendants);
@@ -1683,12 +1667,12 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     public static bool HasDescendant(this UnityEngine.Component  component,  UnityEngine.GameObject descendant) => component.gameObject.HasDescendant(descendant);
     public static bool HasDescendant(this UnityEngine.GameObject gameObject, UnityEngine.Component  descendant) => gameObject.HasDescendant(descendant.gameObject);
     public static bool HasDescendant(this UnityEngine.GameObject gameObject, UnityEngine.GameObject descendant) {
-      for (System.Collections.Generic.Queue<UnityEngine.Transform> pending = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != pending.Count; )
-      foreach (UnityEngine.Transform transform in pending.Dequeue()) {
+      for (System.Collections.Generic.Queue<UnityEngine.Transform> hierarchy = new(gameObject.transform.hierarchyCapacity) {gameObject.transform}; 0 != hierarchy.Count; )
+      foreach (UnityEngine.Transform transform in hierarchy.Dequeue()) {
         if (descendant.transform == transform)
         return true;
 
-        pending.Enqueue(transform);
+        hierarchy.Enqueue(transform);
       }
 
       return false;
