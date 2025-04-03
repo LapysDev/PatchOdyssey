@@ -556,6 +556,10 @@ public class UI : UnityEngine.MonoBehaviour {
   }
 
   private void Start() {
+    #pragma warning disable CS0162
+      if (false)
+      return;
+    #pragma warning restore CS0162
     #if false
       // TODO (Lapys) → Test `ComponentLoad` animations
       UnityEngine.RectTransform? splashTransform = this.components["splash"]?.transform as UnityEngine.RectTransform;
@@ -626,12 +630,12 @@ public class UI : UnityEngine.MonoBehaviour {
       this.LoadComponent      ("splash", UI.LoadAction.Immediately);
       this.LoadMusic          ("calm.mp3");
 
-      Util.WaitAtLeastOnce(1.5, () => {
+      Util.WaitUntil(1.5, () => {
         this.components["splash"]?.GetComponent<UnityEngine.UI.RawImage>()?.CrossFadeAlpha(0.0f, BACKGROUND_UNLOAD_DURATION, true); // → Thank goodness this method exists; T_T
         System.Array.ForEach(this.components["splash"]?.FindDescendantsByComponent<TMPro.TextMeshProUGUI>(), _ => _.alpha = 0.0f);
 
         this.LoadComponent  ("menu", UI.LoadAction.Immediately);
-        Util.WaitAtLeastOnce(BACKGROUND_UNLOAD_DURATION, () => this.UnloadComponent("splash", UI.LoadAction.Immediately));
+        Util.WaitUntil(BACKGROUND_UNLOAD_DURATION, () => this.UnloadComponent("splash", UI.LoadAction.Immediately));
       });
 
       // → Acknowledge application events
@@ -655,7 +659,7 @@ public class UI : UnityEngine.MonoBehaviour {
   public void UnloadBackground(float unloadDuration = LOAD_ANIMATION_DURATION, UI.LoadAction action = default) {
     if (null != this.background) {
       this.background.CrossFadeAlpha(0.0f, unloadDuration, true);
-      Util.WaitAtLeastOnce(unloadDuration, () => this.background.texture = null!);
+      Util.WaitUntil(unloadDuration, () => this.background.texture = null!);
     }
   }
 
@@ -686,6 +690,11 @@ public class UI : UnityEngine.MonoBehaviour {
   }
 
   private void Update() {
+    #pragma warning disable CS0162
+      if (false)
+      return;
+    #pragma warning restore CS0162
+
     (T, UnityEngine.Vector3 eulerAngles, UnityEngine.Vector3 localScale) teeterAnimationStart = (default(T), UnityEngine.Vector3.zero, UnityEngine.Vector3.one);
     System.Collections.Generic.List<UnityEngine.GameObject>              uiAnimatable         = new((int) this.gameObject.CountDescendants());
     System.Action<UnityEngine.AudioSource?>                              uiAsSoundEffect      = static uiAudio => { if (null != uiAudio) uiAudio.spatialBlend = 0.0f; };
