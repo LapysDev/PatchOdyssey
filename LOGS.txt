@@ -1,28 +1,48 @@
-ROADMAP
-• Core utilities — PatchOdyssey.cs
-• User Interface — UI.cs
-• UI sequencing — Game.cs
-
 March 30, 2025 – April 2nd, 2025
 • Added initializer-list support for `System.Collections.Generic.` -`Queue<T>` and -`Stack<T>` via an extended `::Add(this, …)` method.
 • Added `GameObjectEnumerator` and `GameObjectSharedList<T>` to `PatchOdyssey.Collections` namespace for faster `UnityEngine.Component` tree hierarchy traversal methods.
 • Changed from possibly-overloaded `null == …` nullity checks to `… is null` checks.
 • Changed `float`-based functions to use `double` instead.
-• Modified all wrapper functions as inline i.e. `[PatchMethod(AggressiveInlining)]`.
+• Configured script warnings as errors for developing robust game code i.e. `/warnaserror`
+• Modified all basic/ wrapper functions as inline i.e. `[PatchMethod(AggressiveInlining)]`.
 • Optimized `PatchOdyssey.Extensions` and `PatchOdyssey.Util` features.
 • Parity between `System.Array` and `System.Collections.Generic.List<T>` features.
-• Updated `UnityEngine.Component` tree hierarchy traversal methods e.g. `::FindChildBy*(this, …)`, `::FindHierarchyBy*(this, …)`, e.t.c. with `::FindChildByIndex(…)` being the only exception.
+• Updated `UnityEngine.Component` tree hierarchy traversal methods e.g. `::FindChildBy*(this, …)`, `::FindHierarchyBy*(this, …)`, …, e.t.c. with `::FindChildByIndex(…)` being the only exception.
 • Updated C# compile commands to enable nullish annotations i.e. `/nullable` — saves on typing `#nullable enable annotations` at the beginning of every script.
 • Updated from C# .NET 9 to .NET 10 i.e. `/langversion:10`
 • Used C# `event` feature instead of manually implementing `System.Collections.Generic.Stack<delegate>` handler.
 
 April 3rd, 2025
-• Acknowledged `System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>` interface — and promptly redacted its conflicts with `System.Collections.Generic.IDictionary<TKey, TValue>`
-• Added `AddRange(…)` method to `PatchOdyssey.Collections.EditorDictionary<TKey, TValue>`, `PatchOdyssey.Collections.EditorReadOnlyDictionary<TKey, TValue>` and `System.Collections.Generic.IDictionary<TKey, TValue>` types
-• Added `TryAdd(…)` method to `PatchOdyssey.Collections.EditorDictionary<TKey, TValue>`, `PatchOdyssey.Collections.EditorReadOnlyDictionary<TKey, TValue>` and `System.Collections.Generic.IDictionary<TKey, TValue>` types
-• Implemented `EditorReadOnlyDictionary<TKey, TValue>` using `System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>`
-• Shimmed `required` keyword with manual `System.*` polyfill
-• Updated from C# .NET 10 to Unity's Preview C# version i.e. `/langversion:preview`
+• Acknowledged `System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>` interface — and promptly redacted its conflicts with `System.Collections.Generic.IDictionary<TKey, TValue>`.
+• Added `AddRange(…)` method to `PatchOdyssey.Collections.EditorDictionary<TKey, TValue>`, `PatchOdyssey.Collections.EditorReadOnlyDictionary<TKey, TValue>` and `System.Collections.Generic.IDictionary<TKey, TValue>` types.
+• Added `TryAdd(…)` method to `PatchOdyssey.Collections.EditorDictionary<TKey, TValue>`, `PatchOdyssey.Collections.EditorReadOnlyDictionary<TKey, TValue>` and `System.Collections.Generic.IDictionary<TKey, TValue>` types.
+• Implemented `EditorReadOnlyDictionary<TKey, TValue>` using `System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>`.
+• Shimmed `required` keyword with manual `System.*` polyfill.
+• Updated from C# .NET 10 to Unity's Preview C# version i.e. `/langversion:preview`.
 • Updated standard `System.Delegate`s (`System.Func`) to user-defined `delegate`s (e.g. `Interpolator`) for better code communication.
 
--> … something about animations, see other ….cs file
+April 4th, 2025 – April 7th, 2025
+• Implemented `PatchOdyssey.Util.HandlerInfo` for handling events e.g. `Load*(…)`, `Wait*(…)`, …, e.t.c. like a "fat" `delegate` with additional data.
+• Supplemented `event` properties with `PatchOdyssey.Collections.EventHandler` class — supporting `System.Delegate` invocation lists, operator overloads, …, e.t.c.
+• Supplemented `System.EventArgs` with `PatchOdyssey.Collections.Event` generic.
+
+April 8th, 2025 – April 9th, 2025
+• Modified all constructors as setting required members i.e. `[PatchConstructor]`.
+• Refactored `WaitEvery(…)`, `WaitForTimer(…)`, `WaitForTimerUntil(…)`, and `WaitUntil(…)` functions
+
+April 10th, 2025
+• Learned Unity's Entity Component System (ECS) feature using their Data-Oriented Technology Stack (DOTS)
+
+―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+ROADMAP
+• … — Keep Mesh as child GameObject of scripted parent GameObjects
+• Core utilities — PatchOdyssey.cs
+• User Interface — UI.cs
+• UI sequencing — Game.cs
+• Gameplay — "Notice you" anticipation monster mechanic
+―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+ENTITY COMPONENT SYSTEM (UNITY DOTS)
+• Install 2D Sprite, Entities, Entities Graphics, and Unity Physics packages
+• Set project to not rebuild
+• Create Sub Scene (bottom of the list) for Entities (converts everything in it to entities)
+• Set Preferences → Editor to show Runtime Data in the Scene View Mode

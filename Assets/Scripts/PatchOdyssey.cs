@@ -1,30 +1,64 @@
-global using        Animation   = PatchOdyssey.Animation;                              //
-global using        PatchMethod = System.Runtime.CompilerServices.MethodImplAttribute; // ⟶ Modify function with additional attributes e.g. inlined, optimized, unmanaged, …, e.t.c.
-global using        PatchOdyssey.Collections;                                          // ⟶ Expose custom collections e.g. `EditorDictionary<T>`, `GameObjectSharedList<T>`, …
-global using static System.Runtime.CompilerServices.MethodImplOptions;                 // ⟶ 𝑓 `PatchMethod(AggressiveInlining, …)`
+global using Animation  = PatchOdyssey.Animation;                                                     //
+global using PatchBurst = Unity.Burst.BurstCompile;                                                   //
+#if NET7_0 || NET7_0_OR_GREATER                                                                       // ⟶ Modify constructor with diagnostic features
+  global using PatchConstructor = System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute;       //    ^^
+#endif                                                                                                //
+global using PatchLayout = System.Runtime.InteropServices.StructLayoutAttribute;                      // ⟶ Un-manages the structure of class types
+global using PatchMethod = System.Runtime.CompilerServices.MethodImplAttribute;                       // ⟶ Modify function with compile attributes e.g. inlined, optimized, unmanaged, …, e.t.c.
+global using PatchOdyssey.Collections;                                                                // ⟶ Expose custom collections e.g. `EditorDictionary<T>`, `GameObjectSharedList<T>`, …
+global using PatchOffset = System.Runtime.InteropServices.FieldOffsetAttribute;                       // ⟶ Adjust offset of fields within structurally-unmanaged class types
+#if NET9_0 || NET9_0_OR_GREATER                                                                       // ⟶ Modify function priority over another overload during resolution; Defaults to `PatchResolution(0)` for all functions
+  global using PatchResolution = System.Runtime.CompilerServices.OverloadResolutionPriorityAttribute; //    ^^
+#endif                                                                                                //
+global using PatchUnburst = Unity.Burst.BurstDiscard;                                                 // ⟶ `Unity.Burst.CompilerServices.IgnoreWarning(…)`?
+global using static System.Runtime.CompilerServices.MethodImplOptions;                                // ⟶ Use case: 𝑓 `PatchMethod(AggressiveOptimization, …)`
+global using static System.Runtime.InteropServices.LayoutKind;                                        // ⟶ Use case: 𝑓 `PatchLayout(Sequential, …)`
 
-namespace System.Diagnostics.CodeAnalysis /* ⟶ `required` @ `https://github.com/dotnet/core/issues/8016` `https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/required` */ {
-  [System.AttributeUsage(System.AttributeTargets.Constructor, AllowMultiple = false, Inherited = false)]
-  public sealed class SetsRequiredMembersAttribute : System.Attribute {}
-}
+/* C# Polyfills */
+#if !(NET5_0 || NET5_0_OR_GREATER)
+  namespace System.Runtime.CompilerServices {
+    // ⟶`init` @ `https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/init`
+    internal static class IsExternalInit {}
+  }
+#endif
 
-namespace System.Runtime.CompilerServices /* ⟶ `required` @ `https://github.com/dotnet/core/issues/8016` `https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/required` */ {
-  public class CompilerFeatureRequiredAttribute : System.Attribute {
-    public CompilerFeatureRequiredAttribute(string name) {}
+#if !(NET7_0 || NET7_0_OR_GREATER)
+  namespace System.Runtime.CompilerServices {
+    // ⟶ `required` @ `https://github.com/dotnet/core/issues/8016` `https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/required`
+    public        class CompilerFeatureRequiredAttribute : System.Attribute { public CompilerFeatureRequiredAttribute(string name) {} }
+    public sealed class RequiredMemberAttribute          : System.Attribute {}
   }
 
-  public class RequiredMemberAttribute : System.Attribute {}
-}
+  // ⟶ `System.Diagnostics.CodeAnalysis.SetsRequiredMembers` @ `https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.codeanalysis.setsrequiredmembersattribute`
+  [System.Diagnostics.DebuggerNonUserCode]
+  [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+  [System.AttributeUsage(System.AttributeTargets.Constructor, AllowMultiple = false, Inherited = false)]
+  public sealed class PatchConstructor : System.Attribute {}
+#endif
 
+#if !(NET9_0 || NET9_0_OR_GREATER)
+  // ⟶ `System.Runtime.CompilerServices.OverloadResolutionPriorityAttribute` @ `https://learn.microsoft.com/en-us/dotnet/api/system.runtime.compilerservices.overloadresolutionpriorityattribute`
+  [System.Diagnostics.DebuggerNonUserCode]
+  [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+  [System.AttributeUsage(System.AttributeTargets.Method | System.AttributeTargets.Constructor | System.AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+  public sealed class PatchResolution : System.Attribute {
+    // ⟶ Polyfill functionally does nothing
+    public int Priority { get; }
+    public PatchResolution(int priority) => this.Priority = priority;
+  }
+#endif
+
+/* PatchOdyssey */
 namespace PatchOdyssey /* ⟶ Class types and delegates */ {
   namespace Animation {
-    public class UIKeyframe {
-      public     readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>? begin      =  null;
-      public ref readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>  end        => ref this.properties;
-      public     readonly string?                                                             name       =  null;
-      public     readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>  properties =  new(new System.Collections.Generic.Dictionary<string, object?>());
+    public class UIKeyframe /* ⟶ Not a `struct`, inherited by `Animation.UISequence` */ {
+      public readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>? begin      = null;
+      public          System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>? end        { get => this.properties; init => this.properties = value!; }
+      public readonly string?                                                             name       = null;
+      public readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>  properties = new(new System.Collections.Generic.Dictionary<string, object?>());
 
       /* … ⟶ Will modify specified `::begin` and `::end` properties to ensure they have the same keys */
+      [PatchConstructor]
       internal UIKeyframe(in string name, in System.Collections.Generic.IDictionary<string, object?> properties) {
         this.name = name;
 
@@ -32,6 +66,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         this.properties = new(properties);
       }
 
+      [PatchConstructor]
       internal UIKeyframe(in string name, in System.Collections.Generic.IDictionary<string, object?> begin, in System.Collections.Generic.IDictionary<string, object?> end) {
         this.name = name;
 
@@ -46,8 +81,8 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
           foreach (string _ in new System.ReadOnlySpan<string>(names, offsets.begin, offsets.end))   { if (!begin.ContainsKey(_)) end  .Remove(_); }
           foreach (string _ in new System.ReadOnlySpan<string>(names, 0,             offsets.begin)) { if (!end  .ContainsKey(_)) begin.Remove(_); }
 
-          this.begin      = begin.AsReadOnly();
-          this.properties = end  .AsReadOnly(); // ⟶ `this.end = …;`
+          this.begin = begin.AsReadOnly();
+          this.end   = end  .AsReadOnly(); // ⟶ `this.end = …;`
         }
       }
     }
@@ -63,38 +98,38 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       private          double                                                                                                                                      timestamp         =  0.0;
 
       /* … ⟶ 𝑓 `UISequence([optional] name, duration, [optional] delay, [optional] easing, [optional] interpolator, begin, end) { … }` */
-      [PatchMethod(AggressiveInlining)] public UISequence             (double duration,                                                                                    System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, 0.0,   null!,  null!,        begin,                                                             end)                                                             {}
-      [PatchMethod(AggressiveInlining)] public UISequence             (double duration,                                                                                    System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, 0.0,   null!,  null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [PatchMethod(AggressiveInlining)] public UISequence             (double duration, double delay,                                                                      System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, 0.0,   null!,  null!,        begin,                                                             end)                                                             {}
-      [PatchMethod(AggressiveInlining)] public UISequence             (double duration, double delay,                                                                      System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, 0.0,   null!,  null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [PatchMethod(AggressiveInlining)] public UISequence             (double duration,               PatchOdyssey.Tweener easing,                                         System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, 0.0,   easing, null!,        begin,                                                             end)                                                             {}
-      [PatchMethod(AggressiveInlining)] public UISequence             (double duration,               PatchOdyssey.Tweener easing,                                         System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, 0.0,   easing, null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [PatchMethod(AggressiveInlining)] public UISequence             (double duration, double delay, PatchOdyssey.Tweener easing,                                         System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, delay, easing, null!,        begin,                                                             end)                                                             {}
-      [PatchMethod(AggressiveInlining)] public UISequence             (double duration, double delay, PatchOdyssey.Tweener easing,                                         System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, delay, easing, null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [PatchMethod(AggressiveInlining)] public UISequence             (double duration,                                            PatchOdyssey.Interpolator interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, 0.0,   null!,  interpolator, begin,                                                             end)                                                             {}
-      [PatchMethod(AggressiveInlining)] public UISequence             (double duration,                                            PatchOdyssey.Interpolator interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, 0.0,   null!,  interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [PatchMethod(AggressiveInlining)] public UISequence             (double duration, double delay,                              PatchOdyssey.Interpolator interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, delay, null!,  interpolator, begin,                                                             end)                                                             {}
-      [PatchMethod(AggressiveInlining)] public UISequence             (double duration, double delay,                              PatchOdyssey.Interpolator interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, delay, null!,  interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [PatchMethod(AggressiveInlining)] public UISequence             (double duration,               PatchOdyssey.Tweener easing, PatchOdyssey.Interpolator interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, 0.0,   easing, interpolator, begin,                                                             end)                                                             {}
-      [PatchMethod(AggressiveInlining)] public UISequence             (double duration,               PatchOdyssey.Tweener easing, PatchOdyssey.Interpolator interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, 0.0,   easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [PatchMethod(AggressiveInlining)] public UISequence             (double duration, double delay, PatchOdyssey.Tweener easing, PatchOdyssey.Interpolator interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, delay, easing, interpolator, begin,                                                             end)                                                             {}
-      [PatchMethod(AggressiveInlining)] public UISequence             (double duration, double delay, PatchOdyssey.Tweener easing, PatchOdyssey.Interpolator interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, delay, easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [PatchMethod(AggressiveInlining)] public UISequence(string name, double duration,                                                                                    System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, 0.0,   null!,  null!,        begin,                                                             end)                                                             {}
-      [PatchMethod(AggressiveInlining)] public UISequence(string name, double duration,                                                                                    System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, 0.0,   null!,  null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [PatchMethod(AggressiveInlining)] public UISequence(string name, double duration, double delay,                                                                      System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, 0.0,   null!,  null!,        begin,                                                             end)                                                             {}
-      [PatchMethod(AggressiveInlining)] public UISequence(string name, double duration, double delay,                                                                      System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, 0.0,   null!,  null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [PatchMethod(AggressiveInlining)] public UISequence(string name, double duration,               PatchOdyssey.Tweener easing,                                         System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, 0.0,   easing, null!,        begin,                                                             end)                                                             {}
-      [PatchMethod(AggressiveInlining)] public UISequence(string name, double duration,               PatchOdyssey.Tweener easing,                                         System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, 0.0,   easing, null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [PatchMethod(AggressiveInlining)] public UISequence(string name, double duration, double delay, PatchOdyssey.Tweener easing,                                         System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, delay, easing, null!,        begin,                                                             end)                                                             {}
-      [PatchMethod(AggressiveInlining)] public UISequence(string name, double duration, double delay, PatchOdyssey.Tweener easing,                                         System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, delay, easing, null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [PatchMethod(AggressiveInlining)] public UISequence(string name, double duration,                                            PatchOdyssey.Interpolator interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, 0.0,   null!,  interpolator, begin,                                                             end)                                                             {}
-      [PatchMethod(AggressiveInlining)] public UISequence(string name, double duration,                                            PatchOdyssey.Interpolator interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, 0.0,   null!,  interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [PatchMethod(AggressiveInlining)] public UISequence(string name, double duration, double delay,                              PatchOdyssey.Interpolator interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, delay, null!,  interpolator, begin,                                                             end)                                                             {}
-      [PatchMethod(AggressiveInlining)] public UISequence(string name, double duration, double delay,                              PatchOdyssey.Interpolator interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, delay, null!,  interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [PatchMethod(AggressiveInlining)] public UISequence(string name, double duration,               PatchOdyssey.Tweener easing, PatchOdyssey.Interpolator interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, 0.0,   easing, interpolator, begin,                                                             end)                                                             {}
-      [PatchMethod(AggressiveInlining)] public UISequence(string name, double duration,               PatchOdyssey.Tweener easing, PatchOdyssey.Interpolator interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, 0.0,   easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [PatchMethod(AggressiveInlining)] public UISequence(string name, double duration, double delay, PatchOdyssey.Tweener easing, PatchOdyssey.Interpolator interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, delay, easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
-      [PatchMethod(AggressiveInlining)]
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration,                                                                                    System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, 0.0,   null!,  null!,        begin,                                                             end)                                                             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration,                                                                                    System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, 0.0,   null!,  null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration, double delay,                                                                      System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, 0.0,   null!,  null!,        begin,                                                             end)                                                             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration, double delay,                                                                      System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, 0.0,   null!,  null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration,               PatchOdyssey.Tweener easing,                                         System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, 0.0,   easing, null!,        begin,                                                             end)                                                             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration,               PatchOdyssey.Tweener easing,                                         System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, 0.0,   easing, null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration, double delay, PatchOdyssey.Tweener easing,                                         System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, delay, easing, null!,        begin,                                                             end)                                                             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration, double delay, PatchOdyssey.Tweener easing,                                         System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, delay, easing, null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration,                                            PatchOdyssey.Interpolator interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, 0.0,   null!,  interpolator, begin,                                                             end)                                                             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration,                                            PatchOdyssey.Interpolator interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, 0.0,   null!,  interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration, double delay,                              PatchOdyssey.Interpolator interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, delay, null!,  interpolator, begin,                                                             end)                                                             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration, double delay,                              PatchOdyssey.Interpolator interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, delay, null!,  interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration,               PatchOdyssey.Tweener easing, PatchOdyssey.Interpolator interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, 0.0,   easing, interpolator, begin,                                                             end)                                                             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration,               PatchOdyssey.Tweener easing, PatchOdyssey.Interpolator interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, 0.0,   easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration, double delay, PatchOdyssey.Tweener easing, PatchOdyssey.Interpolator interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, delay, easing, interpolator, begin,                                                             end)                                                             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration, double delay, PatchOdyssey.Tweener easing, PatchOdyssey.Interpolator interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, delay, easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence(string name, double duration,                                                                                    System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, 0.0,   null!,  null!,        begin,                                                             end)                                                             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence(string name, double duration,                                                                                    System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, 0.0,   null!,  null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence(string name, double duration, double delay,                                                                      System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, 0.0,   null!,  null!,        begin,                                                             end)                                                             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence(string name, double duration, double delay,                                                                      System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, 0.0,   null!,  null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence(string name, double duration,               PatchOdyssey.Tweener easing,                                         System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, 0.0,   easing, null!,        begin,                                                             end)                                                             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence(string name, double duration,               PatchOdyssey.Tweener easing,                                         System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, 0.0,   easing, null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence(string name, double duration, double delay, PatchOdyssey.Tweener easing,                                         System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, delay, easing, null!,        begin,                                                             end)                                                             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence(string name, double duration, double delay, PatchOdyssey.Tweener easing,                                         System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, delay, easing, null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence(string name, double duration,                                            PatchOdyssey.Interpolator interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, 0.0,   null!,  interpolator, begin,                                                             end)                                                             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence(string name, double duration,                                            PatchOdyssey.Interpolator interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, 0.0,   null!,  interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence(string name, double duration, double delay,                              PatchOdyssey.Interpolator interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, delay, null!,  interpolator, begin,                                                             end)                                                             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence(string name, double duration, double delay,                              PatchOdyssey.Interpolator interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, delay, null!,  interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence(string name, double duration,               PatchOdyssey.Tweener easing, PatchOdyssey.Interpolator interpolator, System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(name,  duration, 0.0,   easing, interpolator, begin,                                                             end)                                                             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence(string name, double duration,               PatchOdyssey.Tweener easing, PatchOdyssey.Interpolator interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, 0.0,   easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence(string name, double duration, double delay, PatchOdyssey.Tweener easing, PatchOdyssey.Interpolator interpolator, System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(name,  duration, delay, easing, interpolator, new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)]
       public UISequence(string name, double duration, double delay, PatchOdyssey.Tweener easing, PatchOdyssey.Interpolator interpolator, System.Collections.Generic.Dictionary<string, object?> begin, System.Collections.Generic.Dictionary<string, object?> end) : base(name, begin ?? new System.Collections.Generic.Dictionary<string, object?>(), end ?? new System.Collections.Generic.Dictionary<string, object?>()) {
         this.delay        = delay;
         this.duration     = duration;
@@ -182,10 +217,10 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
 
       /* … ⟶ Simultaneous (un-)boxing is minimally slow 🐢 */
       public object? this[string property] { get {
-        if (property is not null && this.end.ContainsKey(property)) {
+        if (property is not null && this.end!.ContainsKey(property)) {
           System.Collections.ObjectModel.ReadOnlyDictionary<string, object?> begin    = this.begin!;
           double                                                             elapsed  = UnityEngine.Time.realtimeSinceStartupAsDouble - this.timestamp;
-          System.Collections.ObjectModel.ReadOnlyDictionary<string, object?> end      = this.end;
+          System.Collections.ObjectModel.ReadOnlyDictionary<string, object?> end      = this.end!;
           double                                                             progress = (elapsed - this.delay) / this.duration;
 
           // …
@@ -216,7 +251,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         object                                                                    System.Collections.IEnumerator.Current => this.Current;
 
         /* … */
-        [PatchMethod(AggressiveInlining)]
+        [PatchConstructor, PatchMethod(AggressiveInlining)]
         internal Enumerator(PatchOdyssey.Collections.EditorDictionary<TKey, TValue> dictionary) {
           this.current    = null;
           this.dictionary = dictionary;
@@ -277,21 +312,22 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       bool                                                                                                                          System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<TKey, TValue>>.IsReadOnly => false;
 
       /* … */
-      [PatchMethod(AggressiveInlining)] public EditorDictionary()                                                                                                                                                                            : this(0,                                                                                                          null!)    {}
-      [PatchMethod(AggressiveInlining)] public EditorDictionary(int                                                                                                 capacity)                                                                : this(capacity,                                                                                                   null!)    {}
-      [PatchMethod(AggressiveInlining)] public EditorDictionary(System.Collections.Generic.IEqualityComparer<TKey>                                                  comparer)                                                                : this(0,                                                                                                          comparer) {}
-      [PatchMethod(AggressiveInlining)] public EditorDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary)                                                              : this((System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>) dictionary, null!)    {}
-      [PatchMethod(AggressiveInlining)] public EditorDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable)                                                              : this(enumerable,                                                                                                 null!)    {}
-      [PatchMethod(AggressiveInlining)] public EditorDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : this((System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>) dictionary, comparer) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorDictionary()                                                                                                                                                                            : this(0,                                                                                                          null!)    {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorDictionary(int                                                                                                 capacity)                                                                : this(capacity,                                                                                                   null!)    {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorDictionary(System.Collections.Generic.IEqualityComparer<TKey>                                                  comparer)                                                                : this(0,                                                                                                          comparer) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary)                                                              : this((System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>) dictionary, null!)    {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable)                                                              : this(enumerable,                                                                                                 null!)    {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : this((System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>) dictionary, comparer) {}
 
-      [PatchMethod(AggressiveInlining)]
-      public EditorDictionary(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable, System.Collections.Generic.IEqualityComparer<TKey> comparer) : this(enumerable is null ? 0u : Util.EnumerableCount(enumerable), comparer) {
+      [PatchConstructor, PatchMethod(AggressiveInlining)]
+      public EditorDictionary(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable, System.Collections.Generic.IEqualityComparer<TKey> comparer) : this(enumerable is null ? 0 : (int) Util.EnumerableCount(enumerable), comparer) {
         if (enumerable is null)
           throw new System.ArgumentNullException($"Source provided is null");
 
         this.AddRange(enumerable);
       }
 
+      [PatchConstructor]
       public EditorDictionary(int capacity, System.Collections.Generic.IEqualityComparer<TKey> comparer) {
         if (capacity < 0)
           throw new System.ArgumentOutOfRangeException($"Expected positive dictionary capacity");
@@ -672,14 +708,14 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       public  new       System.Collections.Generic.IEnumerable<TValue> Values               => base.Values;
 
       /* … */
-      [PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary()                                                                                                                                                                            : base()                     {}
-      [PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(int                                                                                                 capacity)                                                                : base(capacity)             { this.initializerListCount = (uint) capacity; }
-      [PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(System.Collections.Generic.IEqualityComparer<TKey>                                                  comparer)                                                                : base(comparer)             {}
-      [PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary)                                                              : base(dictionary)           {}
-      [PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable)                                                              : base(enumerable)           {}
-      [PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(int                                                                                                 capacity,   System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(capacity,   comparer) { this.initializerListCount = (uint) capacity; }
-      [PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(dictionary, comparer) {}
-      [PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(enumerable, comparer) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary()                                                                                                                                                                            : base()                     {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(int                                                                                                 capacity)                                                                : base(capacity)             { this.initializerListCount = (uint) capacity; }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(System.Collections.Generic.IEqualityComparer<TKey>                                                  comparer)                                                                : base(comparer)             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary)                                                              : base(dictionary)           {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable)                                                              : base(enumerable)           {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(int                                                                                                 capacity,   System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(capacity,   comparer) { this.initializerListCount = (uint) capacity; }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(dictionary, comparer) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(enumerable, comparer) {}
 
       /* … ⟶ Intended for initializer lists only */
       [PatchMethod(AggressiveInlining)] public new void Add(System.Collections.Generic.KeyValuePair<TKey, TValue> element) => this.Add(element.Key, element.Value);
@@ -722,6 +758,66 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [System.Serializable] public class Vector3IntReadOnlyDictionary     : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Vector3Int>     { [PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
       [System.Serializable] public class Vector4ReadOnlyDictionary        : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Vector4>        { [PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
 
+    public class Event : System.EventArgs {
+      public /* required */ object? data { get; internal set; } = null;
+
+      [PatchConstructor, PatchMethod(AggressiveInlining)]
+      public Event() {}
+    }
+      public class WaitForTimerEvent : PatchOdyssey.Collections.Event {
+        public new (double delay, double timestamp) data { get; internal set; } = (0.0, 0.0);
+
+        public double delay     { get => this.data.delay;     set => this.data = (value, this.data.timestamp); } // ⟶ Specified delay
+        public double timestamp { get => this.data.timestamp; set => this.data = (this.data.delay, value); }     // ⟶ Next available timestamp to signal a `WaitForTimer` event (which could be in the past chronologically)
+
+        /* … */
+        [PatchConstructor, PatchMethod(AggressiveInlining)] public WaitForTimerEvent() {}
+      }
+
+    public static class EventHandler /* : PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.Event> */ {
+      // ⟶ Based on by `System.Delegate.Combine(𝑓, 𝑓)`
+      [PatchMethod(AggressiveInlining)]
+      public static void Combine<T>(in PatchOdyssey.Collections.EventHandler<T> eventHandler, in PatchOdyssey.Collections.HandlerInfo<T> handler) where T : PatchOdyssey.Collections.Event, new() {
+        if (EventHandler<T>.DefaultHandlerValue != (handler.value ?? EventHandler<T>.DefaultHandlerValue))
+        eventHandler.handlers.Add(handler);
+      }
+
+      // ⟶ Based on by `System.Delegate.Remove(𝑓, 𝑓)`
+      [PatchMethod(AggressiveInlining)]
+      public static void Remove<T>(in PatchOdyssey.Collections.EventHandler<T> eventHandler, in PatchOdyssey.Collections.HandlerInfo<T> handler) where T : PatchOdyssey.Collections.Event, new() {
+        for (int index = eventHandler.handlers.Count; 0 != index--; )
+        if (eventHandler.handlers[index].value == handler.value) {
+          eventHandler.handlers.RemoveAt(index);
+          return;
+        }
+      }
+    }
+
+    public readonly struct EventHandler<T> where T : PatchOdyssey.Collections.Event, new() /* ⟶ `event` @ `https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/event` */ {
+      internal static readonly PatchOdyssey.Handler<T>                                                  DefaultHandlerValue = PatchOdyssey.Collections.HandlerInfo<T>.DefaultValue;
+      internal        readonly System.Collections.Generic.List<PatchOdyssey.Collections.HandlerInfo<T>> handlers            = new(1); // ⟶ Private composition over inheritance
+
+      /* … ⟶ See `struct PatchOdyssey.Collections.HandlerInfo` constructor */
+      [PatchConstructor, PatchMethod(AggressiveInlining)]                     public EventHandler()                                                     {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)]                     public EventHandler(EventHandler                        <T> eventHandler) { if (eventHandler != this) this.handlers.AddRange(eventHandler.handlers); }
+      [PatchConstructor, PatchMethod(AggressiveInlining), PatchResolution(1)] public EventHandler(PatchOdyssey.Collections.HandlerInfo<T> handler)      { PatchOdyssey.Collections.EventHandler.Combine(this, handler); }
+
+      /* … */
+      [PatchMethod(AggressiveInlining)] public /* virtual */ object            Clone            ()                            => new EventHandler<T>(this);
+      [PatchMethod(AggressiveInlining)] public               void              DynamicInvoke    (params object?[]? arguments) { foreach (PatchOdyssey.Collections.HandlerInfo<T> handler in this.handlers) handler.DynamicInvoke(); }
+      [PatchMethod(AggressiveInlining)] public override      bool              Equals           (object?           value)     => base.Equals     (value);
+      [PatchMethod(AggressiveInlining)] public override      int               GetHashCode      ()                            => base.GetHashCode();
+      [PatchMethod(AggressiveInlining)] public /* virtual */ System.Delegate[] GetInvocationList()                            => this.handlers.ConvertAll(static handler => (System.Delegate) (() => handler.Invoke())).ToArray(); // ⟶ Caching unnecessary here
+      [PatchMethod(AggressiveInlining)] public               void              Invoke           ()                            { foreach (PatchOdyssey.Collections.HandlerInfo<T> handler in this.handlers) handler.Invoke(); }
+
+      /* … */
+      [PatchMethod(AggressiveInlining)] public static EventHandler<T> operator +(EventHandler<T> eventHandler, PatchOdyssey.Collections.HandlerInfo<T> handler) { PatchOdyssey.Collections.EventHandler.Combine(eventHandler, handler); return eventHandler; }
+      [PatchMethod(AggressiveInlining)] public static EventHandler<T> operator -(EventHandler<T> eventHandler, PatchOdyssey.Collections.HandlerInfo<T> handler) { PatchOdyssey.Collections.EventHandler.Remove (eventHandler, handler); return eventHandler; }
+
+      [PatchMethod(AggressiveInlining)] public static implicit operator EventHandler<T>(System.ValueTuple<PatchOdyssey.Handler<T>, object?, T> tuple)        => new(new PatchOdyssey.Collections.HandlerInfo<T>(tuple.Item1, tuple.Item2, tuple.Item3));
+      [PatchMethod(AggressiveInlining)] public static implicit operator System.Action  (EventHandler<T>                                        eventHandler) => () => eventHandler.Invoke();
+    }
+
     public struct GameObjectEnumerator : System.Collections.Generic.IEnumerator<UnityEngine.GameObject>, System.Collections.Generic.IEnumerable<UnityEngine.GameObject> /* ⟶ Ranged `foreach …` shorthand support */ {
       private enum HierarchyCurrent : sbyte { Unmoved = -1, Pending,     Moved };
       public  enum Kind             : byte  { Children,     Descendants, Hierarchy };
@@ -735,7 +831,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       object                                                                    System.Collections.IEnumerator.Current => this.Current;
 
       /* … */
-      [PatchMethod(AggressiveInlining)]
+      [PatchConstructor, PatchMethod(AggressiveInlining)]
       internal GameObjectEnumerator(GameObjectEnumerator.Kind kind, UnityEngine.Transform gameObjectTransform) {
         this.kind          = kind;
         this.root          = gameObjectTransform;
@@ -800,32 +896,59 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [PatchMethod(AggressiveInlining)] System.Collections.Generic.IEnumerator<UnityEngine.GameObject> System.Collections.Generic.IEnumerable<UnityEngine.GameObject>.GetEnumerator() => this.GetEnumerator();
     }
 
+    public readonly struct HandlerInfo<T> /* : System.Delegate */ where T : PatchOdyssey.Collections.Event, new() {
+      internal readonly PatchOdyssey.Handler<T> value    = HandlerInfo<T>.DefaultValue; // ⟶ Callback function(s)
+      internal readonly object?                 target   = null;                        // ⟶ Callback target
+      internal readonly T                       metadata = new();                       // ⟶ Callback data
+
+      /* … ⟶ See `struct PatchOdyssey.Collections.EventHandler` constructor */
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public HandlerInfo(HandlerInfo<T> handler) : this(handler.value, handler.target, handler.metadata) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)]
+      public HandlerInfo(PatchOdyssey.Handler<T> value, object? target, T metadata) {
+        this.metadata = metadata;
+        this.target   = target;
+        this.value    = value ?? HandlerInfo<T>.DefaultValue;
+      }
+
+      /* … */
+      [PatchMethod(AggressiveInlining)] internal /* virtual */ object            Clone            ()                                 => new HandlerInfo<T>((PatchOdyssey.Handler<T>) this.value.Clone(), this.target, new() {data = this.metadata.data});
+      [PatchMethod(NoInlining)]         internal static        void              DefaultValue     (object?           target, T data) {}
+      [PatchMethod(AggressiveInlining)] internal               void              DynamicInvoke    (params object?[]? arguments)      => this.value.DynamicInvoke(new object?[] {this.target, this.metadata});
+      [PatchMethod(AggressiveInlining)] public   override      bool              Equals           (object?           value)          => this.value.Equals           (value);
+      [PatchMethod(AggressiveInlining)] public   override      int               GetHashCode      ()                                 => this.value.GetHashCode      ();
+      [PatchMethod(AggressiveInlining)] internal /* virtual */ System.Delegate[] GetInvocationList()                                 => this.value.GetInvocationList();
+      [PatchMethod(AggressiveInlining)] internal               void              Invoke           ()                                 => this.value.Invoke           (this.target, this.metadata);
+
+      /* … */
+      [PatchMethod(AggressiveInlining)] public static implicit operator PatchOdyssey.Handler<T>(HandlerInfo<T> handler) => handler.value;
+    }
+
     public class SharedList<T> : System.Collections.Generic.IEnumerable<T> {
       public                    int                                Count => LIST.Count;
       protected internal static System.Collections.Generic.List<T> LIST  =  new();
 
       /* … */
-      [PatchMethod(AggressiveInlining)] public SharedList(uint                                      capacity = 0u)                                                                                                { LIST.Capacity = System.Math.Max(LIST.Capacity, (int) capacity); }
-      [PatchMethod(AggressiveInlining)] public SharedList(T[]                                       array)                   : this(array,                  (uint) array       .Length)                           {}
-      [PatchMethod(AggressiveInlining)] public SharedList(System.Array                              array)                   : this(array,                  (uint) array       .Length)                           {}
-      [PatchMethod(AggressiveInlining)] public SharedList(System.ArraySegment<T>                    arraySegment)            : this(arraySegment,           (uint) arraySegment.Count)                            {}
-      [PatchMethod(AggressiveInlining)] public SharedList(System.Collections.ArrayList              arrayList)               : this(arrayList,              (uint) arrayList   .Count)                            {}
-      [PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.HashSet    <T> hashset)                 : this(hashset,                (uint) hashset     .Count)                            {}
-      [PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.IEnumerable<T> enumerable)              : this(enumerable,             (uint) SharedList<T>.GetEnumerableLength(enumerable)) {}
-      [PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.LinkedList <T> list)                    : this(list,                   (uint) list     .Count)                               {}
-      [PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.List       <T> list)                    : this(list,                   (uint) list     .Count)                               {}
-      [PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.Queue      <T> queue)                   : this(queue,                  (uint) queue    .Count)                               {}
-      [PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.SortedSet  <T> sortedSet)               : this(sortedSet,              (uint) sortedSet.Count)                               {}
-      [PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.Stack      <T> stack)                   : this(stack,                  (uint) stack    .Count)                               {}
-      [PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Hashtable              hashtable)               : this(hashtable,              (uint) hashtable.Count)                               {}
-      [PatchMethod(AggressiveInlining)] public SharedList(System.Collections.IEnumerable            enumerable)              : this(enumerable,             (uint) SharedList<T>.GetEnumerableLength(enumerable)) {}
-      [PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Queue                  queue)                   : this(queue,                  (uint) queue     .Count)                              {}
-      [PatchMethod(AggressiveInlining)] public SharedList(System.Collections.SortedList             sortedList)              : this(sortedList,             (uint) sortedList.Count)                              {}
-      [PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Stack                  stack)                   : this(stack,                  (uint) stack     .Count)                              {}
-      [PatchMethod(AggressiveInlining)] public SharedList(System.Memory        <T>                  memory)                  : this(Util.ArrayFrom(memory), (uint) memory    .Length)                             {}
-      [PatchMethod(AggressiveInlining)] public SharedList(System.ReadOnlyMemory<T>                  memory)                  : this(Util.ArrayFrom(memory), (uint) memory    .Length)                             {}
-      [PatchMethod(AggressiveInlining)] public SharedList(System.Collections.IEnumerable            enumerable, uint length) : this(length)                                                                       { if (enumerable is SharedList<T>) return; LIST.Clear(); foreach (T value in enumerable) LIST.Add(value); }
-      [PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.IEnumerable<T> enumerable, uint length) : this(length)                                                                       { if (enumerable is SharedList<T>) return; LIST.Clear(); LIST.AddRange(enumerable); }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(uint                                      capacity = 0u)                                                                                                { LIST.Capacity = System.Math.Max(LIST.Capacity, (int) capacity); }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(T[]                                       array)                   : this(array,                  (uint) array       .Length)                           {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Array                              array)                   : this(array,                  (uint) array       .Length)                           {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.ArraySegment<T>                    arraySegment)            : this(arraySegment,           (uint) arraySegment.Count)                            {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.ArrayList              arrayList)               : this(arrayList,              (uint) arrayList   .Count)                            {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.HashSet    <T> hashset)                 : this(hashset,                (uint) hashset     .Count)                            {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.IEnumerable<T> enumerable)              : this(enumerable,             (uint) SharedList<T>.GetEnumerableLength(enumerable)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.LinkedList <T> list)                    : this(list,                   (uint) list     .Count)                               {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.List       <T> list)                    : this(list,                   (uint) list     .Count)                               {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.Queue      <T> queue)                   : this(queue,                  (uint) queue    .Count)                               {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.SortedSet  <T> sortedSet)               : this(sortedSet,              (uint) sortedSet.Count)                               {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.Stack      <T> stack)                   : this(stack,                  (uint) stack    .Count)                               {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Hashtable              hashtable)               : this(hashtable,              (uint) hashtable.Count)                               {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.IEnumerable            enumerable)              : this(enumerable,             (uint) SharedList<T>.GetEnumerableLength(enumerable)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Queue                  queue)                   : this(queue,                  (uint) queue     .Count)                              {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.SortedList             sortedList)              : this(sortedList,             (uint) sortedList.Count)                              {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Stack                  stack)                   : this(stack,                  (uint) stack     .Count)                              {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Memory        <T>                  memory)                  : this(Util.ArrayFrom(memory), (uint) memory    .Length)                             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.ReadOnlyMemory<T>                  memory)                  : this(Util.ArrayFrom(memory), (uint) memory    .Length)                             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.IEnumerable            enumerable, uint length) : this(length)                                                                       { if (enumerable is SharedList<T>) return; LIST.Clear(); foreach (T value in enumerable) LIST.Add(value); }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.IEnumerable<T> enumerable, uint length) : this(length)                                                                       { if (enumerable is SharedList<T>) return; LIST.Clear(); LIST.AddRange(enumerable); }
 
       /* … */
       [PatchMethod(AggressiveInlining)] public void                                                 Add          (T                                         element)                                                             =>     LIST.Add          (element);
@@ -901,9 +1024,9 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       }
     }
       public class GameObjectSharedList<T> : PatchOdyssey.Collections.SharedList<T> where T : UnityEngine.Object /* ⟶ UnityEngine.Component or UnityEngine.GameObject */ {
-        [PatchMethod(AggressiveInlining)] internal GameObjectSharedList(uint                    capacity = 0u) : base(capacity) {}
-        [PatchMethod(AggressiveInlining)] internal GameObjectSharedList(GameObjectSharedList<T> list)          : base(list)     {}
-        [PatchMethod(AggressiveInlining)] private  GameObjectSharedList(SharedList          <T> list)          : base(list)     {}
+        [PatchConstructor, PatchMethod(AggressiveInlining)] internal GameObjectSharedList(uint                    capacity = 0u) : base(capacity) {}
+        [PatchConstructor, PatchMethod(AggressiveInlining)] internal GameObjectSharedList(GameObjectSharedList<T> list)          : base(list)     {}
+        [PatchConstructor, PatchMethod(AggressiveInlining)] private  GameObjectSharedList(SharedList          <T> list)          : base(list)     {}
 
         /* … */
         [PatchMethod(AggressiveInlining)] internal           new void                    Add          (T                                         element)                                                             =>     base.Add          (element);
@@ -963,13 +1086,36 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
           return new();
         }
       }
+
+    internal readonly struct WaitInfo /* ⟶ Considered `UnityEngine.MonoBehaviour::Invoke[Repeating](nameof(𝑓) or ((System.Delegate) 𝑓).Method.Name, delay[, interval])` */ {
+      internal static readonly System.Collections.Generic.SortedDictionary<double, PatchOdyssey.Collections.WaitInfo> WAITS = new(new System.Collections.Generic.Dictionary<double, PatchOdyssey.Collections.WaitInfo>(16)) {{double.NaN, new()}};
+
+      internal readonly UnityEngine.Coroutine?                                                            coroutine = null;
+      internal readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.WaitForTimerEvent> handlers  = new();
+
+      /* … */
+      [PatchConstructor, PatchMethod(AggressiveInlining)]
+      public WaitInfo() {}
+
+      [PatchConstructor, PatchMethod(AggressiveInlining)]
+      internal WaitInfo(PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.WaitForTimerEvent> handler) {
+        this.handlers += handler;
+      }
+
+      [PatchConstructor, PatchMethod(AggressiveInlining)]
+      internal WaitInfo(UnityEngine.Coroutine coroutine, PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.WaitForTimerEvent> handler) {
+        this.coroutine = coroutine;
+        this.handlers += handler;
+      }
+    }
   }
 
   /* … */
-  public delegate void    Handler           (object? data);                           // ⟶ Handles completed `Load`, `Wait`, … operations
-  public delegate object? Interpolator      (double  progress, object? a, object? b); // ⟶ Interpolates `::begin` and `::end` properties in `Animation.UIKeyframe["…"]`
-  public delegate T       Interpolator<T>   (double  progress, T       a, T       b); //
-  public delegate double  Tweener           (double  time);                           // ⟶ Adjusts interpolation be-tween `Interpolator(…)`'s `progress` from `a` to `b`
+  public delegate void    Handler        (object? target,   PatchOdyssey.Collections.Event data);         // ⟶ Handles completed `Load`, `Wait`, … operations i.e. `System.EventHandler`
+  public delegate void    Handler<T>     (object? target,   T                              data);         //    ^^
+  public delegate object? Interpolator   (double  progress, object?                        a, object? b); // ⟶ Interpolates `::begin` and `::end` properties in `Animation.UIKeyframe["…"]`
+  public delegate T       Interpolator<T>(double  progress, T                              a, T       b); //    ^^
+  public delegate double  Tweener        (double  time);                                                  // ⟶ Adjusts interpolation be-tween `Interpolator(…)`'s `progress` from `a` to `b`
 
   public sealed class ReadOnlyInInspectorAttribute : UnityEngine.PropertyAttribute {
     /* ⟶ Display property in Unity Inspector as “read-only” */
@@ -978,6 +1124,10 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
   [System.AttributeUsage(System.AttributeTargets.All, AllowMultiple = false, Inherited = false)]
   public sealed class ReadWriteInInspectorAttribute : UnityEngine.PropertyAttribute /* ⟶ System.Attribute */ {
     /* ⟶ Display property in Unity Inspector as “read-write” */
+  }
+
+  public readonly ref struct Void {
+    /* ⟶ “error CS0590: UsEr-DeFiNeD oPeRaToRs CaNnOt ReTuRn VoId” */
   }
 
   /* … */
@@ -1183,16 +1333,16 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
   /* … */
   public static class Extensions /* ⟶ Method extensions only e.g. `System.Array.Add(this …)` */ {
-    [PatchMethod(AggressiveInlining)] public static void Add              (this System.Collections.Queue                             queue,      object?                                               element) => queue.Enqueue(element); // ⟶ Intended for initializer lists only i.e. `new() {…}`
-    [PatchMethod(AggressiveInlining)] public static void Add<T>           (this System.Collections.Queue                             queue,      T                                                     element) => queue.Enqueue(element); // ^^
-    [PatchMethod(AggressiveInlining)] public static void Add<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, System.Collections.Generic.KeyValuePair<TKey, TValue> element)    => this.Add(element.Key, element.Value); //
-    [PatchMethod(AggressiveInlining)] public static void Add<T>           (this System.Collections.Generic.Queue      <T>            queue,      T                                                     element) => queue.Enqueue(element); // ⟶ Intended for initializer lists only i.e. `new() {…}`
-    [PatchMethod(AggressiveInlining)] public static void Add<T>           (this System.Collections.Generic.Stack      <T>            stack,      T                                                     element) => stack.Push   (element); // ^^
-    [PatchMethod(AggressiveInlining)] public static void Add              (this System.Collections.Stack                             stack,      object?                                               element) => stack.Push   (element); //
-    [PatchMethod(AggressiveInlining)] public static void Add<T>           (this System.Collections.Stack                             stack,      T                                                     element) => stack.Push   (element); //
+    [PatchMethod(AggressiveInlining)] public static void Add              (this System.Collections.Queue                             queue,      object?                                               element) => queue     .Enqueue(element);                    // ⟶ Intended for initializer lists only i.e. `new() {…}`
+    [PatchMethod(AggressiveInlining)] public static void Add<T>           (this System.Collections.Queue                             queue,      T                                                     element) => queue     .Enqueue(element);                    //    ^^
+    [PatchMethod(AggressiveInlining)] public static void Add<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, System.Collections.Generic.KeyValuePair<TKey, TValue> element) => dictionary.Add    (element.Key, element.Value); //
+    [PatchMethod(AggressiveInlining)] public static void Add<T>           (this System.Collections.Generic.Queue      <T>            queue,      T                                                     element) => queue     .Enqueue(element);                    // ⟶ Intended for initializer lists only i.e. `new() {…}`
+    [PatchMethod(AggressiveInlining)] public static void Add<T>           (this System.Collections.Generic.Stack      <T>            stack,      T                                                     element) => stack     .Push   (element);                    //    ^^
+    [PatchMethod(AggressiveInlining)] public static void Add              (this System.Collections.Stack                             stack,      object?                                               element) => stack     .Push   (element);                    //
+    [PatchMethod(AggressiveInlining)] public static void Add<T>           (this System.Collections.Stack                             stack,      T                                                     element) => stack     .Push   (element);                    //
 
-    [PatchMethod(AggressiveInlining)] public static void AddRange<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable) { foreach (System.Collections.Generic.KeyValuePair<TKey, TValue> element  in dictionary) dictionary.Add(element.Key, element.Value); }
-    [PatchMethod(AggressiveInlining)] public static void AddRange<T>           (this System.Collections.Generic.IList      <T>            list,       System.Collections.Generic.IEnumerable<T>                                                     enumerable) { foreach (T                                                     value in enumerable) list      .Add(value); }
+    [PatchMethod(AggressiveInlining)] public static void AddRange<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable) { foreach (System.Collections.Generic.KeyValuePair<TKey, TValue> element in dictionary) dictionary.Add(element.Key, element.Value); }
+    [PatchMethod(AggressiveInlining)] public static void AddRange<T>           (this System.Collections.Generic.IList      <T>            list,       System.Collections.Generic.IEnumerable<T>                                                     enumerable) { foreach (T                                                     value   in enumerable) list      .Add(value); }
 
     [PatchMethod(AggressiveInlining)] public static object? Append   (this System.Collections.ArrayList             arrayList, object? value) { arrayList.Add    (value); return value; }
     [PatchMethod(AggressiveInlining)] public static T       Append<T>(this System.Collections.ArrayList             arrayList, T       value) { arrayList.Add    (value); return value; }
@@ -1438,20 +1588,20 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       System.Array.ForEach<T>(array, action);
     }
 
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.Component>  GetChildren   (this UnityEngine.Component  component)                                 => component .FindChildrenByComponent(component.GetType());
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetChildren<T>(this UnityEngine.Component  component) where T : UnityEngine.Component => component .FindChildrenByComponent<T>();
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.GameObject> GetChildren   (this UnityEngine.GameObject gameObject)                                => gameObject.FindChildren   (static child => true);
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.GameObject> GetChildren<T>(this UnityEngine.GameObject gameObject)                                => gameObject.FindChildren<T>(static child => true);
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.Component>  GetChildren   (this UnityEngine.Component  component)                                  => component .FindChildrenByComponent(component.GetType());
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetChildren<T>(this UnityEngine.Component  component) where T : UnityEngine.Component  => component .FindChildrenByComponent<T>();
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.GameObject> GetChildren   (this UnityEngine.GameObject gameObject)                                 => gameObject.FindChildren   (static child => true);
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetChildren<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject.FindChildren<T>(static child => true);
 
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.Component>  GetDescendants   (this UnityEngine.Component  component)                                 => component .FindDescendantsByComponent(component.GetType());
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetDescendants<T>(this UnityEngine.Component  component) where T : UnityEngine.Component => component .FindDescendantsByComponent<T>();
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.GameObject> GetDescendants   (this UnityEngine.GameObject gameObject)                                => gameObject.FindDescendants   (static child => true);
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.GameObject> GetDescendants<T>(this UnityEngine.GameObject gameObject)                                => gameObject.FindDescendants<T>(static child => true);
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.Component>  GetDescendants   (this UnityEngine.Component  component)                                  => component .FindDescendantsByComponent(component.GetType());
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetDescendants<T>(this UnityEngine.Component  component) where T : UnityEngine.Component  => component .FindDescendantsByComponent<T>();
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.GameObject> GetDescendants   (this UnityEngine.GameObject gameObject)                                 => gameObject.FindDescendants   (static child => true);
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetDescendants<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject.FindDescendants<T>(static child => true);
 
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.Component>  GetHierarchy   (this UnityEngine.Component  component)                                 => component .FindHierarchyByComponent(component.GetType());
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetHierarchy<T>(this UnityEngine.Component  component) where T : UnityEngine.Component => component .FindHierarchyByComponent<T>();
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.GameObject> GetHierarchy   (this UnityEngine.GameObject gameObject)                                => gameObject.FindHierarchy   (static child => true);
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.GameObject> GetHierarchy<T>(this UnityEngine.GameObject gameObject)                                => gameObject.FindHierarchy<T>(static child => true);
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.Component>  GetHierarchy   (this UnityEngine.Component  component)                                  => component .FindHierarchyByComponent(component.GetType());
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetHierarchy<T>(this UnityEngine.Component  component) where T : UnityEngine.Component  => component .FindHierarchyByComponent<T>();
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.GameObject> GetHierarchy   (this UnityEngine.GameObject gameObject)                                 => gameObject.FindHierarchy   (static child => true);
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetHierarchy<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject.FindHierarchy<T>(static child => true);
 
     [PatchMethod(AggressiveInlining)] public static UnityEngine.GameObject GetParent(this UnityEngine.Component  component)  => component.gameObject.GetParent();
     [PatchMethod(AggressiveInlining)] public static UnityEngine.GameObject GetParent(this UnityEngine.GameObject gameObject) { return gameObject.transform.parent.gameObject; }
@@ -1528,6 +1678,9 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     [PatchMethod(AggressiveInlining)] public static void Sort<T>(this T[]          array, int                                      index, int length)                                                    => System.Array.Sort<T>(array, index, length);
     [PatchMethod(AggressiveInlining)] public static void Sort<T>(this T[]          array, int                                      index, int length, System.Collections.Generic.IComparer<T>? comparer) => System.Array.Sort<T>(array, index, length, comparer);
 
+    [PatchMethod(AggressiveInlining)] public static void TrimExcess<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary)               => (dictionary as System.Collections.Generic.Dictionary<TKey, TValue>)?.TrimExcess();
+    [PatchMethod(AggressiveInlining)] public static void TrimExcess<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, int capacity) => (dictionary as System.Collections.Generic.Dictionary<TKey, TValue>)?.TrimExcess(capacity);
+
     [PatchMethod(AggressiveInlining)]
     public static bool TrueForAll<T>(this T[] array, System.Predicate<T> match) {
       return System.Array.TrueForAll<T>(array, match);
@@ -1543,6 +1696,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       return false;
     }
 
+    [PatchMethod(AggressiveInlining)] public static bool TryAdd<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, System.Collections.Generic.KeyValuePair<TKey, TValue> element) => dictionary.TryAdd(element.Key, element.Value);
     [PatchMethod(AggressiveInlining)]
     public static bool TryAdd<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, TKey key, TValue value) {
       if (!dictionary.ContainsKey(key)) {
@@ -1552,47 +1706,38 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
       return false;
     }
+
+    #if !(NETCOREAPP2_1 || NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1 || NETSTANDARD2_1_OR_GREATER)
+      [PatchMethod(AggressiveInlining)] public static void TrimExcess<TKey, TValue>(this System.Collections.Generic.Dictionary<TKey, TValue> dictionary)               { /* ⟶ Do nothing… */ }
+      [PatchMethod(AggressiveInlining)] public static void TrimExcess<TKey, TValue>(this System.Collections.Generic.Dictionary<TKey, TValue> dictionary, int capacity) { /* ⟶ Do nothing… */ }
+    #endif
   }
 
   public static partial class Util /* ⟶ Utilities */ {
+    /* TODO */
     private sealed class LoadInfo {
-      public       object?              data     = null;  //
-      public event PatchOdyssey.Handler handlers = new(); // ⟶ Queued callbacks when the `::data` is correctly loaded
-      public       bool                 pending  = false; // ⟶ Denotes            if the `::data` is still     loading
+    //   internal       object?              data     = null;  //
+    //   internal event PatchOdyssey.Handler handlers = null!; // ⟶ Queued callbacks when the `::data` is correctly loaded
+    //   internal       bool                 pending  = false; // ⟶ Denotes            if the `::data` is still     loading
 
-      [PatchMethod(AggressiveInlining)]
-      public LoadInfo(object? data, System.Collections.Generic.IEnumerable<PatchOdyssey.Handler> handlers, bool pending) {
-        this.data     = data;
-        this.handlers = new(handlers is null ? new PatchOdyssey.Handler[0] : handlers);
-        this.pending  = pending;
-      }
-    }
-
-    private /* readonly */ sealed class WaitInfo {
-      public event    PatchOdyssey.Handler handler   = static _ => {};
-      public readonly double               interval  = 0.0;
-      public readonly double               timestamp = 0.0;
-
-      /* ⟶ Considered `UnityEngine.MonoBehaviour::Invoke[Repeating](nameof(𝑓) or 𝑓.Method.Name, delay[, interval])` */
-      [PatchMethod(AggressiveInlining)]
-      public WaitInfo(PatchOdyssey.Handler callback, double interval, double timestamp) {
-        this.handler  += handler;
-        this.interval  = interval;
-        this.timestamp = timestamp;
-      }
+    //   [PatchConstructor, PatchMethod(AggressiveInlining)]
+    //   internal LoadInfo(object? data, System.Collections.Generic.IEnumerable<PatchOdyssey.Handler> handlers, bool pending) {
+    //     this.data     = data;
+    //     // this.handlers = new(handlers is null ? new PatchOdyssey.Handler[0] : handlers);
+    //     this.pending  = pending;
+    //   }
     }
 
     /* … */
-    public const           double  LoadAsynchronously = 0.0f;  // ⟶ `LoadURI*(…, double? loadDurationMaximum, …)`
-    public const           bool    LoadCached         = false; // ⟶ `LoadURI*(…, bool nocache)`
-    public const           bool    LoadDirectly       = true;  // ⟶ `LoadURI*(…, bool nocache)`
-    public static readonly double? LoadSynchronously  = null;  // ⟶ `LoadURI*(…, double? loadDurationMaximum, …)`
-    public const           int     MouseButtonLeft    = 0x0;
-    public const           int     MouseButtonMiddle  = 0x2;
-    public const           int     MouseButtonRight   = 0x1;
+    public   const           double  LoadAsynchronously = 0.0f;  // ⟶ `LoadURI*(…, double? loadDurationMaximum, …)`
+    public   const           bool    LoadCached         = false; // ⟶ `LoadURI*(…, bool nocache)`
+    public   const           bool    LoadDirectly       = true;  // ⟶ `LoadURI*(…, bool nocache)`
+    public   static readonly double? LoadSynchronously  = null;  // ⟶ `LoadURI*(…, double? loadDurationMaximum, …)`
+    public   const           int     MouseButtonLeft    = 0x0;   //
+    public   const           int     MouseButtonMiddle  = 0x2;   //
+    public   const           int     MouseButtonRight   = 0x1;   //
+    internal const           int     RefSize            = 8;     // ⟶ Presumed byte size of managed/ reference types as structured within class types (i.e. `sizeof(void*)`) — relative liberal guess to avoid object splicing
 
-    // private static readonly System.Collections.Generic    .Dictionary        <double, Util.WaitInfo>                                                       WAITS                  = new(16);
-    private static readonly System.Collections.Generic    .List              <Util.WaitInfo>                                                               WAITS                  = new(16);
     private static readonly System.Collections.ObjectModel.ReadOnlyCollection<int>                                                                         MOUSE_BUTTONS          = new[] {Util.MouseButtonLeft, Util.MouseButtonRight, Util.MouseButtonMiddle}.AsReadOnly();
     private static readonly System.Collections.Generic    .Dictionary        <string, Util.LoadInfo>                                                       LOADS                  = new(16);
     private static readonly System.Collections.ObjectModel.ReadOnlyCollection<UnityEngine.KeyCode>                                                         KEYS                   = new[] {UnityEngine.KeyCode.A, UnityEngine.KeyCode.Alpha0, UnityEngine.KeyCode.Alpha1, UnityEngine.KeyCode.Alpha2, UnityEngine.KeyCode.Alpha3, UnityEngine.KeyCode.Alpha4, UnityEngine.KeyCode.Alpha5, UnityEngine.KeyCode.Alpha6, UnityEngine.KeyCode.Alpha7, UnityEngine.KeyCode.Alpha8, UnityEngine.KeyCode.Alpha9, UnityEngine.KeyCode.AltGr, UnityEngine.KeyCode.Ampersand, UnityEngine.KeyCode.Asterisk, UnityEngine.KeyCode.At, UnityEngine.KeyCode.B, UnityEngine.KeyCode.BackQuote, UnityEngine.KeyCode.Backslash, UnityEngine.KeyCode.Backspace, UnityEngine.KeyCode.Break, UnityEngine.KeyCode.C, UnityEngine.KeyCode.CapsLock, UnityEngine.KeyCode.Caret, UnityEngine.KeyCode.Clear, UnityEngine.KeyCode.Colon, UnityEngine.KeyCode.Comma, UnityEngine.KeyCode.D, UnityEngine.KeyCode.Delete, UnityEngine.KeyCode.Dollar, UnityEngine.KeyCode.DoubleQuote, UnityEngine.KeyCode.DownArrow, UnityEngine.KeyCode.E, UnityEngine.KeyCode.End, UnityEngine.KeyCode.Equals, UnityEngine.KeyCode.Escape, UnityEngine.KeyCode.Exclaim, UnityEngine.KeyCode.F, UnityEngine.KeyCode.F1, UnityEngine.KeyCode.F10, UnityEngine.KeyCode.F11, UnityEngine.KeyCode.F12, UnityEngine.KeyCode.F13, UnityEngine.KeyCode.F14, UnityEngine.KeyCode.F15, UnityEngine.KeyCode.F2, UnityEngine.KeyCode.F3, UnityEngine.KeyCode.F4, UnityEngine.KeyCode.F5, UnityEngine.KeyCode.F6, UnityEngine.KeyCode.F7, UnityEngine.KeyCode.F8, UnityEngine.KeyCode.F9, UnityEngine.KeyCode.G, UnityEngine.KeyCode.Greater, UnityEngine.KeyCode.H, UnityEngine.KeyCode.Hash, UnityEngine.KeyCode.Help, UnityEngine.KeyCode.Home, UnityEngine.KeyCode.I, UnityEngine.KeyCode.Insert, UnityEngine.KeyCode.J, UnityEngine.KeyCode.K, UnityEngine.KeyCode.Keypad0, UnityEngine.KeyCode.Keypad1, UnityEngine.KeyCode.Keypad2, UnityEngine.KeyCode.Keypad3, UnityEngine.KeyCode.Keypad4, UnityEngine.KeyCode.Keypad5, UnityEngine.KeyCode.Keypad6, UnityEngine.KeyCode.Keypad7, UnityEngine.KeyCode.Keypad8, UnityEngine.KeyCode.Keypad9, UnityEngine.KeyCode.KeypadDivide, UnityEngine.KeyCode.KeypadEnter, UnityEngine.KeyCode.KeypadEquals, UnityEngine.KeyCode.KeypadMinus, UnityEngine.KeyCode.KeypadMultiply, UnityEngine.KeyCode.KeypadPeriod, UnityEngine.KeyCode.KeypadPlus, UnityEngine.KeyCode.L, UnityEngine.KeyCode.LeftAlt, UnityEngine.KeyCode.LeftApple, UnityEngine.KeyCode.LeftArrow, UnityEngine.KeyCode.LeftBracket, UnityEngine.KeyCode.LeftCommand, UnityEngine.KeyCode.LeftControl, UnityEngine.KeyCode.LeftCurlyBracket, UnityEngine.KeyCode.LeftMeta, UnityEngine.KeyCode.LeftParen, UnityEngine.KeyCode.LeftShift, UnityEngine.KeyCode.LeftWindows, UnityEngine.KeyCode.Less, UnityEngine.KeyCode.M, UnityEngine.KeyCode.Menu, UnityEngine.KeyCode.Minus, UnityEngine.KeyCode.N, UnityEngine.KeyCode.Numlock, UnityEngine.KeyCode.O, UnityEngine.KeyCode.P, UnityEngine.KeyCode.PageDown, UnityEngine.KeyCode.PageUp, UnityEngine.KeyCode.Pause, UnityEngine.KeyCode.Percent, UnityEngine.KeyCode.Period, UnityEngine.KeyCode.Pipe, UnityEngine.KeyCode.Plus, UnityEngine.KeyCode.Print, UnityEngine.KeyCode.Q, UnityEngine.KeyCode.Question, UnityEngine.KeyCode.Quote, UnityEngine.KeyCode.R, UnityEngine.KeyCode.Return, UnityEngine.KeyCode.RightAlt, UnityEngine.KeyCode.RightApple, UnityEngine.KeyCode.RightArrow, UnityEngine.KeyCode.RightBracket, UnityEngine.KeyCode.RightCommand, UnityEngine.KeyCode.RightControl, UnityEngine.KeyCode.RightCurlyBracket, UnityEngine.KeyCode.RightMeta, UnityEngine.KeyCode.RightParen, UnityEngine.KeyCode.RightShift, UnityEngine.KeyCode.RightWindows, UnityEngine.KeyCode.S, UnityEngine.KeyCode.ScrollLock, UnityEngine.KeyCode.Semicolon, UnityEngine.KeyCode.Slash, UnityEngine.KeyCode.Space, UnityEngine.KeyCode.SysReq, UnityEngine.KeyCode.T, UnityEngine.KeyCode.Tab, UnityEngine.KeyCode.Tilde, UnityEngine.KeyCode.U, UnityEngine.KeyCode.Underscore, UnityEngine.KeyCode.UpArrow, UnityEngine.KeyCode.V, UnityEngine.KeyCode.W, UnityEngine.KeyCode.X, UnityEngine.KeyCode.Y, UnityEngine.KeyCode.Z}.AsReadOnly();
@@ -1604,8 +1749,8 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       {typeof(long),   new[] {typeof(decimal), typeof(double), typeof(float)}                                                                                                                    .AsReadOnly()},
       {typeof(nint),   new[] {typeof(decimal), typeof(double), typeof(float), typeof(long)}                                                                                                      .AsReadOnly()},
       {typeof(nuint),  new[] {typeof(decimal), typeof(double), typeof(float), typeof(ulong)}                                                                                                     .AsReadOnly()},
-      {typeof(sbyte),  new[] {typeof(decimal), typeof(double), typeof(float), typeof(int), typeof(long), typeof(nint), typeof(short)}                                                            .AsReadOnly()},
-      {typeof(short),  new[] {typeof(decimal), typeof(double), typeof(float), typeof(int), typeof(long), typeof(nint)}                                                                           .AsReadOnly()},
+      {typeof(sbyte),  new[] {typeof(decimal), typeof(double), typeof(float), typeof(int),  typeof(long),  typeof(nint), typeof(short)}                                                          .AsReadOnly()},
+      {typeof(short),  new[] {typeof(decimal), typeof(double), typeof(float), typeof(int),  typeof(long),  typeof(nint)}                                                                         .AsReadOnly()},
       {typeof(uint),   new[] {typeof(decimal), typeof(double), typeof(float), typeof(long), typeof(nuint), typeof(ulong)}                                                                        .AsReadOnly()},
       {typeof(ulong),  new[] {typeof(decimal), typeof(double), typeof(float)}                                                                                                                    .AsReadOnly()},
       {typeof(ushort), new[] {typeof(decimal), typeof(double), typeof(float), typeof(int), typeof(long), typeof(nint), typeof(nuint), typeof(uint), typeof(ulong)}                               .AsReadOnly()}
@@ -1743,6 +1888,31 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       }
 
       return null!; // ⟶ `structure` is null
+    }
+
+    public static uint CheckWaitForTimer() {
+      uint                                                                                           count        = 0u;
+      double                                                                                         timestamp    = UnityEngine.Time.realtimeSinceStartupAsDouble;
+      PatchOdyssey.Collections.WaitInfo                                                              wait         = WaitInfo.WAITS[double.NaN];
+      ref readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.WaitForTimerEvent> waitHandlers = ref wait.handlers;
+
+      // … ⟶ Enumeration is messy because the final design could not succinctly account for a timer-based model
+      for (int index = waitHandlers.handlers.Count; 0 != index--; ) {
+        PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.WaitForTimerEvent> waitHandler = waitHandlers.handlers[index];
+        (double waitDelay, double waitTimestamp)                                                     = waitHandler.metadata.data;
+
+        // …
+        if (!(timestamp < waitTimestamp)) {
+          if (double.IsNaN(waitDelay) || 0.0 >= waitDelay) { ++count; waitHandlers.handlers.RemoveAt(index); }                               // ⟶ Remove `WaitForTimerUntil(…)` handlers, or
+          else waitHandlers.handlers[index] = new(waitHandler.value, waitHandler.target, new() {data = (waitDelay, timestamp + waitDelay)}); // ⟶ Update `WaitForTimerEvery(…)` handlers
+
+          // … ⟶ The wait has elapsed
+          waitHandler.metadata.delay = System.Math.Abs(waitHandler.metadata.delay);
+          waitHandler.Invoke();
+        }
+      }
+
+      return count;
     }
 
     public static UnityEngine.Vector3[] CornersFromRect(UnityEngine.Rect rectangle) {
@@ -2013,7 +2183,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         foreach (System.Type? subtype in Util.ArrayFrom(
           new[] {(type.IsEnum ? System.Enum    .GetUnderlyingType : (System.Func<System.Type, System.Type>) null!)?.Invoke(type)},
           new[] {(true        ? System.Nullable.GetUnderlyingType : (System.Func<System.Type, System.Type>) null!)?.Invoke(type)},
-          IMPLICIT_TYPE_CONVERTS.TryGetValue(typeA, out System.Type[] types) && types.Contains(typeB) ? types : new System.Type[0]
+          IMPLICIT_TYPE_CONVERTS.TryGetValue(typeA, out System.Collections.ObjectModel.ReadOnlyCollection<System.Type> types) && types.Contains(typeB) ? types : new System.Collections.ObjectModel.ReadOnlyCollection<System.Type>(new System.Collections.Generic.List<System.Type>())
         )) {
           if (subtype is not null && !pending.Contains(subtype))
           pending.Enqueue(subtype);
@@ -2024,170 +2194,170 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     }
 
     private static bool IsImplicitConvertibleType(System.Type typeA, System.Type typeB) {
-      return IMPLICIT_TYPE_CONVERTS.TryGetValue(typeA, out System.Type[] types) && types.Contains(typeB);
+      return IMPLICIT_TYPE_CONVERTS.TryGetValue(typeA, out System.Collections.ObjectModel.ReadOnlyCollection<System.Type> types) && types.Contains(typeB);
     }
 
-    private static object? LoadURI(
-      string id, string path, System.Action<object?> callback, double? loadDurationMaximum, bool nocache,
-      System.Func<object, object>                                  preparser, // ⟶ `Util.LoadURI(…)` cache hit on `LOADS` for desired URI data
-      System.Func<string, UnityEngine.Networking.UnityWebRequest>  requester, // ⟶ Map `path` URI to preempted `UnityEngine.Networking.UnityWebRequest`
-      System.Func<UnityEngine.Networking.UnityWebRequest, object?> parser     // ⟶ Map `UnityEngine.Networking.UnityWebRequest` result to desired URI data
-    ) {
-      Util.LoadInfo                                            load = new(data: null, handlers: new[] {callback}, pending: false);
-      UnityEngine.Networking.UnityWebRequestAsyncOperation operation;
-      UnityEngine.Networking.UnityWebRequest               request; // ⟶ Able to access the `UnityEngine.Application.streamingAssetsPath` directory
-      System.Diagnostics.Stopwatch                         stopwatch = new();
+    // private static object? LoadURI(
+    //   string id, string path, System.Action<object?> callback, double? loadDurationMaximum, bool nocache,
+    //   System.Func<object, object>                                  preparser, // ⟶ `Util.LoadURI(…)` cache hit on `LOADS` for desired URI data
+    //   System.Func<string, UnityEngine.Networking.UnityWebRequest>  requester, // ⟶ Map `path` URI to preempted `UnityEngine.Networking.UnityWebRequest`
+    //   System.Func<UnityEngine.Networking.UnityWebRequest, object?> parser     // ⟶ Map `UnityEngine.Networking.UnityWebRequest` result to desired URI data
+    // ) {
+    //   Util.LoadInfo                                        load = new(data: null, handlers: new[] {callback}, pending: false);
+    //   UnityEngine.Networking.UnityWebRequestAsyncOperation operation;
+    //   UnityEngine.Networking.UnityWebRequest               request; // ⟶ Able to access the `UnityEngine.Application.streamingAssetsPath` directory
+    //   System.Diagnostics.Stopwatch                         stopwatch = new();
 
-      // …
-      static object? HandleURIData(ref Util.LoadInfo load, object? data) {
-        while (0 != load.handlers.Count)
-        load.handlers.Pop()(data);
+    //   // …
+    //   static object? HandleURIData(ref Util.LoadInfo load, object? data) {
+    //     while (0 != load.handlers.Count)
+    //     load.handlers.Pop()(data);
 
-        return data;
-      }
+    //     return data;
+    //   }
 
-      object? HandleURIRequest(ref Util.LoadInfo load, ref UnityEngine.Networking.UnityWebRequest request) {
-        object? data = parser(request);
+    //   object? HandleURIRequest(ref Util.LoadInfo load, ref UnityEngine.Networking.UnityWebRequest request) {
+    //     object? data = parser(request);
 
-        // …
-        request.Dispose();
-        load.data = data is not null && !nocache ? data : load.data;
+    //     // …
+    //     request.Dispose();
+    //     load.data = data is not null && !nocache ? data : load.data;
 
-        return HandleURIData(ref load, data);
-      }
+    //     return HandleURIData(ref load, data);
+    //   }
 
-      // …
-      if (path is null)
-      return null;
+    //   // …
+    //   if (path is null)
+    //   return null;
 
-      if (LOADS.ContainsKey(id + path)) {
-        load = LOADS[id + path];
-        load.handlers.Push(callback);
+    //   if (LOADS.ContainsKey(id + path)) {
+    //     load = LOADS[id + path];
+    //     load.handlers.Push(callback);
 
-        if (load.data is not null && !nocache)
-        return HandleURIData(ref load, preparser(load.data));
-      } else LOADS.Add(id + path, load);
+    //     if (load.data is not null && !nocache)
+    //     return HandleURIData(ref load, preparser(load.data));
+    //   } else LOADS.Add(id + path, load);
 
-      if (load.pending && loadDurationMaximum is not null)
-      return null; // ⟶ Prevent spamming multiple `UnityEngine.Networking.UnityWebRequest`s
+    //   if (load.pending && loadDurationMaximum is not null)
+    //   return null; // ⟶ Prevent spamming multiple `UnityEngine.Networking.UnityWebRequest`s
 
-      stopwatch.Start();
-      request      = requester(path);
-      operation    = request.SendWebRequest();
-      load.pending = true;
+    //   stopwatch.Start();
+    //   request      = requester(path);
+    //   operation    = request.SendWebRequest();
+    //   load.pending = true;
 
-      while (UnityEngine.Networking.UnityWebRequest.Result.Success != request.result)
-      switch (request.result) {
-        case UnityEngine.Networking.UnityWebRequest.Result.ConnectionError    :
-        case UnityEngine.Networking.UnityWebRequest.Result.DataProcessingError:
-        case UnityEngine.Networking.UnityWebRequest.Result.ProtocolError      : {
-          stopwatch.Stop   ();
-          request  .Dispose();
+    //   while (UnityEngine.Networking.UnityWebRequest.Result.Success != request.result)
+    //   switch (request.result) {
+    //     case UnityEngine.Networking.UnityWebRequest.Result.ConnectionError    :
+    //     case UnityEngine.Networking.UnityWebRequest.Result.DataProcessingError:
+    //     case UnityEngine.Networking.UnityWebRequest.Result.ProtocolError      : {
+    //       stopwatch.Stop   ();
+    //       request  .Dispose();
 
-          load.pending = false;
-        } return null;
+    //       load.pending = false;
+    //     } return null;
 
-        case UnityEngine.Networking.UnityWebRequest.Result.InProgress: {
-          if (stopwatch.Elapsed.TotalSeconds < (loadDurationMaximum ?? double.PositiveInfinity))
-          continue;
+    //     case UnityEngine.Networking.UnityWebRequest.Result.InProgress: {
+    //       if (stopwatch.Elapsed.TotalSeconds < (loadDurationMaximum ?? double.PositiveInfinity))
+    //       continue;
 
-          stopwatch.Stop();
-          operation.completed += operation => {
-            UnityEngine.Networking.UnityWebRequest request = ((UnityEngine.Networking.UnityWebRequestAsyncOperation) operation).webRequest!;
+    //       stopwatch.Stop();
+    //       operation.completed += operation => {
+    //         UnityEngine.Networking.UnityWebRequest request = ((UnityEngine.Networking.UnityWebRequestAsyncOperation) operation).webRequest!;
 
-            // …
-            load.pending = false;
+    //         // …
+    //         load.pending = false;
 
-            if (UnityEngine.Networking.UnityWebRequest.Result.Success != request.result) request.Dispose();
-            else                                                                         HandleURIRequest(ref load, ref request);
-          };
-        } return null;
-      }
+    //         if (UnityEngine.Networking.UnityWebRequest.Result.Success != request.result) request.Dispose();
+    //         else                                                                         HandleURIRequest(ref load, ref request);
+    //       };
+    //     } return null;
+    //   }
 
-      stopwatch.Stop();
-      load.pending = false;
+    //   stopwatch.Stop();
+    //   load.pending = false;
 
-      return HandleURIRequest(ref load, ref request);
-    }
+    //   return HandleURIRequest(ref load, ref request);
+    // }
 
-    public static byte[]? LoadURI(string path, System.Action<byte[]?>? callback = null, double? loadDurationMaximum = null, bool nocache = Util.LoadCached) {
-      return Util.LoadURI(
-        typeof(byte[]).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as byte[]), loadDurationMaximum, nocache,
-        static predata => predata, // ⟶ `(predata as byte[]).Clone() as byte[]`
-        static path    => UnityEngine.Networking.UnityWebRequest.Get(path),
-        static request => request.downloadHandler.data
-      ) as byte[];
-    }
+    // public static byte[]? LoadURI(string path, System.Action<byte[]?>? callback = null, double? loadDurationMaximum = null, bool nocache = Util.LoadCached) {
+    //   return Util.LoadURI(
+    //     typeof(byte[]).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as byte[]), loadDurationMaximum, nocache,
+    //     static predata => predata, // ⟶ `(predata as byte[]).Clone() as byte[]`
+    //     static path    => UnityEngine.Networking.UnityWebRequest.Get(path),
+    //     static request => request.downloadHandler.data
+    //   ) as byte[];
+    // }
 
-    public static UnityEngine.AudioClip? LoadURIAsAudioClip(string path, System.Action<UnityEngine.AudioClip?>? callback = null, double? loadDurationMaximum = null, bool nocache = Util.LoadCached, UnityEngine.AudioType? encoding = null) {
-      return Util.LoadURI(
-        typeof(UnityEngine.AudioClip).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as UnityEngine.AudioClip), loadDurationMaximum, nocache,
-        static predata => {
-          #if false // ⟶ Consume less memory resources, please T_T
-            UnityEngine.AudioClip                preaudioClip     = predata as UnityEngine.AudioClip;
-            Unity.Collections.NativeArray<float> preaudioClipData = new(preaudioClip.channels * preaudioClip.samples, Unity.Collections.Allocator.Temp, Unity.Collections.NativeArrayOptions.UninitializedMemory);
-            UnityEngine.AudioClip                audioClip        = UnityEngine.AudioClip.Create("🎵 " + System.IO.Path.GetFileName(path), preaudioClip.samples, preaudioClip.channels, preaudioClip.frequency, false);
+    // public static UnityEngine.AudioClip? LoadURIAsAudioClip(string path, System.Action<UnityEngine.AudioClip?>? callback = null, double? loadDurationMaximum = null, bool nocache = Util.LoadCached, UnityEngine.AudioType? encoding = null) {
+    //   return Util.LoadURI(
+    //     typeof(UnityEngine.AudioClip).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as UnityEngine.AudioClip), loadDurationMaximum, nocache,
+    //     static predata => {
+    //       #if false // ⟶ Consume less memory resources, please T_T
+    //         UnityEngine.AudioClip                preaudioClip     = predata as UnityEngine.AudioClip;
+    //         Unity.Collections.NativeArray<float> preaudioClipData = new(preaudioClip.channels * preaudioClip.samples, Unity.Collections.Allocator.Temp, Unity.Collections.NativeArrayOptions.UninitializedMemory);
+    //         UnityEngine.AudioClip                audioClip        = UnityEngine.AudioClip.Create("🎵 " + System.IO.Path.GetFileName(path), preaudioClip.samples, preaudioClip.channels, preaudioClip.frequency, false);
 
-            // …
-            if (!preaudioClip.GetData(preaudioClipData, 0)) return preaudioClip;
-            if (!audioClip   .SetData(preaudioClipData, 0)) return preaudioClip;
+    //         // …
+    //         if (!preaudioClip.GetData(preaudioClipData, 0)) return preaudioClip;
+    //         if (!audioClip   .SetData(preaudioClipData, 0)) return preaudioClip;
 
-            return audioClip;
-          #endif
-          return predata;
-        },
-        path           => UnityEngine.Networking.UnityWebRequestMultimedia.GetAudioClip(path, encoding ?? UnityEngine.AudioType.MPEG),
-        static request => {
-          UnityEngine.AudioClip? audioClip = UnityEngine.Networking.DownloadHandlerAudioClip.GetContent(request);
+    //         return audioClip;
+    //       #endif
+    //       return predata;
+    //     },
+    //     path           => UnityEngine.Networking.UnityWebRequestMultimedia.GetAudioClip(path, encoding ?? UnityEngine.AudioType.MPEG),
+    //     static request => {
+    //       UnityEngine.AudioClip? audioClip = UnityEngine.Networking.DownloadHandlerAudioClip.GetContent(request);
 
-          // …
-          if (audioClip is not null)
-          audioClip.name = request.url is not null ? "🎵 " + System.IO.Path.GetFileName(request.url) : "🎵";
+    //       // …
+    //       if (audioClip is not null)
+    //       audioClip.name = request.url is not null ? "🎵 " + System.IO.Path.GetFileName(request.url) : "🎵";
 
-          return audioClip;
-        }
-      ) as UnityEngine.AudioClip;
-    }
+    //       return audioClip;
+    //     }
+    //   ) as UnityEngine.AudioClip;
+    // }
 
-    public static string? LoadURIAsText(string path, System.Action<string?>? callback = null, double? loadDurationMaximum = null, bool nocache = Util.LoadCached, System.Text.Encoding? encoding = null) {
-      return Util.LoadURI(
-        typeof(string).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as string), loadDurationMaximum, nocache,
-        static predata => predata, // ⟶ `new string((predata as string).ToCharArray())`
-        static path    => UnityEngine.Networking.UnityWebRequest.Get(path),
-        request        => {
-          string? text = encoding is not null ? null : request.downloadHandler.text; // ⟶ UTF-8
+    // public static string? LoadURIAsText(string path, System.Action<string?>? callback = null, double? loadDurationMaximum = null, bool nocache = Util.LoadCached, System.Text.Encoding? encoding = null) {
+    //   return Util.LoadURI(
+    //     typeof(string).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as string), loadDurationMaximum, nocache,
+    //     static predata => predata, // ⟶ `new string((predata as string).ToCharArray())`
+    //     static path    => UnityEngine.Networking.UnityWebRequest.Get(path),
+    //     request        => {
+    //       string? text = encoding is not null ? null : request.downloadHandler.text; // ⟶ UTF-8
 
-          // …
-          try { text ??= encoding!.GetString(request.downloadHandler.data); }
-          catch (System.Exception exception) when (exception is System.ArgumentException || exception is System.ArgumentNullException || exception is System.Text.DecoderFallbackException) {}
+    //       // …
+    //       try { text ??= encoding!.GetString(request.downloadHandler.data); }
+    //       catch (System.Exception exception) when (exception is System.ArgumentException || exception is System.ArgumentNullException || exception is System.Text.DecoderFallbackException) {}
 
-          return text;
-        }
-      ) as string;
-    }
+    //       return text;
+    //     }
+    //   ) as string;
+    // }
 
-    public static UnityEngine.Texture2D? LoadURIAsTexture2D(string path, System.Action<UnityEngine.Texture2D?>? callback = null, double? loadDurationMaximum = null, bool nocache = Util.LoadCached) {
-      return Util.LoadURI(
-        typeof(UnityEngine.Texture2D).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as UnityEngine.Texture2D), loadDurationMaximum, nocache,
-        static predata => {
-          #if false // ⟶ Consume less memory resources, please T_T
-            UnityEngine.Texture2D pretexture = predata as UnityEngine.Texture2D;
-            UnityEngine.Texture2D texture    = new(pretexture.width, pretexture.height, pretexture.format, pretexture.mipmapCount, false);
+    // public static UnityEngine.Texture2D? LoadURIAsTexture2D(string path, System.Action<UnityEngine.Texture2D?>? callback = null, double? loadDurationMaximum = null, bool nocache = Util.LoadCached) {
+    //   return Util.LoadURI(
+    //     typeof(UnityEngine.Texture2D).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as UnityEngine.Texture2D), loadDurationMaximum, nocache,
+    //     static predata => {
+    //       #if false // ⟶ Consume less memory resources, please T_T
+    //         UnityEngine.Texture2D pretexture = predata as UnityEngine.Texture2D;
+    //         UnityEngine.Texture2D texture    = new(pretexture.width, pretexture.height, pretexture.format, pretexture.mipmapCount, false);
 
-            UnityEngine.Graphics.CopyTexture(pretexture, texture);
-            return texture;
-          #endif
-          return predata;
-        },
-        static path => UnityEngine.Networking.UnityWebRequest.Get(path),
-        request     => {
-          UnityEngine.Texture2D texture = new(2, 2, UnityEngine.TextureFormat.RGBA32, -1, false);
+    //         UnityEngine.Graphics.CopyTexture(pretexture, texture);
+    //         return texture;
+    //       #endif
+    //       return predata;
+    //     },
+    //     static path => UnityEngine.Networking.UnityWebRequest.Get(path),
+    //     request     => {
+    //       UnityEngine.Texture2D texture = new(2, 2, UnityEngine.TextureFormat.RGBA32, -1, false);
 
-          texture.name = "🖼️ " + System.IO.Path.GetFileName(path);
-          return UnityEngine.ImageConversion.LoadImage(texture, request.downloadHandler.data, true) ? texture : null;
-        }
-      ) as UnityEngine.Texture2D;
-    }
+    //       texture.name = "🖼️ " + System.IO.Path.GetFileName(path);
+    //       return UnityEngine.ImageConversion.LoadImage(texture, request.downloadHandler.data, true) ? texture : null;
+    //     }
+    //   ) as UnityEngine.Texture2D;
+    // }
 
     public static UnityEngine.Bounds? LocalBoundsFromRectTransform(UnityEngine.RectTransform? transform) {
       UnityEngine.Rect? rectangle = Util.LocalRectFromRectTransform(transform);
@@ -2302,10 +2472,10 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     public static float   PercentOf(float   value, double  percentage) { return System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f); }
     public static float   PercentOf(float   value, float   percentage) { return System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f); }
 
-    public static void  PreloadURI           (string path)                                         { Util.LoadURI           (path, null, Util.LoadAsynchronously, Util.LoadCached); }
-    public static void  PreloadURIAsAudioClip(string path, UnityEngine.AudioType? encoding = null) { Util.LoadURIAsAudioClip(path, null, Util.LoadAsynchronously, Util.LoadCached, encoding); }
-    public static void  PreloadURIAsText     (string path, System.Text.Encoding?  encoding = null) { Util.LoadURIAsText     (path, null, Util.LoadAsynchronously, Util.LoadCached, encoding); }
-    public static void  PreloadURIAsTexture2D(string path)                                         { Util.LoadURIAsTexture2D(path, null, Util.LoadAsynchronously, Util.LoadCached); }
+    // public static void PreloadURI           (string path)                                         => Util.LoadURI           (path, null, Util.LoadAsynchronously, Util.LoadCached);
+    // public static void PreloadURIAsAudioClip(string path, UnityEngine.AudioType? encoding = null) => Util.LoadURIAsAudioClip(path, null, Util.LoadAsynchronously, Util.LoadCached, encoding);
+    // public static void PreloadURIAsText     (string path, System.Text.Encoding?  encoding = null) => Util.LoadURIAsText     (path, null, Util.LoadAsynchronously, Util.LoadCached, encoding);
+    // public static void PreloadURIAsTexture2D(string path)                                         => Util.LoadURIAsTexture2D(path, null, Util.LoadAsynchronously, Util.LoadCached);
 
     public static UnityEngine.Rect RectFromCorners(UnityEngine.Vector3[] corners) {
       // ⟶ Origin begins from bottom-left rather than top-left
@@ -2402,33 +2572,23 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     public static UnityEngine.Vector3    SetVectorWidthAxis  (UnityEngine.Vector3    vector, float value) => Util.SetVectorRightAxis  (vector, value);
     public static UnityEngine.Vector3Int SetVectorWidthAxis  (UnityEngine.Vector3Int vector, int   value) => Util.SetVectorRightAxis  (vector, value);
 
-    public static void StopWaiting() {
-      for ((int index, double timestamp) = (WAITS.Count, UnityEngine.Time.realtimeSinceStartupAsDouble); 0 != index; ) {
-        Util.Wait wait = WAITS[--index];
+    /* TODO */
+    public static void StopWaitForTimer(PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) {}
+    public static void StopWaitForTimer(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) {}
 
-        // ⟶ Exclude `double.PositiveInfinity` and normalized greater `wait.[interval|timestamp]`
-        if (!(timestamp < wait.timestamp)) {
-          if (0.0 >= wait.interval || /* ⟶ `wait.interval != wait.interval` */ double.IsNaN(wait.interval)) WAITS.RemoveAt(index);
-          else WAITS[index] = new(callback: wait.callback, interval: wait.interval, timestamp: wait.interval + wait.timestamp);
-
-          wait.callback();
-        }
-      }
-    }
-
-    public static object? Switch<T>(T value, System.Collections.Generic. Dictionary<T, object> expression, object? fallback = null) => Util.Switch<T>(value, expression as System.Collections.Generic.IDictionary<T, object>, fallback);
-    public static object? Switch<T>(T value, System.Collections.Generic.IDictionary<T, object> expression, object? fallback = null) {
+    public static object? Switch<T>(T value, System.Collections.Generic.Dictionary<T, object> expression, object? fallback = null) => Util.Switch<T>(value, (System.Collections.Generic.IReadOnlyDictionary<T, object>) expression, fallback);
+    public static object? Switch<T>(T value, System.Collections.Generic.IReadOnlyDictionary<T, object> expression, object? fallback = null) {
       return expression?.TryGetValue(value, out object callback) ?? false ? callback : fallback;
     }
 
-    public static void WaitEvery(double delay, PatchOdyssey.Handler callback) {
-      if (callback is not null)
-      WAITS.Add(new(callback: callback, interval: delay, timestamp: UnityEngine.Time.realtimeSinceStartupAsDouble + delay));
+    [PatchMethod(AggressiveInlining)]
+    public static void WaitForTimerEvery(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) {
+      PatchOdyssey.Collections.EventHandler.Combine(WaitInfo.WAITS[double.NaN].handlers, new(callback, null, new() {data = (+delay, UnityEngine.Time.realtimeSinceStartupAsDouble + delay)}));
     }
 
-    public static void WaitUntil(double delay, PatchOdyssey.Handler callback) {
-      if (callback is not null)
-      WAITS.Add(new(callback: callback, interval: 0.0, timestamp: UnityEngine.Time.realtimeSinceStartupAsDouble + delay));
+    [PatchMethod(AggressiveInlining)]
+    public static void WaitForTimerUntil(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) {
+      PatchOdyssey.Collections.EventHandler.Combine(WaitInfo.WAITS[double.NaN].handlers, new(callback, null, new() {data = (-delay, UnityEngine.Time.realtimeSinceStartupAsDouble + delay)}));
     }
 
     public static UnityEngine.Bounds? WorldBoundsFromRectTransform(UnityEngine.RectTransform? transform) {
@@ -2446,3 +2606,99 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     }
   }
 }
+
+namespace PatchOdyssey /* ⟶ Cheeky pre-initialization/ setup entry point */ {
+  public static class Debug {
+    [UnityEngine.RuntimeInitializeOnLoadMethod]
+    private static void Main() {
+      new UnityEngine.GameObject("…", typeof(PatchBehaviour));
+    }
+  }
+}
+
+internal sealed class PatchBehaviour : UnityEngine.MonoBehaviour {
+  private static void Awake      () {}
+  private static void FixedUpdate() {}
+  private static void OnDestroy  () {}
+}
+// private sealed class WaitBehaviour : UnityEngine.MonoBehaviour {}
+
+// private sealed class WaitInfo {
+//   internal readonly struct HandlerInfo {
+//     internal readonly ECS.Handler value;
+//     internal readonly object?     metadata;
+//   }
+
+//   internal UnityEngine.Coroutine                        coroutine = null!;
+//   internal System.Collections.Generic.List<HandlerInfo> handlers  = new(1);
+// }
+
+// /* … */
+// private static UnityEngine.MonoBehaviour                                   WAIT  = new UnityEngine.GameObject("…").AddComponent<ECS.WaitBehaviour>();
+// private static System.Collections.Generic.Dictionary<double, ECS.WaitInfo> WAITS = new(16);
+
+// /* … */
+// public static uint StopWait() {
+//   /* StopWait all */
+// }
+
+// public static uint StopWait(ECS.Handler callback) {
+//   uint     count     = 0u;
+//   double[] durations = new double[WAITS.Count];
+
+//   // …
+//   WAITS.Keys.CopyTo(durations, 0);
+
+//   foreach (double delay in durations)
+//     count += StopWait(delay, callback);
+
+//   return count;
+// }
+
+// public static uint StopWait(double delay, ECS.Handler callback) {
+//   uint count = 0u;
+
+//   // …
+//   if (WAITS.TryGetValue(delay, out ECS.WaitInfo wait)) {
+//     for (int index = wait.handlers.Count; 0 != index--; )
+//     if (callback == wait.handlers[index].value) {
+//       ++count;
+//       wait.handlers.RemoveAt(index);
+//     }
+
+//     if (0 == wait.handlers.Count)
+//     WAITS.Remove(delay);
+//   }
+
+//   return count;
+// }
+
+// public static void Wait(double delay, ECS.Handler callback, uint count, object? data = null) {
+//   static System.Collections.IEnumerator EnumerateRoutine(double delay, uint count) {
+//     bool         forever = 0u == count;
+//     ECS.WaitInfo wait    = WAITS[delay];
+
+//     // …
+//     while (forever || 0u != count--) {
+//       yield return new UnityEngine.WaitForSecondsRealtime((float) delay);
+
+//       if (0 == wait.handlers.Count)
+//       break;
+
+//       foreach (var handler in wait.handlers)
+//       handler.value(handler.metadata);
+//     }
+
+//     WAIT.StopCoroutine(wait.coroutine);
+//   }
+
+//   if (!WAITS.TryGetValue(delay, out ECS.WaitInfo wait)) {
+//     WAITS.Add(delay, wait = new());
+
+//     wait.handlers  = new(1) {new(value: callback, metadata: data)};
+//     wait.coroutine = WAIT.StartCoroutine(EnumerateRoutine(delay, count));
+//   } else wait.handlers.Add(new(value: callback, metadata: data));
+// }
+
+// public static void WaitEvery(double delay, ECS.Handler callback, object? data = null) => Wait(delay, callback, 0u, data);
+// public static void WaitUntil(double delay, ECS.Handler callback, object? data = null) => Wait(delay, callback, 1u, data);
