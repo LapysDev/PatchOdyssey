@@ -30,19 +30,27 @@ April 8th, 2025 – April 9th, 2025
 • Modified all constructors as setting required members i.e. `[PatchConstructor]`.
 • Refactored `WaitEvery(…)`, `WaitForTimer(…)`, `WaitForTimerUntil(…)`, and `WaitUntil(…)` functions
 
-April 10th, 2025
-• Learned Unity's Entity Component System (ECS) feature using their Data-Oriented Technology Stack (DOTS)
-
+April 10th, 2025 – April 13th, 2025
+• Learned Unity's Entity Component System (ECS) feature using their Data-Oriented Technology Stack (DOTS) — https://www.youtube.com/watch?v=1gSnTlUjs-s
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 ROADMAP
 • … — Keep Mesh as child GameObject of scripted parent GameObjects
 • Core utilities — PatchOdyssey.cs
 • User Interface — UI.cs
 • UI sequencing — Game.cs
-• Gameplay — "Notice you" anticipation monster mechanic
+―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+IDEAS
+• NPCs notice you in anticipation before responding — not all monsters are immediately hostile
+tap tap tap random key!
+Adobe sucs cption stock
+Plants vs Zombies design
+Character name "Aure"
+Player failure still means progress
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 ENTITY COMPONENT SYSTEM (UNITY DOTS)
 • Install 2D Sprite, Entities, Entities Graphics, and Unity Physics packages
 • Set project to not rebuild
 • Create Sub Scene (bottom of the list) for Entities (converts everything in it to entities)
 • Set Preferences → Editor to show Runtime Data in the Scene View Mode
+• Prefab variants exist… think inheritance
+• Prefabs must have the Linked Entity Group script

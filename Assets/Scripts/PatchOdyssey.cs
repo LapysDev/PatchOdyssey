@@ -764,6 +764,11 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [PatchConstructor, PatchMethod(AggressiveInlining)]
       public Event() {}
     }
+      public class LoadEvent : PatchOdyssey.Collections.Event {
+        [PatchConstructor, PatchMethod(AggressiveInlining)]
+        public LoadEvent() {}
+      }
+
       public class WaitForTimerEvent : PatchOdyssey.Collections.Event {
         public new (double delay, double timestamp) data { get; internal set; } = (0.0, 0.0);
 
@@ -771,7 +776,8 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         public double timestamp { get => this.data.timestamp; set => this.data = (this.data.delay, value); }     // ⟶ Next available timestamp to signal a `WaitForTimer` event (which could be in the past chronologically)
 
         /* … */
-        [PatchConstructor, PatchMethod(AggressiveInlining)] public WaitForTimerEvent() {}
+        [PatchConstructor, PatchMethod(AggressiveInlining)]
+        public WaitForTimerEvent() {}
       }
 
     public static class EventHandler /* : PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.Event> */ {
@@ -785,7 +791,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       // ⟶ Based on by `System.Delegate.Remove(𝑓, 𝑓)`
       [PatchMethod(AggressiveInlining)]
       public static void Remove<T>(in PatchOdyssey.Collections.EventHandler<T> eventHandler, in PatchOdyssey.Collections.HandlerInfo<T> handler) where T : PatchOdyssey.Collections.Event, new() {
-        for (int index = eventHandler.handlers.Count; 0 != index--; )
+        for (int index = eventHandler.CountInvocationList(); 0 != index--; )
         if (eventHandler.handlers[index].value == handler.value) {
           eventHandler.handlers.RemoveAt(index);
           return;
@@ -803,19 +809,20 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [PatchConstructor, PatchMethod(AggressiveInlining), PatchResolution(1)] public EventHandler(PatchOdyssey.Collections.HandlerInfo<T> handler)      { PatchOdyssey.Collections.EventHandler.Combine(this, handler); }
 
       /* … */
-      [PatchMethod(AggressiveInlining)] public /* virtual */ object            Clone            ()                            => new EventHandler<T>(this);
-      [PatchMethod(AggressiveInlining)] public               void              DynamicInvoke    (params object?[]? arguments) { foreach (PatchOdyssey.Collections.HandlerInfo<T> handler in this.handlers) handler.DynamicInvoke(); }
-      [PatchMethod(AggressiveInlining)] public override      bool              Equals           (object?           value)     => base.Equals     (value);
-      [PatchMethod(AggressiveInlining)] public override      int               GetHashCode      ()                            => base.GetHashCode();
-      [PatchMethod(AggressiveInlining)] public /* virtual */ System.Delegate[] GetInvocationList()                            => this.handlers.ConvertAll(static handler => (System.Delegate) (() => handler.Invoke())).ToArray(); // ⟶ Caching unnecessary here
-      [PatchMethod(AggressiveInlining)] public               void              Invoke           ()                            { foreach (PatchOdyssey.Collections.HandlerInfo<T> handler in this.handlers) handler.Invoke(); }
+      [PatchMethod(AggressiveInlining)] public /* virtual */ object            Clone              ()                            => new EventHandler<T>(this);
+      [PatchMethod(AggressiveInlining)] public               uint              CountInvocationList()                            => this.handlers.Count;
+      [PatchMethod(AggressiveInlining)] public               void              DynamicInvoke      (params object?[]? arguments) { foreach (PatchOdyssey.Collections.HandlerInfo<T> handler in this.handlers) handler.DynamicInvoke(); }
+      [PatchMethod(AggressiveInlining)] public override      bool              Equals             (object?           value)     => base.Equals     (value);
+      [PatchMethod(AggressiveInlining)] public override      int               GetHashCode        ()                            => base.GetHashCode();
+      [PatchMethod(AggressiveInlining)] public /* virtual */ System.Delegate[] GetInvocationList  ()                            => this.handlers.ConvertAll(static handler => (System.Delegate) (() => handler.Invoke())).ToArray(); // ⟶ Caching unnecessary here
+      [PatchMethod(AggressiveInlining)] public               void              Invoke             ()                            { foreach (PatchOdyssey.Collections.HandlerInfo<T> handler in this.handlers) handler.Invoke(); }
 
       /* … */
       [PatchMethod(AggressiveInlining)] public static EventHandler<T> operator +(EventHandler<T> eventHandler, PatchOdyssey.Collections.HandlerInfo<T> handler) { PatchOdyssey.Collections.EventHandler.Combine(eventHandler, handler); return eventHandler; }
       [PatchMethod(AggressiveInlining)] public static EventHandler<T> operator -(EventHandler<T> eventHandler, PatchOdyssey.Collections.HandlerInfo<T> handler) { PatchOdyssey.Collections.EventHandler.Remove (eventHandler, handler); return eventHandler; }
 
-      [PatchMethod(AggressiveInlining)] public static implicit operator EventHandler<T>(System.ValueTuple<PatchOdyssey.Handler<T>, object?, T> tuple)        => new(new PatchOdyssey.Collections.HandlerInfo<T>(tuple.Item1, tuple.Item2, tuple.Item3));
-      [PatchMethod(AggressiveInlining)] public static implicit operator System.Action  (EventHandler<T>                                        eventHandler) => () => eventHandler.Invoke();
+      [PatchMethod(AggressiveInlining)] public static implicit operator EventHandler<T>((PatchOdyssey.Handler<T>, object?, T) tuple)        => new(new PatchOdyssey.Collections.HandlerInfo<T>(tuple.Item1, tuple.Item2, tuple.Item3));
+      [PatchMethod(AggressiveInlining)] public static implicit operator System.Action  (EventHandler<T>                       eventHandler) => () => eventHandler.Invoke();
     }
 
     public struct GameObjectEnumerator : System.Collections.Generic.IEnumerator<UnityEngine.GameObject>, System.Collections.Generic.IEnumerable<UnityEngine.GameObject> /* ⟶ Ranged `foreach …` shorthand support */ {
@@ -921,6 +928,20 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
 
       /* … */
       [PatchMethod(AggressiveInlining)] public static implicit operator PatchOdyssey.Handler<T>(HandlerInfo<T> handler) => handler.value;
+    }
+
+    internal readonly struct LoadInfo {
+      internal static readonly System.Collections.Generic.Dictionary<(System.Type, System.Uri), PatchOdyssey.Collections.LoadInfo> LOADS = new(16);
+      internal readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.LoadEvent> handlers = new();
+
+      /* … */
+      [PatchConstructor, PatchMethod(AggressiveInlining)]
+      internal LoadInfo() {}
+
+      [PatchConstructor, PatchMethod(AggressiveInlining)]
+      internal LoadInfo(PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.LoadEvent> handler) {
+        this.handlers += handler;
+      }
     }
 
     public class SharedList<T> : System.Collections.Generic.IEnumerable<T> {
@@ -1088,6 +1109,10 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       }
 
     internal readonly struct WaitInfo /* ⟶ Considered `UnityEngine.MonoBehaviour::Invoke[Repeating](nameof(𝑓) or ((System.Delegate) 𝑓).Method.Name, delay[, interval])` */ {
+      private sealed Waiter : UnityEngine.MonoBehaviour {}
+
+      /* … */
+      internal static          UnityEngine.MonoBehaviour                                                              WAIT  = new UnityEngine.GameObject("…").AddComponent<WaitInfo.Waiter>();
       internal static readonly System.Collections.Generic.SortedDictionary<double, PatchOdyssey.Collections.WaitInfo> WAITS = new(new System.Collections.Generic.Dictionary<double, PatchOdyssey.Collections.WaitInfo>(16)) {{double.NaN, new()}};
 
       internal readonly UnityEngine.Coroutine?                                                            coroutine = null;
@@ -1117,7 +1142,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
   public delegate T       Interpolator<T>(double  progress, T                              a, T       b); //    ^^
   public delegate double  Tweener        (double  time);                                                  // ⟶ Adjusts interpolation be-tween `Interpolator(…)`'s `progress` from `a` to `b`
 
-  public sealed class ReadOnlyInInspectorAttribute : UnityEngine.PropertyAttribute {
+  public sealed class ReadOnlyInInspectorAttribute : UnityEngine.PropertyAttribute, Unity.Collections.ReadOnlyAttribute {
     /* ⟶ Display property in Unity Inspector as “read-only” */
   }
 
@@ -1715,33 +1740,18 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
   public static partial class Util /* ⟶ Utilities */ {
     /* TODO */
-    private sealed class LoadInfo {
-    //   internal       object?              data     = null;  //
-    //   internal event PatchOdyssey.Handler handlers = null!; // ⟶ Queued callbacks when the `::data` is correctly loaded
-    //   internal       bool                 pending  = false; // ⟶ Denotes            if the `::data` is still     loading
-
-    //   [PatchConstructor, PatchMethod(AggressiveInlining)]
-    //   internal LoadInfo(object? data, System.Collections.Generic.IEnumerable<PatchOdyssey.Handler> handlers, bool pending) {
-    //     this.data     = data;
-    //     // this.handlers = new(handlers is null ? new PatchOdyssey.Handler[0] : handlers);
-    //     this.pending  = pending;
-    //   }
-    }
-
-    /* … */
-    public   const           double  LoadAsynchronously = 0.0f;  // ⟶ `LoadURI*(…, double? loadDurationMaximum, …)`
-    public   const           bool    LoadCached         = false; // ⟶ `LoadURI*(…, bool nocache)`
-    public   const           bool    LoadDirectly       = true;  // ⟶ `LoadURI*(…, bool nocache)`
-    public   static readonly double? LoadSynchronously  = null;  // ⟶ `LoadURI*(…, double? loadDurationMaximum, …)`
-    public   const           int     MouseButtonLeft    = 0x0;   //
-    public   const           int     MouseButtonMiddle  = 0x2;   //
-    public   const           int     MouseButtonRight   = 0x1;   //
-    internal const           int     RefSize            = 8;     // ⟶ Presumed byte size of managed/ reference types as structured within class types (i.e. `sizeof(void*)`) — relative liberal guess to avoid object splicing
+    public   const double LoadAsynchronously = 0.0;
+    public   const bool   LoadWithCache      = true;
+    public   const bool   LoadWithoutCache   = false;
+    public   const double LoadSynchronously  = double.PositiveInfinity;
+    public   const int    MouseButtonLeft    = 0x0;   //
+    public   const int    MouseButtonMiddle  = 0x2;   //
+    public   const int    MouseButtonRight   = 0x1;   //
+    internal const int    RefSize            = 8;     // ⟶ Presumed byte size of managed/ reference types as structured within class types (i.e. `sizeof(void*)`) — relative liberal guess to avoid object splicing
 
     private static readonly System.Collections.ObjectModel.ReadOnlyCollection<int>                                                                         MOUSE_BUTTONS          = new[] {Util.MouseButtonLeft, Util.MouseButtonRight, Util.MouseButtonMiddle}.AsReadOnly();
-    private static readonly System.Collections.Generic    .Dictionary        <string, Util.LoadInfo>                                                       LOADS                  = new(16);
     private static readonly System.Collections.ObjectModel.ReadOnlyCollection<UnityEngine.KeyCode>                                                         KEYS                   = new[] {UnityEngine.KeyCode.A, UnityEngine.KeyCode.Alpha0, UnityEngine.KeyCode.Alpha1, UnityEngine.KeyCode.Alpha2, UnityEngine.KeyCode.Alpha3, UnityEngine.KeyCode.Alpha4, UnityEngine.KeyCode.Alpha5, UnityEngine.KeyCode.Alpha6, UnityEngine.KeyCode.Alpha7, UnityEngine.KeyCode.Alpha8, UnityEngine.KeyCode.Alpha9, UnityEngine.KeyCode.AltGr, UnityEngine.KeyCode.Ampersand, UnityEngine.KeyCode.Asterisk, UnityEngine.KeyCode.At, UnityEngine.KeyCode.B, UnityEngine.KeyCode.BackQuote, UnityEngine.KeyCode.Backslash, UnityEngine.KeyCode.Backspace, UnityEngine.KeyCode.Break, UnityEngine.KeyCode.C, UnityEngine.KeyCode.CapsLock, UnityEngine.KeyCode.Caret, UnityEngine.KeyCode.Clear, UnityEngine.KeyCode.Colon, UnityEngine.KeyCode.Comma, UnityEngine.KeyCode.D, UnityEngine.KeyCode.Delete, UnityEngine.KeyCode.Dollar, UnityEngine.KeyCode.DoubleQuote, UnityEngine.KeyCode.DownArrow, UnityEngine.KeyCode.E, UnityEngine.KeyCode.End, UnityEngine.KeyCode.Equals, UnityEngine.KeyCode.Escape, UnityEngine.KeyCode.Exclaim, UnityEngine.KeyCode.F, UnityEngine.KeyCode.F1, UnityEngine.KeyCode.F10, UnityEngine.KeyCode.F11, UnityEngine.KeyCode.F12, UnityEngine.KeyCode.F13, UnityEngine.KeyCode.F14, UnityEngine.KeyCode.F15, UnityEngine.KeyCode.F2, UnityEngine.KeyCode.F3, UnityEngine.KeyCode.F4, UnityEngine.KeyCode.F5, UnityEngine.KeyCode.F6, UnityEngine.KeyCode.F7, UnityEngine.KeyCode.F8, UnityEngine.KeyCode.F9, UnityEngine.KeyCode.G, UnityEngine.KeyCode.Greater, UnityEngine.KeyCode.H, UnityEngine.KeyCode.Hash, UnityEngine.KeyCode.Help, UnityEngine.KeyCode.Home, UnityEngine.KeyCode.I, UnityEngine.KeyCode.Insert, UnityEngine.KeyCode.J, UnityEngine.KeyCode.K, UnityEngine.KeyCode.Keypad0, UnityEngine.KeyCode.Keypad1, UnityEngine.KeyCode.Keypad2, UnityEngine.KeyCode.Keypad3, UnityEngine.KeyCode.Keypad4, UnityEngine.KeyCode.Keypad5, UnityEngine.KeyCode.Keypad6, UnityEngine.KeyCode.Keypad7, UnityEngine.KeyCode.Keypad8, UnityEngine.KeyCode.Keypad9, UnityEngine.KeyCode.KeypadDivide, UnityEngine.KeyCode.KeypadEnter, UnityEngine.KeyCode.KeypadEquals, UnityEngine.KeyCode.KeypadMinus, UnityEngine.KeyCode.KeypadMultiply, UnityEngine.KeyCode.KeypadPeriod, UnityEngine.KeyCode.KeypadPlus, UnityEngine.KeyCode.L, UnityEngine.KeyCode.LeftAlt, UnityEngine.KeyCode.LeftApple, UnityEngine.KeyCode.LeftArrow, UnityEngine.KeyCode.LeftBracket, UnityEngine.KeyCode.LeftCommand, UnityEngine.KeyCode.LeftControl, UnityEngine.KeyCode.LeftCurlyBracket, UnityEngine.KeyCode.LeftMeta, UnityEngine.KeyCode.LeftParen, UnityEngine.KeyCode.LeftShift, UnityEngine.KeyCode.LeftWindows, UnityEngine.KeyCode.Less, UnityEngine.KeyCode.M, UnityEngine.KeyCode.Menu, UnityEngine.KeyCode.Minus, UnityEngine.KeyCode.N, UnityEngine.KeyCode.Numlock, UnityEngine.KeyCode.O, UnityEngine.KeyCode.P, UnityEngine.KeyCode.PageDown, UnityEngine.KeyCode.PageUp, UnityEngine.KeyCode.Pause, UnityEngine.KeyCode.Percent, UnityEngine.KeyCode.Period, UnityEngine.KeyCode.Pipe, UnityEngine.KeyCode.Plus, UnityEngine.KeyCode.Print, UnityEngine.KeyCode.Q, UnityEngine.KeyCode.Question, UnityEngine.KeyCode.Quote, UnityEngine.KeyCode.R, UnityEngine.KeyCode.Return, UnityEngine.KeyCode.RightAlt, UnityEngine.KeyCode.RightApple, UnityEngine.KeyCode.RightArrow, UnityEngine.KeyCode.RightBracket, UnityEngine.KeyCode.RightCommand, UnityEngine.KeyCode.RightControl, UnityEngine.KeyCode.RightCurlyBracket, UnityEngine.KeyCode.RightMeta, UnityEngine.KeyCode.RightParen, UnityEngine.KeyCode.RightShift, UnityEngine.KeyCode.RightWindows, UnityEngine.KeyCode.S, UnityEngine.KeyCode.ScrollLock, UnityEngine.KeyCode.Semicolon, UnityEngine.KeyCode.Slash, UnityEngine.KeyCode.Space, UnityEngine.KeyCode.SysReq, UnityEngine.KeyCode.T, UnityEngine.KeyCode.Tab, UnityEngine.KeyCode.Tilde, UnityEngine.KeyCode.U, UnityEngine.KeyCode.Underscore, UnityEngine.KeyCode.UpArrow, UnityEngine.KeyCode.V, UnityEngine.KeyCode.W, UnityEngine.KeyCode.X, UnityEngine.KeyCode.Y, UnityEngine.KeyCode.Z}.AsReadOnly();
-    private static readonly System.Collections.Generic    .Dictionary        <System.ValueTuple<System.Type, System.Type>, System.Delegate>                DELEGATED_CONVERTS     = new(1);
+    private static readonly System.Collections.Generic    .Dictionary        <(System.Type, System.Type), System.Delegate>                                 DELEGATED_CONVERTS     = new(1);
     private static readonly System.Collections.ObjectModel.ReadOnlyDictionary<System.Type, System.Collections.ObjectModel.ReadOnlyCollection<System.Type>> IMPLICIT_TYPE_CONVERTS = new System.Collections.Generic.Dictionary<System.Type, System.Collections.ObjectModel.ReadOnlyCollection<System.Type>>() {
       {typeof(byte),   new[] {typeof(decimal), typeof(double), typeof(float), typeof(int), typeof(long), typeof(nint), typeof(nuint), typeof(short), typeof(uint), typeof(ulong), typeof(ushort)}.AsReadOnly()},
       {typeof(float),  new[] {typeof(double)}                                                                                                                                                    .AsReadOnly()},
@@ -1893,7 +1903,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     public static uint CheckWaitForTimer() {
       uint                                                                                           count        = 0u;
       double                                                                                         timestamp    = UnityEngine.Time.realtimeSinceStartupAsDouble;
-      PatchOdyssey.Collections.WaitInfo                                                              wait         = WaitInfo.WAITS[double.NaN];
+      PatchOdyssey.Collections.WaitInfo                                                              wait         = PatchOdyssey.Collections.WaitInfo.WAITS[double.NaN];
       ref readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.WaitForTimerEvent> waitHandlers = ref wait.handlers;
 
       // … ⟶ Enumeration is messy because the final design could not succinctly account for a timer-based model
@@ -2197,101 +2207,109 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       return IMPLICIT_TYPE_CONVERTS.TryGetValue(typeA, out System.Collections.ObjectModel.ReadOnlyCollection<System.Type> types) && types.Contains(typeB);
     }
 
-    // private static object? LoadURI(
-    //   string id, string path, System.Action<object?> callback, double? loadDurationMaximum, bool nocache,
-    //   System.Func<object, object>                                  preparser, // ⟶ `Util.LoadURI(…)` cache hit on `LOADS` for desired URI data
-    //   System.Func<string, UnityEngine.Networking.UnityWebRequest>  requester, // ⟶ Map `path` URI to preempted `UnityEngine.Networking.UnityWebRequest`
-    //   System.Func<UnityEngine.Networking.UnityWebRequest, object?> parser     // ⟶ Map `UnityEngine.Networking.UnityWebRequest` result to desired URI data
-    // ) {
-    //   Util.LoadInfo                                        load = new(data: null, handlers: new[] {callback}, pending: false);
-    //   UnityEngine.Networking.UnityWebRequestAsyncOperation operation;
-    //   UnityEngine.Networking.UnityWebRequest               request; // ⟶ Able to access the `UnityEngine.Application.streamingAssetsPath` directory
-    //   System.Diagnostics.Stopwatch                         stopwatch = new();
+    /* TODO */
+    [PatchMethod(AggressiveInlining)]
+    private static object? LoadURI<T>(System.Uri path, PatchOdyssey.Handler<PatchOdyssey.Collections.LoadEvent> callback, double timeout, bool cached, System.Func<System.Uri, UnityEngine.Networking.UnityWebRequest> requester, System.Func<UnityEngine.Networking.UnityWebRequest, T?> loader, System.Func<T, T> cacheLoader) {
+      (System.Type, System.Uri)         id        = (typeof(T), path);
+      PatchOdyssey.Collections.LoadInfo load      = new(callback, null, new() {data = null});
+      System.Diagnostics.Stopwatch      stopwatch = new();
 
-    //   // …
-    //   static object? HandleURIData(ref Util.LoadInfo load, object? data) {
-    //     while (0 != load.handlers.Count)
-    //     load.handlers.Pop()(data);
+      // …
+      if (!PatchOdyssey.Collections.LoadInfo.LOADS.ContainsKey(id))
+        PatchOdyssey.Collections.LoadInfo.LOADS.Add(id, load);
 
-    //     return data;
-    //   }
+      else {
+        load = PatchOdyssey.Collections.LoadInfo.LOADS[id];
+        PatchOdyssey.Collections.EventHandler.Combine(load.handlers, new(callback, null, new() {data = null}));
+      }
 
-    //   object? HandleURIRequest(ref Util.LoadInfo load, ref UnityEngine.Networking.UnityWebRequest request) {
-    //     object? data = parser(request);
+      // ===============================================================================================
+      Util.LoadInfo                                        load = new(data: null, handlers: new[] {callback}, pending: false);
+      UnityEngine.Networking.UnityWebRequestAsyncOperation operation;
+      UnityEngine.Networking.UnityWebRequest               request; // ⟶ Able to access the `UnityEngine.Application.streamingAssetsPath` directory
+      System.Diagnostics.Stopwatch                         stopwatch = new();
 
-    //     // …
-    //     request.Dispose();
-    //     load.data = data is not null && !nocache ? data : load.data;
+      // …
+      static object? HandleURIData(ref Util.LoadInfo load, object? data) {
+        while (0 != load.handlers.Count)
+        load.handlers.Pop()(data);
 
-    //     return HandleURIData(ref load, data);
-    //   }
+        return data;
+      }
 
-    //   // …
-    //   if (path is null)
-    //   return null;
+      object? HandleURIRequest(ref Util.LoadInfo load, ref UnityEngine.Networking.UnityWebRequest request) {
+        object? data = loader(request);
 
-    //   if (LOADS.ContainsKey(id + path)) {
-    //     load = LOADS[id + path];
-    //     load.handlers.Push(callback);
+        // …
+        request.Dispose();
+        load.data = data is not null && !cached ? data : load.data;
 
-    //     if (load.data is not null && !nocache)
-    //     return HandleURIData(ref load, preparser(load.data));
-    //   } else LOADS.Add(id + path, load);
+        return HandleURIData(ref load, data);
+      }
 
-    //   if (load.pending && loadDurationMaximum is not null)
-    //   return null; // ⟶ Prevent spamming multiple `UnityEngine.Networking.UnityWebRequest`s
+      // …
+      if (LOADS.ContainsKey(id + path)) {
+        load = LOADS[id + path];
+        load.handlers.Push(callback);
 
-    //   stopwatch.Start();
-    //   request      = requester(path);
-    //   operation    = request.SendWebRequest();
-    //   load.pending = true;
+        if (load.data is not null && !cached)
+        return HandleURIData(ref load, cacheLoader(load.data));
+      } else LOADS.Add(id + path, load);
 
-    //   while (UnityEngine.Networking.UnityWebRequest.Result.Success != request.result)
-    //   switch (request.result) {
-    //     case UnityEngine.Networking.UnityWebRequest.Result.ConnectionError    :
-    //     case UnityEngine.Networking.UnityWebRequest.Result.DataProcessingError:
-    //     case UnityEngine.Networking.UnityWebRequest.Result.ProtocolError      : {
-    //       stopwatch.Stop   ();
-    //       request  .Dispose();
+      if (load.pending)
+      return null; // ⟶ Prevent spamming multiple `UnityEngine.Networking.UnityWebRequest`s
 
-    //       load.pending = false;
-    //     } return null;
+      stopwatch.Start();
+      request      = requester(path);
+      operation    = request.SendWebRequest();
+      load.pending = true;
 
-    //     case UnityEngine.Networking.UnityWebRequest.Result.InProgress: {
-    //       if (stopwatch.Elapsed.TotalSeconds < (loadDurationMaximum ?? double.PositiveInfinity))
-    //       continue;
+      while (UnityEngine.Networking.UnityWebRequest.Result.Success != request.result)
+      switch (request.result) {
+        case UnityEngine.Networking.UnityWebRequest.Result.ConnectionError    :
+        case UnityEngine.Networking.UnityWebRequest.Result.DataProcessingError:
+        case UnityEngine.Networking.UnityWebRequest.Result.ProtocolError      : {
+          stopwatch.Stop   ();
+          request  .Dispose();
 
-    //       stopwatch.Stop();
-    //       operation.completed += operation => {
-    //         UnityEngine.Networking.UnityWebRequest request = ((UnityEngine.Networking.UnityWebRequestAsyncOperation) operation).webRequest!;
+          load.pending = false;
+        } return null;
 
-    //         // …
-    //         load.pending = false;
+        case UnityEngine.Networking.UnityWebRequest.Result.InProgress: {
+          if (stopwatch.Elapsed.TotalSeconds < timeout)
+          continue;
 
-    //         if (UnityEngine.Networking.UnityWebRequest.Result.Success != request.result) request.Dispose();
-    //         else                                                                         HandleURIRequest(ref load, ref request);
-    //       };
-    //     } return null;
-    //   }
+          stopwatch.Stop();
+          operation.completed += operation => {
+            UnityEngine.Networking.UnityWebRequest request = ((UnityEngine.Networking.UnityWebRequestAsyncOperation) operation).webRequest!;
 
-    //   stopwatch.Stop();
-    //   load.pending = false;
+            // …
+            load.pending = false;
 
-    //   return HandleURIRequest(ref load, ref request);
-    // }
+            if (UnityEngine.Networking.UnityWebRequest.Result.Success != request.result) request.Dispose();
+            else                                                                         HandleURIRequest(ref load, ref request);
+          };
+        } return null;
+      }
 
-    // public static byte[]? LoadURI(string path, System.Action<byte[]?>? callback = null, double? loadDurationMaximum = null, bool nocache = Util.LoadCached) {
+      stopwatch.Stop();
+      load.pending = false;
+
+      return HandleURIRequest(ref load, ref request);
+    }
+
+    // public static byte[]? LoadURI(string path, System.Action<byte[]?>? callback = null, double? timeout = null, bool cached = Util.LoadWithCache) {
     //   return Util.LoadURI(
-    //     typeof(byte[]).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as byte[]), loadDurationMaximum, nocache,
+    //     typeof(byte[]).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as byte[]), timeout, cached,
     //     static predata => predata, // ⟶ `(predata as byte[]).Clone() as byte[]`
     //     static path    => UnityEngine.Networking.UnityWebRequest.Get(path),
     //     static request => request.downloadHandler.data
     //   ) as byte[];
     // }
 
-    // public static UnityEngine.AudioClip? LoadURIAsAudioClip(string path, System.Action<UnityEngine.AudioClip?>? callback = null, double? loadDurationMaximum = null, bool nocache = Util.LoadCached, UnityEngine.AudioType? encoding = null) {
+    // public static UnityEngine.AudioClip? LoadURIAsAudioClip(string path, System.Action<UnityEngine.AudioClip?>? callback = null, double? timeout = null, bool cached = Util.LoadWithCache, UnityEngine.AudioType? encoding = null) {
     //   return Util.LoadURI(
-    //     typeof(UnityEngine.AudioClip).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as UnityEngine.AudioClip), loadDurationMaximum, nocache,
+    //     typeof(UnityEngine.AudioClip).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as UnityEngine.AudioClip), timeout, cached,
     //     static predata => {
     //       #if false // ⟶ Consume less memory resources, please T_T
     //         UnityEngine.AudioClip                preaudioClip     = predata as UnityEngine.AudioClip;
@@ -2319,9 +2337,9 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     //   ) as UnityEngine.AudioClip;
     // }
 
-    // public static string? LoadURIAsText(string path, System.Action<string?>? callback = null, double? loadDurationMaximum = null, bool nocache = Util.LoadCached, System.Text.Encoding? encoding = null) {
+    // public static string? LoadURIAsText(string path, System.Action<string?>? callback = null, double? timeout = null, bool cached = Util.LoadWithCache, System.Text.Encoding? encoding = null) {
     //   return Util.LoadURI(
-    //     typeof(string).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as string), loadDurationMaximum, nocache,
+    //     typeof(string).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as string), timeout, cached,
     //     static predata => predata, // ⟶ `new string((predata as string).ToCharArray())`
     //     static path    => UnityEngine.Networking.UnityWebRequest.Get(path),
     //     request        => {
@@ -2336,9 +2354,9 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     //   ) as string;
     // }
 
-    // public static UnityEngine.Texture2D? LoadURIAsTexture2D(string path, System.Action<UnityEngine.Texture2D?>? callback = null, double? loadDurationMaximum = null, bool nocache = Util.LoadCached) {
+    // public static UnityEngine.Texture2D? LoadURIAsTexture2D(string path, System.Action<UnityEngine.Texture2D?>? callback = null, double? timeout = null, bool cached = Util.LoadWithCache) {
     //   return Util.LoadURI(
-    //     typeof(UnityEngine.Texture2D).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as UnityEngine.Texture2D), loadDurationMaximum, nocache,
+    //     typeof(UnityEngine.Texture2D).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as UnityEngine.Texture2D), timeout, cached,
     //     static predata => {
     //       #if false // ⟶ Consume less memory resources, please T_T
     //         UnityEngine.Texture2D pretexture = predata as UnityEngine.Texture2D;
@@ -2472,10 +2490,10 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     public static float   PercentOf(float   value, double  percentage) { return System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f); }
     public static float   PercentOf(float   value, float   percentage) { return System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f); }
 
-    // public static void PreloadURI           (string path)                                         => Util.LoadURI           (path, null, Util.LoadAsynchronously, Util.LoadCached);
-    // public static void PreloadURIAsAudioClip(string path, UnityEngine.AudioType? encoding = null) => Util.LoadURIAsAudioClip(path, null, Util.LoadAsynchronously, Util.LoadCached, encoding);
-    // public static void PreloadURIAsText     (string path, System.Text.Encoding?  encoding = null) => Util.LoadURIAsText     (path, null, Util.LoadAsynchronously, Util.LoadCached, encoding);
-    // public static void PreloadURIAsTexture2D(string path)                                         => Util.LoadURIAsTexture2D(path, null, Util.LoadAsynchronously, Util.LoadCached);
+    // public static void PreloadURI           (string path)                                         => Util.LoadURI           (path, null, Util.LoadAsynchronously, Util.LoadWithCache);
+    // public static void PreloadURIAsAudioClip(string path, UnityEngine.AudioType? encoding = null) => Util.LoadURIAsAudioClip(path, null, Util.LoadAsynchronously, Util.LoadWithCache, encoding);
+    // public static void PreloadURIAsText     (string path, System.Text.Encoding?  encoding = null) => Util.LoadURIAsText     (path, null, Util.LoadAsynchronously, Util.LoadWithCache, encoding);
+    // public static void PreloadURIAsTexture2D(string path)                                         => Util.LoadURIAsTexture2D(path, null, Util.LoadAsynchronously, Util.LoadWithCache);
 
     public static UnityEngine.Rect RectFromCorners(UnityEngine.Vector3[] corners) {
       // ⟶ Origin begins from bottom-left rather than top-left
@@ -2572,9 +2590,86 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     public static UnityEngine.Vector3    SetVectorWidthAxis  (UnityEngine.Vector3    vector, float value) => Util.SetVectorRightAxis  (vector, value);
     public static UnityEngine.Vector3Int SetVectorWidthAxis  (UnityEngine.Vector3Int vector, int   value) => Util.SetVectorRightAxis  (vector, value);
 
-    /* TODO */
-    public static void StopWaitForTimer(PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) {}
-    public static void StopWaitForTimer(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) {}
+    [PatchMethod(AggressiveInlining)]
+    public static uint StopWaitForCoroutine() {
+      foreach (System.Collections.Generic.KeyValuePair<double, PatchOdyssey.Collections.WaitInfo> element in PatchOdyssey.Collections.WaitInfo.WAITS) {
+        ref readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.WaitForTimerEvent> waitHandlers = ref PatchOdyssey.Collections.WaitInfo.WAITS[element.Key].handlers;
+        waitHandlers.handlers.Clear();
+      }
+    }
+
+    [PatchMethod(AggressiveInlining)]
+    public static uint StopWaitForCoroutine(PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) {
+      uint count = 0u;
+
+      // …
+      foreach (System.Collections.Generic.KeyValuePair<double, PatchOdyssey.Collections.WaitInfo> element in PatchOdyssey.Collections.WaitInfo.WAITS) {
+        ref readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.WaitForTimerEvent> waitHandlers = ref PatchOdyssey.Collections.WaitInfo.WAITS[element.Key].handlers;
+
+        // …
+        for (int index = waitHandlers.CountInvocationList(); 0 != index--; )
+        if (callback == waitHandlers.handlers[index].value) {
+          ++count;
+          waitHandlers.handlers.RemoveAt(index);
+        }
+      }
+
+      return count;
+    }
+
+    [PatchMethod(AggressiveInlining)]
+    public static uint StopWaitForCoroutine(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) {
+      uint count = 0u;
+
+      // …
+      if (PatchOdyssey.Collections.WaitInfo.WAITS.TryGetValue(delay, out PatchOdyssey.Collections.WaitInfo wait)) {
+        ref readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.WaitForTimerEvent> waitHandlers = ref wait.handlers;
+
+        // …
+        for (int index = waitHandlers.CountInvocationList(); 0 != index--; )
+        if (callback == waitHandlers.handlers[index].value) {
+          ++count;
+          waitHandlers.handlers.RemoveAt(index);
+        }
+      }
+
+      return count;
+    }
+
+    [PatchMethod(AggressiveInlining)]
+    public static uint StopWaitForTimer() {
+      PatchOdyssey.Collections.WaitInfo.WAITS[double.NaN] = new();
+    }
+
+    [PatchMethod(AggressiveInlining)]
+    public static uint StopWaitForTimer(PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) {
+      uint                                                                                           count        = 0u;
+      ref readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.WaitForTimerEvent> waitHandlers = ref PatchOdyssey.Collections.WaitInfo.WAITS[double.NaN].handlers;
+
+      // …
+      for (int index = waitHandlers.CountInvocationList(); 0 != index--; )
+      if (callback == waitHandlers.handlers[index].value) {
+        ++count;
+        waitHandlers.handlers.RemoveAt(index);
+      }
+
+      return count;
+    }
+
+    [PatchMethod(AggressiveInlining)]
+    public static uint StopWaitForTimer(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) {
+      uint                                                                                           count        = 0u;
+      ref readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.WaitForTimerEvent> waitHandlers = ref PatchOdyssey.Collections.WaitInfo.WAITS[double.NaN].handlers;
+
+      // …
+      for (int index = waitHandlers.handlers.Count; 0 != index--; )
+      if (delay == waitHandlers.handlers[index].metadata.delay && callback == waitHandlers.handlers[index].value) {
+        ++count;
+        waitHandlers.handlers.RemoveAt(index);
+      }
+
+      return count;
+    }
 
     public static object? Switch<T>(T value, System.Collections.Generic.Dictionary<T, object> expression, object? fallback = null) => Util.Switch<T>(value, (System.Collections.Generic.IReadOnlyDictionary<T, object>) expression, fallback);
     public static object? Switch<T>(T value, System.Collections.Generic.IReadOnlyDictionary<T, object> expression, object? fallback = null) {
@@ -2582,14 +2677,41 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     }
 
     [PatchMethod(AggressiveInlining)]
+    public static void WaitEvery(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) => Util.WaitForCoroutineEvery(delay, callback);
+
+    private static void WaitForCoroutine(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback, bool forever) {
+      [PatchMethod(AggressiveInlining)]
+      static System.Collections.IEnumerator EnumerateRoutine(double delay, bool forever) {
+        PatchOdyssey.Collections.WaitInfo wait = PatchOdyssey.Collections.WaitInfo.WAITS[delay];
+
+        // …
+        do {
+          yield return new UnityEngine.WaitForSecondsRealtime((float) delay);
+          wait.handlers.Invoke();
+        } while (forever && 0u != wait.handlers.CountInvocationList());
+
+        WaitInfo.WAIT.StopCoroutine(wait.coroutine);
+      }
+
+      if (PatchOdyssey.Collections.WaitInfo.WAITS.TryGetValue(delay, out PatchOdyssey.Collections.WaitInfo wait)) PatchOdyssey.Collections.EventHandler.Combine(wait.handlers, new(callback, wait.coroutine, new() {data = (delay, UnityEngine.Time.realtimeSinceStartupAsDouble + delay)}));
+      else { UnityEngine.Coroutine coroutine = WaitInfo.WAIT.StartCoroutine(EnumerateRoutine(delay, forever)); PatchOdyssey.Collections.WaitInfo.WAITS.Add(delay, new(coroutine, new(callback, coroutine, new() {data = (delay, UnityEngine.Time.realtimeSinceStartupAsDouble + delay)}))); }
+    }
+
+    [PatchMethod(AggressiveInlining)] public static void WaitForCoroutineEvery(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) => Util.WaitForCoroutine(delay, callback, true);
+    [PatchMethod(AggressiveInlining)] public static void WaitForCoroutineUntil(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) => Util.WaitForCoroutine(delay, callback, false);
+
+    [PatchMethod(AggressiveInlining)]
     public static void WaitForTimerEvery(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) {
-      PatchOdyssey.Collections.EventHandler.Combine(WaitInfo.WAITS[double.NaN].handlers, new(callback, null, new() {data = (+delay, UnityEngine.Time.realtimeSinceStartupAsDouble + delay)}));
+      PatchOdyssey.Collections.EventHandler.Combine(PatchOdyssey.Collections.WaitInfo.WAITS[double.NaN].handlers, new(callback, null, new() {data = (+delay, UnityEngine.Time.realtimeSinceStartupAsDouble + delay)}));
     }
 
     [PatchMethod(AggressiveInlining)]
     public static void WaitForTimerUntil(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) {
-      PatchOdyssey.Collections.EventHandler.Combine(WaitInfo.WAITS[double.NaN].handlers, new(callback, null, new() {data = (-delay, UnityEngine.Time.realtimeSinceStartupAsDouble + delay)}));
+      PatchOdyssey.Collections.EventHandler.Combine(PatchOdyssey.Collections.WaitInfo.WAITS[double.NaN].handlers, new(callback, null, new() {data = (-delay, UnityEngine.Time.realtimeSinceStartupAsDouble + delay)}));
     }
+
+    [PatchMethod(AggressiveInlining)]
+    public static void WaitUntil(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) => Util.WaitForCoroutineUntil(delay, callback);
 
     public static UnityEngine.Bounds? WorldBoundsFromRectTransform(UnityEngine.RectTransform? transform) {
       UnityEngine.Rect? rectangle = Util.WorldRectFromRectTransform(transform);
@@ -2621,84 +2743,3 @@ internal sealed class PatchBehaviour : UnityEngine.MonoBehaviour {
   private static void FixedUpdate() {}
   private static void OnDestroy  () {}
 }
-// private sealed class WaitBehaviour : UnityEngine.MonoBehaviour {}
-
-// private sealed class WaitInfo {
-//   internal readonly struct HandlerInfo {
-//     internal readonly ECS.Handler value;
-//     internal readonly object?     metadata;
-//   }
-
-//   internal UnityEngine.Coroutine                        coroutine = null!;
-//   internal System.Collections.Generic.List<HandlerInfo> handlers  = new(1);
-// }
-
-// /* … */
-// private static UnityEngine.MonoBehaviour                                   WAIT  = new UnityEngine.GameObject("…").AddComponent<ECS.WaitBehaviour>();
-// private static System.Collections.Generic.Dictionary<double, ECS.WaitInfo> WAITS = new(16);
-
-// /* … */
-// public static uint StopWait() {
-//   /* StopWait all */
-// }
-
-// public static uint StopWait(ECS.Handler callback) {
-//   uint     count     = 0u;
-//   double[] durations = new double[WAITS.Count];
-
-//   // …
-//   WAITS.Keys.CopyTo(durations, 0);
-
-//   foreach (double delay in durations)
-//     count += StopWait(delay, callback);
-
-//   return count;
-// }
-
-// public static uint StopWait(double delay, ECS.Handler callback) {
-//   uint count = 0u;
-
-//   // …
-//   if (WAITS.TryGetValue(delay, out ECS.WaitInfo wait)) {
-//     for (int index = wait.handlers.Count; 0 != index--; )
-//     if (callback == wait.handlers[index].value) {
-//       ++count;
-//       wait.handlers.RemoveAt(index);
-//     }
-
-//     if (0 == wait.handlers.Count)
-//     WAITS.Remove(delay);
-//   }
-
-//   return count;
-// }
-
-// public static void Wait(double delay, ECS.Handler callback, uint count, object? data = null) {
-//   static System.Collections.IEnumerator EnumerateRoutine(double delay, uint count) {
-//     bool         forever = 0u == count;
-//     ECS.WaitInfo wait    = WAITS[delay];
-
-//     // …
-//     while (forever || 0u != count--) {
-//       yield return new UnityEngine.WaitForSecondsRealtime((float) delay);
-
-//       if (0 == wait.handlers.Count)
-//       break;
-
-//       foreach (var handler in wait.handlers)
-//       handler.value(handler.metadata);
-//     }
-
-//     WAIT.StopCoroutine(wait.coroutine);
-//   }
-
-//   if (!WAITS.TryGetValue(delay, out ECS.WaitInfo wait)) {
-//     WAITS.Add(delay, wait = new());
-
-//     wait.handlers  = new(1) {new(value: callback, metadata: data)};
-//     wait.coroutine = WAIT.StartCoroutine(EnumerateRoutine(delay, count));
-//   } else wait.handlers.Add(new(value: callback, metadata: data));
-// }
-
-// public static void WaitEvery(double delay, ECS.Handler callback, object? data = null) => Wait(delay, callback, 0u, data);
-// public static void WaitUntil(double delay, ECS.Handler callback, object? data = null) => Wait(delay, callback, 1u, data);
