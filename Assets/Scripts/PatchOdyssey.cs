@@ -11,40 +11,289 @@ global using PatchOffset = System.Runtime.InteropServices.FieldOffsetAttribute; 
   global using PatchResolution = System.Runtime.CompilerServices.OverloadResolutionPriorityAttribute; //    ^^
 #endif                                                                                                //
 global using PatchUnburst = Unity.Burst.BurstDiscard;                                                 // ⟶ `Unity.Burst.CompilerServices.IgnoreWarning(…)`?
-global using static System.Runtime.CompilerServices.MethodImplOptions;                                // ⟶ Use case: 𝑓 `PatchMethod(AggressiveOptimization, …)`
-global using static System.Runtime.InteropServices.LayoutKind;                                        // ⟶ Use case: 𝑓 `PatchLayout(Sequential, …)`
+global using static System.Runtime.CompilerServices.MethodImplOptions;                                // ⟶ Use case: `𝑓 PatchMethod(AggressiveOptimization, …)`
+global using static System.Runtime.InteropServices.LayoutKind;                                        // ⟶ Use case: `𝑓 PatchLayout(Sequential, …)`
 
 /* C# Polyfills */
 #if !(NET5_0 || NET5_0_OR_GREATER)
   namespace System.Runtime.CompilerServices {
-    // ⟶`init` @ `https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/init`
+    // ⟶`init` @ `https://web.archive.org/web/20220918192058/https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/init`
     internal static class IsExternalInit {}
   }
 #endif
 
 #if !(NET7_0 || NET7_0_OR_GREATER)
   namespace System.Runtime.CompilerServices {
-    // ⟶ `required` @ `https://github.com/dotnet/core/issues/8016` `https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/required`
+    // ⟶ `required` @ `https://web.archive.org/web/20220924164132/https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/required`
     public        class CompilerFeatureRequiredAttribute : System.Attribute { public CompilerFeatureRequiredAttribute(string name) {} }
     public sealed class RequiredMemberAttribute          : System.Attribute {}
   }
 
-  // ⟶ `System.Diagnostics.CodeAnalysis.SetsRequiredMembers` @ `https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.codeanalysis.setsrequiredmembersattribute`
-  [System.Diagnostics.DebuggerNonUserCode]
-  [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+  // ⟶ `System.Diagnostics.CodeAnalysis.SetsRequiredMembers` @ `https://web.archive.org/web/20250401051947/https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.codeanalysis.setsrequiredmembersattribute?view=net-9.0`
   [System.AttributeUsage(System.AttributeTargets.Constructor, AllowMultiple = false, Inherited = false)]
+  [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+  [System.Diagnostics.DebuggerNonUserCode]
   public sealed class PatchConstructor : System.Attribute {}
 #endif
 
+#if !(NET8_0 || NET8_0_OR_GREATER)
+  namespace System.Runtime.CompilerServices {
+    // ⟶ Collection Expressions @ `https://web.archive.org/web/20231114165920/https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/collection-expressions`
+    [System.AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Interface | System.AttributeTargets.Struct, Inherited = false)]
+    [System.Diagnostics.DebuggerNonUserCode]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    internal sealed class CollectionBuilderAttribute : System.Attribute {
+      public System.Type BuilderType { get; }
+      public string      MethodName  { get; }
+
+      /* … */
+      public CollectionBuilderAttribute(System.Type builderType, string methodName) {
+        this.BuilderType = builderType;
+        this.MethodName  = methodName;
+      }
+    }
+  }
+#endif
+
 #if !(NET9_0 || NET9_0_OR_GREATER)
-  // ⟶ `System.Runtime.CompilerServices.OverloadResolutionPriorityAttribute` @ `https://learn.microsoft.com/en-us/dotnet/api/system.runtime.compilerservices.overloadresolutionpriorityattribute`
-  [System.Diagnostics.DebuggerNonUserCode]
-  [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+  // ⟶ `System.Runtime.CompilerServices.OverloadResolutionPriorityAttribute` @ `https://web.archive.org/web/20240920192519/https://learn.microsoft.com/en-us/dotnet/api/system.runtime.compilerservices.overloadresolutionpriorityattribute?view=net-9.0`
   [System.AttributeUsage(System.AttributeTargets.Method | System.AttributeTargets.Constructor | System.AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+  [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+  [System.Diagnostics.DebuggerNonUserCode]
   public sealed class PatchResolution : System.Attribute {
     // ⟶ Polyfill functionally does nothing
     public int Priority { get; }
     public PatchResolution(int priority) => this.Priority = priority;
+  }
+#endif
+
+#if !(NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
+  #pragma warning disable CA1066 // ⟶ Implement IEquatable when overriding `System.Object.Equals(…)`; Equality comparison of `System.HashCode` is disabled by design
+  #pragma warning disable CA1815 // ⟶ Override equals and operator equals on value types; Equality comparison of `System.HashCode` is disabled by design
+  #pragma warning disable CA2231 // ⟶ Overload operator equals on overriding value type `Equals(…)`; Equality comparison of `System.HashCode` is disabled by design
+  #pragma warning disable SA1202 // ⟶ Elements should be ordered by access; Preserving original layout of members
+
+  namespace System {
+    // ⟶ `System.HashCode` @ `https://web.archive.org/web/20250115200832/https://learn.microsoft.com/en-us/dotnet/api/system.hashcode?view=net-9.0`
+    public struct HashCode /* ⟶ Uses non-cryptographic “xxHash32” (https://web.archive.org/web/20150814055024/https://github.com/Cyan4973/xxHash) hash algorithm */ {
+      private const           uint Prime1 = 2654435761u;
+      private const           uint Prime2 = 2246822519u;
+      private const           uint Prime3 = 3266489917u;
+      private const           uint Prime4 = 668265263u;
+      private const           uint Prime5 = 374761393u;
+      private static readonly uint Seed   = HashCode.GenerateGlobalSeed();
+
+      private uint length;
+      private uint queueA;
+      private uint queueB;
+      private uint queueC;
+      private uint valueA;
+      private uint valueB;
+      private uint valueC;
+      private uint valueD;
+
+      /* … */
+      private void Add(int value) {
+        uint length   = this.length++;
+        uint position = length % 4;
+
+        // … ⟶ `switch` statements can not be inlined
+        if (position == 0u) { this.queueA = (uint) value; return; }
+        if (position == 1u) { this.queueB = (uint) value; return; }
+        if (position == 2u) { this.queueC = (uint) value; return; }
+
+        /* if (position == 3u) */ {
+          if (length == 3u)
+            HashCode.Initialize(out this.valueA, out this.valueB, out this.valueC, out this.valueD);
+
+          this.valueA = HashCode.Round(this.valueA, this.queueA);
+          this.valueB = HashCode.Round(this.valueB, this.queueB);
+          this.valueC = HashCode.Round(this.valueC, this.queueC);
+          this.valueD = HashCode.Round(this.valueD, (uint) value);
+        }
+      }
+
+      [PatchMethod(AggressiveInlining)] public void Add<T>(in T value)                                                            => this.Add(value?.GetHashCode() ?? 0);
+      [PatchMethod(AggressiveInlining)] public void Add<T>(in T value, System.Collections.Generic.IEqualityComparer<T>? comparer) => this.Add(value is not null ? comparer?.GetHashCode(value) ?? value.GetHashCode() : 0);
+
+      public void AddBytes(in System.ReadOnlySpan<byte> value) {
+        ref byte position = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(value);
+        ref byte end      = ref System.Runtime.CompilerServices.Unsafe.Add               (ref position, value.Length);
+
+        // Add four bytes at a time until the input has fewer than four bytes remaining.
+        while ((nint) System.Runtime.CompilerServices.Unsafe.ByteOffset(ref position, ref end) >= sizeof(int)) {
+          this.Add(System.Runtime.CompilerServices.Unsafe.ReadUnaligned<int>(ref position));
+          position = ref System.Runtime.CompilerServices.Unsafe.Add(ref position, sizeof(int));
+        }
+
+        // Add the remaining bytes a single byte at a time.
+        while (System.Runtime.CompilerServices.Unsafe.IsAddressLessThan(ref position, ref end)) {
+          this.Add((int) position);
+          position = ref System.Runtime.CompilerServices.Unsafe.Add(ref position, 1);
+        }
+      }
+
+      [PatchMethod(AggressiveInlining)]
+      public static int Combine<T1>(in T1 objectA) {
+        uint hash  = HashCode.MixEmptyState() + 4u;
+        uint hashA = (uint) (objectA?.GetHashCode() ?? 0);
+
+        // …
+        hash = HashCode.QueueRound(hash, hashA);
+
+        return (int) HashCode.MixFinal(hash);
+      }
+
+      [PatchMethod(AggressiveInlining)]
+      public static int Combine<T1, T2>(in T1 objectA, in T2 objectB) {
+        uint hash                = HashCode.MixEmptyState() + 8u;
+        (uint hashA, uint hashB) = ((uint) (objectA?.GetHashCode() ?? 0), (uint) (objectB?.GetHashCode() ?? 0));
+
+        // …
+        hash = HashCode.QueueRound(hash, hashA);
+        hash = HashCode.QueueRound(hash, hashB);
+
+        return (int) HashCode.MixFinal(hash);
+      }
+
+      [PatchMethod(AggressiveInlining)]
+      public static int Combine<T1, T2, T3>(in T1 objectA, in T2 objectB, in T3 objectC) {
+        uint hash                            = HashCode.MixEmptyState() + 12u;
+        (uint hashA, uint hashB, uint hashC) = ((uint) (objectA?.GetHashCode() ?? 0), (uint) (objectB?.GetHashCode() ?? 0), (uint) (objectC?.GetHashCode() ?? 0));
+
+        // …
+        hash = HashCode.QueueRound(hash, hashA);
+        hash = HashCode.QueueRound(hash, hashB);
+        hash = HashCode.QueueRound(hash, hashC);
+
+        return (int) HashCode.MixFinal(hash);
+      }
+
+      [PatchMethod(AggressiveInlining)]
+      public static int Combine<T1, T2, T3, T4>(in T1 objectA, in T2 objectB, in T3 objectC, in T4 objectD) {
+        uint hash;
+        (uint hashA, uint hashB, uint hashC, uint hashD) = ((uint) (objectA?.GetHashCode() ?? 0), (uint) (objectB?.GetHashCode() ?? 0), (uint) (objectC?.GetHashCode() ?? 0), (uint) (objectD?.GetHashCode() ?? 0));
+
+        // …
+        HashCode.Initialize(out uint valueA, out uint valueB, out uint valueC, out uint valueD);
+
+        (valueA, valueB, valueC, valueD) = (HashCode.Round(valueA, hashA), HashCode.Round(valueB, hashB), HashCode.Round(valueC, hashC), HashCode.Round(valueD, hashD));
+        hash                             = HashCode.MixState(valueA, valueB, valueC, valueD) + 16u;
+
+        return (int) HashCode.MixFinal(hash);
+      }
+
+      [PatchMethod(AggressiveInlining)]
+      public static int Combine<T1, T2, T3, T4, T5>(in T1 objectA, in T2 objectB, in T3 objectC, in T4 objectD, in T5 objectE) {
+        uint hash;
+        (uint hashA, uint hashB, uint hashC, uint hashD, uint hashE) = ((uint) (objectA?.GetHashCode() ?? 0), (uint) (objectB?.GetHashCode() ?? 0), (uint) (objectC?.GetHashCode() ?? 0), (uint) (objectD?.GetHashCode() ?? 0), (uint) (objectE?.GetHashCode() ?? 0));
+
+        // …
+        HashCode.Initialize(out uint valueA, out uint valueB, out uint valueC, out uint valueD);
+
+        (valueA, valueB, valueC, valueD) = (HashCode.Round(valueA, hashA), HashCode.Round(valueB, hashB), HashCode.Round(valueC, hashC), HashCode.Round(valueD, hashD));
+        hash                             = HashCode.MixState  (valueA, valueB, valueC, valueD) + 20u;
+        hash                             = HashCode.QueueRound(hash, hashE);
+
+        return (int) HashCode.MixFinal(hash);
+      }
+
+      [PatchMethod(AggressiveInlining)]
+      public static int Combine<T1, T2, T3, T4, T5, T6>(in T1 objectA, in T2 objectB, in T3 objectC, in T4 objectD, in T5 objectE, in T6 objectF) {
+        uint hash;
+        (uint hashA, uint hashB, uint hashC, uint hashD, uint hashE, uint hashF) = ((uint) (objectA?.GetHashCode() ?? 0), (uint) (objectB?.GetHashCode() ?? 0), (uint) (objectC?.GetHashCode() ?? 0), (uint) (objectD?.GetHashCode() ?? 0), (uint) (objectE?.GetHashCode() ?? 0), (uint) (objectF?.GetHashCode() ?? 0));
+
+        // …
+        HashCode.Initialize(out uint valueA, out uint valueB, out uint valueC, out uint valueD);
+
+        (valueA, valueB, valueC, valueD) = (HashCode.Round(valueA, hashA), HashCode.Round(valueB, hashB), HashCode.Round(valueC, hashC), HashCode.Round(valueD, hashD));
+        hash                             = HashCode.MixState  (valueA, valueB, valueC, valueD) + 24u;
+        hash                             = HashCode.QueueRound(hash, hashE);
+        hash                             = HashCode.QueueRound(hash, hashF);
+
+        return (int) HashCode.MixFinal(hash);
+      }
+
+      [PatchMethod(AggressiveInlining)]
+      public static int Combine<T1, T2, T3, T4, T5, T6, T7>(in T1 objectA, in T2 objectB, in T3 objectC, in T4 objectD, in T5 objectE, in T6 objectF, in T7 objectG) {
+        uint hash;
+        (uint hashA, uint hashB, uint hashC, uint hashD, uint hashE, uint hashF, uint hashG) = ((uint) (objectA?.GetHashCode() ?? 0), (uint) (objectB?.GetHashCode() ?? 0), (uint) (objectC?.GetHashCode() ?? 0), (uint) (objectD?.GetHashCode() ?? 0), (uint) (objectE?.GetHashCode() ?? 0), (uint) (objectF?.GetHashCode() ?? 0), (uint) (objectG?.GetHashCode() ?? 0));
+
+        // …
+        HashCode.Initialize(out uint valueA, out uint valueB, out uint valueC, out uint valueD);
+
+        (valueA, valueB, valueC, valueD) = (HashCode.Round(valueA, hashA), HashCode.Round(valueB, hashB), HashCode.Round(valueC, hashC), HashCode.Round(valueD, hashD));
+        hash                             = HashCode.MixState  (valueA, valueB, valueC, valueD) + 28u;
+        hash                             = HashCode.QueueRound(hash, hashE);
+        hash                             = HashCode.QueueRound(hash, hashF);
+        hash                             = HashCode.QueueRound(hash, hashG);
+
+        return (int) HashCode.MixFinal(hash);
+      }
+
+      [PatchMethod(AggressiveInlining)]
+      public static int Combine<T1, T2, T3, T4, T5, T6, T7, T8>(in T1 objectA, in T2 objectB, in T3 objectC, in T4 objectD, in T5 objectE, in T6 objectF, in T7 objectG, in T8 objectH) {
+        uint hash;
+        (uint hashA, uint hashB, uint hashC, uint hashD, uint hashE, uint hashF, uint hashG, uint hashH) = ((uint) (objectA?.GetHashCode() ?? 0), (uint) (objectB?.GetHashCode() ?? 0), (uint) (objectC?.GetHashCode() ?? 0), (uint) (objectD?.GetHashCode() ?? 0), (uint) (objectE?.GetHashCode() ?? 0), (uint) (objectF?.GetHashCode() ?? 0), (uint) (objectG?.GetHashCode() ?? 0), (uint) (objectH?.GetHashCode() ?? 0));
+
+        // …
+        HashCode.Initialize(out uint valueA, out uint valueB, out uint valueC, out uint valueD);
+
+        (valueA, valueB, valueC, valueD) = (HashCode.Round(valueA, hashA), HashCode.Round(valueB, hashB), HashCode.Round(valueC, hashC), HashCode.Round(valueD, hashD));
+        (valueA, valueB, valueC, valueD) = (HashCode.Round(valueA, hashE), HashCode.Round(valueB, hashF), HashCode.Round(valueC, hashG), HashCode.Round(valueD, hashH));
+        hash                             = HashCode.MixState(valueA, valueB, valueC, valueD) + 32u;
+
+        return (int) HashCode.MixFinal(hash);
+      }
+
+      [PatchMethod(AggressiveInlining)]
+      private static void Initialize(out uint valueA, out uint valueB, out uint valueC, out uint valueD) {
+        valueA = HashCode.Seed + HashCode.Prime1 + HashCode.Prime2;
+        valueB = HashCode.Seed + HashCode.Prime2;
+        valueC = HashCode.Seed;
+        valueD = HashCode.Seed - HashCode.Prime1;
+      }
+
+      [PatchMethod(AggressiveInlining)] private static uint MixEmptyState()                                                   => HashCode.Prime5 + HashCode.Seed;
+      [PatchMethod(AggressiveInlining)] private static uint MixFinal     (uint hash)                                          { hash ^= hash >> 15; hash *= HashCode.Prime2; hash ^= hash >> 13; hash *= HashCode.Prime3; hash ^= hash >> 16; return hash; }
+      [PatchMethod(AggressiveInlining)] private static uint MixState     (uint valueA, uint valueB, uint valueC, uint valueD) => HashCode.RotateLeft(valueA, 1) + HashCode.RotateLeft(valueB, 7) + HashCode.RotateLeft(valueC, 12) + HashCode.RotateLeft(valueD, 18);
+      [PatchMethod(AggressiveInlining)] private static uint QueueRound   (uint hash,   uint queuedValue)                      => HashCode.Prime4 * HashCode.RotateLeft(hash + (HashCode.Prime3 * queuedValue), 17);
+      [PatchMethod(AggressiveInlining)] private static uint RotateLeft   (uint value,  int  offset)                           => (value << offset) | (value >> (32 - offset));
+      [PatchMethod(AggressiveInlining)] private static uint Round        (uint hash,   uint input)                            => HashCode.Prime1 * HashCode.RotateLeft(hash + (HashCode.Prime2 * input),       13);
+
+      public int ToHashCode() {
+        uint hash     = this.length < 4u ? HashCode.MixEmptyState() : HashCode.MixState(this.valueA, this.valueB, this.valueC, this.valueD);
+        uint position = this.length % 4u;
+
+        // …
+        hash += this.length * 4u;
+
+        if (position > 0u) { hash = HashCode.QueueRound(hash, this.queueA);
+        if (position > 1u) { hash = HashCode.QueueRound(hash, this.queueB);
+        if (position > 2u) { hash = HashCode.QueueRound(hash, this.queueC);
+        } } }
+
+        return (int) HashCode.MixFinal(hash);
+      }
+
+      #pragma warning disable CS0809 // ⟶ Obsolete member overrides non-obsolete member; Disallowing `HashCode::Equals(…)` and `HashCode::GetHashCode()` is by design
+      #pragma warning disable CA1065 // ⟶ Do not raise exceptions in unexpected locations — also by design
+        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+        [System.Obsolete("`HashCode` is a mutable `struct` and should not be compared with other `HashCode`s.", error: true)]
+        public override bool Equals(object? _) => throw new System.NotSupportedException("`HashCode` is a mutable `struct` and should not be compared with other `HashCode`s.");
+
+        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+        [System.Obsolete("`HashCode` is a mutable `struct` and should not be compared with other `HashCode`s. Use `HashCode.ToHashCode()` to retrieve the computed hash code.", error: true)]
+        public override int GetHashCode() => throw new System.NotSupportedException("`HashCode` is a mutable `struct` and should not be compared with other `HashCode`s. Use `HashCode.ToHashCode()` to retrieve the computed hash code.");
+      #pragma warning restore CA1065
+      #pragma warning restore CS0809
+
+      #pragma warning disable CA5394
+        // ⟶ The .NET runtime uses `Interop.GetRandomBytes(…)`, but this suffices for a polyfill
+        // ⟶ Avoid insecure randomness; Use a different value at each program execution, no cryptography involved
+        private static uint GenerateGlobalSeed() => (uint) new System.Random().Next(int.MinValue, int.MaxValue);
+      #pragma warning restore CA5394
+    }
   }
 #endif
 
@@ -53,7 +302,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
   namespace Animation {
     public class UIKeyframe /* ⟶ Not a `struct`, inherited by `Animation.UISequence` */ {
       public readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>? begin      = null;
-      public          System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>? end        { get => this.properties; init => this.properties = value!; }
+      public          System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>? end        { [PatchMethod(AggressiveInlining)] get => this.properties; [PatchMethod(AggressiveInlining)] init => this.properties = value!; }
       public readonly string?                                                             name       = null;
       public readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>  properties = new(new System.Collections.Generic.Dictionary<string, object?>());
 
@@ -97,7 +346,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       private readonly System.Collections.Generic.SortedList<double, PatchOdyssey.Animation.UIKeyframe>                                                            keyframes         =  new(1);
       private          double                                                                                                                                      timestamp         =  0.0;
 
-      /* … ⟶ 𝑓 `UISequence([optional] name, duration, [optional] delay, [optional] easing, [optional] interpolator, begin, end) { … }` */
+      /* … ⟶ `𝑓 UISequence([optional] name, duration, [optional] delay, [optional] easing, [optional] interpolator, begin, end) { … }` */
       [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration,                                                                                    System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, 0.0,   null!,  null!,        begin,                                                             end)                                                             {}
       [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration,                                                                                    System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, 0.0,   null!,  null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
       [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration, double delay,                                                                      System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, 0.0,   null!,  null!,        begin,                                                             end)                                                             {}
@@ -138,7 +387,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         this.timestamp    = UnityEngine.Time.realtimeSinceStartupAsDouble;
       }
 
-      /* … ⟶ 𝑓 `void Add([optional] keyframe, progress, properties) { … }` */
+      /* … ⟶ `𝑓 Add([optional] keyframe, progress, properties) { … }` */
       [PatchMethod(AggressiveInlining)] public void Add                 (double progress, System.Collections.Generic.Dictionary <string, object?> properties) => this.Add($"#{this.keyframes.Count + 1}", progress, properties);
       [PatchMethod(AggressiveInlining)] public void Add                 (double progress, System.Collections.Generic.IDictionary<string, object?> properties) => this.Add($"#{this.keyframes.Count + 1}", progress, properties);
       [PatchMethod(AggressiveInlining)] public void Add(string keyframe, double progress, System.Collections.Generic.IDictionary<string, object?> properties) => this.Add(keyframe,                       progress, new System.Collections.Generic.Dictionary<string, object?>(properties));
@@ -241,7 +490,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
 
   namespace Collections {
     [System.Serializable]
-    public class EditorDictionary<TKey, TValue> : System.Collections.Generic.IDictionary<TKey, TValue> /* ⟶ `https://discussions.unity.com/t/finally-a-serializable-dictionary-for-unity-extracted-from-system-collections-generic/586385/1` */ {
+    public class EditorDictionary<TKey, TValue> : System.Collections.Generic.IDictionary<TKey, TValue> /* ⟶ `https://web.archive.org/web/20240722203244/https://discussions.unity.com/t/finally-a-serializable-dictionary-for-unity-extracted-from-system-collections-generic/586385` */ {
       public struct Enumerator : System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<TKey, TValue>> {
         public           System.Collections.Generic.KeyValuePair  <TKey, TValue>  Current                                => (System.Collections.Generic.KeyValuePair<TKey, TValue>) this.current!;
         private          System.Collections.Generic.KeyValuePair  <TKey, TValue>? current                                =  null;
@@ -340,7 +589,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       /* … */
       [PatchMethod(AggressiveInlining)] public void Add(System.Collections.Generic.KeyValuePair<TKey, TValue> element) => this.Add(element.Key, element.Value);
       [PatchMethod(AggressiveInlining)]
-      public void Add(TKey key, TValue value) {
+      public void Add(in TKey key, in TValue value) {
         this.Insert(key, value, true);
       }
 
@@ -374,12 +623,12 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       }
 
       [PatchMethod(AggressiveInlining)]
-      public bool ContainsKey(TKey key) {
+      public bool ContainsKey(in TKey key) {
         return this.FindIndex(key) != -1;
       }
 
       [PatchMethod(AggressiveInlining)]
-      public bool ContainsValue(TValue value) {
+      public bool ContainsValue(in TValue value) {
         for ((uint index, System.Func<TValue, TValue, bool> comparer) = (this.count, value is null ? static (value, _) => value is null : System.Collections.Generic.EqualityComparer<TValue>.Default.Equals); 0u != index--; ) {
           if (this.hashes[index] >= 0 && comparer(this.values[index], value))
           return true;
@@ -430,7 +679,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         if (EditorDictionary<TKey, TValue>.DelegateGUIField<TValue>() is null) throw new System.NotSupportedException($"[{UnityEngine.Application.productName}]: Type `{typeof(TValue)}` is not supported for `EditorDictionary`");
       }
 
-      private int FindIndex(TKey key) {
+      private int FindIndex(in TKey key) {
         if (key is null)
         throw new System.ArgumentNullException($"Dictionary key is null");
 
@@ -520,7 +769,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         this.buckets.Fill(-1);
       }
 
-      private void Insert(TKey key, TValue value, bool strict) {
+      private void Insert(in TKey key, in TValue value, bool strict) {
         int freeIndex = 0;
         int hash      = 0;
         int hashIndex = 0;
@@ -565,7 +814,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       }
 
       [PatchMethod(AggressiveInlining)] public bool Remove(System.Collections.Generic.KeyValuePair<TKey, TValue> element) => this.Remove(element.Key);
-      public bool Remove(TKey key) {
+      public bool Remove(in TKey key) {
         int freeIndex = -1;
         int hash      =  0;
         int hashIndex =  0;
@@ -626,19 +875,12 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         this.values  = values;
       }
 
-      [PatchMethod(AggressiveInlining)]
-      System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
-        return this.GetEnumerator();
-      }
-
-      [PatchMethod(AggressiveInlining)]
-      System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<TKey, TValue>> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>.GetEnumerator() {
-        return this.GetEnumerator();
-      }
+      [PatchMethod(AggressiveInlining)] System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<TKey, TValue>> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>.GetEnumerator() => this.GetEnumerator();
+      [PatchMethod(AggressiveInlining)] System.Collections.IEnumerator                                                                System.Collections.IEnumerable.GetEnumerator                                                               () => this.GetEnumerator();
 
       [PatchMethod(AggressiveInlining)] public bool TryAdd(System.Collections.Generic.KeyValuePair<TKey, TValue> element) => this.TryAdd(element);
       [PatchMethod(AggressiveInlining)]
-      public bool TryAdd(TKey key, TValue value) {
+      public bool TryAdd(in TKey key, in TValue value) {
         if (!this.ContainsKey(key)) {
           this.Add(key, value);
           return true;
@@ -648,14 +890,14 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       }
 
       [PatchMethod(AggressiveInlining)]
-      public bool TryGetValue(TKey key, out TValue value) {
+      public bool TryGetValue(in TKey key, out TValue value) {
         int index = this.FindIndex(key);
 
         value = index != -1 ? this.values[index] : default!;
         return index != -1;
       }
 
-      public TValue this[TKey key] {
+      public TValue this[in TKey key] {
         [PatchMethod(AggressiveInlining)]
         get {
           int index = this.FindIndex(key);
@@ -665,12 +907,10 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         }
 
         [PatchMethod(AggressiveInlining)]
-        set {
-          this.Insert(key, value, false);
-        }
+        set => this.Insert(key, value, false);
       }
 
-      public TValue this[TKey key, TValue _] {
+      public TValue this[in TKey key, in TValue _] {
         [PatchMethod(AggressiveInlining)]
         get {
           int index = this.FindIndex(key);
@@ -731,9 +971,9 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
 
       [PatchMethod(AggressiveInlining)] public  new void AddRange(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable) { throw new System.NotSupportedException("Can not add item to `EditorReadOnlyDictionary`"); }
       [PatchMethod(AggressiveInlining)] private new void Clear   ()                                                                                                         {}
-      [PatchMethod(AggressiveInlining)] private new bool Remove  (TKey                                                  key)                                                => false;
+      [PatchMethod(AggressiveInlining)] private new bool Remove  (in TKey                                               key)                                                => false;
       [PatchMethod(AggressiveInlining)] private new bool Remove  (System.Collections.Generic.KeyValuePair<TKey, TValue> element)                                            => false;
-      [PatchMethod(AggressiveInlining)] public  new bool TryAdd  (TKey                                                  key, TValue value)                                  { throw new System.NotSupportedException("Can not add item to `EditorReadOnlyDictionary`"); }
+      [PatchMethod(AggressiveInlining)] public  new bool TryAdd  (in TKey                                               key, in TValue value)                               { throw new System.NotSupportedException("Can not add item to `EditorReadOnlyDictionary`"); }
       [PatchMethod(AggressiveInlining)] public  new bool TryAdd  (System.Collections.Generic.KeyValuePair<TKey, TValue> element)                                            => this.TryAdd(element.Key, element.Value);
     }
       [System.Serializable] public class AnimationCurveReadOnlyDictionary : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.AnimationCurve> { [PatchMethod(AggressiveInlining)] public AnimationCurveReadOnlyDictionary(int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public AnimationCurveReadOnlyDictionary(int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
@@ -758,71 +998,120 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [System.Serializable] public class Vector3IntReadOnlyDictionary     : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Vector3Int>     { [PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
       [System.Serializable] public class Vector4ReadOnlyDictionary        : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Vector4>        { [PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
 
-    public class Event : System.EventArgs {
-      public /* required */ object? data { get; internal set; } = null;
+    public class Event : System.EventArgs /* ⟶ See `https://web.archive.org/web/20250117180031/https://learn.microsoft.com/en-us/dotnet/api/system.threading.manualresetevent?view=net-9.0` (or `https://web.archive.org/web/20130916192216/https://developer.mozilla.org/en-US/docs/Web/API/Event`) for naming scheme used */ {
+      public static readonly object? Default = null;
+
+      public /* required */ PatchOdyssey.Handler callback { get; internal set; } = [PatchMethod(AggressiveInlining)] static (_, _) => {};
+      public /* required */ object?              data     { get; internal set; } = Event.Default;
 
       [PatchConstructor, PatchMethod(AggressiveInlining)]
       public Event() {}
     }
       public class LoadEvent : PatchOdyssey.Collections.Event {
+        public static readonly (uint, uint, bool, double, System.Uri, object?) Default = (0u, 1u, false, 0.0, new(string.Empty, System.UriKind.Relative), null);
+
+        public new PatchOdyssey.Handler<PatchOdyssey.Collections.LoadEvent>                                              callback        { get; internal set; } = [PatchMethod(AggressiveInlining)] static (_, _) => {};
+        public new (uint attempts, uint attemptsAllowed, bool cached, double duration, System.Uri path, object? payload) data            { get; internal set; } = LoadEvent.Default;
+        public     uint                                                                                                  attempts        { [PatchMethod(AggressiveInlining)] get => this.data.attempts; }        // ⟶ Track persistent `LoadUri*(…)` `retries`
+        public     uint                                                                                                  attemptsAllowed { [PatchMethod(AggressiveInlining)] get => this.data.attemptsAllowed; } //    ^^
+        public     uint                                                                                                  cached          { [PatchMethod(AggressiveInlining)] get => this.data.cached; }          //
+        public     double                                                                                                duration        { [PatchMethod(AggressiveInlining)] get => this.data.duration; }        // ⟶ Time since load till payload
+        public     System.Uri                                                                                            path            { [PatchMethod(AggressiveInlining)] get => this.data.path; }            //
+        public     object?                                                                                               payload         { [PatchMethod(AggressiveInlining)] get => this.data.payload; }         //
+
+        /* … */
         [PatchConstructor, PatchMethod(AggressiveInlining)]
         public LoadEvent() {}
       }
 
-      public class WaitForTimerEvent : PatchOdyssey.Collections.Event {
-        public new (double delay, double timestamp) data { get; internal set; } = (0.0, 0.0);
+      public class WaitEvent : PatchOdyssey.Collections.Event {
+        public static readonly (double, double) Default = (0.0, 0.0);
 
-        public double delay     { get => this.data.delay;     set => this.data = (value, this.data.timestamp); } // ⟶ Specified delay
-        public double timestamp { get => this.data.timestamp; set => this.data = (this.data.delay, value); }     // ⟶ Next available timestamp to signal a `WaitForTimer` event (which could be in the past chronologically)
+        public new PatchOdyssey.Handler<PatchOdyssey.Collections.WaitEvent> callback  { get; internal set; } = [PatchMethod(AggressiveInlining)] static (_, _) => {};
+        public new (double delay, double timestamp)                         data      { get; internal set; } = WaitEvent.Default;
+        public      double                                                  delay     { [PatchMethod(AggressiveInlining)] get => this.data.delay; }     // ⟶ Specified delay
+        public      double                                                  timestamp { [PatchMethod(AggressiveInlining)] get => this.data.timestamp; } // ⟶ Next available timestamp to signal a `WaitForTimer` event (which could be in the past chronologically)
 
         /* … */
         [PatchConstructor, PatchMethod(AggressiveInlining)]
-        public WaitForTimerEvent() {}
+        public WaitEvent() {}
       }
 
-    public static class EventHandler /* : PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.Event> */ {
-      // ⟶ Based on by `System.Delegate.Combine(𝑓, 𝑓)`
-      [PatchMethod(AggressiveInlining)]
-      public static void Combine<T>(in PatchOdyssey.Collections.EventHandler<T> eventHandler, in PatchOdyssey.Collections.HandlerInfo<T> handler) where T : PatchOdyssey.Collections.Event, new() {
-        if (EventHandler<T>.DefaultHandlerValue != (handler.value ?? EventHandler<T>.DefaultHandlerValue))
-        eventHandler.handlers.Add(handler);
-      }
+    public sealed class EventHandler<T> : System.Collections.Generic.List<PatchOdyssey.Collections.HandlerInfo<T>> where T : PatchOdyssey.Collections.Event, new() /* ⟶ `event` @ `https://web.archive.org/web/20220923174214/https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/event` */ {
+      [PatchConstructor, PatchMethod(AggressiveInlining), PatchResolution(1)] public  EventHandler()                                                                                              : base(1)                                                                                       {}
+      [PatchConstructor, PatchMethod(AggressiveInlining), PatchResolution(1)] public  EventHandler(in EventHandler                        <T>                                       eventHandler) : this((System.Collections.Generic.List<PatchOdyssey.Collections.HandlerInfo<T>>) eventHandler) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining), PatchResolution(2)] public  EventHandler(in PatchOdyssey.Collections.HandlerInfo<T>                                       handler)      : base(PatchOdyssey.Collections.HandlerInfo<T>.DefaultValue != handler.value ? 2 : 1)           { this.Add(handler); }
+      [PatchConstructor, PatchMethod(AggressiveInlining), PatchResolution(0)] private EventHandler(System.Collections.Generic.List        <PatchOdyssey.Collections.HandlerInfo<T>> handlers)     : base(handlers.Count)                                                                          { if (!System.Object.ReferenceEquals(handlers, this)) base.AddRange(handlers); }
 
-      // ⟶ Based on by `System.Delegate.Remove(𝑓, 𝑓)`
-      [PatchMethod(AggressiveInlining)]
-      public static void Remove<T>(in PatchOdyssey.Collections.EventHandler<T> eventHandler, in PatchOdyssey.Collections.HandlerInfo<T> handler) where T : PatchOdyssey.Collections.Event, new() {
-        for (int index = eventHandler.CountInvocationList(); 0 != index--; )
-        if (eventHandler.handlers[index].value == handler.value) {
-          eventHandler.handlers.RemoveAt(index);
-          return;
-        }
-      }
-    }
-
-    public readonly struct EventHandler<T> where T : PatchOdyssey.Collections.Event, new() /* ⟶ `event` @ `https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/event` */ {
-      internal static readonly PatchOdyssey.Handler<T>                                                  DefaultHandlerValue = PatchOdyssey.Collections.HandlerInfo<T>.DefaultValue;
-      internal        readonly System.Collections.Generic.List<PatchOdyssey.Collections.HandlerInfo<T>> handlers            = new(1); // ⟶ Private composition over inheritance
-
-      /* … ⟶ See `struct PatchOdyssey.Collections.HandlerInfo` constructor */
-      [PatchConstructor, PatchMethod(AggressiveInlining)]                     public EventHandler()                                                     {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)]                     public EventHandler(EventHandler                        <T> eventHandler) { if (eventHandler != this) this.handlers.AddRange(eventHandler.handlers); }
-      [PatchConstructor, PatchMethod(AggressiveInlining), PatchResolution(1)] public EventHandler(PatchOdyssey.Collections.HandlerInfo<T> handler)      { PatchOdyssey.Collections.EventHandler.Combine(this, handler); }
+      /* … ⟶ Keep `𝑓 Add(…)`, `𝑓 AddRange(…)`, `𝑓 Append(…)`, `𝑓 Clear(…)`, `𝑓 Insert(…)`, `𝑓 InsertRange(…)`, `𝑓 Prepend(…)`, `𝑓 Remove(…)`, `𝑓 RemoveAll(…)`, `𝑓 RemoveAt(…)`, `𝑓 RemoveRange(…)` accessible for multicast queuing, privately inherit `class System.Collections.Generic.List` methods */
+      [PatchMethod(AggressiveInlining)] public   new              void                                                                                Add              (in PatchOdyssey.Collections.HandlerInfo<T>                                      handler)                                                                                                     { if (PatchOdyssey.Collections.HandlerInfo<T>.DefaultValue != handler.value) base.Add(handler); }
+      [PatchMethod(AggressiveInlining)] public   new              void                                                                                AddRange         (System.Collections.Generic.IEnumerable<PatchOdyssey.Collections.HandlerInfo<T>> handlers)                                                                                                    { foreach (PatchOdyssey.Collections.HandlerInfo<T> handler in handlers)      this.Add(handler); }
+      [PatchMethod(AggressiveInlining)] public   new ref readonly PatchOdyssey.Collections.HandlerInfo<T>                                             Append           (in PatchOdyssey.Collections.HandlerInfo<T>                                      handler)                                                                                                     { this.Add(handler); return ref handler; }
+      [PatchMethod(AggressiveInlining)] private  new              EventHandler<T>                                                                     AsReadOnly       ()                                                                                                                                                                                            => this;
+      [PatchMethod(AggressiveInlining)] private  new              int                                                                                 BinarySearch     (in PatchOdyssey.Collections.HandlerInfo<T> handler)                                                                                                                                          => base.BinarySearch(handler);
+      [PatchMethod(AggressiveInlining)] private  new              int                                                                                 BinarySearch     (in PatchOdyssey.Collections.HandlerInfo<T> handler,                                                               System.Collections.Generic.IComparer<T>? comparer)                         => base.BinarySearch(handler, comparer);
+      [PatchMethod(AggressiveInlining)] private  new              int                                                                                 BinarySearch     (uint                                       index, uint count, in PatchOdyssey.Collections.HandlerInfo<T> handler, System.Collections.Generic.IComparer<T>? comparer)                         => base.BinarySearch((int) index, (int) count, handler, comparer);
+      [PatchMethod(AggressiveInlining)] public   new              void                                                                                Clear            ()                                                                                                                                                                                            => base.Clear       ();
+      [PatchMethod(AggressiveInlining)] public   /* virtual */    object                                                                              Clone            ()                                                                                                                                                                                            => new EventHandler<T>(this);
+      [PatchMethod(AggressiveInlining)] public   static           void                                                                                Combine          (in EventHandler                        <T>                eventHandler, in PatchOdyssey.Collections.HandlerInfo<T> handler)                                                                  {  if (PatchOdyssey.Collections.HandlerInfo<T>.DefaultValue != handler.value) eventHandler.Add(handler); } // ⟶ Based on `𝑓 System.Delegate.Combine(…)`
+      [PatchMethod(AggressiveInlining)] private  new              bool                                                                                Contains         (in PatchOdyssey.Collections.HandlerInfo<T>                handler)                                                                                                                           =>     base.Contains  (handler);
+      [PatchMethod(AggressiveInlining)] private  new              EventHandler<U>                                                                     ConvertAll<U>    (System.Converter<T, U>                                    converter) where U : PatchOdyssey.Collections.Event, new()                                                                         => new(base.ConvertAll(converter));
+      [PatchMethod(AggressiveInlining)] private  new              void                                                                                CopyTo           (PatchOdyssey.Collections.HandlerInfo<T>[]                 array)                                                                                                                             =>     base.CopyTo    (array);
+      [PatchMethod(AggressiveInlining)] private  new              void                                                                                CopyTo           (PatchOdyssey.Collections.HandlerInfo<T>[]                 array, uint index)                                                                                                                 =>     base.CopyTo    (array, (int) index);
+      [PatchMethod(AggressiveInlining)] private  new              void                                                                                CopyTo           (uint                                                      index, PatchOdyssey.Collections.HandlerInfo<T>[] array, uint arrayIndex, uint count)                                               =>     base.CopyTo    ((int) index, array, (int) arrayIndex, (int) count);
+      [PatchMethod(AggressiveInlining)] public                    void                                                                                DynamicInvoke    (params object?[]?                                         arguments)                                                                                                                         { foreach (PatchOdyssey.Collections.HandlerInfo<T> handler in this) handler.DynamicInvoke(); }
+      [PatchMethod(AggressiveInlining)] public   override         bool                                                                                Equals           (object?                                                   value)                                                                                                                             =>     base.Equals       (value);
+      [PatchMethod(AggressiveInlining)] private  new              bool                                                                                Exists           (System.Predicate<PatchOdyssey.Collections.HandlerInfo<T>> predicate)                                                                                                                         =>     base.Exists       (predicate);
+      [PatchMethod(AggressiveInlining)] private  new              PatchOdyssey.Collections.HandlerInfo<T>?                                            Find             (System.Predicate<PatchOdyssey.Collections.HandlerInfo<T>> predicate)                                                                                                                         =>     base.Find         (predicate);
+      [PatchMethod(AggressiveInlining)] private  new              EventHandler<T>                                                                     FindAll          (System.Predicate<PatchOdyssey.Collections.HandlerInfo<T>> predicate)                                                                                                                         => new(base.FindAll      (predicate));
+      [PatchMethod(AggressiveInlining)] private  new              int                                                                                 FindIndex        (System.Predicate<PatchOdyssey.Collections.HandlerInfo<T>> predicate)                                                                                                                         =>     base.FindIndex    (predicate);
+      [PatchMethod(AggressiveInlining)] private  new              int                                                                                 FindIndex        (uint                                                      index,             System.Predicate<PatchOdyssey.Collections.HandlerInfo<T>> predicate)                                            =>     base.FindIndex    ((int) index,              predicate);
+      [PatchMethod(AggressiveInlining)] private  new              int                                                                                 FindIndex        (uint                                                      index, uint count, System.Predicate<PatchOdyssey.Collections.HandlerInfo<T>> predicate)                                            =>     base.FindIndex    ((int) index, (int) count, predicate);
+      [PatchMethod(AggressiveInlining)] private  new              PatchOdyssey.Collections.HandlerInfo<T>?                                            FindLast         (System.Predicate<PatchOdyssey.Collections.HandlerInfo<T>> predicate)                                                                                                                         =>     base.FindLast     (predicate);
+      [PatchMethod(AggressiveInlining)] private  new              int                                                                                 FindLastIndex    (System.Predicate<PatchOdyssey.Collections.HandlerInfo<T>> predicate)                                                                                                                         =>     base.FindLastIndex(predicate);
+      [PatchMethod(AggressiveInlining)] private  new              int                                                                                 FindLastIndex    (uint                                                      index,             System.Predicate<PatchOdyssey.Collections.HandlerInfo<T>> predicate)                                            =>     base.FindLastIndex((int) index,              predicate);
+      [PatchMethod(AggressiveInlining)] private  new              int                                                                                 FindLastIndex    (uint                                                      index, uint count, System.Predicate<PatchOdyssey.Collections.HandlerInfo<T>> predicate)                                            =>     base.FindLastIndex((int) index, (int) count, predicate);
+      [PatchMethod(AggressiveInlining)] private  new              void                                                                                ForEach          (System.Action<PatchOdyssey.Collections.HandlerInfo<T>>    action)                                                                                                                            =>     base.ForEach      (action);
+      [PatchMethod(AggressiveInlining)] private  new              System.Collections.Generic.List<PatchOdyssey.Collections.HandlerInfo<T>>.Enumerator GetEnumerator    ()                                                                                                                                                                                            =>     base.GetEnumerator();
+      [PatchMethod(AggressiveInlining)] public   override         int                                                                                 GetHashCode      ()                                                                                                                                                                                            =>     base.GetHashCode  ();
+      [PatchMethod(AggressiveInlining)] public   /* virtual */    System.Delegate[]                                                                   GetInvocationList()                                                                                                                                                                                            => Util.ArrayFrom(base.ConvertAll(static handler => (System.Delegate) (() => handler.Invoke())));
+      [PatchMethod(AggressiveInlining)] private  new              EventHandler<T>                                                                     GetRange         (uint                                                                             index, uint count)                                                                                          => new(base.GetRange((int) index, (int) count));
+      [PatchMethod(AggressiveInlining)] private  new              int                                                                                 IndexOf          (in PatchOdyssey.Collections.HandlerInfo<T>                                       handler)                                                                                                    =>     base.IndexOf (handler);
+      [PatchMethod(AggressiveInlining)] private  new              int                                                                                 IndexOf          (in PatchOdyssey.Collections.HandlerInfo<T>                                       handler, uint                                                                            index)             =>     base.IndexOf (handler, (int) index);
+      [PatchMethod(AggressiveInlining)] private  new              int                                                                                 IndexOf          (in PatchOdyssey.Collections.HandlerInfo<T>                                       handler, uint                                                                            index, uint count) =>     base.IndexOf (handler, (int) index, (int) count);
+      [PatchMethod(AggressiveInlining)] internal new              void                                                                                Insert           (uint                                                                             index,   in PatchOdyssey.Collections.HandlerInfo<T>                                      handler)           { if (PatchOdyssey.Collections.HandlerInfo<T>.DefaultValue != handler.value) base.Insert((int) index, handler); }
+      [PatchMethod(AggressiveInlining)] internal new              void                                                                                InsertRange      (uint                                                                             index,   System.Collections.Generic.IEnumerable<PatchOdyssey.Collections.HandlerInfo<T>> handlers)          { foreach (PatchOdyssey.Collections.HandlerInfo<T> handler in handlers) { if (PatchOdyssey.Collections.HandlerInfo<T>.DefaultValue != handler.value) base.Insert((uint) index++, handler); } }
+      [PatchMethod(AggressiveInlining)] public                    void                                                                                Invoke           ()                                                                                                                                                                                            { foreach (PatchOdyssey.Collections.HandlerInfo<T> handler in this) handler.Invoke(); }
+      [PatchMethod(AggressiveInlining)] private  new              int                                                                                 LastIndexOf      (in PatchOdyssey.Collections.HandlerInfo<T>                                       handler)                                                                                                    => base.LastIndexOf(handler);
+      [PatchMethod(AggressiveInlining)] private  new              int                                                                                 LastIndexOf      (in PatchOdyssey.Collections.HandlerInfo<T>                                       handler, uint index)                                                                                        => base.LastIndexOf(handler, (int) index);
+      [PatchMethod(AggressiveInlining)] private  new              int                                                                                 LastIndexOf      (in PatchOdyssey.Collections.HandlerInfo<T>                                       handler, uint index, uint count)                                                                            => base.LastIndexOf(handler, (int) index, (int) count);
+      [PatchMethod(AggressiveInlining)] public   new              ref readonly PatchOdyssey.Collections.HandlerInfo<T>                                Prepend          (in PatchOdyssey.Collections.HandlerInfo<T>                                       handler)                                                                                                    {  base.Insert     (0, handler); return ref handler; }
+      [PatchMethod(AggressiveInlining)] public   new              bool                                                                                Remove           (in PatchOdyssey.Collections.HandlerInfo<T>                                       handler)                                                                                                    => base.Remove     (handler);
+      [PatchMethod(AggressiveInlining)] public   static           void                                                                                Remove           (in EventHandler                        <T>                                       eventHandler, in PatchOdyssey.Collections.HandlerInfo<T> handler)                                           { for (int index = eventHandler.Count; 0 != index--; ) if (eventHandler[index].value == handler.value) { eventHandler.RemoveAt(index); return; } } // ⟶ Based on `𝑓 System.Delegate.Remove(…)`
+      [PatchMethod(AggressiveInlining)] public   new              int                                                                                 RemoveAll        (System.Predicate                       <PatchOdyssey.Collections.HandlerInfo<T>> predicate)                                                                                                  => base.RemoveAll  (predicate);
+      [PatchMethod(AggressiveInlining)] public   new              void                                                                                RemoveAt         (uint                                                                             index)                                                                                                      => base.RemoveAt   ((int) index);
+      [PatchMethod(AggressiveInlining)] public   new              void                                                                                RemoveRange      (uint                                                                             index, uint count)                                                                                          => base.RemoveRange((int) index, (int) count);
+      [PatchMethod(AggressiveInlining)] private  new              void                                                                                Reverse          ()                                                                                                                                                                                            => base.Reverse    ();
+      [PatchMethod(AggressiveInlining)] private  new              void                                                                                Reverse          (uint index, uint count)                                                                                                                                                                      => base.Reverse    ((int) index, (int) count);
+      [PatchMethod(AggressiveInlining)] private  new              void                                                                                Sort             ()                                                                                                                                                                                            => base.Sort       ();
+      [PatchMethod(AggressiveInlining)] private  new              void                                                                                Sort             (System.Collections.Generic.IComparer<T>? comparer)                                                                                                                                           => base.Sort       (comparer);
+      [PatchMethod(AggressiveInlining)] private  new              void                                                                                Sort             (System.Comparison                   <T>? comparison)                                                                                                                                         => base.Sort       (comparison);
+      [PatchMethod(AggressiveInlining)] private  new              void                                                                                Sort             (uint                                     index, uint count, System.Collections.Generic.IComparer<T>? comparer)                                                                               => base.Sort       ((int) index, (int) count, comparer);
+      [PatchMethod(AggressiveInlining)] private  new              PatchOdyssey.Collections.HandlerInfo<T>[]                                           ToArray          ()                                                                                                                                                                                            => base.ToArray    ();
+      [PatchMethod(AggressiveInlining)] private  new              void                                                                                TrimExcess       ()                                                                                                                                                                                            => base.TrimExcess ();
+      [PatchMethod(AggressiveInlining)] private  new              bool                                                                                TrueForAll       (System.Predicate<T> predicate)                                                                                                                                                               => base.TrueForAll (predicate);
 
       /* … */
-      [PatchMethod(AggressiveInlining)] public /* virtual */ object            Clone              ()                            => new EventHandler<T>(this);
-      [PatchMethod(AggressiveInlining)] public               uint              CountInvocationList()                            => this.handlers.Count;
-      [PatchMethod(AggressiveInlining)] public               void              DynamicInvoke      (params object?[]? arguments) { foreach (PatchOdyssey.Collections.HandlerInfo<T> handler in this.handlers) handler.DynamicInvoke(); }
-      [PatchMethod(AggressiveInlining)] public override      bool              Equals             (object?           value)     => base.Equals     (value);
-      [PatchMethod(AggressiveInlining)] public override      int               GetHashCode        ()                            => base.GetHashCode();
-      [PatchMethod(AggressiveInlining)] public /* virtual */ System.Delegate[] GetInvocationList  ()                            => this.handlers.ConvertAll(static handler => (System.Delegate) (() => handler.Invoke())).ToArray(); // ⟶ Caching unnecessary here
-      [PatchMethod(AggressiveInlining)] public               void              Invoke             ()                            { foreach (PatchOdyssey.Collections.HandlerInfo<T> handler in this.handlers) handler.Invoke(); }
+      internal PatchOdyssey.Collections.HandlerInfo<T> this[uint index] {
+        [PatchMethod(AggressiveInlining)] get => this.handlers[(int) index];
+        [PatchMethod(AggressiveInlining)] set => this.handlers[(int) index] = value;
+      }
 
-      /* … */
-      [PatchMethod(AggressiveInlining)] public static EventHandler<T> operator +(EventHandler<T> eventHandler, PatchOdyssey.Collections.HandlerInfo<T> handler) { PatchOdyssey.Collections.EventHandler.Combine(eventHandler, handler); return eventHandler; }
-      [PatchMethod(AggressiveInlining)] public static EventHandler<T> operator -(EventHandler<T> eventHandler, PatchOdyssey.Collections.HandlerInfo<T> handler) { PatchOdyssey.Collections.EventHandler.Remove (eventHandler, handler); return eventHandler; }
+      [PatchMethod(AggressiveInlining)] public static EventHandler<T> operator +(in EventHandler<T> eventHandler, PatchOdyssey.Collections.HandlerInfo<T> handler) { EventHandler<T>.Combine(eventHandler, handler); return eventHandler; }
+      [PatchMethod(AggressiveInlining)] public static EventHandler<T> operator -(in EventHandler<T> eventHandler, PatchOdyssey.Collections.HandlerInfo<T> handler) { EventHandler<T>.Remove (eventHandler, handler); return eventHandler; }
 
       [PatchMethod(AggressiveInlining)] public static implicit operator EventHandler<T>((PatchOdyssey.Handler<T>, object?, T) tuple)        => new(new PatchOdyssey.Collections.HandlerInfo<T>(tuple.Item1, tuple.Item2, tuple.Item3));
-      [PatchMethod(AggressiveInlining)] public static implicit operator System.Action  (EventHandler<T>                       eventHandler) => () => eventHandler.Invoke();
+      [PatchMethod(AggressiveInlining)] public static implicit operator System.Action  (in EventHandler<T>                    eventHandler) => () => eventHandler.Invoke();
     }
 
     public struct GameObjectEnumerator : System.Collections.Generic.IEnumerator<UnityEngine.GameObject>, System.Collections.Generic.IEnumerable<UnityEngine.GameObject> /* ⟶ Ranged `foreach …` shorthand support */ {
@@ -903,13 +1192,13 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [PatchMethod(AggressiveInlining)] System.Collections.Generic.IEnumerator<UnityEngine.GameObject> System.Collections.Generic.IEnumerable<UnityEngine.GameObject>.GetEnumerator() => this.GetEnumerator();
     }
 
-    public readonly struct HandlerInfo<T> /* : System.Delegate */ where T : PatchOdyssey.Collections.Event, new() {
+    public readonly struct HandlerInfo<T> /* : System.MulticastDelegate */ where T : PatchOdyssey.Collections.Event, new() {
       internal readonly PatchOdyssey.Handler<T> value    = HandlerInfo<T>.DefaultValue; // ⟶ Callback function(s)
-      internal readonly object?                 target   = null;                        // ⟶ Callback target
-      internal readonly T                       metadata = new();                       // ⟶ Callback data
+      internal readonly object?                 target   = null;                        // ⟶ Callback source
+      internal readonly T                       metadata = new();                       // ⟶ Callback event data
 
-      /* … ⟶ See `struct PatchOdyssey.Collections.EventHandler` constructor */
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public HandlerInfo(HandlerInfo<T> handler) : this(handler.value, handler.target, handler.metadata) {}
+      /* … */
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public HandlerInfo(in HandlerInfo<T> handler) : this(handler.value, handler.target, handler.metadata) {}
       [PatchConstructor, PatchMethod(AggressiveInlining)]
       public HandlerInfo(PatchOdyssey.Handler<T> value, object? target, T metadata) {
         this.metadata = metadata;
@@ -918,13 +1207,13 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       }
 
       /* … */
-      [PatchMethod(AggressiveInlining)] internal /* virtual */ object            Clone            ()                                 => new HandlerInfo<T>((PatchOdyssey.Handler<T>) this.value.Clone(), this.target, new() {data = this.metadata.data});
+      [PatchMethod(AggressiveInlining)] internal /* virtual */ object            Clone            ()                                 => new HandlerInfo<T>((PatchOdyssey.Handler<T>) this.value.Clone(), this.target, this.metadata);
       [PatchMethod(NoInlining)]         internal static        void              DefaultValue     (object?           target, T data) {}
       [PatchMethod(AggressiveInlining)] internal               void              DynamicInvoke    (params object?[]? arguments)      => this.value.DynamicInvoke(new object?[] {this.target, this.metadata});
-      [PatchMethod(AggressiveInlining)] public   override      bool              Equals           (object?           value)          => this.value.Equals           (value);
-      [PatchMethod(AggressiveInlining)] public   override      int               GetHashCode      ()                                 => this.value.GetHashCode      ();
+      [PatchMethod(AggressiveInlining)] public   override      bool              Equals           (object?           value)          => this.GetHashCode() == value.GetHashCode();
+      [PatchMethod(AggressiveInlining)] public   override      int               GetHashCode      ()                                 => System.HashCode.Combine(this.metadata, this.target, this.value);
       [PatchMethod(AggressiveInlining)] internal /* virtual */ System.Delegate[] GetInvocationList()                                 => this.value.GetInvocationList();
-      [PatchMethod(AggressiveInlining)] internal               void              Invoke           ()                                 => this.value.Invoke           (this.target, this.metadata);
+      [PatchMethod(AggressiveInlining)] internal               void              Invoke           ()                                 => this.value.Invoke(this.target, this.metadata);
 
       /* … */
       [PatchMethod(AggressiveInlining)] public static implicit operator PatchOdyssey.Handler<T>(HandlerInfo<T> handler) => handler.value;
@@ -932,117 +1221,136 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
 
     internal readonly struct LoadInfo {
       internal static readonly System.Collections.Generic.Dictionary<(System.Type, System.Uri), PatchOdyssey.Collections.LoadInfo> LOADS = new(16);
+      internal          object?                                                                   cached   = null;
       internal readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.LoadEvent> handlers = new();
+      internal          object?                                                                   payload  = null;
 
       /* … */
-      [PatchConstructor, PatchMethod(AggressiveInlining)]
-      internal LoadInfo() {}
-
-      [PatchConstructor, PatchMethod(AggressiveInlining)]
-      internal LoadInfo(PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.LoadEvent> handler) {
-        this.handlers += handler;
-      }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] internal LoadInfo()                                                                                    {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] internal LoadInfo(in PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.LoadEvent> handler) { this.handlers = new(handler); }
     }
 
-    public class SharedList<T> : System.Collections.Generic.IEnumerable<T> {
-      public                    int                                Count => LIST.Count;
-      protected internal static System.Collections.Generic.List<T> LIST  =  new();
+    [System.Runtime.CompilerServices.CollectionBuilder(typeof(Sequence), nameof(Sequence.Create))]
+    internal readonly ref struct Sequence : System.Collections.Generic.IEnumerable<int> {
+      private readonly int[] values;
 
       /* … */
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(uint                                      capacity = 0u)                                                                                                { LIST.Capacity = System.Math.Max(LIST.Capacity, (int) capacity); }
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(T[]                                       array)                   : this(array,                  (uint) array       .Length)                           {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Array                              array)                   : this(array,                  (uint) array       .Length)                           {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.ArraySegment<T>                    arraySegment)            : this(arraySegment,           (uint) arraySegment.Count)                            {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.ArrayList              arrayList)               : this(arrayList,              (uint) arrayList   .Count)                            {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.HashSet    <T> hashset)                 : this(hashset,                (uint) hashset     .Count)                            {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.IEnumerable<T> enumerable)              : this(enumerable,             (uint) SharedList<T>.GetEnumerableLength(enumerable)) {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.LinkedList <T> list)                    : this(list,                   (uint) list     .Count)                               {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.List       <T> list)                    : this(list,                   (uint) list     .Count)                               {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.Queue      <T> queue)                   : this(queue,                  (uint) queue    .Count)                               {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.SortedSet  <T> sortedSet)               : this(sortedSet,              (uint) sortedSet.Count)                               {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.Stack      <T> stack)                   : this(stack,                  (uint) stack    .Count)                               {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Hashtable              hashtable)               : this(hashtable,              (uint) hashtable.Count)                               {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.IEnumerable            enumerable)              : this(enumerable,             (uint) SharedList<T>.GetEnumerableLength(enumerable)) {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Queue                  queue)                   : this(queue,                  (uint) queue     .Count)                              {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.SortedList             sortedList)              : this(sortedList,             (uint) sortedList.Count)                              {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Stack                  stack)                   : this(stack,                  (uint) stack     .Count)                              {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Memory        <T>                  memory)                  : this(Util.ArrayFrom(memory), (uint) memory    .Length)                             {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.ReadOnlyMemory<T>                  memory)                  : this(Util.ArrayFrom(memory), (uint) memory    .Length)                             {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.IEnumerable            enumerable, uint length) : this(length)                                                                       { if (enumerable is SharedList<T>) return; LIST.Clear(); foreach (T value in enumerable) LIST.Add(value); }
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.IEnumerable<T> enumerable, uint length) : this(length)                                                                       { if (enumerable is SharedList<T>) return; LIST.Clear(); LIST.AddRange(enumerable); }
+      [PatchConstructor, PatchMethod(AggressiveInlining)]
+      public Sequence(System.ReadOnlySpan<int> values) {
+        this.values = values.ToArray();
+      }
 
       /* … */
-      [PatchMethod(AggressiveInlining)] public void                                                 Add          (T                                         element)                                                             =>     LIST.Add          (element);
-      [PatchMethod(AggressiveInlining)] public void                                                 AddRange     (System.Collections.Generic.IEnumerable<T> enumerable)                                                          =>     LIST.AddRange     (enumerable);
-      [PatchMethod(AggressiveInlining)] public T                                                    Append       (T                                         element)                                                             =>     LIST.Append       (element);
-      [PatchMethod(AggressiveInlining)] public System.Collections.ObjectModel.ReadOnlyCollection<T> AsReadOnly   ()                                                                                                              =>     LIST.AsReadOnly   ();
-      [PatchMethod(AggressiveInlining)] public int                                                  BinarySearch (T    element)                                                                                                  =>     LIST.BinarySearch (element);
-      [PatchMethod(AggressiveInlining)] public int                                                  BinarySearch (T    element,                      System.Collections.Generic.IComparer<T>? comparer)                          =>     LIST.BinarySearch (element, comparer);
-      [PatchMethod(AggressiveInlining)] public int                                                  BinarySearch (uint index, uint count, T element, System.Collections.Generic.IComparer<T>? comparer)                          =>     LIST.BinarySearch ((int) index, (int) count, element, comparer);
-      [PatchMethod(AggressiveInlining)] public void                                                 Clear        ()                                                                                                              =>     LIST.Clear        ();
-      [PatchMethod(AggressiveInlining)] public bool                                                 Contains     (T                      element)                                                                                =>     LIST.Contains     (element);
-      [PatchMethod(AggressiveInlining)] public SharedList<U>                                        ConvertAll<U>(System.Converter<T, U> converter)                                                                              => new(LIST.ConvertAll<U>(converter));
-      [PatchMethod(AggressiveInlining)] public void                                                 CopyTo       (T[]                    array)                                                                                  =>     LIST.CopyTo       (array);
-      [PatchMethod(AggressiveInlining)] public void                                                 CopyTo       (T[]                    array, uint index)                                                                      =>     LIST.CopyTo       (array, (int) index);
-      [PatchMethod(AggressiveInlining)] public void                                                 CopyTo       (uint                   index, T[]  array, uint arrayIndex, uint count)                                         =>     LIST.CopyTo       ((int) index, array, (int) arrayIndex, (int) count);
-      [PatchMethod(AggressiveInlining)] public bool                                                 Exists       (System.Predicate<T>    predicate)                                                                              =>     LIST.Exists       (predicate);
-      [PatchMethod(AggressiveInlining)] public T?                                                   Find         (System.Predicate<T>    predicate)                                                                              =>     LIST.Find         (predicate);
-      [PatchMethod(AggressiveInlining)] public SharedList<T>                                        FindAll      (System.Predicate<T>    predicate)                                                                              => new(LIST.FindAll      (predicate));
-      [PatchMethod(AggressiveInlining)] public int                                                  FindIndex    (System.Predicate<T>    predicate)                                                                              =>     LIST.FindIndex    (predicate);
-      [PatchMethod(AggressiveInlining)] public int                                                  FindIndex    (uint                   index,             System.Predicate<T> predicate)                                       =>     LIST.FindIndex    ((int) index,              predicate);
-      [PatchMethod(AggressiveInlining)] public int                                                  FindIndex    (uint                   index, uint count, System.Predicate<T> predicate)                                       =>     LIST.FindIndex    ((int) index, (int) count, predicate);
-      [PatchMethod(AggressiveInlining)] public T?                                                   FindLast     (System.Predicate<T>    predicate)                                                                              =>     LIST.FindLast     (predicate);
-      [PatchMethod(AggressiveInlining)] public int                                                  FindLastIndex(System.Predicate<T>    predicate)                                                                              =>     LIST.FindLastIndex(predicate);
-      [PatchMethod(AggressiveInlining)] public int                                                  FindLastIndex(uint                   index,             System.Predicate<T> predicate)                                       =>     LIST.FindLastIndex((int) index,              predicate);
-      [PatchMethod(AggressiveInlining)] public int                                                  FindLastIndex(uint                   index, uint count, System.Predicate<T> predicate)                                       =>     LIST.FindLastIndex((int) index, (int) count, predicate);
-      [PatchMethod(AggressiveInlining)] public void                                                 ForEach      (System.Action<T>       action)                                                                                 =>     LIST.ForEach      (action);
-      [PatchMethod(AggressiveInlining)] public System.Collections.Generic.List<T>.Enumerator        GetEnumerator()                                                                                                              =>     LIST.GetEnumerator();
-      [PatchMethod(AggressiveInlining)] public SharedList<T>                                        GetRange     (uint                index, uint count)                                                                         => new(LIST.GetRange     ((int) index, (int) count));
-      [PatchMethod(AggressiveInlining)] public int                                                  IndexOf      (T                   element)                                                                                   =>     LIST.IndexOf      (element);
-      [PatchMethod(AggressiveInlining)] public int                                                  IndexOf      (T                   element, uint                                      index)                                  =>     LIST.IndexOf      (element, (int) index);
-      [PatchMethod(AggressiveInlining)] public int                                                  IndexOf      (T                   element, uint                                      index, uint count)                      =>     LIST.IndexOf      (element, (int) index, (int) count);
-      [PatchMethod(AggressiveInlining)] public void                                                 Insert       (uint                index,   T                                         element)                                =>     LIST.Insert       ((int) index,   element);
-      [PatchMethod(AggressiveInlining)] public void                                                 InsertRange  (uint                index,   System.Collections.Generic.IEnumerable<T> enumerable)                             =>     LIST.InsertRange  ((int) index,   enumerable);
-      [PatchMethod(AggressiveInlining)] public int                                                  LastIndexOf  (T                   element)                                                                                   =>     LIST.LastIndexOf  (element);
-      [PatchMethod(AggressiveInlining)] public int                                                  LastIndexOf  (T                   element, uint index)                                                                       =>     LIST.LastIndexOf  (element, (int) index);
-      [PatchMethod(AggressiveInlining)] public int                                                  LastIndexOf  (T                   element, uint index, uint count)                                                           =>     LIST.LastIndexOf  (element, (int) index, (int) count);
-      [PatchMethod(AggressiveInlining)] public T                                                    Prepend      (T                   element)                                                                                   =>     LIST.Prepend      (element);
-      [PatchMethod(AggressiveInlining)] public bool                                                 Remove       (T                   element)                                                                                   =>     LIST.Remove       (element);
-      [PatchMethod(AggressiveInlining)] public int                                                  RemoveAll    (System.Predicate<T> predicate)                                                                                 =>     LIST.RemoveAll    (predicate);
-      [PatchMethod(AggressiveInlining)] public void                                                 RemoveAt     (int                 index)                                                                                     =>     LIST.RemoveAt     (index);
-      [PatchMethod(AggressiveInlining)] public void                                                 RemoveRange  (uint                index, uint count)                                                                         =>     LIST.RemoveRange  ((int) index, (int) count);
-      [PatchMethod(AggressiveInlining)] public void                                                 Reverse      ()                                                                                                              =>     LIST.Reverse      ();
-      [PatchMethod(AggressiveInlining)] public void                                                 Reverse      (uint index, uint count)                                                                                        =>     LIST.Reverse      ((int) index, (int) count);
-      [PatchMethod(AggressiveInlining)] public void                                                 Sort         ()                                                                                                              =>     LIST.Sort         ();
-      [PatchMethod(AggressiveInlining)] public void                                                 Sort         (System.Collections.Generic.IComparer<T>? comparer)                                                             =>     LIST.Sort         (comparer);
-      [PatchMethod(AggressiveInlining)] public void                                                 Sort         (System.Comparison                   <T>? comparison)                                                           =>     LIST.Sort         (comparison);
-      [PatchMethod(AggressiveInlining)] public void                                                 Sort         (uint                                     index, uint count, System.Collections.Generic.IComparer<T>? comparer) =>     LIST.Sort         ((int) index, (int) count, comparer);
-      [PatchMethod(AggressiveInlining)] public T[]                                                  ToArray      ()                                                                                                              =>     LIST.ToArray      ();
-      [PatchMethod(AggressiveInlining)] public void                                                 TrimExcess   ()                                                                                                              =>     LIST.TrimExcess   ();
-      [PatchMethod(AggressiveInlining)] public bool                                                 TrueForAll   (System.Predicate<T> predicate)                                                                                 =>     LIST.TrueForAll   (predicate);
+      [PatchMethod(AggressiveInlining)] public static Sequence                                    Create                                      (System.ReadOnlySpan<int> values) => new(values);
+      [PatchMethod(AggressiveInlining)] public        System.Collections.Generic.IEnumerator<int> GetEnumerator                               () => ((System.Collections.Generic.IEnumerable<int>) this.values).GetEnumerator();
+      [PatchMethod(AggressiveInlining)] System.Collections.IEnumerator                            System.Collections.IEnumerable.GetEnumerator() => this.values.GetEnumerator();
 
-      [PatchMethod(AggressiveInlining)]
-      private protected static uint GetEnumerableLength(System.Collections.IEnumerable enumerable) {
-        System.Collections.IEnumerator enumerator = enumerable.GetEnumerator();
-        uint                           length     = 0u;
+      [PatchMethod(AggressiveInlining)] public static explicit operator int[](Sequence sequence) => sequence.values;
+    }
 
-        // …
-        while (enumerator.MoveNext())
-          ++length;
+    public class SharedList<T> : System.Collections.IList, System.Collections.Generic.IList<T> {
+      protected internal static System.Collections.Generic.List<T> LIST = new(); // ⟶ Singleton composition over inheritance
+      public int Capacity                                             { [PatchMethod(AggressiveInlining)] get => LIST.Capacity; [PatchMethod(AggressiveInlining)] set => LIST.Capacity = value; }
+      public int Count                                                { [PatchMethod(AggressiveInlining)] get => LIST.Count;    [PatchMethod(AggressiveInlining)] set => LIST.Count    = value; }
+      int        System.Collections.Generic.ICollection<T>.Count      { [PatchMethod(AggressiveInlining)] get => LIST.Count; }
+      bool       System.Collections.Generic.ICollection<T>.IsReadOnly { [PatchMethod(AggressiveInlining)] get => false; }
+      int        System.Collections.ICollection.Count                 { [PatchMethod(AggressiveInlining)] get => LIST.Count; }
+      bool       System.Collections.ICollection.IsSynchronized        { [PatchMethod(AggressiveInlining)] get => false; }
+      object     System.Collections.ICollection.SyncRoot              { [PatchMethod(AggressiveInlining)] get => LIST; }
+      bool       System.Collections.IList.IsFixedSize                 { [PatchMethod(AggressiveInlining)] get => false; }
+      bool       System.Collections.IList.IsReadOnly                  { [PatchMethod(AggressiveInlining)] get => false; }
 
-        (enumerator as System.IDisposable)?.Dispose();
-        return length;
-      }
+      /* … */
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(uint                                      capacity = 0u)                                                                                   { LIST.Capacity = System.Math.Max(LIST.Capacity, (int) capacity); }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(T[]                                       array)                   : this(array,                  (uint) array       .Length)              {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Array                              array)                   : this(array,                  (uint) array       .Length)              {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.ArraySegment<T>                    arraySegment)            : this(arraySegment,           (uint) arraySegment.Count)               {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.ArrayList              arrayList)               : this(arrayList,              (uint) arrayList   .Count)               {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.HashSet    <T> hashset)                 : this(hashset,                (uint) hashset     .Count)               {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.IEnumerable<T> enumerable)              : this(enumerable,             (uint) Util.EnumerableCount(enumerable)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.LinkedList <T> list)                    : this(list,                   (uint) list     .Count)                  {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.List       <T> list)                    : this(list,                   (uint) list     .Count)                  {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.Queue      <T> queue)                   : this(queue,                  (uint) queue    .Count)                  {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.SortedSet  <T> sortedSet)               : this(sortedSet,              (uint) sortedSet.Count)                  {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.Stack      <T> stack)                   : this(stack,                  (uint) stack    .Count)                  {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.IEnumerable            enumerable)              : this(enumerable,             (uint) Util.EnumerableCount(enumerable)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Queue                  queue)                   : this(queue,                  (uint) queue     .Count)                 {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.SortedList             sortedList)              : this(sortedList,             (uint) sortedList.Count)                 {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Stack                  stack)                   : this(stack,                  (uint) stack     .Count)                 {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Memory        <T>                  memory)                  : this(Util.ArrayFrom(memory), (uint) memory    .Length)                {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.ReadOnlyMemory<T>                  memory)                  : this(Util.ArrayFrom(memory), (uint) memory    .Length)                {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.IEnumerable            enumerable, uint length) : this(length)                                                          { if (enumerable is SharedList<T>) return; LIST.Clear(); foreach (object value in enumerable) LIST.Add((T) value); }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public SharedList(System.Collections.Generic.IEnumerable<T> enumerable, uint length) : this(length)                                                          { if (enumerable is SharedList<T>) return; LIST.Clear(); LIST.AddRange(enumerable); }
 
-      [PatchMethod(AggressiveInlining)] System.Collections.IEnumerator            System.Collections.IEnumerable.GetEnumerator           () => this.GetEnumerator();
-      [PatchMethod(AggressiveInlining)] System.Collections.Generic.IEnumerator<T> System.Collections.Generic.IEnumerable<T>.GetEnumerator() => this.GetEnumerator();
+      /* … */
+      [PatchMethod(AggressiveInlining)] public void                                                 Add                                                    (in T                                      element)                                                             =>     LIST.Add          (element);
+      [PatchMethod(AggressiveInlining)] public void                                                 AddRange                                               (System.Collections.Generic.IEnumerable<T> enumerable)                                                          =>     LIST.AddRange     (enumerable);
+      [PatchMethod(AggressiveInlining)] public ref readonly T                                       Append                                                 (in T                                      element)                                                             => ref LIST.Append       (element);
+      [PatchMethod(AggressiveInlining)] public System.Collections.ObjectModel.ReadOnlyCollection<T> AsReadOnly                                             ()                                                                                                              =>     LIST.AsReadOnly   ();
+      [PatchMethod(AggressiveInlining)] public int                                                  BinarySearch                                           (in T element)                                                                                                  =>     LIST.BinarySearch (element);
+      [PatchMethod(AggressiveInlining)] public int                                                  BinarySearch                                           (in T element,                      System.Collections.Generic.IComparer<T>? comparer)                          =>     LIST.BinarySearch (element, comparer);
+      [PatchMethod(AggressiveInlining)] public int                                                  BinarySearch                                           (uint index, uint count, T element, System.Collections.Generic.IComparer<T>? comparer)                          =>     LIST.BinarySearch ((int) index, (int) count, element, comparer);
+      [PatchMethod(AggressiveInlining)] public void                                                 Clear                                                  ()                                                                                                              =>     LIST.Clear        ();
+      [PatchMethod(AggressiveInlining)] public bool                                                 Contains                                               (in T                   element)                                                                                =>     LIST.Contains     (element);
+      [PatchMethod(AggressiveInlining)] public SharedList<U>                                        ConvertAll<U>                                          (System.Converter<T, U> converter)                                                                              => new(LIST.ConvertAll<U>(converter));
+      [PatchMethod(AggressiveInlining)] public void                                                 CopyTo                                                 (T[]                    array)                                                                                  =>     LIST.CopyTo       (array);
+      [PatchMethod(AggressiveInlining)] public void                                                 CopyTo                                                 (T[]                    array, uint index)                                                                      =>     LIST.CopyTo       (array, (int) index);
+      [PatchMethod(AggressiveInlining)] public void                                                 CopyTo                                                 (uint                   index, T[]  array, uint arrayIndex, uint count)                                         =>     LIST.CopyTo       ((int) index, array, (int) arrayIndex, (int) count);
+      [PatchMethod(AggressiveInlining)] public bool                                                 Exists                                                 (System.Predicate<T>    predicate)                                                                              =>     LIST.Exists       (predicate);
+      [PatchMethod(AggressiveInlining)] public T?                                                   Find                                                   (System.Predicate<T>    predicate)                                                                              =>     LIST.Find         (predicate);
+      [PatchMethod(AggressiveInlining)] public SharedList<T>                                        FindAll                                                (System.Predicate<T>    predicate)                                                                              => new(LIST.FindAll      (predicate));
+      [PatchMethod(AggressiveInlining)] public int                                                  FindIndex                                              (System.Predicate<T>    predicate)                                                                              =>     LIST.FindIndex    (predicate);
+      [PatchMethod(AggressiveInlining)] public int                                                  FindIndex                                              (uint                   index,             System.Predicate<T> predicate)                                       =>     LIST.FindIndex    ((int) index,              predicate);
+      [PatchMethod(AggressiveInlining)] public int                                                  FindIndex                                              (uint                   index, uint count, System.Predicate<T> predicate)                                       =>     LIST.FindIndex    ((int) index, (int) count, predicate);
+      [PatchMethod(AggressiveInlining)] public T?                                                   FindLast                                               (System.Predicate<T>    predicate)                                                                              =>     LIST.FindLast     (predicate);
+      [PatchMethod(AggressiveInlining)] public int                                                  FindLastIndex                                          (System.Predicate<T>    predicate)                                                                              =>     LIST.FindLastIndex(predicate);
+      [PatchMethod(AggressiveInlining)] public int                                                  FindLastIndex                                          (uint                   index,             System.Predicate<T> predicate)                                       =>     LIST.FindLastIndex((int) index,              predicate);
+      [PatchMethod(AggressiveInlining)] public int                                                  FindLastIndex                                          (uint                   index, uint count, System.Predicate<T> predicate)                                       =>     LIST.FindLastIndex((int) index, (int) count, predicate);
+      [PatchMethod(AggressiveInlining)] public void                                                 ForEach                                                (System.Action<T>       action)                                                                                 =>     LIST.ForEach      (action);
+      [PatchMethod(AggressiveInlining)] public System.Collections.Generic.List<T>.Enumerator        GetEnumerator                                          ()                                                                                                              =>     LIST.GetEnumerator();
+      [PatchMethod(AggressiveInlining)] public SharedList<T>                                        GetRange                                               (uint                index, uint count)                                                                         => new(LIST.GetRange     ((int) index, (int) count));
+      [PatchMethod(AggressiveInlining)] public int                                                  IndexOf                                                (in T                element)                                                                                   =>     LIST.IndexOf      (element);
+      [PatchMethod(AggressiveInlining)] public int                                                  IndexOf                                                (in T                element, uint                                      index)                                  =>     LIST.IndexOf      (element, (int) index);
+      [PatchMethod(AggressiveInlining)] public int                                                  IndexOf                                                (in T                element, uint                                      index, uint count)                      =>     LIST.IndexOf      (element, (int) index, (int) count);
+      [PatchMethod(AggressiveInlining)] public void                                                 Insert                                                 (uint                index,   in T                                      element)                                =>     LIST.Insert       ((int) index,   element);
+      [PatchMethod(AggressiveInlining)] public void                                                 InsertRange                                            (uint                index,   System.Collections.Generic.IEnumerable<T> enumerable)                             =>     LIST.InsertRange  ((int) index,   enumerable);
+      [PatchMethod(AggressiveInlining)] public int                                                  LastIndexOf                                            (in T                element)                                                                                   =>     LIST.LastIndexOf  (element);
+      [PatchMethod(AggressiveInlining)] public int                                                  LastIndexOf                                            (in T                element, uint index)                                                                       =>     LIST.LastIndexOf  (element, (int) index);
+      [PatchMethod(AggressiveInlining)] public int                                                  LastIndexOf                                            (in T                element, uint index, uint count)                                                           =>     LIST.LastIndexOf  (element, (int) index, (int) count);
+      [PatchMethod(AggressiveInlining)] public ref readonly T                                       Prepend                                                (in T                element)                                                                                   => ref LIST.Prepend      (element);
+      [PatchMethod(AggressiveInlining)] public bool                                                 Remove                                                 (in T                element)                                                                                   =>     LIST.Remove       (element);
+      [PatchMethod(AggressiveInlining)] public int                                                  RemoveAll                                              (System.Predicate<T> predicate)                                                                                 =>     LIST.RemoveAll    (predicate);
+      [PatchMethod(AggressiveInlining)] public void                                                 RemoveAt                                               (uint                index)                                                                                     =>     LIST.RemoveAt     ((int) index);
+      [PatchMethod(AggressiveInlining)] public void                                                 RemoveRange                                            (uint                index, uint count)                                                                         =>     LIST.RemoveRange  ((int) index, (int) count);
+      [PatchMethod(AggressiveInlining)] public void                                                 Reverse                                                ()                                                                                                              =>     LIST.Reverse      ();
+      [PatchMethod(AggressiveInlining)] public void                                                 Reverse                                                (uint index, uint count)                                                                                        =>     LIST.Reverse      ((int) index, (int) count);
+      [PatchMethod(AggressiveInlining)] public void                                                 Sort                                                   ()                                                                                                              =>     LIST.Sort         ();
+      [PatchMethod(AggressiveInlining)] public void                                                 Sort                                                   (System.Collections.Generic.IComparer<T>? comparer)                                                             =>     LIST.Sort         (comparer);
+      [PatchMethod(AggressiveInlining)] public void                                                 Sort                                                   (System.Comparison                   <T>? comparison)                                                           =>     LIST.Sort         (comparison);
+      [PatchMethod(AggressiveInlining)] public void                                                 Sort                                                   (uint                                     index, uint count, System.Collections.Generic.IComparer<T>? comparer) =>     LIST.Sort         ((int) index, (int) count, comparer);
+      [PatchMethod(AggressiveInlining)] public T[]                                                  ToArray                                                ()                                                                                                              =>     LIST.ToArray      ();
+      [PatchMethod(AggressiveInlining)] public void                                                 TrimExcess                                             ()                                                                                                              =>     LIST.TrimExcess   ();
+      [PatchMethod(AggressiveInlining)] public bool                                                 TrueForAll                                             (System.Predicate<T> predicate)                                                                                 =>     LIST.TrueForAll   (predicate);
+      [PatchMethod(AggressiveInlining)] void                                                        System.Collections.Generic.ICollection<T>.Add          (T                   element)                                                                                   =>     LIST.Add          (element);
+      [PatchMethod(AggressiveInlining)] void                                                        System.Collections.Generic.ICollection<T>.Clear        ()                                                                                                              =>     LIST.Clear        ();
+      [PatchMethod(AggressiveInlining)] bool                                                        System.Collections.Generic.ICollection<T>.Contains     (T   element)                                                                                                   =>     LIST.Contains     (element);
+      [PatchMethod(AggressiveInlining)] void                                                        System.Collections.Generic.ICollection<T>.CopyTo       (T[] array, int index)                                                                                          =>     LIST.CopyTo       (array, index);
+      [PatchMethod(AggressiveInlining)] bool                                                        System.Collections.Generic.ICollection<T>.Remove       (T   element)                                                                                                   =>     LIST.Remove       (element);
+      [PatchMethod(AggressiveInlining)] System.Collections.Generic.IEnumerator<T>                   System.Collections.Generic.IEnumerable<T>.GetEnumerator()                                                                                                              =>     LIST.GetEnumerator();
+      [PatchMethod(AggressiveInlining)] int                                                         System.Collections.Generic.IList<T>.IndexOf            (T            element)                                                                                          =>     LIST.IndexOf      (element);
+      [PatchMethod(AggressiveInlining)] void                                                        System.Collections.Generic.IList<T>.Insert             (int          index, T element)                                                                                 =>     LIST.Insert       (index, element);
+      [PatchMethod(AggressiveInlining)] void                                                        System.Collections.Generic.IList<T>.RemoveAt           (int          index)                                                                                            =>     LIST.RemoveAt     (index);
+      [PatchMethod(AggressiveInlining)] void                                                        System.Collections.ICollection.CopyTo                  (System.Array array, int index)                                                                                 =>     LIST.CopyTo       (array, index);
+      [PatchMethod(AggressiveInlining)] System.Collections.IEnumerator                              System.Collections.IEnumerable.GetEnumerator           ()                                                                                                              =>     LIST.GetEnumerator();
+      [PatchMethod(AggressiveInlining)] int                                                         System.Collections.IList.Add                           (object? element)                                                                                               =>     LIST.Add          (element);
+      [PatchMethod(AggressiveInlining)] void                                                        System.Collections.IList.Clear                         ()                                                                                                              =>     LIST.Clear        ();
+      [PatchMethod(AggressiveInlining)] bool                                                        System.Collections.IList.Contains                      (object? element)                                                                                               =>     LIST.Contains     (element);
+      [PatchMethod(AggressiveInlining)] int                                                         System.Collections.IList.IndexOf                       (object? element)                                                                                               =>     LIST.IndexOf      (element);
+      [PatchMethod(AggressiveInlining)] void                                                        System.Collections.IList.Insert                        (int     index, object? element)                                                                                =>     LIST.Insert       (index, element);
+      [PatchMethod(AggressiveInlining)] void                                                        System.Collections.IList.Remove                        (object? element)                                                                                               =>     LIST.Remove       (element);
+      [PatchMethod(AggressiveInlining)] void                                                        System.Collections.IList.RemoveAt                      (int     index)                                                                                                 =>     LIST.RemoveAt     (index);
 
-      public T this[uint index] {
-        [PatchMethod(AggressiveInlining)]
-        get {
-          return LIST[(int) index];
-        }
-      }
+      public T this[int index] { [PatchMethod(AggressiveInlining)] get => LIST[index]; }
     }
       public class GameObjectSharedList<T> : PatchOdyssey.Collections.SharedList<T> where T : UnityEngine.Object /* ⟶ UnityEngine.Component or UnityEngine.GameObject */ {
         [PatchConstructor, PatchMethod(AggressiveInlining)] internal GameObjectSharedList(uint                    capacity = 0u) : base(capacity) {}
@@ -1050,19 +1358,19 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         [PatchConstructor, PatchMethod(AggressiveInlining)] private  GameObjectSharedList(SharedList          <T> list)          : base(list)     {}
 
         /* … */
-        [PatchMethod(AggressiveInlining)] internal           new void                    Add          (T                                         element)                                                             =>     base.Add          (element);
+        [PatchMethod(AggressiveInlining)] internal           new void                    Add          (in T                                      element)                                                             =>     base.Add          (element);
         [PatchMethod(AggressiveInlining)] internal           new void                    AddRange     (System.Collections.Generic.IEnumerable<T> enumerable)                                                          =>     base.AddRange     (enumerable);
-        [PatchMethod(AggressiveInlining)] internal           new T                       Append       (T                                         element)                                                             =>     base.Append       (element);
+        [PatchMethod(AggressiveInlining)] internal           new ref readonly T          Append       (in T                                      element)                                                             => ref base.Append       (element);
         [PatchMethod(AggressiveInlining)] internal           new void                    Clear        ()                                                                                                              =>     base.Clear        ();
         [PatchMethod(AggressiveInlining)] public             new GameObjectSharedList<U> ConvertAll<U>(System.Converter<T, U> converter) where U : UnityEngine.Object /* ⟶ T */                                      => new(base.ConvertAll<U>(converter));
         [PatchMethod(AggressiveInlining)] internal           new GameObjectSharedList<T> FindAll      (System.Predicate<T>    predicate)                                                                              => new(base.FindAll      (predicate));
         [PatchMethod(AggressiveInlining)] internal           new GameObjectSharedList<T> GetRange     (uint                   index, uint                                      count)                                 => new(base.GetRange     (index, count));
-        [PatchMethod(AggressiveInlining)] internal           new void                    Insert       (uint                   index, T                                         element)                               =>     base.Insert       (index,   element);
+        [PatchMethod(AggressiveInlining)] internal           new void                    Insert       (uint                   index, in T                                      element)                               =>     base.Insert       (index,   element);
         [PatchMethod(AggressiveInlining)] internal           new void                    InsertRange  (uint                   index, System.Collections.Generic.IEnumerable<T> enumerable)                            =>     base.InsertRange  (index,   enumerable);
-        [PatchMethod(AggressiveInlining)] internal           new T                       Prepend      (T                      element)                                                                                =>     base.Prepend      (element);
-        [PatchMethod(AggressiveInlining)] internal           new bool                    Remove       (T                      element)                                                                                =>     base.Remove       (element);
+        [PatchMethod(AggressiveInlining)] internal           new ref readonly T          Prepend      (in T                   element)                                                                                => ref base.Prepend      (element);
+        [PatchMethod(AggressiveInlining)] internal           new bool                    Remove       (in T                   element)                                                                                =>     base.Remove       (element);
         [PatchMethod(AggressiveInlining)] internal           new int                     RemoveAll    (System.Predicate<T>    predicate)                                                                              =>     base.RemoveAll    (predicate);
-        [PatchMethod(AggressiveInlining)] internal           new void                    RemoveAt     (int                    index)                                                                                  =>     base.RemoveAt     (index);
+        [PatchMethod(AggressiveInlining)] internal           new void                    RemoveAt     (uint                   index)                                                                                  =>     base.RemoveAt     (index);
         [PatchMethod(AggressiveInlining)] internal           new void                    RemoveRange  (uint                   index, uint count)                                                                      =>     base.RemoveRange  (index, count);
         [PatchMethod(AggressiveInlining)] internal           new void                    Reverse      ()                                                                                                              =>     base.Reverse      ();
         [PatchMethod(AggressiveInlining)] internal           new void                    Reverse      (uint index, uint count)                                                                                        =>     base.Reverse      (index, count);
@@ -1109,38 +1417,28 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       }
 
     internal readonly struct WaitInfo /* ⟶ Considered `UnityEngine.MonoBehaviour::Invoke[Repeating](nameof(𝑓) or ((System.Delegate) 𝑓).Method.Name, delay[, interval])` */ {
-      private sealed Waiter : UnityEngine.MonoBehaviour {}
+      private sealed class Waiter : UnityEngine.MonoBehaviour {}
 
       /* … */
       internal static          UnityEngine.MonoBehaviour                                                              WAIT  = new UnityEngine.GameObject("…").AddComponent<WaitInfo.Waiter>();
-      internal static readonly System.Collections.Generic.SortedDictionary<double, PatchOdyssey.Collections.WaitInfo> WAITS = new(new System.Collections.Generic.Dictionary<double, PatchOdyssey.Collections.WaitInfo>(16)) {{double.NaN, new()}};
+      internal static readonly System.Collections.Generic.SortedDictionary<double, PatchOdyssey.Collections.WaitInfo> WAITS = new(new System.Collections.Generic.Dictionary<double, PatchOdyssey.Collections.WaitInfo>(16) {{double.NaN, new()}});
 
-      internal readonly UnityEngine.Coroutine?                                                            coroutine = null;
-      internal readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.WaitForTimerEvent> handlers  = new();
+      internal readonly UnityEngine.Coroutine?                                                    coroutine = null;
+      internal readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.WaitEvent> handlers  = new();
 
       /* … */
-      [PatchConstructor, PatchMethod(AggressiveInlining)]
-      public WaitInfo() {}
-
-      [PatchConstructor, PatchMethod(AggressiveInlining)]
-      internal WaitInfo(PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.WaitForTimerEvent> handler) {
-        this.handlers += handler;
-      }
-
-      [PatchConstructor, PatchMethod(AggressiveInlining)]
-      internal WaitInfo(UnityEngine.Coroutine coroutine, PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.WaitForTimerEvent> handler) {
-        this.coroutine = coroutine;
-        this.handlers += handler;
-      }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public   WaitInfo()                                                                                                                                                                           {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] internal WaitInfo(in PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.WaitEvent> handler)                                                                                        { this.handlers = new(handler); }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] internal WaitInfo(UnityEngine.Coroutine                                                       coroutine, in PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.WaitEvent> handler) { this.handlers = new(handler); this.coroutine = coroutine; }
     }
   }
 
   /* … */
-  public delegate void    Handler        (object? target,   PatchOdyssey.Collections.Event data);         // ⟶ Handles completed `Load`, `Wait`, … operations i.e. `System.EventHandler`
-  public delegate void    Handler<T>     (object? target,   T                              data);         //    ^^
-  public delegate object? Interpolator   (double  progress, object?                        a, object? b); // ⟶ Interpolates `::begin` and `::end` properties in `Animation.UIKeyframe["…"]`
-  public delegate T       Interpolator<T>(double  progress, T                              a, T       b); //    ^^
-  public delegate double  Tweener        (double  time);                                                  // ⟶ Adjusts interpolation be-tween `Interpolator(…)`'s `progress` from `a` to `b`
+  public delegate void    Handler        (object? target,   in PatchOdyssey.Collections.Event data);         // ⟶ Handles completed `Load`, `Wait`, … operations i.e. `System.EventHandler`
+  public delegate void    Handler<T>     (object? target,   in T                              data);         //    ^^
+  public delegate object? Interpolator   (double  progress, object?                           a, object? b); // ⟶ Interpolates `::begin` and `::end` properties in `Animation.UIKeyframe["…"]`
+  public delegate T       Interpolator<T>(double  progress, in T                              a, in T    b); //    ^^
+  public delegate double  Tweener        (double  time);                                                     // ⟶ Adjusts interpolation be-tween `Interpolator(…)`’s `progress` from `a` to `b`
 
   public sealed class ReadOnlyInInspectorAttribute : UnityEngine.PropertyAttribute, Unity.Collections.ReadOnlyAttribute {
     /* ⟶ Display property in Unity Inspector as “read-only” */
@@ -1369,10 +1667,10 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     [PatchMethod(AggressiveInlining)] public static void AddRange<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable) { foreach (System.Collections.Generic.KeyValuePair<TKey, TValue> element in dictionary) dictionary.Add(element.Key, element.Value); }
     [PatchMethod(AggressiveInlining)] public static void AddRange<T>           (this System.Collections.Generic.IList      <T>            list,       System.Collections.Generic.IEnumerable<T>                                                     enumerable) { foreach (T                                                     value   in enumerable) list      .Add(value); }
 
-    [PatchMethod(AggressiveInlining)] public static object? Append   (this System.Collections.ArrayList             arrayList, object? value) { arrayList.Add    (value); return value; }
-    [PatchMethod(AggressiveInlining)] public static T       Append<T>(this System.Collections.ArrayList             arrayList, T       value) { arrayList.Add    (value); return value; }
-    [PatchMethod(AggressiveInlining)] public static T       Append<T>(this System.Collections.Generic.LinkedList<T> list,      T       value) { list     .AddLast(value); return value; }
-    [PatchMethod(AggressiveInlining)] public static T       Append<T>(this System.Collections.Generic.List      <T> list,      T       value) { list     .Add    (value); return value; }
+    [PatchMethod(AggressiveInlining)] public static ref readonly object? Append   (this System.Collections.ArrayList             arrayList, in object? value) { arrayList.Add    (value); return value; }
+    [PatchMethod(AggressiveInlining)] public static ref readonly T       Append<T>(this System.Collections.ArrayList             arrayList, in T       value) { arrayList.Add    (value); return value; }
+    [PatchMethod(AggressiveInlining)] public static ref readonly T       Append<T>(this System.Collections.Generic.LinkedList<T> list,      in T       value) { list     .AddLast(value); return value; }
+    [PatchMethod(AggressiveInlining)] public static ref readonly T       Append<T>(this System.Collections.Generic.List      <T> list,      in T       value) { list     .Add    (value); return value; }
 
     [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyCollection<T>            AsReadOnly<T>           (this T[]                                                  array)      => System.Array.AsReadOnly<T>(array);
     [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyDictionary<TKey, TValue> AsReadOnly<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary) { (dictionary as System.Collections.Generic.Dictionary<TKey, TValue>)?.TrimExcess(/* dictionary.Keys.Count */); return new(dictionary); } // ⟶ `System.Collections.Generic.CollectionExtensions.AsReadOnly<TKey, TValue>(dictionary);`
@@ -1534,7 +1832,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      FindChildren<T>(this UnityEngine.GameObject gameObject, System.Predicate<T>                      predicate) where T : UnityEngine.Component { GameObjectSharedList<T>                      children = new((uint) gameObject.transform.childCount); children.Clear(); foreach (UnityEngine.GameObject child in gameObject.EnumerateChildren()) { T? component = child.GetComponent<T>(); if (component is not null && predicate(component)) children.Add(component); } return children; }
 
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                     FindChildrenByComponent<T>(this UnityEngine.Component  component)  where T : UnityEngine.Component => component.gameObject.FindChildrenByComponent<T>();
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                     FindChildrenByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject          .FindChildrenByComponent(typeof(T)).ConvertAll(static child => (T) child);
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                     FindChildrenByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject          .FindChildrenByComponent(typeof(T)).ConvertAll([PatchMethod(AggressiveInlining)] static child => (T) child);
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.Component> FindChildrenByComponent   (this UnityEngine.Component  component,  System.Type type)               => component.gameObject.FindChildrenByComponent(type);
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.Component> FindChildrenByComponent   (this UnityEngine.GameObject gameObject, System.Type type)               { GameObjectSharedList<UnityEngine.Component> children = new((uint) gameObject.transform.childCount); children.Clear(); foreach (UnityEngine.GameObject child in gameObject.EnumerateChildren()) { UnityEngine.Component? component = child.GetComponent(type); if (component is not null) children.Add(component); } return children; }
 
@@ -1569,7 +1867,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      FindDescendants<T>(this UnityEngine.GameObject gameObject, System.Predicate<T>                      predicate) where T : UnityEngine.Component { GameObjectSharedList<T>                      descendants = new((uint) gameObject.transform.childCount); descendants.Clear(); foreach (UnityEngine.GameObject descendant in gameObject.EnumerateDescendants()) { T? component = descendant.GetComponent<T>(); if (component is not null && predicate(component))  descendants.Add(component); }  return descendants; }
 
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                     FindDescendantsByComponent<T>(this UnityEngine.Component  component)  where T : UnityEngine.Component => component.gameObject.FindDescendantsByComponent<T>();
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                     FindDescendantsByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject          .FindDescendantsByComponent(typeof(T)).ConvertAll(static descendant => (T) descendant);
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                     FindDescendantsByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject          .FindDescendantsByComponent(typeof(T)).ConvertAll([PatchMethod(AggressiveInlining)] static descendant => (T) descendant);
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.Component> FindDescendantsByComponent   (this UnityEngine.Component  component,  System.Type type)               => component.gameObject.FindDescendantsByComponent(type);
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.Component> FindDescendantsByComponent   (this UnityEngine.GameObject gameObject, System.Type type)               { GameObjectSharedList<UnityEngine.Component> descendants = new((uint) gameObject.transform.childCount); descendants.Clear(); foreach (UnityEngine.GameObject descendant in gameObject.EnumerateDescendants()) { UnityEngine.Component? component = descendant.GetComponent(type); if (component is not null) descendants.Add(component); } return descendants; }
 
@@ -1585,7 +1883,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      FindHierarchy<T>(this UnityEngine.GameObject gameObject, System.Predicate<T>                      predicate) where T : UnityEngine.Component { GameObjectSharedList<T>                      hierarchy = new((uint) gameObject.transform.childCount); hierarchy.Clear(); foreach (UnityEngine.GameObject child in gameObject.EnumerateHierarchy()) { T? component = child.GetComponent<T>(); if (component is not null && predicate(component)) hierarchy.Add(component); } return hierarchy; }
 
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                     FindHierarchyByComponent<T>(this UnityEngine.Component  component)  where T : UnityEngine.Component => component.gameObject.FindHierarchyByComponent<T>();
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                     FindHierarchyByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject          .FindHierarchyByComponent(typeof(T)).ConvertAll(static _ => (T) _);
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                     FindHierarchyByComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject          .FindHierarchyByComponent(typeof(T)).ConvertAll([PatchMethod(AggressiveInlining)] static _ => (T) _);
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.Component> FindHierarchyByComponent   (this UnityEngine.Component  component,  System.Type type)               => component.gameObject.FindHierarchyByComponent(type);
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.Component> FindHierarchyByComponent   (this UnityEngine.GameObject gameObject, System.Type type)               { GameObjectSharedList<UnityEngine.Component> hierarchy = new((uint) gameObject.transform.childCount); hierarchy.Clear(); foreach (UnityEngine.GameObject child in gameObject.EnumerateHierarchy()) { UnityEngine.Component? component = child.GetComponent(type); if (component is not null) hierarchy.Add(component); } return hierarchy; }
 
@@ -1615,18 +1913,18 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.Component>  GetChildren   (this UnityEngine.Component  component)                                  => component .FindChildrenByComponent(component.GetType());
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetChildren<T>(this UnityEngine.Component  component) where T : UnityEngine.Component  => component .FindChildrenByComponent<T>();
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.GameObject> GetChildren   (this UnityEngine.GameObject gameObject)                                 => gameObject.FindChildren   (static child => true);
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetChildren<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject.FindChildren<T>(static child => true);
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.GameObject> GetChildren   (this UnityEngine.GameObject gameObject)                                 => gameObject.FindChildren   ([PatchMethod(AggressiveInlining)] static child => true);
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetChildren<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject.FindChildren<T>([PatchMethod(AggressiveInlining)] static child => true);
 
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.Component>  GetDescendants   (this UnityEngine.Component  component)                                  => component .FindDescendantsByComponent(component.GetType());
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetDescendants<T>(this UnityEngine.Component  component) where T : UnityEngine.Component  => component .FindDescendantsByComponent<T>();
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.GameObject> GetDescendants   (this UnityEngine.GameObject gameObject)                                 => gameObject.FindDescendants   (static child => true);
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetDescendants<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject.FindDescendants<T>(static child => true);
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.GameObject> GetDescendants   (this UnityEngine.GameObject gameObject)                                 => gameObject.FindDescendants   ([PatchMethod(AggressiveInlining)] static child => true);
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetDescendants<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject.FindDescendants<T>([PatchMethod(AggressiveInlining)] static child => true);
 
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.Component>  GetHierarchy   (this UnityEngine.Component  component)                                  => component .FindHierarchyByComponent(component.GetType());
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetHierarchy<T>(this UnityEngine.Component  component) where T : UnityEngine.Component  => component .FindHierarchyByComponent<T>();
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.GameObject> GetHierarchy   (this UnityEngine.GameObject gameObject)                                 => gameObject.FindHierarchy   (static child => true);
-    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetHierarchy<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject.FindHierarchy<T>(static child => true);
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.GameObject> GetHierarchy   (this UnityEngine.GameObject gameObject)                                 => gameObject.FindHierarchy   ([PatchMethod(AggressiveInlining)] static child => true);
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetHierarchy<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject.FindHierarchy<T>([PatchMethod(AggressiveInlining)] static child => true);
 
     [PatchMethod(AggressiveInlining)] public static UnityEngine.GameObject GetParent(this UnityEngine.Component  component)  => component.gameObject.GetParent();
     [PatchMethod(AggressiveInlining)] public static UnityEngine.GameObject GetParent(this UnityEngine.GameObject gameObject) { return gameObject.transform.parent.gameObject; }
@@ -1658,10 +1956,10 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     [PatchMethod(AggressiveInlining)] public static int LastIndexOf<T>(this T[]          array, T       value, int index)            => System.Array.LastIndexOf<T>(array, value, index);
     [PatchMethod(AggressiveInlining)] public static int LastIndexOf<T>(this T[]          array, T       value, int index, int count) => System.Array.LastIndexOf<T>(array, value, index, count);
 
-    [PatchMethod(AggressiveInlining)] public static object? Prepend   (this System.Collections.ArrayList             arrayList, object? value) { arrayList.Insert  (0, value); return value; }
-    [PatchMethod(AggressiveInlining)] public static T       Prepend<T>(this System.Collections.ArrayList             arrayList, T       value) { arrayList.Insert  (0, value); return value; }
-    [PatchMethod(AggressiveInlining)] public static T       Prepend<T>(this System.Collections.Generic.LinkedList<T> list,      T       value) { list     .AddFirst(value);    return value; }
-    [PatchMethod(AggressiveInlining)] public static T       Prepend<T>(this System.Collections.Generic.List      <T> list,      T       value) { list     .Insert  (0, value); return value; }
+    [PatchMethod(AggressiveInlining)] public static ref readonly object? Prepend   (this System.Collections.ArrayList             arrayList, in object? value) { arrayList.Insert  (0, value); return value; }
+    [PatchMethod(AggressiveInlining)] public static ref readonly T       Prepend<T>(this System.Collections.ArrayList             arrayList, in T       value) { arrayList.Insert  (0, value); return value; }
+    [PatchMethod(AggressiveInlining)] public static ref readonly T       Prepend<T>(this System.Collections.Generic.LinkedList<T> list,      in T       value) { list     .AddFirst(value);    return value; }
+    [PatchMethod(AggressiveInlining)] public static ref readonly T       Prepend<T>(this System.Collections.Generic.List      <T> list,      in T       value) { list     .Insert  (0, value); return value; }
 
     [PatchMethod(AggressiveInlining)]
     public static void Reset(this UnityEngine.Transform transform) {
@@ -1711,26 +2009,13 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       return System.Array.TrueForAll<T>(array, match);
     }
 
-    [PatchMethod(AggressiveInlining)]
-    public static bool TryAdd<T>(this System.Collections.Generic.IList<T> list, T element) {
-      if (!list.Contains(element)) {
-        list.Add(element);
-        return true;
-      }
+    [PatchMethod(AggressiveInlining)] public static bool TryAdd   <T>(this System.Collections.Generic.IList<T> list, in T element) { if (!list.Contains(element)) { list.Add(element); return true; } return false; }
+    [PatchMethod(AggressiveInlining)] public static T    TryAppend<T>(this System.Collections.Generic.IList<T> list, in T element) { int index = list.IndexOf(element); if (index == -1) { list.Add(element); return element; } return list[index]; }
 
-      return false;
-    }
-
-    [PatchMethod(AggressiveInlining)] public static bool TryAdd<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, System.Collections.Generic.KeyValuePair<TKey, TValue> element) => dictionary.TryAdd(element.Key, element.Value);
-    [PatchMethod(AggressiveInlining)]
-    public static bool TryAdd<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, TKey key, TValue value) {
-      if (!dictionary.ContainsKey(key)) {
-        dictionary.Add(key, value);
-        return true;
-      }
-
-      return false;
-    }
+    [PatchMethod(AggressiveInlining)] public static bool   TryAdd   <TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, System.Collections.Generic.KeyValuePair<TKey, TValue> element)              =>  dictionary.TryAdd     (element.Key, element.Value);
+    [PatchMethod(AggressiveInlining)] public static bool   TryAdd   <TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, in TKey                                               key, in TValue value) => !dictionary.ContainsKey(key) && ((dictionary[key] = value), _: true)._;
+    [PatchMethod(AggressiveInlining)] public static TValue TryAppend<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, System.Collections.Generic.KeyValuePair<TKey, TValue> element)              =>  dictionary.TryAppend  (element.Key, element.Value);
+    [PatchMethod(AggressiveInlining)] public static TValue TryAppend<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, in TKey                                               key, in TValue value) => !dictionary.TryGetValue(key, out TValue prevalue) ? dictionary[key] = value : prevalue;
 
     #if !(NETCOREAPP2_1 || NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1 || NETSTANDARD2_1_OR_GREATER)
       [PatchMethod(AggressiveInlining)] public static void TrimExcess<TKey, TValue>(this System.Collections.Generic.Dictionary<TKey, TValue> dictionary)               { /* ⟶ Do nothing… */ }
@@ -1741,6 +2026,8 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
   public static partial class Util /* ⟶ Utilities */ {
     /* TODO */
     public   const double LoadAsynchronously = 0.0;
+    public   const uint   LoadOnce           = 0u;
+    public   const uint   LoadPersistently   = uint.MaxValue - 1u;
     public   const bool   LoadWithCache      = true;
     public   const bool   LoadWithoutCache   = false;
     public   const double LoadSynchronously  = double.PositiveInfinity;
@@ -1767,59 +2054,26 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     }.AsReadOnly();
 
     /* … */
-    [PatchMethod(AggressiveInlining)] public static object[]     ArrayFrom   ()                                                 { return new object    [0]; }
-    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>()                                                 { return new T         [0]; }
-    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(T[]                                 array)        { return array ?? new T[0]; }
-    [PatchMethod(AggressiveInlining)] public static System.Array ArrayFrom   (System.Array                        array)        { return array; }
-    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.Array                        array)        { return (T[]) array; }
-    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.ArraySegment<T>              arraySegment) { return       arraySegment.ToArray(); }
-    [PatchMethod(AggressiveInlining)] public static object[]     ArrayFrom   (System.Collections.ArrayList        arrayList)    { return       arrayList   .ToArray(); }
-    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.Collections.ArrayList        arrayList)    { return (T[]) arrayList   .ToArray(typeof(T)); }
-    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.Collections.IEnumerable      enumerable)   { return Util.ArrayFrom(enumerable).ConvertAll(static element => (T) element); }
-    [PatchMethod(AggressiveInlining)] public static object[]     ArrayFrom   (System.Collections.Queue            queue)        { return queue .ToArray(); }
-    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.Collections.Queue            queue)        { return queue .ToArray().ConvertAll(static element => (T) element); }
-    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.Collections.Generic.List <T> list)         { return list  .ToArray(); }
-    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.Collections.Generic.Queue<T> queue)        { return queue .ToArray(); }
-    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.Collections.Generic.Stack<T> stack)        { return stack .ToArray(); }
-    [PatchMethod(AggressiveInlining)] public static object[]     ArrayFrom   (System.Collections.Stack            stack)        { return stack .ToArray(); }
-    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.Collections.Stack            stack)        { return stack .ToArray().ConvertAll(static element => (T) element); }
-    [PatchMethod(AggressiveInlining)] public static byte  []     ArrayFrom   (System.IO.MemoryStream              stream)       { return stream.ToArray(); }
-    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.Memory        <T>            memory)       { return memory.ToArray(); }
-    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.ReadOnlyMemory<T>            memory)       { return memory.ToArray(); }
-
-    [PatchMethod(AggressiveInlining)]
-    public static bool[] ArrayFrom(System.Collections.BitArray bits) {
-      bool[] array  = new bool[bits.Length];
-      uint   length = 0u;
-
-      // …
-      foreach (bool bit in bits)
-      array[length++] = bit;
-
-      return array;
-    }
-
-    [PatchMethod(AggressiveInlining)]
-    public static object[] ArrayFrom(System.Collections.IEnumerable enumerable) {
-      System.Collections.Generic.List<object> array = new();
-
-      // …
-      foreach (object value in enumerable)
-      array.Add(value);
-
-      return Util.ArrayFrom(array);
-    }
-
-    [PatchMethod(AggressiveInlining)]
-    public static T[] ArrayFrom<T>(System.Collections.Generic.IEnumerable<T> enumerable) {
-      System.Collections.Generic.List<T> array = new();
-
-      // …
-      foreach (T value in enumerable)
-      array.Add(value);
-
-      return Util.ArrayFrom(array);
-    }
+    [PatchMethod(AggressiveInlining)] public static object[]     ArrayFrom   ()                                                             => (new object          [0]);
+    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>()                                                             => (new T               [0]);
+    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(T[]                                             array)        => (array ?? new T      [0]);
+    [PatchMethod(AggressiveInlining)] public static System.Array ArrayFrom   (System.Array                                    array)        => (array ?? new object [0]);
+    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.Array                                    array)        => (T[]) (array ?? new T[0]);
+    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.ArraySegment<T>                          arraySegment) => arraySegment.ToArray();
+    [PatchMethod(AggressiveInlining)] public static bool  []     ArrayFrom   (System.Collections.BitArray                     bits)         { bool[] array = new bool[bits.Length]; uint length = 0u; foreach (bool bit in bits) { array[length++] = bit; } return array; }
+    [PatchMethod(AggressiveInlining)] public static object[]     ArrayFrom   (System.Collections.ArrayList                    arrayList)    =>       arrayList.ToArray();
+    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.Collections.ArrayList                    arrayList)    => (T[]) arrayList.ToArray(typeof(T));
+    [PatchMethod(AggressiveInlining)] public static object[]     ArrayFrom   (System.Collections.IEnumerable                  enumerable)   { System.Collections.Generic.Queue<object> array = new(); for (System.Collections.IEnumerator enumerator = enumerable.GetEnumerator(); enumerator.MoveNext(); ) array.Enqueue(enumerator.Current); return Util.ArrayFrom(array); }
+    [PatchMethod(AggressiveInlining)] public static object[]     ArrayFrom   (System.Collections.Queue                        queue)        => queue.ToArray();
+    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.Collections.Generic.IEnumerable<T>       enumerable)   { System.Collections.Generic.Queue<T> array = new(); for (System.Collections.Generic.IEnumerator<T> enumerator = enumerable.GetEnumerator(); ; ) { if (enumerator.MoveNext()) array.Enqueue(enumerator.Current); else { enumerator.Dispose(); break; } } return Util.ArrayFrom(array); }
+    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.Collections.Generic.List       <T>       list)         => list .ToArray();
+    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.Collections.Generic.Queue      <T>       queue)        => queue.ToArray();
+    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.Collections.Generic.Stack      <T>       stack)        => stack.ToArray();
+    [PatchMethod(AggressiveInlining)] public static string[]     ArrayFrom   (System.Collections.Specialized.StringCollection collection)   { string[] array = new string[collection.Count]; uint length = 0u; foreach (string element in collection) { array[length++] = element; } return array; }
+    [PatchMethod(AggressiveInlining)] public static object[]     ArrayFrom   (System.Collections.Stack                        stack)        => stack .ToArray();
+    [PatchMethod(AggressiveInlining)] public static byte  []     ArrayFrom   (System.IO.MemoryStream                          stream)       => stream.ToArray();
+    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.Memory        <T>                        memory)       => memory.ToArray();
+    [PatchMethod(AggressiveInlining)] public static T     []     ArrayFrom<T>(System.ReadOnlyMemory<T>                        memory)       => memory.ToArray();
 
     public static T[] ArrayFrom<T>(System.Collections.Generic.IEnumerable<T> enumerableA, System.Collections.Generic.IEnumerable<T> enumerableB) {
       if (enumerableB is null) return enumerableA is not null ? Util.ArrayFrom(enumerableA) : new T[0];
@@ -1900,24 +2154,58 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       return null!; // ⟶ `structure` is null
     }
 
+    [PatchMethod(AggressiveInlining)] public static T[]                                                                       AsCopy<T>           (this T[]                                                                       array)                            => (T[])          array.Clone();
+    [PatchMethod(AggressiveInlining)] public static System.Array                                                              AsCopy              (this System.Array                                                              array)                            => (System.Array) array.Clone();
+    [PatchMethod(AggressiveInlining)] public static System.ArraySegment<T>                                                    AsCopy<T>           (this System.ArraySegment<T>                                                    arraySegment)                     => new(Util.ArrayFrom(arraySegment));
+    [PatchMethod(AggressiveInlining)] public static System.Collections.ArrayList                                              AsCopy              (this System.Collections.ArrayList                                              arrayList)                        => (System.Collections.ArrayList) arrayList.Clone();
+    [PatchMethod(AggressiveInlining)] public static System.Collections.BitArray                                               AsCopy              (this System.Collections.BitArray                                               bits)                             => (System.Collections.BitArray)  bits     .Clone();
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Queue                                                  AsCopy              (this System.Collections.Queue                                                  queue)                            => (System.Collections.Queue)     queue    .Clone();
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.SortedDictionary<TKey, TValue>                 AsCopy<TKey, TValue>(this System.Collections.Generic.Dictionary      <TKey, TValue>                 dictionary)                       => new(dictionary, dictionary.Comparer);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.HashSet         <T>                            AsCopy<T>           (this System.Collections.Generic.HashSet         <T>                            hashset)                          => new(hashset, hashset.Comparer);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.LinkedList      <T>                            AsCopy<T>           (this System.Collections.Generic.LinkedList      <T>                            list)                             => new(list);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.List            <T>                            AsCopy<T>           (this System.Collections.Generic.List            <T>                            list)                             => new(list);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.Queue           <T>                            AsCopy<T>           (this System.Collections.Generic.Queue           <T>                            queue)                            => new(queue);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.SortedDictionary<TKey, TValue>                 AsCopy<TKey, TValue>(this System.Collections.Generic.SortedDictionary<TKey, TValue>                 sortedDictionary)                 => new(sortedDictionary, sortedDictionary.Comparer);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.SortedList      <T>                            AsCopy<T>           (this System.Collections.Generic.SortedList      <T>                            sortedList)                       => new(sortedList,       sortedList      .Comparer);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.SortedSet       <T>                            AsCopy<T>           (this System.Collections.Generic.SortedSet       <T>                            sortedSet)                        => new(sortedSet,        sortedSet       .Comparer);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.Stack           <T>                            AsCopy<T>           (this System.Collections.Generic.Stack           <T>                            stack)                            => new(stack);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Hashtable                                              AsCopy              (this System.Collections.Hashtable                                              hashtable)                        => (System.Collections.Hashtable) hashtable.Clone(); // ⟶ `new(hashtable, hashtable.EqualityComparer)`
+    [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ObservableCollection        <T>            AsCopy<T>           (this System.Collections.ObjectModel.ObservableCollection        <T>            collection)                       => new(collection);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyCollection          <T>            AsCopy<T>           (this System.Collections.ObjectModel.ReadOnlyCollection          <T>            collection)                       => new(new System.Collections.Generic.List                    <T>           (collection));
+    [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyDictionary          <TKey, TValue> AsCopy<TKey, TValue>(this System.Collections.ObjectModel.ReadOnlyDictionary          <TKey, TValue> dictionary)                       => new(new System.Collections.Generic.Dictionary              <TKey, TValue>(dictionary));
+    [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyObservableCollection<T>            AsCopy<T>           (this System.Collections.ObjectModel.ReadOnlyObservableCollection<T>            collection)                       => new(new System.Collections.ObjectModel.ObservableCollection<T>           (collection));
+    [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyCollection          <T>            AsCopy<T>           (this System.Collections.ObjectModel.ReadOnlySet                 <T>            set)                              => new(new System.Collections.Generic.HashSet                 <T>           (set));
+    [PatchMethod(AggressiveInlining)] public static System.Collections.SortedList                                             AsCopy              (this System.Collections.SortedList                                             sortedList)                       => (System.Collections.SortedList) sortedList.Clone();
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.HybridDictionary                           AsCopy              (this System.Collections.Specialized.HybridDictionary                           dictionary)                       => dictionary.AsCopy(false);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.HybridDictionary                           AsCopy              (this System.Collections.Specialized.HybridDictionary                           dictionary, bool caseInsensitive) { System.Collections.Specialized.HybridDictionary copy = new(dictionary.Count, caseInsensitive); foreach (System.Collections.DictionaryEntry element in dictionary) { copy.Add(element.Key, element.Value); } return copy; };
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.ListDictionary                             AsCopy              (this System.Collections.Specialized.ListDictionary                             dictionary)                       { System.Collections.Specialized.ListDictionary copy = new(); foreach (System.Collections.DictionaryEntry element in dictionary) { copy.Add(element.Key, element.Value); } return copy; }
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.NameValueCollection                        AsCopy              (this System.Collections.Specialized.NameValueCollection                        collection)                       => new(collection);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.OrderedDictionary                          AsCopy              (this System.Collections.Specialized.OrderedDictionary                          dictionary)                       { System.Collections.Specialized.OrderedDictionary copy = new(dictionary.Count); foreach (System.Collections.DictionaryEntry element in dictionary) { copy.Add(element.Key, element.Value); } return copy; }
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.StringCollection                           AsCopy              (this System.Collections.Specialized.StringCollection                           collection)                       { System.Collections.Specialized.StringCollection copy = new(); string[] subcopy = new string[collection.Count]; collection.CopyTo(subcopy, 0); copy.AddRange(subcopy); return copy; }
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.StringDictionary                           AsCopy              (this System.Collections.Specialized.StringDictionary                           dictionary)                       { System.Collections.Specialized.StringDictionary copy = new(dictionary.Count); foreach (System.Collections.DictionaryEntry element in dictionary) { copy.Add(element.Key, element.Value); } return copy; }
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Stack                                                  AsCopy              (this System.Collections.Stack                                                  stack)                            => new(stack);
+    [PatchMethod(AggressiveInlining)] public static System.IO.MemoryStream                                                    AsCopy              (this System.IO.MemoryStream                                                    stream)                           { try { return new(stream.GetBuffer(), 0, stream.Length, stream.CanWrite, true); } catch (System.UnauthorizedAccessException exception) {} return new(Util.ArrayFrom(stream), 0, stream.Length, stream.CanWrite, false); }
+    [PatchMethod(AggressiveInlining)] public static System.Memory        <T>                                                  AsCopy<T>           (this System.Memory        <T>                                                  memory)                           => new(Util.ArrayFrom(memory));
+    [PatchMethod(AggressiveInlining)] public static System.ReadOnlyMemory<T>                                                  AsCopy<T>           (this System.ReadOnlyMemory<T>                                                  memory)                           => new(Util.ArrayFrom(memory));
+
+    [PatchMethod(AggressiveInlining)] public static uint CheckWait            () => Util.CheckWaitForCoroutine();
+    [PatchMethod(AggressiveInlining)] public static uint CheckWaitForCoroutine() => 0u;
+
     public static uint CheckWaitForTimer() {
-      uint                                                                                           count        = 0u;
-      double                                                                                         timestamp    = UnityEngine.Time.realtimeSinceStartupAsDouble;
-      PatchOdyssey.Collections.WaitInfo                                                              wait         = PatchOdyssey.Collections.WaitInfo.WAITS[double.NaN];
-      ref readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.WaitForTimerEvent> waitHandlers = ref wait.handlers;
+      uint                              count        = 0u;
+      double                            timestamp    = UnityEngine.Time.realtimeSinceStartupAsDouble;
+      PatchOdyssey.Collections.WaitInfo wait         = PatchOdyssey.Collections.WaitInfo.WAITS[double.NaN];
 
       // … ⟶ Enumeration is messy because the final design could not succinctly account for a timer-based model
-      for (int index = waitHandlers.handlers.Count; 0 != index--; ) {
-        PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.WaitForTimerEvent> waitHandler = waitHandlers.handlers[index];
-        (double waitDelay, double waitTimestamp)                                                     = waitHandler.metadata.data;
+      foreach (PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.WaitEvent> waitHandler in wait.handlers.AsCopy()) {
+        (double waitDelay, double waitTimestamp) = waitHandler.metadata.data;
 
         // …
         if (!(timestamp < waitTimestamp)) {
-          if (double.IsNaN(waitDelay) || 0.0 >= waitDelay) { ++count; waitHandlers.handlers.RemoveAt(index); }                               // ⟶ Remove `WaitForTimerUntil(…)` handlers, or
-          else waitHandlers.handlers[index] = new(waitHandler.value, waitHandler.target, new() {data = (waitDelay, timestamp + waitDelay)}); // ⟶ Update `WaitForTimerEvery(…)` handlers
+          if (double.IsNaN(waitDelay) || 0.0 >= waitDelay) { ++count; wait.handlers.Remove(waitHandler); }                                                                                                  // ⟶ Remove `WaitForTimerUntil(…)` handlers, or
+          else wait.handlers[wait.handlers.IndexOf(waitHandler)] = new(waitHandler.value, waitHandler.target, new() {callback = waitHandler.metadata.callback, data = (waitDelay, timestamp + waitDelay)}); // ⟶ Update `WaitForTimerEvery(…)` handlers
 
-          // … ⟶ The wait has elapsed
-          waitHandler.metadata.delay = System.Math.Abs(waitHandler.metadata.delay);
+          waitHandler.metadata.data = (System.Math.Abs(waitDelay), waitHandler.metadata.data.timestamp);
           waitHandler.Invoke();
         }
       }
@@ -1957,19 +2245,64 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       return subvalue => (value as System.IEquatable<T>)?.Equals(subvalue) ?? (object) value! == (object) subvalue!;
     }
 
-    [PatchMethod(AggressiveInlining)] public static uint EnumerableCount<T>(System.Collections.IEnumerable            enumerable) => Util.EnumerableCount((System.Collections.IEnumerable) enumerable);
-    [PatchMethod(AggressiveInlining)] public static uint EnumerableCount<T>(System.Collections.Generic.IEnumerable<T> enumerable) => Util.EnumerableCount((System.Collections.IEnumerable) enumerable);
+    [PatchMethod(AggressiveInlining)] public static uint EnumerableCount   (System.Collections.IEnumerable            enumerable) => Util.EnumeratorCount(enumerable.GetEnumerator(), false);
+    [PatchMethod(AggressiveInlining)] public static uint EnumerableCount<T>(System.Collections.Generic.IEnumerable<T> enumerable) => Util.EnumeratorCount(enumerable.GetEnumerator(), false);
+
     [PatchMethod(AggressiveInlining)]
-    public static uint EnumerableCount(System.Collections.IEnumerable enumerable) {
-      uint                           count      = 0u;
-      System.Collections.IEnumerator enumerator = enumerable.GetEnumerator();
+    public static uint EnumeratorCount(System.Collections.IEnumerator enumerator, bool reset = true) {
+      uint count = 0u;
+      uint index = 0u;
 
       // …
-      while (enumerator.MoveNext())
-        ++count;
+      if (reset) {
+        while (enumerator.MoveNext())
+        ++index;
+      }
 
-      (enumerator as System.IDisposable)?.Dispose();
+      for (enumerator.Reset(); enumerator.MoveNext(); )
+      ++count;
+
+      if (reset) {
+        for (enumerator.Reset(); count != index; ++index)
+        enumerator.MoveNext(); // ⟶ Reset `enumerator` to initially passed state
+      }
+
       return count;
+    }
+
+    [PatchMethod(AggressiveInlining)]
+    public static uint EnumeratorCount<T>(System.Collections.Generic.IEnumerator<T> enumerator, bool reset = true) {
+      uint count = Util.EnumeratorCount((System.Collections.IEnumerator) enumerator, reset);
+
+      // …
+      if (!reset)
+      enumerator.Dispose();
+
+      return count;
+    }
+
+    [PatchMethod(AggressiveInlining)]
+    public static T? EnumeratorMoveTo<T>(in T enumerator, uint position, bool reset = true) where T : System.Collections.IEnumerator {
+      uint count = 0u;
+      uint index = 0u;
+
+      // …
+      if (reset) {
+        while (enumerator.MoveNext())
+        ++index;
+      }
+
+      for (enumerator.Reset(); 0u != position--; ++count)
+      if (!enumerator.MoveNext()) {
+        if (reset) {
+          for (enumerator.Reset(); count != index; ++index)
+          enumerator.MoveNext(); // ⟶ Reset `enumerator` to initially passed state
+        }
+
+        return null;
+      }
+
+      return enumerator;
     }
 
     public static UnityEngine.Vector2    ExcludeVectorAxes       (UnityEngine.Vector2    vector, UnityEngine.Vector2    axes) { return new(axes.x != 1.0f ? vector.x : 0.0f, axes.y != 1.0f ? vector.y : 0.0f); }
@@ -2208,107 +2541,202 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     }
 
     /* TODO */
-    [PatchMethod(AggressiveInlining)]
-    private static object? LoadURI<T>(System.Uri path, PatchOdyssey.Handler<PatchOdyssey.Collections.LoadEvent> callback, double timeout, bool cached, System.Func<System.Uri, UnityEngine.Networking.UnityWebRequest> requester, System.Func<UnityEngine.Networking.UnityWebRequest, T?> loader, System.Func<T, T> cacheLoader) {
-      (System.Type, System.Uri)         id        = (typeof(T), path);
-      PatchOdyssey.Collections.LoadInfo load      = new(callback, null, new() {data = null});
-      System.Diagnostics.Stopwatch      stopwatch = new();
+    private static T? LoadUri<T>(System.Uri path, PatchOdyssey.Handler<PatchOdyssey.Collections.LoadEvent> callback, double timeout, bool cached, uint retries, System.Func<System.Uri, UnityEngine.Networking.UnityWebRequest> requester, System.Func<UnityEngine.Networking.UnityWebRequest, T?> loader, System.Func<T, T> recacher, PatchOdyssey.Handler<PatchOdyssey.Collections.LoadEvent> fallback, bool restarted) /* where T : class? */ {
+      uint                                                                     attemptsAllowed = retries - (uint.MaxValue == retries ? 1u : 0u) + 1u;
+      T[]?                                                                     cachedPayload   = null;
+      PatchOdyssey.Collections.LoadInfo                                        load            = PatchOdyssey.Collections.LoadInfo.LOADS.TryAppend((typeof(T), path), new());
+      PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.LoadEvent> loadHandler     = restarted ? load.handlers[0] : default;
+      uint                                                                     attempts        = restarted ? loadHandler.metadata.data.attempts : 1u;
+      UnityEngine.Networking.UnityWebRequestAsyncOperation                     operation       = null!; // ⟶ Able to access the `UnityEngine.Application.streamingAssetsPath` directory
+      bool                                                                     requested       = restarted;
+      bool                                                                     requestFailed   = false; // ⟶ `UnityEngine.Networking.UnityWebRequest.Result.*Error`, `timeout`, …, e.t.c.
+      System.Diagnostics.Stopwatch                                             stopwatch       = new();
 
-      // …
-      if (!PatchOdyssey.Collections.LoadInfo.LOADS.ContainsKey(id))
-        PatchOdyssey.Collections.LoadInfo.LOADS.Add(id, load);
+      [PatchMethod(AggressiveInlining)]
+      static void ClearAsynchronousCached(in PatchOdyssey.Collections.LoadInfo load, ref T[]? cachedPayload, System.Func<T, T> recacher) {
+        foreach (PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.LoadEvent> loadHandler in load.handlers.AsCopy())
+        if (loadHandler.metadata.data.cached) {
+          (uint attempts, uint attemptsAllowed, bool cached, double duration, System.Uri path, object? payload) data = loadHandler.metadata.data;
 
-      else {
-        load = PatchOdyssey.Collections.LoadInfo.LOADS[id];
-        PatchOdyssey.Collections.EventHandler.Combine(load.handlers, new(callback, null, new() {data = null}));
+          // …
+          data.duration = UnityEngine.Time.realtimeSinceStartupAsDouble - data.duration;
+          data.payload  = (cachedPayload ??= new[] {recacher((T) load.cached)})[0];
+
+          load.handlers.Remove(loadHandler);
+          loadHandler.value(null, new() {callback = loadHandler.value, data = data});
+        }
       }
 
-      // ===============================================================================================
-      Util.LoadInfo                                        load = new(data: null, handlers: new[] {callback}, pending: false);
-      UnityEngine.Networking.UnityWebRequestAsyncOperation operation;
-      UnityEngine.Networking.UnityWebRequest               request; // ⟶ Able to access the `UnityEngine.Application.streamingAssetsPath` directory
-      System.Diagnostics.Stopwatch                         stopwatch = new();
-
-      // …
-      static object? HandleURIData(ref Util.LoadInfo load, object? data) {
-        while (0 != load.handlers.Count)
-        load.handlers.Pop()(data);
-
-        return data;
+      [PatchMethod(AggressiveInlining)]
+      static ref T GetCache(ref T[]? cachedPayload, System.Func<T, T> recacher) {
+        cachedPayload ??= new[] {recacher((T) load.cached)};
+        return ref cachedPayload[0];
       }
 
-      object? HandleURIRequest(ref Util.LoadInfo load, ref UnityEngine.Networking.UnityWebRequest request) {
-        object? data = loader(request);
+      void LoadAsynchronousUri(UnityEngine.AsyncOperation _) /* ⟶ Captures `load` and `loadHandler` */ {
+        UnityEngine.Networking.UnityWebRequestAsyncOperation operation                                         = (UnityEngine.Networking.UnityWebRequestAsyncOperation) _;
+        UnityEngine.Networking.UnityWebRequest               request                                           = operation.webRequest; // ⟶ `request.uri` could be modified through redirection
+        (uint attempts, uint attemptsAllowed, bool cached, double timestamp, System.Uri path, object? payload) = loadHandler.metadata.data;
 
         // …
-        request.Dispose();
-        load.data = data is not null && !cached ? data : load.data;
+        if (UnityEngine.Networking.UnityWebRequest.Result.Success != request.result) {
+          request.Dispose();
 
-        return HandleURIData(ref load, data);
+          if (attempts != attemptsAllowed) {
+            operation   = requester(path).SendWebRequest();
+            loadHandler = load.handlers[load.handlers.IndexOf(loadHandler)] = new(loadHandler.value, operation, new() {callback = loadHandler.metadata.callback, data = (attempts + 1u, attemptsAllowed, cached, timestamp, path, payload)});
+
+            operation.completed += LoadAsynchronousUri;
+          }
+
+          else {
+            load.payload = null;
+
+            foreach (PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.LoadEvent> loadHandler in load.handlers.AsCopy()) {
+              // recurse here
+            }
+          }
+        }
+
+        else {
+          // onsuccess?
+          request.Dispose();
+        }
       }
 
-      // …
-      if (LOADS.ContainsKey(id + path)) {
-        load = LOADS[id + path];
-        load.handlers.Push(callback);
-
-        if (load.data is not null && !cached)
-        return HandleURIData(ref load, cacheLoader(load.data));
-      } else LOADS.Add(id + path, load);
-
-      if (load.pending)
-      return null; // ⟶ Prevent spamming multiple `UnityEngine.Networking.UnityWebRequest`s
-
-      stopwatch.Start();
-      request      = requester(path);
-      operation    = request.SendWebRequest();
-      load.pending = true;
-
-      while (UnityEngine.Networking.UnityWebRequest.Result.Success != request.result)
-      switch (request.result) {
-        case UnityEngine.Networking.UnityWebRequest.Result.ConnectionError    :
-        case UnityEngine.Networking.UnityWebRequest.Result.DataProcessingError:
-        case UnityEngine.Networking.UnityWebRequest.Result.ProtocolError      : {
-          stopwatch.Stop   ();
-          request  .Dispose();
-
-          load.pending = false;
-        } return null;
-
-        case UnityEngine.Networking.UnityWebRequest.Result.InProgress: {
-          if (stopwatch.Elapsed.TotalSeconds < timeout)
-          continue;
-
-          stopwatch.Stop();
-          operation.completed += operation => {
-            UnityEngine.Networking.UnityWebRequest request = ((UnityEngine.Networking.UnityWebRequestAsyncOperation) operation).webRequest!;
-
-            // …
-            load.pending = false;
-
-            if (UnityEngine.Networking.UnityWebRequest.Result.Success != request.result) request.Dispose();
-            else                                                                         HandleURIRequest(ref load, ref request);
-          };
-        } return null;
+      [PatchMethod(AggressiveInlining)]
+      static void ReloadAsynchronousUri(in PatchOdyssey.Collections.LoadInfo load) /* ⟶ Use pending asynchronous handler to get payload (ideally does not raise a `System.StackOverflowException`) */ {
+        PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.LoadEvent> loadHandler = load.handlers[0];
+        Util.LoadUri<T>(path, loadHandler.value, Util.LoadAsynchronously, loadHandler.metadata.data.cached, loadHandler.metadata.data.attemptsAllowed - 1u, requester, loader, recacher, loadHandler.metadata.callback, true);
       }
 
-      stopwatch.Stop();
-      load.pending = false;
+      // … ⟶ Get (available) cached payload
+      if (load.cached is not null) {
+        ClearAsynchronousCached(load, ref cachedPayload, recacher);
 
-      return HandleURIRequest(ref load, ref request);
+        if (cached) {
+          GetCache(ref cachedPayload, recacher);
+
+          if      (!restarted)               callback(null, new() {callback = callback, data = (attempts, attemptsAllowed, true, 0.0, path, cachedPayload)}); // ⟶ Otherwise already cleared and invoked via `ClearAsynchronousCached(…)`
+          else if (0 != load.handlers.Count) ReloadAsynchronousUri(load); // ⟶ TODO: Fancy comment about eager immediate hit not locking up the load queue
+
+          return cachedPayload;
+        }
+      }
+
+      // … ⟶ Get payload
+      do {
+        stopwatch.Restart();
+
+        // … ⟶ Wait until prior handler is complete
+        if (!requested && !restarted && 0 != load.handlers.Count) {
+          // … ⟶ `Util.LoadAsynchronously` — Handler awaits completion of predecessor
+          if (double.IsNaN(timeout) || 0.0 >= timeout) {
+            load.handlers.Add (new(callback, null, new() {callback = fallback, data = (attempts, attemptsAllowed, cached, UnityEngine.Time.realtimeSinceStartupAsDouble, path, null)}));
+            stopwatch    .Stop();
+
+            return null;
+          }
+
+          // … ⟶ `Util.LoadSynchronously` — Handler blocks until completion of predecessor
+          else {
+            while (0 != load.handlers.Count && stopwatch.Elapsed.TotalSeconds < timeout)                               continue;
+            if    (attempts != attemptsAllowed && (load.payload is null || stopwatch.Elapsed.TotalSeconds >= timeout)) continue;
+
+            stopwatch.Stop();
+            (load.payload is not null ? callback : fallback)(null, new() {callback = callback, data = (attempts, attemptsAllowed, cached, stopwatch.Elapsed.TotalSeconds, path, load.payload)});
+
+            return load.payload;
+          }
+        }
+
+        // … ⟶ Future handlers will wait on this handler to complete
+        operation     = requester(path).SendWebRequest(); // ⟶ Was unaware of `int UnityEngine.Networking.UnityWebRequest::timeout` beforehand
+        requestFailed = false;
+
+        if (requested)
+          // ⟶ Update the handler’s `.target`
+          loadHandler = load.handlers[restarted ? 0u : load.handlers.IndexOf(loadHandler)] = new(loadHandler.value, operation, new() {callback = loadHandler.metadata.callback, data = (attempts, attemptsAllowed, cached, loadHandler.metadata.data.duration, path, null)});
+
+        else {
+          loadHandler = load.handlers.Append(new(callback, operation, new() {callback = fallback, data = (attempts, attemptsAllowed, cached, UnityEngine.Time.realtimeSinceStartupAsDouble, path, null)}));
+          requested   = true;
+        }
+
+        for (UnityEngine.Networking.UnityWebRequest request = operation.webRequest; UnityEngine.Networking.UnityWebRequest.Result.Success != request.result; ) {
+          if (UnityEngine.Networking.UnityWebRequest.Result.ConnectionError == request.result || UnityEngine.Networking.UnityWebRequest.Result.DataProcessingError == request.result || UnityEngine.Networking.UnityWebRequest.Result.ProtocolError == request.result) {
+            requestFailed = true;
+            request.Dispose();
+
+            break;
+          }
+
+          if (UnityEngine.Networking.UnityWebRequest.Result.InProgress == request.result) {
+            // … ⟶ `Util.LoadAsynchronously` — ???
+            if (double.IsNaN(timeout) || 0.0 >= timeout) {
+              operation.completed += LoadAsynchronousUri;
+              return null;
+            }
+
+            // … ⟶ `Util.LoadSynchronously` — ???
+            // if (stopwatch.Elapsed.TotalSeconds < timeout)
+            // continue; // ⟶ Wait until `request.result` is successful
+          }
+        }
+
+        // onsuccess? HandleURIRequest(load, request);
+
+        if (requestFailed)
+        continue;
+      } while (attempts++ != attemptsAllowed);
+
+      // … ⟶ Allow pending handlers to get payload (or available cache)
+      if (requestFailed) {
+        load.payload = null;
+
+        foreach (PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.LoadEvent> loadHandler in load.handlers.AsCopy()) {
+          (uint attempts, uint attemptsAllowed, bool cached, double timestamp, System.Uri path, object? payload) data     = loadHandler.metadata.data;
+          ref PatchOdyssey.Handler<PatchOdyssey.Collections.LoadEvent>                                           fallback = ref loadHandler.metadata.callback;
+
+          // … ⟶ Invoke currently failed and asynchronous pending handlers, otherwise update remaining pending
+          if (data.attempts == data.attemptsAllowed || loadHandler.target == operation) {
+            data.attempts = loadHandler.target == operation ? attempts : data.attempts;
+            data.duration = UnityEngine.Time.realtimeSinceStartupAsDouble - data.duration;
+
+            load.handlers.Remove(loadHandler);
+            fallback(loadHandler.target, new() {callback = loadHandler.value, data = data});
+          }
+
+          // … ⟶ — otherwise update remaining pending handlers
+          else {
+            data.attempts                                    += 1u;
+            load.handlers[load.handlers.IndexOf(loadHandler)] = new(loadHandler.value, loadHandler.target, new() {callback = fallback, data = data});
+          }
+        }
+
+        // … ⟶ Use pending asynchronous handler to get payload (ideally does not raise a `System.StackOverflowException`)
+        if (0 != load.handlers.Count) {
+          loadHandler = load.handlers[0];
+          Util.LoadUri<T>(path, loadHandler.value, Util.LoadAsynchronously, loadHandler.metadata.data.cached, loadHandler.metadata.data.attemptsAllowed - 1u, requester, loader, recacher, loadHandler.metadata.callback, true);
+        }
+      }
+
+      // LoadUri("haha.txt", (target = operation, loadEvent) => { loadEvent.callback; loadEvent.data.payload; }, Util.LoadSynchronously, Util.LoadWithCache, Util.LoadOnce, 𝑓, 𝑓, 𝑓, (target, loadEvent) => {})
+      return null;
     }
 
-    // public static byte[]? LoadURI(string path, System.Action<byte[]?>? callback = null, double? timeout = null, bool cached = Util.LoadWithCache) {
-    //   return Util.LoadURI(
-    //     typeof(byte[]).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as byte[]), timeout, cached,
-    //     static predata => predata, // ⟶ `(predata as byte[]).Clone() as byte[]`
-    //     static path    => UnityEngine.Networking.UnityWebRequest.Get(path),
-    //     static request => request.downloadHandler.data
-    //   ) as byte[];
-    // }
+    public static byte[]? LoadUri(string path, System.Action<byte[]?>? callback = null, double? timeout = null, bool cached = Util.LoadWithCache) {
+      return Util.LoadUri(
+        typeof(byte[]).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as byte[]), timeout, cached,
+        static path    => UnityEngine.Networking.UnityWebRequest.Get(path),
+        static request => request.downloadHandler.data,
+        static predata => predata, // ⟶ `(predata as byte[]).Clone() as byte[]`
+        false
+      ) as byte[];
+    }
 
-    // public static UnityEngine.AudioClip? LoadURIAsAudioClip(string path, System.Action<UnityEngine.AudioClip?>? callback = null, double? timeout = null, bool cached = Util.LoadWithCache, UnityEngine.AudioType? encoding = null) {
-    //   return Util.LoadURI(
+    // public static UnityEngine.AudioClip? LoadUriAsAudioClip(string path, System.Action<UnityEngine.AudioClip?>? callback = null, double? timeout = null, bool cached = Util.LoadWithCache, UnityEngine.AudioType? encoding = null) {
+    //   return Util.LoadUri(
     //     typeof(UnityEngine.AudioClip).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as UnityEngine.AudioClip), timeout, cached,
     //     static predata => {
     //       #if false // ⟶ Consume less memory resources, please T_T
@@ -2337,8 +2765,8 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     //   ) as UnityEngine.AudioClip;
     // }
 
-    // public static string? LoadURIAsText(string path, System.Action<string?>? callback = null, double? timeout = null, bool cached = Util.LoadWithCache, System.Text.Encoding? encoding = null) {
-    //   return Util.LoadURI(
+    // public static string? LoadUriAsText(string path, System.Action<string?>? callback = null, double? timeout = null, bool cached = Util.LoadWithCache, System.Text.Encoding? encoding = null) {
+    //   return Util.LoadUri(
     //     typeof(string).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as string), timeout, cached,
     //     static predata => predata, // ⟶ `new string((predata as string).ToCharArray())`
     //     static path    => UnityEngine.Networking.UnityWebRequest.Get(path),
@@ -2354,8 +2782,8 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     //   ) as string;
     // }
 
-    // public static UnityEngine.Texture2D? LoadURIAsTexture2D(string path, System.Action<UnityEngine.Texture2D?>? callback = null, double? timeout = null, bool cached = Util.LoadWithCache) {
-    //   return Util.LoadURI(
+    // public static UnityEngine.Texture2D? LoadUriAsTexture2D(string path, System.Action<UnityEngine.Texture2D?>? callback = null, double? timeout = null, bool cached = Util.LoadWithCache) {
+    //   return Util.LoadUri(
     //     typeof(UnityEngine.Texture2D).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as UnityEngine.Texture2D), timeout, cached,
     //     static predata => {
     //       #if false // ⟶ Consume less memory resources, please T_T
@@ -2449,8 +2877,8 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
       return maximum![0]; // ⟶ `System.IndexOutOfRangeException`
     }
-      public static T Max<T>(T valueA, T valueB) where T : System.IComparable<T> => valueA.CompareTo(valueB) > 0 ? valueA : valueB;
-      public static T Max<T>(params T[] values)                                  => Util.Max(values);
+      public static T Max<T>(in T valueA, in T valueB) where T : System.IComparable<T> => valueA.CompareTo(valueB) > 0 ? valueA : valueB;
+      public static T Max<T>(params T[] values)                                        => Util.Max(values);
 
     public static T Min<T>(System.Collections.Generic.IEnumerable<T> enumerable) where T : System.IComparable<T> {
       T[] minimum = null!;
@@ -2463,8 +2891,8 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
       return minimum![0]; // ⟶ `System.IndexOutOfRangeException`
     }
-      public static T Min<T>(T valueA, T valueB) where T : System.IComparable<T> => valueA.CompareTo(valueB) < 0 ? valueA : valueB;
-      public static T Min<T>(params T[] values)                                  => Util.Min(values);
+      public static T Min<T>(in T valueA, in T valueB) where T : System.IComparable<T> => valueA.CompareTo(valueB) < 0 ? valueA : valueB;
+      public static T Min<T>(params T[] values)                                        => Util.Min(values);
 
     private static string NormalizeURI(string path) {
       path = path.TrimEnd().Replace(System.IO.Path.AltDirectorySeparatorChar, System.IO.Path.DirectorySeparatorChar);
@@ -2476,24 +2904,24 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       return path;
     }
 
-    public static decimal Percent(decimal percentage) { return percentage / 100.0m; }
-    public static double  Percent(double  percentage) { return percentage / 100.0; }
-    public static float   Percent(float   percentage) { return percentage / 100.0f; }
+    public static decimal Percent(decimal percentage) => percentage / 100.0m;
+    public static double  Percent(double  percentage) => percentage / 100.0;
+    public static float   Percent(float   percentage) => percentage / 100.0f;
 
-    public static decimal PercentOf(decimal value, decimal percentage) { return System.Math.Min(value, (decimal) percentage) * (System.Math.Max(value, (decimal) percentage) / 100.0m); }
-    public static decimal PercentOf(decimal value, double  percentage) { return System.Math.Min(value, (decimal) percentage) * (System.Math.Max(value, (decimal) percentage) / 100.0m); }
-    public static decimal PercentOf(decimal value, float   percentage) { return System.Math.Min(value, (decimal) percentage) * (System.Math.Max(value, (decimal) percentage) / 100.0m); }
-    public static double  PercentOf(double  value, decimal percentage) { return System.Math.Min(value, (double)  percentage) * (System.Math.Max(value, (double)  percentage) / 100.0); }
-    public static double  PercentOf(double  value, double  percentage) { return System.Math.Min(value, (double)  percentage) * (System.Math.Max(value, (double)  percentage) / 100.0); }
-    public static double  PercentOf(double  value, float   percentage) { return System.Math.Min(value, (double)  percentage) * (System.Math.Max(value, (double)  percentage) / 100.0); }
-    public static float   PercentOf(float   value, decimal percentage) { return System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f); }
-    public static float   PercentOf(float   value, double  percentage) { return System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f); }
-    public static float   PercentOf(float   value, float   percentage) { return System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f); }
+    public static decimal PercentOf(decimal value, decimal percentage) => System.Math.Min(value, (decimal) percentage) * (System.Math.Max(value, (decimal) percentage) / 100.0m);
+    public static decimal PercentOf(decimal value, double  percentage) => System.Math.Min(value, (decimal) percentage) * (System.Math.Max(value, (decimal) percentage) / 100.0m);
+    public static decimal PercentOf(decimal value, float   percentage) => System.Math.Min(value, (decimal) percentage) * (System.Math.Max(value, (decimal) percentage) / 100.0m);
+    public static double  PercentOf(double  value, decimal percentage) => System.Math.Min(value, (double)  percentage) * (System.Math.Max(value, (double)  percentage) / 100.0);
+    public static double  PercentOf(double  value, double  percentage) => System.Math.Min(value, (double)  percentage) * (System.Math.Max(value, (double)  percentage) / 100.0);
+    public static double  PercentOf(double  value, float   percentage) => System.Math.Min(value, (double)  percentage) * (System.Math.Max(value, (double)  percentage) / 100.0);
+    public static float   PercentOf(float   value, decimal percentage) => System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f);
+    public static float   PercentOf(float   value, double  percentage) => System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f);
+    public static float   PercentOf(float   value, float   percentage) => System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f);
 
-    // public static void PreloadURI           (string path)                                         => Util.LoadURI           (path, null, Util.LoadAsynchronously, Util.LoadWithCache);
-    // public static void PreloadURIAsAudioClip(string path, UnityEngine.AudioType? encoding = null) => Util.LoadURIAsAudioClip(path, null, Util.LoadAsynchronously, Util.LoadWithCache, encoding);
-    // public static void PreloadURIAsText     (string path, System.Text.Encoding?  encoding = null) => Util.LoadURIAsText     (path, null, Util.LoadAsynchronously, Util.LoadWithCache, encoding);
-    // public static void PreloadURIAsTexture2D(string path)                                         => Util.LoadURIAsTexture2D(path, null, Util.LoadAsynchronously, Util.LoadWithCache);
+    // public static void PreloadURI           (string path)                                         => Util.LoadUri           (path, null, Util.LoadAsynchronously, Util.LoadWithCache);
+    // public static void PreloadURIAsAudioClip(string path, UnityEngine.AudioType? encoding = null) => Util.LoadUriAsAudioClip(path, null, Util.LoadAsynchronously, Util.LoadWithCache, encoding);
+    // public static void PreloadURIAsText     (string path, System.Text.Encoding?  encoding = null) => Util.LoadUriAsText     (path, null, Util.LoadAsynchronously, Util.LoadWithCache, encoding);
+    // public static void PreloadURIAsTexture2D(string path)                                         => Util.LoadUriAsTexture2D(path, null, Util.LoadAsynchronously, Util.LoadWithCache);
 
     public static UnityEngine.Rect RectFromCorners(UnityEngine.Vector3[] corners) {
       // ⟶ Origin begins from bottom-left rather than top-left
@@ -2592,44 +3020,42 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
     [PatchMethod(AggressiveInlining)]
     public static uint StopWaitForCoroutine() {
-      foreach (System.Collections.Generic.KeyValuePair<double, PatchOdyssey.Collections.WaitInfo> element in PatchOdyssey.Collections.WaitInfo.WAITS) {
-        ref readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.WaitForTimerEvent> waitHandlers = ref PatchOdyssey.Collections.WaitInfo.WAITS[element.Key].handlers;
-        waitHandlers.handlers.Clear();
+      // … ⟶ Skip past the non-coroutine timer-based `double.NaN` entry — which is always sorted as first
+      for ((uint count, System.Collections.Generic.SortedDictionary<double, PatchOdyssey.Collections.WaitInfo>.ValueCollection.Enumerator enumerator) = (0u, Util.EnumeratorMoveTo(PatchOdyssey.Collections.WaitInfo.WAITS.Values.GetEnumerator(), 1u, false)); ; ++count) {
+        if (enumerator.MoveNext()) enumerator.Current.handlers.Clear();
+        else { enumerator.Dispose(); return count; }
       }
     }
 
     [PatchMethod(AggressiveInlining)]
-    public static uint StopWaitForCoroutine(PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) {
-      uint count = 0u;
+    public static uint StopWaitForCoroutine(PatchOdyssey.Handler<PatchOdyssey.Collections.WaitEvent> callback) {
+      // … ⟶ ^^
+      for ((uint count, System.Collections.Generic.SortedDictionary<double, PatchOdyssey.Collections.WaitInfo>.ValueCollection.Enumerator enumerator) = (0u, Util.EnumeratorMoveTo(PatchOdyssey.Collections.WaitInfo.WAITS.Values.GetEnumerator(), 1u, false)); ; ) {
+        if (enumerator.MoveNext()) {
+          for (int index = enumerator.Current.handlers.Count; 0 != index--; )
+          if (callback == enumerator.Current.handlers[index].value) {
+            ++count;
+            enumerator.Current.handlers.RemoveAt(index);
+          }
 
-      // …
-      foreach (System.Collections.Generic.KeyValuePair<double, PatchOdyssey.Collections.WaitInfo> element in PatchOdyssey.Collections.WaitInfo.WAITS) {
-        ref readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.WaitForTimerEvent> waitHandlers = ref PatchOdyssey.Collections.WaitInfo.WAITS[element.Key].handlers;
-
-        // …
-        for (int index = waitHandlers.CountInvocationList(); 0 != index--; )
-        if (callback == waitHandlers.handlers[index].value) {
-          ++count;
-          waitHandlers.handlers.RemoveAt(index);
+          continue;
         }
-      }
 
-      return count;
+        enumerator.Dispose();
+        return count;
+      }
     }
 
     [PatchMethod(AggressiveInlining)]
-    public static uint StopWaitForCoroutine(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) {
+    public static uint StopWaitForCoroutine(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitEvent> callback) {
       uint count = 0u;
 
       // …
       if (PatchOdyssey.Collections.WaitInfo.WAITS.TryGetValue(delay, out PatchOdyssey.Collections.WaitInfo wait)) {
-        ref readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.WaitForTimerEvent> waitHandlers = ref wait.handlers;
-
-        // …
-        for (int index = waitHandlers.CountInvocationList(); 0 != index--; )
-        if (callback == waitHandlers.handlers[index].value) {
+        for (int index = wait.handlers.Count; 0 != index--; )
+        if (callback == wait.handlers[index].value) {
           ++count;
-          waitHandlers.handlers.RemoveAt(index);
+          wait.handlers.RemoveAt(index);
         }
       }
 
@@ -2638,80 +3064,76 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
     [PatchMethod(AggressiveInlining)]
     public static uint StopWaitForTimer() {
-      PatchOdyssey.Collections.WaitInfo.WAITS[double.NaN] = new();
+      PatchOdyssey.Collections.WaitInfo.WAITS[double.NaN].handlers.Clear();
     }
 
     [PatchMethod(AggressiveInlining)]
-    public static uint StopWaitForTimer(PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) {
-      uint                                                                                           count        = 0u;
-      ref readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.WaitForTimerEvent> waitHandlers = ref PatchOdyssey.Collections.WaitInfo.WAITS[double.NaN].handlers;
+    public static uint StopWaitForTimer(PatchOdyssey.Handler<PatchOdyssey.Collections.WaitEvent> callback) {
+      uint                                                                                   count        = 0u;
+      ref readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.WaitEvent> waitHandlers = ref PatchOdyssey.Collections.WaitInfo.WAITS[double.NaN].handlers;
 
       // …
-      for (int index = waitHandlers.CountInvocationList(); 0 != index--; )
-      if (callback == waitHandlers.handlers[index].value) {
+      for (int index = waitHandlers.Count; 0 != index--; )
+      if (callback == waitHandlers[index].value) {
         ++count;
-        waitHandlers.handlers.RemoveAt(index);
+        waitHandlers.RemoveAt(index);
       }
 
       return count;
     }
 
     [PatchMethod(AggressiveInlining)]
-    public static uint StopWaitForTimer(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) {
-      uint                                                                                           count        = 0u;
-      ref readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.WaitForTimerEvent> waitHandlers = ref PatchOdyssey.Collections.WaitInfo.WAITS[double.NaN].handlers;
+    public static uint StopWaitForTimer(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitEvent> callback) {
+      uint                                                                                   count        = 0u;
+      ref readonly PatchOdyssey.Collections.EventHandler<PatchOdyssey.Collections.WaitEvent> waitHandlers = ref PatchOdyssey.Collections.WaitInfo.WAITS[double.NaN].handlers;
 
       // …
-      for (int index = waitHandlers.handlers.Count; 0 != index--; )
-      if (delay == waitHandlers.handlers[index].metadata.delay && callback == waitHandlers.handlers[index].value) {
+      for (int index = waitHandlers.Count; 0 != index--; )
+      if (callback == waitHandlers[index].value && delay == waitHandlers[index].metadata.delay) {
         ++count;
-        waitHandlers.handlers.RemoveAt(index);
+        waitHandlers.RemoveAt(index);
       }
 
       return count;
     }
 
-    public static object? Switch<T>(T value, System.Collections.Generic.Dictionary<T, object> expression, object? fallback = null) => Util.Switch<T>(value, (System.Collections.Generic.IReadOnlyDictionary<T, object>) expression, fallback);
-    public static object? Switch<T>(T value, System.Collections.Generic.IReadOnlyDictionary<T, object> expression, object? fallback = null) {
+    public static object? Switch<T>(in T value, System.Collections.Generic.Dictionary<T, object> expression, object? fallback = null) => Util.Switch<T>(value, (System.Collections.Generic.IReadOnlyDictionary<T, object>) expression, fallback);
+    public static object? Switch<T>(in T value, System.Collections.Generic.IReadOnlyDictionary<T, object> expression, object? fallback = null) {
       return expression?.TryGetValue(value, out object callback) ?? false ? callback : fallback;
     }
 
     [PatchMethod(AggressiveInlining)]
-    public static void WaitEvery(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) => Util.WaitForCoroutineEvery(delay, callback);
+    public static void WaitEvery(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitEvent> callback) => Util.WaitForCoroutineEvery(delay, callback);
 
-    private static void WaitForCoroutine(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback, bool forever) {
+    private static void WaitForCoroutine(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitEvent> callback, bool forever) {
       [PatchMethod(AggressiveInlining)]
       static System.Collections.IEnumerator EnumerateRoutine(double delay, bool forever) {
-        PatchOdyssey.Collections.WaitInfo wait = PatchOdyssey.Collections.WaitInfo.WAITS[delay];
-
-        // …
         do {
           yield return new UnityEngine.WaitForSecondsRealtime((float) delay);
-          wait.handlers.Invoke();
-        } while (forever && 0u != wait.handlers.CountInvocationList());
 
-        WaitInfo.WAIT.StopCoroutine(wait.coroutine);
+          if (0u == PatchOdyssey.Collections.WaitInfo.WAITS[delay].handlers.handlers.Count)
+          break;
+
+          PatchOdyssey.Collections.WaitInfo.WAITS[delay].handlers.Invoke();
+        } while (forever);
+
+        PatchOdyssey.Collections.WaitInfo.WAIT.StopCoroutine(wait.coroutine);
       }
 
-      if (PatchOdyssey.Collections.WaitInfo.WAITS.TryGetValue(delay, out PatchOdyssey.Collections.WaitInfo wait)) PatchOdyssey.Collections.EventHandler.Combine(wait.handlers, new(callback, wait.coroutine, new() {data = (delay, UnityEngine.Time.realtimeSinceStartupAsDouble + delay)}));
-      else { UnityEngine.Coroutine coroutine = WaitInfo.WAIT.StartCoroutine(EnumerateRoutine(delay, forever)); PatchOdyssey.Collections.WaitInfo.WAITS.Add(delay, new(coroutine, new(callback, coroutine, new() {data = (delay, UnityEngine.Time.realtimeSinceStartupAsDouble + delay)}))); }
+      if (PatchOdyssey.Collections.WaitInfo.WAITS.TryGetValue(delay, out PatchOdyssey.Collections.WaitInfo wait))
+        wait.handlers.Add(new PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.WaitEvent>(callback, wait.coroutine, new() {callback = callback, data = (delay, UnityEngine.Time.realtimeSinceStartupAsDouble + delay)}));
+
+      else {
+        UnityEngine.Coroutine coroutine = PatchOdyssey.Collections.WaitInfo.WAIT.StartCoroutine(EnumerateRoutine(delay, forever));
+        PatchOdyssey.Collections.WaitInfo.WAITS.Add(delay, new(coroutine, new new PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Collections.WaitEvent>(callback, coroutine, new() {callback = callback, data = (delay, UnityEngine.Time.realtimeSinceStartupAsDouble + delay)})));
+      }
     }
 
-    [PatchMethod(AggressiveInlining)] public static void WaitForCoroutineEvery(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) => Util.WaitForCoroutine(delay, callback, true);
-    [PatchMethod(AggressiveInlining)] public static void WaitForCoroutineUntil(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) => Util.WaitForCoroutine(delay, callback, false);
-
-    [PatchMethod(AggressiveInlining)]
-    public static void WaitForTimerEvery(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) {
-      PatchOdyssey.Collections.EventHandler.Combine(PatchOdyssey.Collections.WaitInfo.WAITS[double.NaN].handlers, new(callback, null, new() {data = (+delay, UnityEngine.Time.realtimeSinceStartupAsDouble + delay)}));
-    }
-
-    [PatchMethod(AggressiveInlining)]
-    public static void WaitForTimerUntil(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) {
-      PatchOdyssey.Collections.EventHandler.Combine(PatchOdyssey.Collections.WaitInfo.WAITS[double.NaN].handlers, new(callback, null, new() {data = (-delay, UnityEngine.Time.realtimeSinceStartupAsDouble + delay)}));
-    }
-
-    [PatchMethod(AggressiveInlining)]
-    public static void WaitUntil(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitForTimerEvent> callback) => Util.WaitForCoroutineUntil(delay, callback);
+    [PatchMethod(AggressiveInlining)] public static void WaitForCoroutineEvery(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitEvent> callback) => Util.WaitForCoroutine(delay, callback, true);
+    [PatchMethod(AggressiveInlining)] public static void WaitForCoroutineUntil(double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitEvent> callback) => Util.WaitForCoroutine(delay, callback, false);
+    [PatchMethod(AggressiveInlining)] public static void WaitForTimerEvery    (double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitEvent> callback) => PatchOdyssey.Collections.WaitInfo.WAITS[double.NaN].handlers.Add(new(callback, null, new() {callback = callback, data = (+delay, UnityEngine.Time.realtimeSinceStartupAsDouble + delay)}));
+    [PatchMethod(AggressiveInlining)] public static void WaitForTimerUntil    (double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitEvent> callback) => PatchOdyssey.Collections.WaitInfo.WAITS[double.NaN].handlers.Add(new(callback, null, new() {callback = callback, data = (-delay, UnityEngine.Time.realtimeSinceStartupAsDouble + delay)}));
+    [PatchMethod(AggressiveInlining)] public static void WaitUntil            (double delay, PatchOdyssey.Handler<PatchOdyssey.Collections.WaitEvent> callback) => Util.WaitForCoroutineUntil(delay, callback);
 
     public static UnityEngine.Bounds? WorldBoundsFromRectTransform(UnityEngine.RectTransform? transform) {
       UnityEngine.Rect? rectangle = Util.WorldRectFromRectTransform(transform);

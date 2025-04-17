@@ -28,10 +28,18 @@ April 4th, 2025 – April 7th, 2025
 
 April 8th, 2025 – April 9th, 2025
 • Modified all constructors as setting required members i.e. `[PatchConstructor]`.
-• Refactored `WaitEvery(…)`, `WaitForTimer(…)`, `WaitForTimerUntil(…)`, and `WaitUntil(…)` functions
+• Refactored `WaitEvery(…)`, `WaitForTimerEvery(…)`, `WaitForTimerUntil(…)`, and `WaitUntil(…)` functions
 
 April 10th, 2025 – April 13th, 2025
+• Added `WaitForCoroutineEvery(…)` and `WaitForCoroutineUntil(…)` functions
 • Learned Unity's Entity Component System (ECS) feature using their Data-Oriented Technology Stack (DOTS) — https://www.youtube.com/watch?v=1gSnTlUjs-s
+
+April 14th, 2025 – April 15th, 2025
+• Refactored `EventHandler<T>`, `HandlerInfo<T>`, and other associated code
+
+April 15th, 2025 — April 16th, 2025
+• Refactored `LoadURI*(…)` functions
+• Use `System.Math` for non-game-specific, `Unity.Mathematics` for ECS-specific, and `UnityEngine.Mathf` for game-specific mathematics
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 ROADMAP
 • … — Keep Mesh as child GameObject of scripted parent GameObjects
@@ -40,11 +48,12 @@ ROADMAP
 • UI sequencing — Game.cs
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 IDEAS
+Pet simulation?
 • NPCs notice you in anticipation before responding — not all monsters are immediately hostile
 tap tap tap random key!
 Adobe sucs cption stock
+Character name "Audu", "Aure", "Xinis"
 Plants vs Zombies design
-Character name "Aure"
 Player failure still means progress
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 ENTITY COMPONENT SYSTEM (UNITY DOTS)
