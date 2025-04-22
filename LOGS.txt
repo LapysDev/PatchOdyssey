@@ -19,27 +19,43 @@ April 3rd, 2025
 • Implemented `EditorReadOnlyDictionary<TKey, TValue>` using `System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>`.
 • Shimmed `required` keyword with manual `System.*` polyfill.
 • Updated from C# .NET 10 to Unity's Preview C# version i.e. `/langversion:preview`.
-• Updated standard `System.Delegate`s (`System.Func`) to user-defined `delegate`s (e.g. `Interpolator`) for better code communication.
+• Updated standard `System.Delegate`s (`System.Func`) to user-defined `delegate`s (e.g. `Interpolator`, `RefAction`) for better code communication.
 
 April 4th, 2025 – April 7th, 2025
-• Implemented `PatchOdyssey.Util.HandlerInfo` for handling events e.g. `Load*(…)`, `Wait*(…)`, …, e.t.c. like a "fat" `delegate` with additional data.
+• Implemented `PatchOdyssey.Util.HandlerInfo` for handling events e.g. `Load*(…)`, `Wait*(…)`, …, e.t.c. like a “fat” `delegate` with additional data.
 • Supplemented `event` properties with `PatchOdyssey.Collections.EventHandler` class — supporting `System.Delegate` invocation lists, operator overloads, …, e.t.c.
 • Supplemented `System.EventArgs` with `PatchOdyssey.Collections.Event` generic.
 
 April 8th, 2025 – April 9th, 2025
 • Modified all constructors as setting required members i.e. `[PatchConstructor]`.
-• Refactored `WaitEvery(…)`, `WaitForTimerEvery(…)`, `WaitForTimerUntil(…)`, and `WaitUntil(…)` functions
+• Refactored `Util.WaitEvery(…)`, `Util.WaitForTimerEvery(…)`, `Util.WaitForTimerUntil(…)`, and `Util.WaitUntil(…)` functions
 
 April 10th, 2025 – April 13th, 2025
-• Added `WaitForCoroutineEvery(…)` and `WaitForCoroutineUntil(…)` functions
+• Added `Util.WaitForCoroutineEvery(…)` and `Util.WaitForCoroutineUntil(…)` functions
 • Learned Unity's Entity Component System (ECS) feature using their Data-Oriented Technology Stack (DOTS) — https://www.youtube.com/watch?v=1gSnTlUjs-s
 
 April 14th, 2025 – April 15th, 2025
 • Refactored `EventHandler<T>`, `HandlerInfo<T>`, and other associated code
 
 April 15th, 2025 — April 16th, 2025
+• Designated `System.Math` for non-game-specific, `Unity.Mathematics` for ECS-specific, and `UnityEngine.Mathf` for game-specific mathematics
 • Refactored `LoadURI*(…)` functions
-• Use `System.Math` for non-game-specific, `Unity.Mathematics` for ECS-specific, and `UnityEngine.Mathf` for game-specific mathematics
+
+April 20th, 2025 — April 22nd, 2025
+• Developed `Mono<T>` structure for monostate (localized singleton) variables
+• Developed `RefList<T>` and `RefReadOnlyList<T>` classes to allow in-place value-type modification of list elements
+• Optimized out `System.Array` bounds-checking with `ref System.Runtime.CompilerServices.Unsafe.Add(ref System.Runtime.InteropServices.MemoryMarshal.GetReference(array), index)` instead of `ref array[index]`
+• …
+―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+TODO
+• Consider a `PatchDictionary` (and `PatchReadOnlyDictionary`) instead of `EditorDictionary`
+• Ensure `EditorDictionary` `ref`s its internal `System.Array` fields
+• Add `TrimExcess(uint)` to custom lists
+• ECS-ify the `Event`s i.e. `SortedDictionary` to `SortedList`
+• There's only ever one synchronous load in the list and it's either getting the payload or waiting for an asynchronous one.. Check if it's called up in a `repeated` `LoadUri(…)` call
+• Use `ListDictionary` for `UISequence`
+• `Event`s now store callsite arguments in `metadata` field alongside a `timestamp` field
+• `ToString(…)` for all custom types
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 ROADMAP
 • … — Keep Mesh as child GameObject of scripted parent GameObjects
@@ -48,13 +64,17 @@ ROADMAP
 • UI sequencing — Game.cs
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 IDEAS
-Pet simulation?
+• Character names: “Audu”, “Aure”, “Xinis”, …
+• Each section is a unique Scene with a Loading UI menu as their start
+• Enemies have drop-glow, too. NPCs don't
+• Monster autonomy, Tamer autonomy ⟶ Player lassoes wild monster, is teleported on them as Rider — material changes to white with animated scaling and invulnerability
 • NPCs notice you in anticipation before responding — not all monsters are immediately hostile
-tap tap tap random key!
+• Opening Looney Tunes vignette that leads into tutorial section
+• Plants vs Zombies game design of always introducing new things to look forward to if possible
+• Player failure still means progress
+• Vignette UI that reddens slightly (no shake) on damage and shakes on attack
+
 Adobe sucs cption stock
-Character name "Audu", "Aure", "Xinis"
-Plants vs Zombies design
-Player failure still means progress
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 ENTITY COMPONENT SYSTEM (UNITY DOTS)
 • Install 2D Sprite, Entities, Entities Graphics, and Unity Physics packages
