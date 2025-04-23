@@ -5,7 +5,7 @@ global using PatchBurst = Unity.Burst.BurstCompile;                             
 #endif                                                                                                //
 global using PatchLayout = System.Runtime.InteropServices.StructLayoutAttribute;                      // ⟶ Un-manages the structure of class types
 global using PatchMethod = System.Runtime.CompilerServices.MethodImplAttribute;                       // ⟶ Modify function with compile attributes e.g. inlined, optimized, unmanaged, …, e.t.c.
-global using PatchOdyssey.Collections;                                                                // ⟶ Expose custom collections e.g. `EditorDictionary<T>`, `GameObjectSharedList<T>`, …
+global using PatchOdyssey.Collections;                                                                // ⟶ Expose custom collections e.g. `GameObjectSharedList<T>`, `RefDictionary<T>`, …
 global using PatchOffset = System.Runtime.InteropServices.FieldOffsetAttribute;                       // ⟶ Adjust offset of fields within structurally-unmanaged class types
 #if NET9_0 || NET9_0_OR_GREATER                                                                       // ⟶ Modify function priority over another overload during resolution; Defaults to `PatchResolution(0)` for all functions
   global using PatchResolution = System.Runtime.CompilerServices.OverloadResolutionPriorityAttribute; //    ^^
@@ -597,516 +597,6 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
   }
 
   namespace Collections {
-    [System.Serializable]
-    // System.Runtime.InteropServices.CollectionMarshal.GetValueRefOrNullRef(…)
-    public class EditorDictionary<TKey, TValue> : System.Collections.Generic.IDictionary<TKey, TValue> /* ⟶ `https://web.archive.org/web/20240722203244/https://discussions.unity.com/t/finally-a-serializable-dictionary-for-unity-extracted-from-system-collections-generic/586385` */ {
-      public struct Enumerator : System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<TKey, TValue>> {
-        public           System.Collections.Generic.KeyValuePair  <TKey, TValue>  Current                                => (System.Collections.Generic.KeyValuePair<TKey, TValue>) this.current!;
-        private          System.Collections.Generic.KeyValuePair  <TKey, TValue>? current                                =  null;
-        private readonly PatchOdyssey.Collections.EditorDictionary<TKey, TValue>  dictionary                             =  null!;
-        private          uint                                                     index                                  =  0u;
-        private readonly uint                                                     version                                =  0u;
-        object                                                                    System.Collections.IEnumerator.Current => this.Current;
-
-        /* … */
-        [PatchConstructor, PatchMethod(AggressiveInlining)]
-        internal Enumerator(PatchOdyssey.Collections.EditorDictionary<TKey, TValue> dictionary) {
-          this.current    = null;
-          this.dictionary = dictionary;
-          this.index      = 0u;
-          this.version    = dictionary.version;
-        }
-
-        /* … */
-        [PatchMethod(AggressiveInlining)]
-        public void Dispose() {}
-
-        public bool MoveNext() {
-          if (this.dictionary.version != this.version)
-          throw new System.InvalidOperationException("Dictionary changed during enumeration");
-
-          for (; this.dictionary.count > this.index; ++this.index)
-          if (this.dictionary.hashes[this.index] >= 0) {
-            this.current = new(this.dictionary.keys[this.index], this.dictionary.values[this.index]);
-            this.index  += 1u;
-
-            return true;
-          }
-
-          this.current = null;
-          this.index   = this.dictionary.count + 1u;
-
-          return false;
-        }
-
-        void System.Collections.IEnumerator.Reset() {
-          if (this.dictionary.version != this.version)
-          throw new System.InvalidOperationException("Dictionary changed during enumeration");
-
-          this.current = null;
-          this.index   = 0;
-        }
-      }
-
-      /* … */
-      internal const           uint                                                    CapacityMaximum = 0x7FEFFFFDu;
-      internal static readonly System.Collections.ObjectModel.ReadOnlyCollection<uint> Primes          = new[] {3u, 7u, 11u, 17u, 23u, 29u, 37u, 47u, 59u, 71u, 89u, 107u, 131u, 163u, 197u, 239u, 293u, 353u, 431u, 521u, 631u, 761u, 919u, 1103u, 1327u, 1597u, 1931u, 2333u, 2801u, 3371u, 4049u, 4861u, 5839u, 7013u, 8419u, 10103u, 12143u, 14591u, 17519u, 21023u, 25229u, 30293u, 36353u, 43627u, 52361u, 62851u, 75431u, 90523u, 108631u, 130363u, 156437u, 187751u, 225307u, 270371u, 324449u, 389357u, 467237u, 560689u, 672827u, 807403u, 968897u, 1162687u, 1395263u, 1674319u, 2009191u, 2411033u, 2893249u, 3471899u, 4166287u, 4999559u, 5999471u, 7199369u}.AsReadOnly();
-      internal const           uint                                                    PrimeMaximum    = 0x7FFFFFFFu;
-
-      public                                                                     int                                                Count                                                                                                    => (int) (this.count - this.freeCount);
-      public                                                                     System.Collections.Generic.ICollection<TKey>       Keys                                                                                                     => this.keys  .AsCopy();
-      public                                                                     System.Collections.Generic.ICollection<TValue>     Values                                                                                                   => this.values.AsCopy();
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private          int[]                                              buckets                                                                                                  =  System.Array.Empty<int>();
-      private                                                           readonly System.Collections.Generic.IEqualityComparer<TKey> comparer                                                                                                 =  System.Collections.Generic.EqualityComparer<TKey>.Default;
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private          uint                                               count                                                                                                    =  0u;
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private          uint                                               freeCount                                                                                                =  0u;
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private          int                                                freeList                                                                                                 =  0;
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private          int   []                                           hashes                                                                                                   =  System.Array.Empty<int>();
-      public                                                            const    bool                                               IsReadOnly                                                                                               =  true;
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private          TKey  []                                           keys                                                                                                     =  System.Array.Empty<TKey>  ();
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private          int   []                                           next                                                                                                     =  System.Array.Empty<int>   ();
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private          TValue[]                                           values                                                                                                   =  System.Array.Empty<TValue>();
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] public           uint                                               version                                                                                                  =  0u;
-      bool                                                                                                                          System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<TKey, TValue>>.IsReadOnly => false;
-
-      /* … */
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorDictionary()                                                                                                                                                                            : this(0,                                                                                                          null!)    {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorDictionary(int                                                                                                 capacity)                                                                : this(capacity,                                                                                                   null!)    {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorDictionary(System.Collections.Generic.IEqualityComparer<TKey>                                                  comparer)                                                                : this(0,                                                                                                          comparer) {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary)                                                              : this((System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>) dictionary, null!)    {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable)                                                              : this(enumerable,                                                                                                 null!)    {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : this((System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>) dictionary, comparer) {}
-
-      [PatchConstructor, PatchMethod(AggressiveInlining)]
-      public EditorDictionary(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable, System.Collections.Generic.IEqualityComparer<TKey> comparer) : this(enumerable is null ? 0 : (int) Util.EnumerableCount(enumerable), comparer) {
-        if (enumerable is null)
-          throw new System.ArgumentNullException($"Source provided is null");
-
-        this.AddRange(enumerable);
-      }
-
-      [PatchConstructor]
-      public EditorDictionary(int capacity, System.Collections.Generic.IEqualityComparer<TKey> comparer) {
-        if (capacity < 0)
-          throw new System.ArgumentOutOfRangeException($"Expected positive dictionary capacity");
-
-        EditorDictionary<TKey, TValue>.Ensure();
-        this.Initialize((uint) capacity);
-        this.comparer = comparer ?? System.Collections.Generic.EqualityComparer<TKey>.Default;
-      }
-
-      /* … */
-      [PatchMethod(AggressiveInlining)] public void Add(System.Collections.Generic.KeyValuePair<TKey, TValue> element) => this.Add(element.Key, element.Value);
-      [PatchMethod(AggressiveInlining)]
-      public void Add(in TKey key, in TValue value) {
-        this.Insert(key, value, true);
-      }
-
-      [PatchMethod(AggressiveInlining)]
-      public void AddRange(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable) {
-        foreach (System.Collections.Generic.KeyValuePair<TKey, TValue> element in enumerable)
-        this.Add(element);
-      }
-
-      [PatchMethod(AggressiveInlining)]
-      public void Clear() {
-        if (0u == this.count)
-        return;
-
-        this.buckets.Fill(-1);
-        this.hashes .Clear(0, (int) this.count);
-        this.keys   .Clear(0, (int) this.count);
-        this.next   .Clear(0, (int) this.count);
-        this.values .Clear(0, (int) this.count);
-
-        this.count     =  0;
-        this.freeCount =  0;
-        this.freeList  = -1;
-        this.version  += +1;
-      }
-
-      [PatchMethod(AggressiveInlining)]
-      public bool Contains(System.Collections.Generic.KeyValuePair<TKey, TValue> element) {
-        int index = this.FindIndex(element.Key);
-        return index != -1 && System.Collections.Generic.EqualityComparer<TValue>.Default.Equals(this.values[index], element.Value);
-      }
-
-      [PatchMethod(AggressiveInlining)]
-      public bool ContainsKey(in TKey key) {
-        return this.FindIndex(key) != -1;
-      }
-
-      [PatchMethod(AggressiveInlining)]
-      public bool ContainsValue(in TValue value) {
-        for ((uint index, System.Func<TValue, TValue, bool> comparer) = (this.count, value is null ? static (value, _) => value is null : System.Collections.Generic.EqualityComparer<TValue>.Default.Equals); 0u != index--; ) {
-          if (this.hashes[index] >= 0 && comparer(this.values[index], value))
-          return true;
-        }
-
-        return false;
-      }
-
-      public void CopyTo(System.Collections.Generic.KeyValuePair<TKey, TValue>[] array, int offset) {
-        if (array is null)                       throw new System.ArgumentNullException      ($"Destination array provided is null");
-        if (offset < 0 || array.Length < offset) throw new System.ArgumentOutOfRangeException($"Invalid offset provided");
-        if (this.Count >  array.Length - offset) throw new System.ArgumentException          ($"Dictionary element count is more than the specified space provided");
-
-        for (int index = 0; index != this.count; ++index) {
-          if (this.hashes[index] >= 0)
-          array[offset++] = new(this.keys[index], this.values[index]);
-        }
-      }
-
-      public static System.Func<UnityEngine.Rect, object, object>? DelegateGUIField<T>() {
-        if (typeof(T) == typeof(bool))                              return static (position, value) => UnityEditor.EditorGUI.Toggle         (position,                              (System.Boolean)             value)                  as object;
-        if (typeof(T) == typeof(double))                            return static (position, value) => UnityEditor.EditorGUI.DoubleField    (position,                              (System.Double)              value)                  as object;
-        if (typeof(T) == typeof(float))                             return static (position, value) => UnityEditor.EditorGUI.FloatField     (position,                              (System.Single)              value)                  as object;
-        if (typeof(T) == typeof(int))                               return static (position, value) => UnityEditor.EditorGUI.IntField       (position,                              (System.Int32)               value)                  as object;
-        if (typeof(T) == typeof(long))                              return static (position, value) => UnityEditor.EditorGUI.LongField      (position,                              (System.Int64)               value)                  as object;
-        if (typeof(T) == typeof(string))                            return static (position, value) => UnityEditor.EditorGUI.TextField      (position,                              (System.String)              value)                  as object;
-        if (typeof(T) == typeof(UnityEngine.AnimationCurve))        return static (position, value) => UnityEditor.EditorGUI.CurveField     (position,                              (UnityEngine.AnimationCurve) value)                  as object;
-        if (typeof(T) == typeof(UnityEngine.Bounds))                return static (position, value) => UnityEditor.EditorGUI.BoundsField    (position,                              (UnityEngine.Bounds)         value)                  as object;
-        if (typeof(T) == typeof(UnityEngine.BoundsInt))             return static (position, value) => UnityEditor.EditorGUI.BoundsIntField (position,                              (UnityEngine.BoundsInt)      value)                  as object;
-        if (typeof(T) == typeof(UnityEngine.Color))                 return static (position, value) => UnityEditor.EditorGUI.ColorField     (position,                              (UnityEngine.Color)          value)                  as object;
-        if (typeof(T) == typeof(UnityEngine.Gradient))              return static (position, value) => UnityEditor.EditorGUI.GradientField  (position,                              (UnityEngine.Gradient)       value)                  as object;
-        if (typeof(T) == typeof(UnityEngine.Rect))                  return static (position, value) => UnityEditor.EditorGUI.RectField      (position,                              (UnityEngine.Rect)           value)                  as object;
-        if (typeof(T) == typeof(UnityEngine.RectInt))               return static (position, value) => UnityEditor.EditorGUI.RectIntField   (position,                              (UnityEngine.RectInt)        value)                  as object;
-        if (typeof(T) == typeof(UnityEngine.Vector2))               return static (position, value) => UnityEditor.EditorGUI.Vector2Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector2)        value)                  as object;
-        if (typeof(T) == typeof(UnityEngine.Vector2Int))            return static (position, value) => UnityEditor.EditorGUI.Vector2IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector2Int)     value)                  as object;
-        if (typeof(T) == typeof(UnityEngine.Vector3))               return static (position, value) => UnityEditor.EditorGUI.Vector3Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector3)        value)                  as object;
-        if (typeof(T) == typeof(UnityEngine.Vector3Int))            return static (position, value) => UnityEditor.EditorGUI.Vector3IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector3Int)     value)                  as object;
-        if (typeof(T) == typeof(UnityEngine.Vector4))               return static (position, value) => UnityEditor.EditorGUI.Vector4Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector4)        value)                  as object;
-        if (typeof(T).IsEnum)                                       return static (position, value) => UnityEditor.EditorGUI.EnumPopup      (position,                              (System.Enum)                value)                  as object;
-        if (typeof(UnityEngine.Object).IsAssignableFrom(typeof(T))) return static (position, value) => UnityEditor.EditorGUI.ObjectField    (position,                              (UnityEngine.Object)         value, typeof(T), true) as object;
-
-        return null;
-      }
-
-      [PatchMethod(AggressiveInlining)]
-      public static void Ensure() {
-        if (EditorDictionary<TKey, TValue>.DelegateGUIField<TKey>  () is null) throw new System.NotSupportedException($"[{UnityEngine.Application.productName}]: Type `{typeof(TKey)}` is not supported for `EditorDictionary`");
-        if (EditorDictionary<TKey, TValue>.DelegateGUIField<TValue>() is null) throw new System.NotSupportedException($"[{UnityEngine.Application.productName}]: Type `{typeof(TValue)}` is not supported for `EditorDictionary`");
-      }
-
-      private int FindIndex(in TKey key) {
-        if (key is null)
-        throw new System.ArgumentNullException($"Dictionary key is null");
-
-        if (0 != this.buckets.Length) {
-          int hash  = this.comparer.GetHashCode(key) & (int) EditorDictionary<TKey, TValue>.PrimeMaximum;
-          int index = this.buckets[hash % this.buckets.Length];
-
-          // …
-          for (; index >= 0; index = this.next[index]) {
-            if (hash == this.hashes[index] && this.comparer.Equals(this.keys[index], key))
-            return index;
-          }
-        }
-
-        return -1;
-      }
-
-      [PatchMethod(AggressiveInlining)]
-      public EditorDictionary<TKey, TValue>.Enumerator GetEnumerator() {
-        return new(this);
-      }
-
-      public static uint GetPrime(uint minimum) {
-        [PatchMethod(AggressiveInlining)]
-        static uint Sqrt(uint number) {
-          uint residue = 1u;
-          uint root    = 0u;
-          uint term;
-
-          // …
-          while (residue <= number)
-          residue <<= 2;
-
-          while (residue > 1u) {
-            residue >>= 2;
-            term      = number - residue - root;
-            root    >>= 1;
-
-            if (term >= 0u) {
-              number = term;
-              root  += residue;
-            }
-          }
-
-          return root;
-        }
-
-        /* … */
-        if (minimum < 0u)
-        throw new System.ArgumentException($"Expected positive dictionary prime");
-
-        foreach (uint prime in EditorDictionary<TKey, TValue>.Primes) {
-          if (minimum <= prime)
-          return prime;
-        }
-
-        for (uint index = minimum | 1u; index < EditorDictionary<TKey, TValue>.PrimeMaximum; index += 2u)
-        if (0 != (index & 1u)) {
-          uint limit  = Sqrt(index);
-          bool primed = true;
-
-          // … ⟶ Magic numbers here — “Bippity bappity boo”! 🪄
-          for (uint subindex = 3u; limit >= subindex; subindex += 2u)
-          if (0u == index % subindex) {
-            primed = false;
-            break;
-          }
-
-          if (primed && 0u != (index - 1u) % 101u)
-          return index;
-        }
-
-        return minimum;
-      }
-
-      private void Initialize(uint capacity) {
-        uint prime = EditorDictionary<TKey, TValue>.GetPrime(capacity);
-
-        // …
-        this.buckets  = new int[prime];
-        this.freeList = -1;
-        this.hashes   = new int   [prime];
-        this.keys     = new TKey  [prime];
-        this.next     = new int   [prime];
-        this.values   = new TValue[prime];
-
-        this.buckets.Fill(-1);
-      }
-
-      private void Insert(in TKey key, in TValue value, bool strict) {
-        int freeIndex = 0;
-        int hash      = 0;
-        int hashIndex = 0;
-
-        // …
-        if (key is null)                 throw new System.ArgumentNullException($"Dictionary key is null");
-        if (0    == this.buckets.Length) this.Initialize(0u);
-
-        hash      = this.comparer.GetHashCode(key) & (int) EditorDictionary<TKey, TValue>.PrimeMaximum;
-        hashIndex = hash % this.buckets.Length;
-
-        for (int index = this.buckets[hashIndex]; index >= 0; ++freeIndex, index = next[index])
-        if (hash == this.hashes[index] && this.comparer.Equals(this.keys[index], key)) {
-          if (!strict) {
-            this.values[index] = value;
-            this.version      += 1u;
-
-            return;
-          }
-
-          throw new System.ArgumentException($"Dictionary key already exists: `{key}`");
-        }
-
-        if (0u != this.freeCount) {
-          this.freeCount -= 1u;
-          this.freeList   = this.next[freeIndex = this.freeList];
-        }
-
-        else {
-          if (this.count == this.keys.Length)
-            this.Resize(EditorDictionary<TKey, TValue>.CapacityMaximum >> 0 > this.count && EditorDictionary<TKey, TValue>.CapacityMaximum >> 1 < this.count ? EditorDictionary<TKey, TValue>.CapacityMaximum : EditorDictionary<TKey, TValue>.GetPrime(this.count << 1));
-
-          freeIndex = (int) this.count++;
-        }
-
-        this.next   [freeIndex] = this.buckets[hashIndex];
-        this.buckets[hashIndex] = freeIndex;
-        this.hashes [freeIndex] = hash;
-        this.keys   [freeIndex] = key;
-        this.values [freeIndex] = value;
-        this.version           += 1u;
-      }
-
-      [PatchMethod(AggressiveInlining)] public bool Remove(System.Collections.Generic.KeyValuePair<TKey, TValue> element) => this.Remove(element.Key);
-      public bool Remove(in TKey key) {
-        int freeIndex = -1;
-        int hash      =  0;
-        int hashIndex =  0;
-
-        // …
-        if (key is null)
-          throw new System.ArgumentNullException($"Dictionary key is null");
-
-        hash      = this.comparer.GetHashCode(key) & (int) EditorDictionary<TKey, TValue>.PrimeMaximum;
-        hashIndex = hash % this.buckets.Length;
-
-        for (int index = this.buckets[hashIndex]; index >= 0; freeIndex = index = this.next[index])
-        if (hash == this.hashes[index] && this.comparer.Equals(this.keys[index], key)) {
-          if (freeIndex < 0) this.buckets[hashIndex] = this.next[index];
-          else               this.next   [freeIndex] = this.next[index];
-
-          this.version      += 1u;
-          this.values[index] = default!;
-          this.next  [index] = this.freeList;
-          this.keys  [index] = default!;
-          this.hashes[index] = -1;
-          this.freeList      = index;
-          this.freeCount    += 1u;
-
-          return true;
-        }
-
-        return false;
-      }
-
-      private void Resize(uint capacity) {
-        int[]    buckets = new int   [capacity];
-        int[]    hashes  = new int   [capacity];
-        TKey[]   keys    = new TKey  [capacity];
-        int[]    next    = new int   [capacity];
-        TValue[] values  = new TValue[capacity];
-
-        // …
-        buckets.Fill(-1);
-
-        System.Array.Copy(this.hashes, 0, hashes, 0, this.count);
-        System.Array.Copy(this.keys,   0, keys,   0, this.count);
-        System.Array.Copy(this.next,   0, next,   0, this.count);
-        System.Array.Copy(this.values, 0, values, 0, this.count);
-
-        for (int index = 0; index != this.count; ++index) {
-          int hashIndex = hashes[index] % (int) capacity;
-
-          // …
-          next   [index]     = buckets[hashIndex];
-          buckets[hashIndex] = index;
-        }
-
-        this.buckets = buckets;
-        this.hashes  = hashes;
-        this.keys    = keys;
-        this.next    = next;
-        this.values  = values;
-      }
-
-      [PatchMethod(AggressiveInlining)] System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<TKey, TValue>> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>.GetEnumerator() => this.GetEnumerator();
-      [PatchMethod(AggressiveInlining)] System.Collections.IEnumerator                                                                System.Collections.IEnumerable.GetEnumerator                                                               () => this.GetEnumerator();
-
-      [PatchMethod(AggressiveInlining)] public bool TryAdd(System.Collections.Generic.KeyValuePair<TKey, TValue> element) => this.TryAdd(element);
-      [PatchMethod(AggressiveInlining)]
-      public bool TryAdd(in TKey key, in TValue value) {
-        if (!this.ContainsKey(key)) {
-          this.Add(key, value);
-          return true;
-        }
-
-        return false;
-      }
-
-      [PatchMethod(AggressiveInlining)]
-      public bool TryGetValue(in TKey key, out TValue value) {
-        int index = this.FindIndex(key);
-
-        value = index != -1 ? this.values[index] : default!;
-        return index != -1;
-      }
-
-      public TValue this[in TKey key] {
-        [PatchMethod(AggressiveInlining)]
-        get {
-          int index = this.FindIndex(key);
-
-          if (index != -1) return this.values[index];
-          throw new System.Collections.Generic.KeyNotFoundException(key?.ToString() ?? "");
-        }
-
-        [PatchMethod(AggressiveInlining)]
-        set => this.Insert(key, value, false);
-      }
-
-      public TValue this[in TKey key, in TValue _] {
-        [PatchMethod(AggressiveInlining)]
-        get {
-          int index = this.FindIndex(key);
-          return index != -1 ? this.values[index] : _;
-        }
-      }
-    }
-      [System.Serializable] public class AnimationCurveDictionary : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.AnimationCurve> { [PatchMethod(AggressiveInlining)] public AnimationCurveDictionary() : base() {} [PatchMethod(AggressiveInlining)] public AnimationCurveDictionary(int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public AnimationCurveDictionary(System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public AnimationCurveDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public AnimationCurveDictionary(int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public AnimationCurveDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class BooleanDictionary        : PatchOdyssey.Collections.EditorDictionary<string, System     .Boolean>        { [PatchMethod(AggressiveInlining)] public BooleanDictionary       () : base() {} [PatchMethod(AggressiveInlining)] public BooleanDictionary       (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public BooleanDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public BooleanDictionary       (System.Collections.Generic.IDictionary<string, System     .Boolean>        dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public BooleanDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public BooleanDictionary       (System.Collections.Generic.IDictionary<string, System     .Boolean>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class BoundsDictionary         : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.Bounds>         { [PatchMethod(AggressiveInlining)] public BoundsDictionary        () : base() {} [PatchMethod(AggressiveInlining)] public BoundsDictionary        (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public BoundsDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public BoundsDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public BoundsDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public BoundsDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class BoundsIntDictionary      : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.BoundsInt>      { [PatchMethod(AggressiveInlining)] public BoundsIntDictionary     () : base() {} [PatchMethod(AggressiveInlining)] public BoundsIntDictionary     (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public BoundsIntDictionary     (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public BoundsIntDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public BoundsIntDictionary     (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public BoundsIntDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class ColorDictionary          : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.Color>          { [PatchMethod(AggressiveInlining)] public ColorDictionary         () : base() {} [PatchMethod(AggressiveInlining)] public ColorDictionary         (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public ColorDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public ColorDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public ColorDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public ColorDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class DoubleDictionary         : PatchOdyssey.Collections.EditorDictionary<string, System     .Double>         { [PatchMethod(AggressiveInlining)] public DoubleDictionary        () : base() {} [PatchMethod(AggressiveInlining)] public DoubleDictionary        (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public DoubleDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public DoubleDictionary        (System.Collections.Generic.IDictionary<string, System     .Double>         dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public DoubleDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public DoubleDictionary        (System.Collections.Generic.IDictionary<string, System     .Double>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class FloatDictionary          : PatchOdyssey.Collections.EditorDictionary<string, System     .Single>         { [PatchMethod(AggressiveInlining)] public FloatDictionary         () : base() {} [PatchMethod(AggressiveInlining)] public FloatDictionary         (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public FloatDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public FloatDictionary         (System.Collections.Generic.IDictionary<string, System     .Single>         dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public FloatDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public FloatDictionary         (System.Collections.Generic.IDictionary<string, System     .Single>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class GameObjectDictionary     : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.GameObject>     { [PatchMethod(AggressiveInlining)] public GameObjectDictionary    () : base() {} [PatchMethod(AggressiveInlining)] public GameObjectDictionary    (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public GameObjectDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public GameObjectDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public GameObjectDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public GameObjectDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class GradientDictionary       : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.Gradient>       { [PatchMethod(AggressiveInlining)] public GradientDictionary      () : base() {} [PatchMethod(AggressiveInlining)] public GradientDictionary      (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public GradientDictionary      (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public GradientDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public GradientDictionary      (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public GradientDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class IntDictionary            : PatchOdyssey.Collections.EditorDictionary<string, System     .Int32>          { [PatchMethod(AggressiveInlining)] public IntDictionary           () : base() {} [PatchMethod(AggressiveInlining)] public IntDictionary           (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public IntDictionary           (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public IntDictionary           (System.Collections.Generic.IDictionary<string, System     .Int32>          dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public IntDictionary           (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public IntDictionary           (System.Collections.Generic.IDictionary<string, System     .Int32>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class LongDictionary           : PatchOdyssey.Collections.EditorDictionary<string, System     .Int64>          { [PatchMethod(AggressiveInlining)] public LongDictionary          () : base() {} [PatchMethod(AggressiveInlining)] public LongDictionary          (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public LongDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public LongDictionary          (System.Collections.Generic.IDictionary<string, System     .Int64>          dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public LongDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public LongDictionary          (System.Collections.Generic.IDictionary<string, System     .Int64>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class RectDictionary           : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.Rect>           { [PatchMethod(AggressiveInlining)] public RectDictionary          () : base() {} [PatchMethod(AggressiveInlining)] public RectDictionary          (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public RectDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public RectDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public RectDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public RectDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class RectIntDictionary        : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.RectInt>        { [PatchMethod(AggressiveInlining)] public RectIntDictionary       () : base() {} [PatchMethod(AggressiveInlining)] public RectIntDictionary       (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public RectIntDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public RectIntDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public RectIntDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public RectIntDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class StringDictionary         : PatchOdyssey.Collections.EditorDictionary<string, System     .String>         { [PatchMethod(AggressiveInlining)] public StringDictionary        () : base() {} [PatchMethod(AggressiveInlining)] public StringDictionary        (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public StringDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public StringDictionary        (System.Collections.Generic.IDictionary<string, System     .String>         dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public StringDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public StringDictionary        (System.Collections.Generic.IDictionary<string, System     .String>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class UIntDictionary           : PatchOdyssey.Collections.EditorDictionary<string, System     .UInt32>         { [PatchMethod(AggressiveInlining)] public UIntDictionary          () : base() {} [PatchMethod(AggressiveInlining)] public UIntDictionary          (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public UIntDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public UIntDictionary          (System.Collections.Generic.IDictionary<string, System     .UInt32>         dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public UIntDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public UIntDictionary          (System.Collections.Generic.IDictionary<string, System     .UInt32>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class ULongDictionary          : PatchOdyssey.Collections.EditorDictionary<string, System     .UInt64>         { [PatchMethod(AggressiveInlining)] public ULongDictionary         () : base() {} [PatchMethod(AggressiveInlining)] public ULongDictionary         (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public ULongDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public ULongDictionary         (System.Collections.Generic.IDictionary<string, System     .UInt64>         dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public ULongDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public ULongDictionary         (System.Collections.Generic.IDictionary<string, System     .UInt64>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class Vector2Dictionary        : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.Vector2>        { [PatchMethod(AggressiveInlining)] public Vector2Dictionary       () : base() {} [PatchMethod(AggressiveInlining)] public Vector2Dictionary       (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public Vector2Dictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public Vector2Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public Vector2Dictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public Vector2Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class Vector2IntDictionary     : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.Vector2Int>     { [PatchMethod(AggressiveInlining)] public Vector2IntDictionary    () : base() {} [PatchMethod(AggressiveInlining)] public Vector2IntDictionary    (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public Vector2IntDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public Vector2IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public Vector2IntDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public Vector2IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class Vector3Dictionary        : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.Vector3>        { [PatchMethod(AggressiveInlining)] public Vector3Dictionary       () : base() {} [PatchMethod(AggressiveInlining)] public Vector3Dictionary       (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public Vector3Dictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public Vector3Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public Vector3Dictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public Vector3Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class Vector3IntDictionary     : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.Vector3Int>     { [PatchMethod(AggressiveInlining)] public Vector3IntDictionary    () : base() {} [PatchMethod(AggressiveInlining)] public Vector3IntDictionary    (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public Vector3IntDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public Vector3IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public Vector3IntDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public Vector3IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class Vector4Dictionary        : PatchOdyssey.Collections.EditorDictionary<string, UnityEngine.Vector4>        { [PatchMethod(AggressiveInlining)] public Vector4Dictionary       () : base() {} [PatchMethod(AggressiveInlining)] public Vector4Dictionary       (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public Vector4Dictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public Vector4Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public Vector4Dictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public Vector4Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-
-    [System.Serializable]
-    public class EditorReadOnlyDictionary<TKey, TValue> : PatchOdyssey.Collections.EditorDictionary<TKey, TValue>, System.Collections.Generic.IReadOnlyDictionary<TKey, TValue> {
-      private           uint                                           initializerListCount =  0u;
-      public  new const bool                                           IsReadOnly           =  true;
-      public  new       System.Collections.Generic.IEnumerable<TKey>   Keys                 => base.Keys;
-      public  new       System.Collections.Generic.IEnumerable<TValue> Values               => base.Values;
-
-      /* … */
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary()                                                                                                                                                                            : base()                     {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(int                                                                                                 capacity)                                                                : base(capacity)             { this.initializerListCount = (uint) capacity; }
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(System.Collections.Generic.IEqualityComparer<TKey>                                                  comparer)                                                                : base(comparer)             {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary)                                                              : base(dictionary)           {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable)                                                              : base(enumerable)           {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(int                                                                                                 capacity,   System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(capacity,   comparer) { this.initializerListCount = (uint) capacity; }
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                          dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(dictionary, comparer) {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public EditorReadOnlyDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(enumerable, comparer) {}
-
-      /* … ⟶ Intended for initializer lists only */
-      [PatchMethod(AggressiveInlining)] public new void Add(System.Collections.Generic.KeyValuePair<TKey, TValue> element) => this.Add(element.Key, element.Value);
-      [PatchMethod(AggressiveInlining)]
-      public new void Add(TKey key, TValue value) {
-        if (0u != this.initializerListCount--) {
-          base.Add(key, value);
-
-          if (0u == this.initializerListCount)
-          this.TrimExcess(/* this.Count */);
-        } else throw new System.NotSupportedException("Can not add item to `EditorReadOnlyDictionary`");
-      }
-
-      [PatchMethod(AggressiveInlining)] public  new void AddRange(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable) { throw new System.NotSupportedException("Can not add item to `EditorReadOnlyDictionary`"); }
-      [PatchMethod(AggressiveInlining)] private new void Clear   ()                                                                                                         {}
-      [PatchMethod(AggressiveInlining)] private new bool Remove  (in TKey                                               key)                                                => false;
-      [PatchMethod(AggressiveInlining)] private new bool Remove  (System.Collections.Generic.KeyValuePair<TKey, TValue> element)                                            => false;
-      [PatchMethod(AggressiveInlining)] public  new bool TryAdd  (in TKey                                               key, in TValue value)                               { throw new System.NotSupportedException("Can not add item to `EditorReadOnlyDictionary`"); }
-      [PatchMethod(AggressiveInlining)] public  new bool TryAdd  (System.Collections.Generic.KeyValuePair<TKey, TValue> element)                                            => this.TryAdd(element.Key, element.Value);
-    }
-      [System.Serializable] public class AnimationCurveReadOnlyDictionary : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.AnimationCurve> { [PatchMethod(AggressiveInlining)] public AnimationCurveReadOnlyDictionary(int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public AnimationCurveReadOnlyDictionary(int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class BooleanReadOnlyDictionary        : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, System     .Boolean>        { [PatchMethod(AggressiveInlining)] public BooleanReadOnlyDictionary       (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public BooleanReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public BooleanReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, System     .Boolean>        dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public BooleanReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public BooleanReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, System     .Boolean>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class BoundsReadOnlyDictionary         : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Bounds>         { [PatchMethod(AggressiveInlining)] public BoundsReadOnlyDictionary        (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public BoundsReadOnlyDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public BoundsReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public BoundsReadOnlyDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public BoundsReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class BoundsIntReadOnlyDictionary      : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.BoundsInt>      { [PatchMethod(AggressiveInlining)] public BoundsIntReadOnlyDictionary     (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public BoundsIntReadOnlyDictionary     (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class ColorReadOnlyDictionary          : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Color>          { [PatchMethod(AggressiveInlining)] public ColorReadOnlyDictionary         (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public ColorReadOnlyDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public ColorReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public ColorReadOnlyDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public ColorReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class DoubleReadOnlyDictionary         : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, System     .Double>         { [PatchMethod(AggressiveInlining)] public DoubleReadOnlyDictionary        (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public DoubleReadOnlyDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public DoubleReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System     .Double>         dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public DoubleReadOnlyDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public DoubleReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System     .Double>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class FloatReadOnlyDictionary          : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, System     .Single>         { [PatchMethod(AggressiveInlining)] public FloatReadOnlyDictionary         (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public FloatReadOnlyDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public FloatReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System     .Single>         dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public FloatReadOnlyDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public FloatReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System     .Single>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class GameObjectReadOnlyDictionary     : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.GameObject>     { [PatchMethod(AggressiveInlining)] public GameObjectReadOnlyDictionary    (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public GameObjectReadOnlyDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public GameObjectReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public GameObjectReadOnlyDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public GameObjectReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class GradientReadOnlyDictionary       : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Gradient>       { [PatchMethod(AggressiveInlining)] public GradientReadOnlyDictionary      (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public GradientReadOnlyDictionary      (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public GradientReadOnlyDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public GradientReadOnlyDictionary      (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public GradientReadOnlyDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class IntReadOnlyDictionary            : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, System     .Int32>          { [PatchMethod(AggressiveInlining)] public IntReadOnlyDictionary           (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public IntReadOnlyDictionary           (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public IntReadOnlyDictionary           (System.Collections.Generic.IDictionary<string, System     .Int32>          dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public IntReadOnlyDictionary           (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public IntReadOnlyDictionary           (System.Collections.Generic.IDictionary<string, System     .Int32>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class LongReadOnlyDictionary           : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, System     .Int64>          { [PatchMethod(AggressiveInlining)] public LongReadOnlyDictionary          (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public LongReadOnlyDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public LongReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System     .Int64>          dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public LongReadOnlyDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public LongReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System     .Int64>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class RectReadOnlyDictionary           : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Rect>           { [PatchMethod(AggressiveInlining)] public RectReadOnlyDictionary          (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public RectReadOnlyDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public RectReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public RectReadOnlyDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public RectReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class RectIntReadOnlyDictionary        : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.RectInt>        { [PatchMethod(AggressiveInlining)] public RectIntReadOnlyDictionary       (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public RectIntReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public RectIntReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public RectIntReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public RectIntReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class StringReadOnlyDictionary         : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, System     .String>         { [PatchMethod(AggressiveInlining)] public StringReadOnlyDictionary        (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public StringReadOnlyDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public StringReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System     .String>         dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public StringReadOnlyDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public StringReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System     .String>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class UIntReadOnlyDictionary           : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, System     .UInt32>         { [PatchMethod(AggressiveInlining)] public UIntReadOnlyDictionary          (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public UIntReadOnlyDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public UIntReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System     .UInt32>         dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public UIntReadOnlyDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public UIntReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System     .UInt32>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class ULongReadOnlyDictionary          : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, System     .UInt64>         { [PatchMethod(AggressiveInlining)] public ULongReadOnlyDictionary         (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public ULongReadOnlyDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public ULongReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System     .UInt64>         dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public ULongReadOnlyDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public ULongReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System     .UInt64>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class Vector2ReadOnlyDictionary        : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Vector2>        { [PatchMethod(AggressiveInlining)] public Vector2ReadOnlyDictionary       (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public Vector2ReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public Vector2ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public Vector2ReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public Vector2ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class Vector2IntReadOnlyDictionary     : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Vector2Int>     { [PatchMethod(AggressiveInlining)] public Vector2IntReadOnlyDictionary    (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public Vector2IntReadOnlyDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class Vector3ReadOnlyDictionary        : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Vector3>        { [PatchMethod(AggressiveInlining)] public Vector3ReadOnlyDictionary       (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public Vector3ReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public Vector3ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public Vector3ReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public Vector3ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class Vector3IntReadOnlyDictionary     : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Vector3Int>     { [PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-      [System.Serializable] public class Vector4ReadOnlyDictionary        : PatchOdyssey.Collections.EditorReadOnlyDictionary<string, UnityEngine.Vector4>        { [PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (int capacity) : base(capacity) {} [PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary) : base(dictionary) {} [PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
-
     public class Event : System.EventArgs /* ⟶ See `https://web.archive.org/web/20250117180031/https://learn.microsoft.com/en-us/dotnet/api/system.threading.manualresetevent?view=net-9.0` (or `https://web.archive.org/web/20130916192216/https://developer.mozilla.org/en-US/docs/Web/API/Event`) for naming scheme used */ {
       public static readonly object? Default = null;
 
@@ -1370,17 +860,532 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [PatchMethod(AggressiveInlining)] public static implicit operator Mono<T>(in T       value) => new(value);
     }
 
-    public abstract class RefComparer<T> : Program.RefReadOnlyComparer<T>;
+    public abstract class RefComparer<T> : PatchOdyssey.Collections.RefReadOnlyComparer<T>;
 
-    public class RefList<T> : Program.RefReadOnlyList<T>, System.Collections.Generic.IList<T>, System.Collections.ICollection, System.Collections.IList {
-      public new struct Enumerator : System.Collections.Generic.IEnumerator<T> {
-        public  ref T                                     Current => ref this.enumerator.list.GetValue((uint) this.enumerator.index);
-        private     Program.RefReadOnlyList<T>.Enumerator enumerator;
-        T                                                 System.Collections.Generic.IEnumerator<T>.Current => this.Current;
-        object                                            System.Collections.IEnumerator.Current            => this.Current!;
+    [System.Serializable]
+    public class RefDictionary<TKey, TValue> : System.Collections.Generic.IDictionary<TKey, TValue>, System.Collections.ICollection, System.Collections.IDictionary /* ⟶ Based on `System.Collections.Generic.Dictionary<TKey, TValue>`; See `https://web.archive.org/web/20240722203244/https://discussions.unity.com/t/finally-a-serializable-dictionary-for-unity-extracted-from-system-collections-generic/586385` */ {
+      public readonly struct AlternateLookup<TAlternateKey> /* ⟶ Based on `System.Collections.Generic.Dictionary<TKey, TValue>.AlternateLookup<TAlternateKey>` */ {
+        public readonly RefDictionary<TKey,TValue> Dictionary;
 
         /* … */
         [PatchMethod(AggressiveInlining)]
+        internal AlternateLookup(RefDictionary<TKey, TValue> dictionary) => this.Dictionary = dictionary;
+
+        /* … */
+        [PatchMethod(AggressiveInlining)] public bool ContainsKey(in TAlternateKey key)                                         => false;
+        [PatchMethod(AggressiveInlining)] public bool Remove     (in TAlternateKey key)                                         => false;
+        [PatchMethod(AggressiveInlining)] public bool Remove     (in TAlternateKey key, out TKey   actualKey, out TValue value) { actualKey = default!; value = default!; return false; }
+        [PatchMethod(AggressiveInlining)] public bool TryAdd     (in TAlternateKey key, in TValue  value)                       => false;
+        [PatchMethod(AggressiveInlining)] public bool TryGetValue(in TAlternateKey key, out TValue value)                       {                       value = default!; return false; }
+        [PatchMethod(AggressiveInlining)] public bool TryGetValue(in TAlternateKey key, out TKey   actualKey, out TValue value) { actualKey = default!; value = default!; return false; }
+
+        public ref TValue this[in TAlternateKey key] { get => ref Util.Reference<TValue>(); }
+      }
+
+      public struct Enumerator : System.Collections.Generic.IEnumerator<PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>>, System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<TKey, TValue>>, System.Collections.IDictionaryEnumerator /* ⟶ Based on `System.Collections.Generic.Dictionary<TKey, TValue>.Dictionary` */ {
+        private class Index { public uint value = 0u; }
+
+        public                 ref PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>   Current => ref System.Runtime.InteropServices.MemoryMarshal.GetReference(this.current);
+        private /* required */     PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>[] current;
+        private readonly           RefDictionary                           <TKey, TValue>   dictionary;
+        private /* required */     Enumerator.Index                                         index;
+        PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>                              System.Collections.Generic.IEnumerator<PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>>.Current => this.Current;
+        System.Collections.Generic.KeyValuePair <TKey, TValue>                              System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<TKey, TValue>>.Current  => this.Current;
+        System.Collections.DictionaryEntry                                                  System.Collections.IDictionaryEnumerator.Entry                                                         => new(this.Current.Key, this.Current.Value);
+        object                                                                              System.Collections.IDictionaryEnumerator.Key                                                           => this.Current.Key;
+        object?                                                                             System.Collections.IDictionaryEnumerator.Value                                                         => this.Current.Value;
+        object                                                                              System.Collections.IEnumerator.Current                                                                 => this.Current;
+
+        /* … */
+        [PatchConstructor, PatchMethod(AggressiveInlining)]
+        internal Enumerator(RefDictionary<TKey, TValue> dictionary) {
+          this.current = null!; // ⟶ “error CS8618: NoN-nUlLaBlE fIeLd 'current' MuSt CoNtAiN a NoN-nUlL vAlUe WhEn ExItInG cOnStRuCtOr. CoNsIdEr AdDiNg ThE 'required' mOdIfIeR oR dEcLaRiNg ThE fIeLd As NuLlAbLe.”
+          this.index   = null!; //    ^^
+
+          this.Reset();
+          this.dictionary = dictionary;
+        }
+
+        /* … */
+        [PatchMethod(AggressiveInlining)]
+        public void Dispose() { /* Do nothing… */ }
+
+        [PatchMethod(AggressiveInlining)]
+        public bool MoveNext() {
+          for (; this.dictionary.count > this.index.value; ++this.index.value)
+          if (this.dictionary.hashes[this.index.value] >= 0) {
+            Util.ArrayReference(this.current) = new(this.dictionary, this.index.value++);
+            return true;
+          }
+
+          Util.ArrayReference(this.current) = default;
+          this.index.value                  = this.dictionary.count;
+
+          return false;
+        }
+
+        [PatchMethod(AggressiveInlining)] public void Reset                                  () { this.current = new PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>[] {default}; this.index = new() {value = 0u}; }
+        [PatchMethod(AggressiveInlining)] bool        System.Collections.IEnumerator.MoveNext() => this.MoveNext();
+        [PatchMethod(AggressiveInlining)] void        System.Collections.IEnumerator.Reset   () => this.Reset   ();
+        [PatchMethod(AggressiveInlining)] void        System.IDisposable.Dispose             () => this.Dispose ();
+      }
+
+      public /* sealed */ class KeyCollection : System.Collections.Generic.ICollection<TKey>, System.Collections.Generic.IReadOnlyCollection<TKey>, System.Collections.ICollection /* ⟶ Based on `System.Collections.Generic.Dictionary<TKey, TValue>.KeyCollection` */ {
+        public struct Enumerator : System.Collections.Generic.IEnumerator<TKey> /* ⟶ Based on `System.Collections.Generic.Dictionary<TKey, TValue>.KeyCollection.Enumerator` */ {
+          public  ref readonly TKey                                   Current => ref this.enumerator.Current.Key;
+          private     readonly RefDictionary<TKey, TValue>.Enumerator enumerator;
+          TKey                                                        System.Collections.Generic.IEnumerator<TKey>.Current => this.Current;
+          object                                                      System.Collections.IEnumerator.Current               => this.Current!;
+
+          /* … */
+          [PatchConstructor, PatchMethod(AggressiveInlining)]
+          internal Enumerator(RefDictionary<TKey, TValue> dictionary) => this.enumerator = dictionary.GetEnumerator();
+
+          /* … */
+          [PatchMethod(AggressiveInlining)] public void Dispose                                () => this.enumerator.Dispose ();
+          [PatchMethod(AggressiveInlining)] public bool MoveNext                               () => this.enumerator.MoveNext();
+          [PatchMethod(AggressiveInlining)] public void Reset                                  () => this.enumerator.Reset   ();
+          [PatchMethod(AggressiveInlining)] bool        System.Collections.IEnumerator.MoveNext() => this           .MoveNext();
+          [PatchMethod(AggressiveInlining)] void        System.Collections.IEnumerator.Reset   () => this           .Reset   ();
+          [PatchMethod(AggressiveInlining)] void        System.IDisposable.Dispose             () => this           .Dispose ();
+        }
+
+        /* … */
+        public           int                         Count                                                      => (int) this.dictionary.Count;
+        private readonly RefDictionary<TKey, TValue> dictionary                                                 =  null!;
+        bool                                         System.Collections.Generic.ICollection<TKey>.IsReadOnly    => true;
+        int                                          System.Collections.Generic.IReadOnlyCollection<TKey>.Count => this.Count;
+        int                                          System.Collections.ICollection.Count                       => this.Count;
+        bool                                         System.Collections.ICollection.IsSynchronized              => false;
+        object                                       System.Collections.ICollection.SyncRoot                    => this;
+
+        /* … */
+        [PatchMethod(AggressiveInlining)]
+        public KeyCollection(RefDictionary<TKey, TValue> dictionary) => this.dictionary = dictionary;
+
+        /* … */
+        [PatchMethod(AggressiveInlining)] public bool                                  Contains                                                  (in TKey element)               => this.dictionary.ContainsKey(in element);
+        [PatchMethod(AggressiveInlining)] public void                                  CopyTo                                                    (TKey[]  array, uint index)     { foreach (ref readonly TKey element in this) array[index++] = element; }
+        [PatchMethod(AggressiveInlining)] public KeyCollection.Enumerator              GetEnumerator                                             ()                              => new(this.dictionary);
+        [PatchMethod(AggressiveInlining)] void                                         System.Collections.Generic.ICollection<TKey>.Add          (TKey element)                  { throw new System.NotSupportedException("Dictionary key collection is read-only"); }
+        [PatchMethod(AggressiveInlining)] void                                         System.Collections.Generic.ICollection<TKey>.Clear        ()                              { throw new System.NotSupportedException("Dictionary key collection is read-only"); }
+        [PatchMethod(AggressiveInlining)] bool                                         System.Collections.Generic.ICollection<TKey>.Contains     (TKey   element)                => this.Contains(in element);
+        [PatchMethod(AggressiveInlining)] void                                         System.Collections.Generic.ICollection<TKey>.CopyTo       (TKey[] array, int index)       => this.CopyTo  (array, (uint) index);
+        [PatchMethod(AggressiveInlining)] bool                                         System.Collections.Generic.ICollection<TKey>.Remove       (TKey   element)                { throw new System.NotSupportedException("Dictionary key collection is read-only"); }
+        [PatchMethod(AggressiveInlining)] System.Collections.Generic.IEnumerator<TKey> System.Collections.Generic.IEnumerable<TKey>.GetEnumerator()                              => this.GetEnumerator();
+        [PatchMethod(AggressiveInlining)] void                                         System.Collections.ICollection.CopyTo                     (System.Array array, int index) => this.CopyTo       ((TKey[]) array, (uint) index);
+        [PatchMethod(AggressiveInlining)] System.Collections.IEnumerator               System.Collections.IEnumerable.GetEnumerator              ()                              => this.GetEnumerator();
+      }
+
+      public /* sealed */ class ValueCollection : System.Collections.Generic.ICollection<TValue>, System.Collections.Generic.IReadOnlyCollection<TValue>, System.Collections.ICollection /* ⟶ Based on `System.Collections.Generic.Dictionary<TKey, TValue>.ValueCollection` */ {
+        public struct Enumerator : System.Collections.Generic.IEnumerator<TValue> /* ⟶ Based on `System.Collections.Generic.Dictionary<TKey, TValue>.ValueCollection.Enumerator` */ {
+          public  ref          TValue                                 Current => ref this.enumerator.Current.Value;
+          private     readonly RefDictionary<TKey, TValue>.Enumerator enumerator;
+          TValue                                                      System.Collections.Generic.IEnumerator<TValue>.Current => this.Current;
+          object                                                      System.Collections.IEnumerator.Current                 => this.Current!;
+
+          /* … */
+          [PatchConstructor, PatchMethod(AggressiveInlining)]
+          internal Enumerator(RefDictionary<TKey, TValue> dictionary) => this.enumerator = dictionary.GetEnumerator();
+
+          /* … */
+          [PatchMethod(AggressiveInlining)] public void Dispose                                () => this.enumerator.Dispose ();
+          [PatchMethod(AggressiveInlining)] public bool MoveNext                               () => this.enumerator.MoveNext();
+          [PatchMethod(AggressiveInlining)] public void Reset                                  () => this.enumerator.Reset   ();
+          [PatchMethod(AggressiveInlining)] bool        System.Collections.IEnumerator.MoveNext() => this           .MoveNext();
+          [PatchMethod(AggressiveInlining)] void        System.Collections.IEnumerator.Reset   () => this           .Reset   ();
+          [PatchMethod(AggressiveInlining)] void        System.IDisposable.Dispose             () => this           .Dispose ();
+        }
+
+        /* … */
+        public           int                         Count                                                        => (int) this.dictionary.Count;
+        private readonly RefDictionary<TKey, TValue> dictionary                                                   =  null!;
+        bool                                         System.Collections.Generic.ICollection<TValue>.IsReadOnly    => true;
+        int                                          System.Collections.Generic.IReadOnlyCollection<TValue>.Count => this.Count;
+        int                                          System.Collections.ICollection.Count                         => this.Count;
+        bool                                         System.Collections.ICollection.IsSynchronized                => false;
+        object                                       System.Collections.ICollection.SyncRoot                      => this;
+
+        /* … */
+        [PatchMethod(AggressiveInlining)]
+        public ValueCollection(RefDictionary<TKey, TValue> dictionary) => this.dictionary = dictionary;
+
+        /* … */
+        [PatchMethod(AggressiveInlining)] public bool                                    Contains                                                    (in TValue element)             => this.dictionary.ContainsValue(in element);
+        [PatchMethod(AggressiveInlining)] public void                                    CopyTo                                                      (TValue[]  array, uint index)   { foreach (ref readonly TValue element in this) array[index++] = element; }
+        [PatchMethod(AggressiveInlining)] public ValueCollection.Enumerator              GetEnumerator                                               ()                              => new(this.dictionary);
+        [PatchMethod(AggressiveInlining)] void                                           System.Collections.Generic.ICollection<TValue>.Add          (TValue element)                { throw new System.NotSupportedException("Dictionary key collection is read-only"); }
+        [PatchMethod(AggressiveInlining)] void                                           System.Collections.Generic.ICollection<TValue>.Clear        ()                              { throw new System.NotSupportedException("Dictionary key collection is read-only"); }
+        [PatchMethod(AggressiveInlining)] bool                                           System.Collections.Generic.ICollection<TValue>.Contains     (TValue   element)              => this.Contains(in element);
+        [PatchMethod(AggressiveInlining)] void                                           System.Collections.Generic.ICollection<TValue>.CopyTo       (TValue[] array, int index)     => this.CopyTo  (array, (uint) index);
+        [PatchMethod(AggressiveInlining)] bool                                           System.Collections.Generic.ICollection<TValue>.Remove       (TValue   element)              { throw new System.NotSupportedException("Dictionary key collection is read-only"); }
+        [PatchMethod(AggressiveInlining)] System.Collections.Generic.IEnumerator<TValue> System.Collections.Generic.IEnumerable<TValue>.GetEnumerator()                              => this.GetEnumerator();
+        [PatchMethod(AggressiveInlining)] void                                           System.Collections.ICollection.CopyTo                       (System.Array array, int index) => this.CopyTo       ((TValue[]) array, (uint) index);
+        [PatchMethod(AggressiveInlining)] System.Collections.IEnumerator                 System.Collections.IEnumerable.GetEnumerator                ()                              => this.GetEnumerator();
+      }
+
+      /* … */
+      private const           uint                                           CapacityMaximum = 0x7FEFFFFDu;
+      private static readonly PatchOdyssey.Collections.RefReadOnlyList<uint> Primes          = new(new[] {3u, 7u, 11u, 17u, 23u, 29u, 37u, 47u, 59u, 71u, 89u, 107u, 131u, 163u, 197u, 239u, 293u, 353u, 431u, 521u, 631u, 761u, 919u, 1103u, 1327u, 1597u, 1931u, 2333u, 2801u, 3371u, 4049u, 4861u, 5839u, 7013u, 8419u, 10103u, 12143u, 14591u, 17519u, 21023u, 25229u, 30293u, 36353u, 43627u, 52361u, 62851u, 75431u, 90523u, 108631u, 130363u, 156437u, 187751u, 225307u, 270371u, 324449u, 389357u, 467237u, 560689u, 672827u, 807403u, 968897u, 1162687u, 1395263u, 1674319u, 2009191u, 2411033u, 2893249u, 3471899u, 4166287u, 4999559u, 5999471u, 7199369u});
+      private const           uint                                           PrimeMaximum    = 0x7FFFFFFFu;
+
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private           PatchOdyssey.Collections.RefList<int>              buckets                                                                                                  =  new();
+      public                                                                      uint                                               Capacity                                                                                                 => this.count;
+      public                                                             readonly System.Collections.Generic.IEqualityComparer<TKey> Comparer                                                                                                 =  System.Collections.Generic.EqualityComparer<TKey>.Default;
+      public                                                                      uint                                               Count                                                                                                    => this.count - this.free.count;
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private           uint                                               count                                                                                                    =  0u;
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private           (uint count, int list)                             free                                                                                                     =  (0u, -1);
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private           PatchOdyssey.Collections.RefList<int>              hashes                                                                                                   =  new();
+      public                                                                      RefDictionary<TKey, TValue>.KeyCollection          Keys                                                                                                     => new(this);
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] internal          PatchOdyssey.Collections.RefList<TKey>             keys                                                                                                     =  new();
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private           PatchOdyssey.Collections.RefList<int>              next                                                                                                     =  new();
+      public                                                                      RefDictionary<TKey, TValue>.ValueCollection        Values                                                                                                   => new(this);
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] internal          PatchOdyssey.Collections.RefList<TValue>           values                                                                                                   =  new();
+      bool                                                                                                                           System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<TKey, TValue>>.IsReadOnly => false;
+      int                                                                                                                            System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<TKey, TValue>>.Count      => ((int) this.Count);
+      System.Collections.Generic.ICollection<TKey>                                                                                   System.Collections.Generic.IDictionary<TKey, TValue>.Keys                                                => this.Keys;
+      System.Collections.Generic.ICollection<TValue>                                                                                 System.Collections.Generic.IDictionary<TKey, TValue>.Values                                              => this.Values;
+      int                                                                                                                            System.Collections.ICollection.Count                                                                     => (int) this.Count;
+      bool                                                                                                                           System.Collections.ICollection.IsSynchronized                                                            => false;
+      object                                                                                                                         System.Collections.ICollection.SyncRoot                                                                  => this;
+      bool                                                                                                                           System.Collections.IDictionary.IsFixedSize                                                               => false;
+      bool                                                                                                                           System.Collections.IDictionary.IsReadOnly                                                                => false;
+      System.Collections.ICollection                                                                                                 System.Collections.IDictionary.Keys                                                                      => this.Keys;
+      System.Collections.ICollection                                                                                                 System.Collections.IDictionary.Values                                                                    => this.Values;
+
+      /* … ⟶ Availability of `System.Runtime.InteropServices.CollectionMarshal.GetValueRefOrNullRef(…)` would replace `RefDictionary<T…>`’s entire purpose */
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public RefDictionary()                                                                                                                                                                             : this(0u,                                                                                         null!)    {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public RefDictionary(uint                                                                                                 capacity)                                                                : this(capacity,                                                                                   null!)    {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public RefDictionary(System.Collections.Generic.IEqualityComparer<TKey>                                                   comparer)                                                                : this(0u,                                                                                         comparer) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public RefDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                           dictionary)                                                              : this((System.Collections.Generic.IEnumerable<PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>>) dictionary, null!)    {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public RefDictionary(System.Collections.Generic.IEnumerable      <PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>> enumerable)                                                              : this(enumerable,                                                                                 null!)    {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public RefDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair<TKey, TValue>>  enumerable)                                                              : this(enumerable,                                                                                 null!)    {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public RefDictionary(System.Collections.Generic.IDictionary      <TKey, TValue>                                           dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : this((System.Collections.Generic.IEnumerable<PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>>) dictionary, comparer) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public RefDictionary(System.Collections.Generic.IEnumerable      <PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>> enumerable, System.Collections.Generic.IEqualityComparer<TKey> comparer) : this(enumerable is null ? 0u : Util.EnumerableCount(enumerable),                                 comparer) => this.AddRange(enumerable!);
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public RefDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair<TKey, TValue>>  enumerable, System.Collections.Generic.IEqualityComparer<TKey> comparer) : this(enumerable is null ? 0u : Util.EnumerableCount(enumerable),                                 comparer) => this.AddRange(enumerable!);
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public RefDictionary(uint                                                                                                 capacity,   System.Collections.Generic.IEqualityComparer<TKey> comparer)                                                                                                              { RefDictionary<TKey, TValue>.Ensure(); this.Initialize(capacity); this.Comparer = comparer ?? System.Collections.Generic.EqualityComparer<TKey>.Default; }
+
+      /* … */
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public void Add     (in PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>                                      element)              => this.Add   (in element.Key, in element.Value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public void Add     (in System.Collections.Generic.KeyValuePair <TKey, TValue>                                      element)              => this.Add   (element.Key,    element.Value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public void Add     (in TKey                                                                                        key, in TValue value) { if (key is not null) this.Insert(in key, in value, true); }
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public void AddRange(System.Collections.Generic.IEnumerable<PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>> enumerable)           { foreach (PatchOdyssey.Collections.RefKeyValuePair                <TKey, TValue> element in enumerable) this.Add(in element); }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public void AddRange(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>  enumerable)           { foreach (System.Collections.Generic.KeyValuePair<TKey, TValue> element in enumerable) this.Add(element); }
+
+      [PatchMethod(AggressiveInlining)]
+      public void Clear() {
+        this.hashes .Clear();
+        this.keys   .Clear();
+        this.next   .Clear();
+        this.values .Clear();
+
+        this.count = 0u;
+        this.free  = (count: 0u, list: -1);
+
+        for (uint index = this.buckets.Count; 0u != index--; )
+        this.buckets[index] = -1;
+      }
+
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public bool Contains     (in PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue> element)           { int index = this.FindIndex(element.Key); return index != -1 && System.Collections.Generic.EqualityComparer<TValue>.Default.Equals(this.values[(uint) index], element.Value); }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public bool Contains     (in System.Collections.Generic.KeyValuePair<TKey, TValue>  element)           { int index = this.FindIndex(element.Key); return index != -1 && System.Collections.Generic.EqualityComparer<TValue>.Default.Equals(this.values[(uint) index], element.Value); }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public bool ContainsKey  (in TKey                                                   key)               => this.FindIndex(in key) != -1;
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public bool ContainsValue(in TValue                                                 value)             { System.Func<TValue, TValue, bool> comparer = value is null ? static (value, _) => value is null : System.Collections.Generic.EqualityComparer<TValue>.Default.Equals; for (uint index = this.count; 0u != index--; ) { if (this.hashes[index] >= 0 && comparer(this.values[index], value)) return true; } return false; }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public void CopyTo       (PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>[]  array, uint index) { for (uint subindex = 0u; subindex != this.count; ++subindex) { if (this.hashes[subindex] >= 0) array[index++] = new(in this.keys[subindex], in this.values[subindex]); } }
+
+      public static PatchOdyssey.DictionaryGUIField? DelegateGUIField<T>() {
+        #if UNITY_EDITOR
+          if (typeof(T) == typeof(bool))                              return static (position, value) => UnityEditor.EditorGUI.Toggle         (position,                              (System.Boolean)             value)                  as object;
+          if (typeof(T) == typeof(double))                            return static (position, value) => UnityEditor.EditorGUI.DoubleField    (position,                              (System.Double)              value)                  as object;
+          if (typeof(T) == typeof(float))                             return static (position, value) => UnityEditor.EditorGUI.FloatField     (position,                              (System.Single)              value)                  as object;
+          if (typeof(T) == typeof(int))                               return static (position, value) => UnityEditor.EditorGUI.IntField       (position,                              (System.Int32)               value)                  as object;
+          if (typeof(T) == typeof(long))                              return static (position, value) => UnityEditor.EditorGUI.LongField      (position,                              (System.Int64)               value)                  as object;
+          if (typeof(T) == typeof(string))                            return static (position, value) => UnityEditor.EditorGUI.TextField      (position,                              (System.String)              value)                  as object;
+          if (typeof(T) == typeof(UnityEngine.AnimationCurve))        return static (position, value) => UnityEditor.EditorGUI.CurveField     (position,                              (UnityEngine.AnimationCurve) value)                  as object;
+          if (typeof(T) == typeof(UnityEngine.Bounds))                return static (position, value) => UnityEditor.EditorGUI.BoundsField    (position,                              (UnityEngine.Bounds)         value)                  as object;
+          if (typeof(T) == typeof(UnityEngine.BoundsInt))             return static (position, value) => UnityEditor.EditorGUI.BoundsIntField (position,                              (UnityEngine.BoundsInt)      value)                  as object;
+          if (typeof(T) == typeof(UnityEngine.Color))                 return static (position, value) => UnityEditor.EditorGUI.ColorField     (position,                              (UnityEngine.Color)          value)                  as object;
+          if (typeof(T) == typeof(UnityEngine.Gradient))              return static (position, value) => UnityEditor.EditorGUI.GradientField  (position,                              (UnityEngine.Gradient)       value)                  as object;
+          if (typeof(T) == typeof(UnityEngine.Rect))                  return static (position, value) => UnityEditor.EditorGUI.RectField      (position,                              (UnityEngine.Rect)           value)                  as object;
+          if (typeof(T) == typeof(UnityEngine.RectInt))               return static (position, value) => UnityEditor.EditorGUI.RectIntField   (position,                              (UnityEngine.RectInt)        value)                  as object;
+          if (typeof(T) == typeof(UnityEngine.Vector2))               return static (position, value) => UnityEditor.EditorGUI.Vector2Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector2)        value)                  as object;
+          if (typeof(T) == typeof(UnityEngine.Vector2Int))            return static (position, value) => UnityEditor.EditorGUI.Vector2IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector2Int)     value)                  as object;
+          if (typeof(T) == typeof(UnityEngine.Vector3))               return static (position, value) => UnityEditor.EditorGUI.Vector3Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector3)        value)                  as object;
+          if (typeof(T) == typeof(UnityEngine.Vector3Int))            return static (position, value) => UnityEditor.EditorGUI.Vector3IntField(position, UnityEngine.GUIContent.none, (UnityEngine.Vector3Int)     value)                  as object;
+          if (typeof(T) == typeof(UnityEngine.Vector4))               return static (position, value) => UnityEditor.EditorGUI.Vector4Field   (position, UnityEngine.GUIContent.none, (UnityEngine.Vector4)        value)                  as object;
+          if (typeof(T).IsEnum)                                       return static (position, value) => UnityEditor.EditorGUI.EnumPopup      (position,                              (System.Enum)                value)                  as object;
+          if (typeof(UnityEngine.Object).IsAssignableFrom(typeof(T))) return static (position, value) => UnityEditor.EditorGUI.ObjectField    (position,                              (UnityEngine.Object)         value, typeof(T), true) as object;
+        #endif
+
+        return null;
+      }
+
+      [PatchMethod(AggressiveInlining)]
+      public static void Ensure() {
+        if (RefDictionary<TKey, TValue>.DelegateGUIField<TKey>  () is null) throw new System.NotSupportedException($"Type `{typeof(TKey)  }` is not supported for `RefDictionary`");
+        if (RefDictionary<TKey, TValue>.DelegateGUIField<TValue>() is null) throw new System.NotSupportedException($"Type `{typeof(TValue)}` is not supported for `RefDictionary`");
+      }
+
+      [PatchMethod(AggressiveInlining)]
+      public void EnsureCapacity(uint capacity) { /* Do nothing… */ }
+
+      [PatchMethod(AggressiveInlining)]
+      private int FindIndex(in TKey key) {
+        if (key is not null && 0 != this.buckets.Count) {
+          int hash = this.Comparer.GetHashCode(key) & (int) RefDictionary<TKey, TValue>.PrimeMaximum;
+
+          // …
+          for (int index = this.buckets[(uint) (hash % this.buckets.Count)]; index >= 0; index = this.next[(uint) index]) {
+            if (hash == this.hashes[(uint) index] && this.Comparer.Equals(this.keys[(uint) index], key))
+            return index;
+          }
+        }
+
+        return -1;
+      }
+
+      [PatchMethod(AggressiveInlining)] public RefDictionary<TKey, TValue>.AlternateLookup<TAlternateKey> GetAlternateLookup<TAlternateKey>() => new(this);
+      [PatchMethod(AggressiveInlining)] public RefDictionary<TKey, TValue>.Enumerator                     GetEnumerator                    () => new(this);
+
+      [PatchMethod(AggressiveInlining)]
+      public static uint GetPrime(uint minimum) {
+        [PatchMethod(AggressiveInlining)]
+        static uint Sqrt(uint number) /* ⟶ `System.Math.Sqrt(double)` exists but is suboptimal for (unsigned) integer-only roots */{
+          uint residue = 1u;
+          uint root    = 0u;
+          uint term;
+
+          // …
+          while (residue <= number)
+          residue <<= 2;
+
+          while (residue > 1u) {
+            residue >>= 2;
+            term      = number - residue - root;
+            root    >>= 1;
+
+            if (term >= 0u) {
+              number = term;
+              root  += residue;
+            }
+          }
+
+          return root;
+        }
+
+        /* … */
+        for (uint index = 0u, prime; index != (uint) RefDictionary<TKey, TValue>.Primes.Count; ++index) {
+          if (minimum <= (prime = RefDictionary<TKey, TValue>.Primes[index]))
+          return prime;
+        }
+
+        for (uint index = minimum | 1u; index < RefDictionary<TKey, TValue>.PrimeMaximum; index += 2u)
+        if (0 != (index & 1)) {
+          uint limit  = Sqrt(index);
+          bool primed = true;
+
+          // … ⟶ Magic numbers here — “Bippity bappity boo”! 🪄
+          for (uint subindex = 3u; limit >= subindex; subindex += 2u)
+          if (0u == index % subindex) {
+            primed = false;
+            break;
+          }
+
+          if (primed && 0u != (index - 1u) % 101u)
+          return index;
+        }
+
+        return minimum;
+      }
+
+      [PatchMethod(AggressiveInlining)]
+      private void Initialize(uint capacity) {
+        capacity = RefDictionary<TKey, TValue>.GetPrime(capacity);
+
+        this.buckets.EnsureCapacity(capacity, true);
+        this.hashes .EnsureCapacity(capacity, true);
+        this.keys   .EnsureCapacity(capacity, true);
+        this.next   .EnsureCapacity(capacity, true);
+        this.values .EnsureCapacity(capacity, true);
+
+        this.buckets.Count = this.hashes.Count = this.keys.Count = this.next.Count = this.values.Count = capacity;
+        this.free.list     = -1;
+
+        for (uint index = this.buckets.Count; 0u != index--; )
+        this.buckets[index] = -1;
+      }
+
+      private ref TValue Insert(in TKey key, in TValue value, bool immutable) {
+        if (0 == this.buckets.Count) this.Initialize(0u);
+
+        uint freeIndex = 0u;
+        int  hash      = this.Comparer.GetHashCode(key) & (int) RefDictionary<TKey, TValue>.PrimeMaximum;
+        uint hashIndex = (uint) (hash % this.buckets.Count);
+
+        // …
+        for (int index = this.buckets[hashIndex]; index >= 0; ++freeIndex, index = this.next[(uint) index])
+        if (hash == this.hashes[(uint) index] && this.Comparer.Equals(this.keys[(uint) index], key)) {
+          if (!immutable) {
+            this.values[(uint) index] = value;
+            return ref this.values[(uint) index];
+          }
+
+          throw new System.ArgumentException($"Dictionary key already exists: `{key}`");
+        }
+
+        if (0u != this.free.count) {
+          freeIndex = (uint) this.free.list;
+          this.free = (count: this.free.count - 1u, list: this.next[freeIndex]);
+        }
+
+        else {
+          if (this.count == this.keys.Count)
+            this.Resize(RefDictionary<TKey, TValue>.CapacityMaximum >> 0 > this.count && RefDictionary<TKey, TValue>.CapacityMaximum >> 1 < this.count ? RefDictionary<TKey, TValue>.CapacityMaximum : RefDictionary<TKey, TValue>.GetPrime(this.count << 1));
+
+          freeIndex   = this.count;
+          this.count += 1u;
+        }
+
+        this.next   [freeIndex] = this.buckets[hashIndex];
+        this.buckets[hashIndex] = (int) freeIndex;
+        this.hashes [freeIndex] = hash;
+        this.keys   [freeIndex] = key;
+        this.values [freeIndex] = value;
+
+        return ref this.values[freeIndex];
+      }
+
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public bool Remove(in PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue> element) => (this.TryGetValue(in element.Key, out TValue value) && System.Collections.Generic.EqualityComparer<TValue>.Default.Equals(value, element.Value) ? this.Remove(in element.Key) : false);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public bool Remove(in System.Collections.Generic.KeyValuePair <TKey, TValue> element) => (this.TryGetValue(element.Key,    out TValue value) && System.Collections.Generic.EqualityComparer<TValue>.Default.Equals(value, element.Value) ? this.Remove(element.Key)    : false);
+      public bool Remove(in TKey key) {
+        if (key is not null) {
+          int  freeIndex = -1;
+          int  hash      = this.Comparer.GetHashCode(key) & (int) RefDictionary<TKey, TValue>.PrimeMaximum;
+          uint hashIndex = (uint) (hash % this.buckets.Count);
+
+          // …
+          for (int index = this.buckets[hashIndex]; index >= 0; freeIndex = index = this.next[(uint) index])
+          if (hash == this.hashes[(uint) index] && this.Comparer.Equals(this.keys[(uint) index], key)) {
+            (freeIndex < 0 ? ref this.buckets[hashIndex] : ref this.next[(uint) freeIndex]) = this.next[(uint) index];
+
+            this.values[(uint) index] = default!;
+            this.next  [(uint) index] = this.free.list;
+            this.keys  [(uint) index] = default!;
+            this.hashes[(uint) index] = -1;
+            this.free                 = (count: this.free.count + 1u, list: index);
+
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+      private void Resize(uint capacity) {
+        this.buckets.EnsureCapacity(capacity, true);
+        this.hashes .EnsureCapacity(capacity, true);
+        this.keys   .EnsureCapacity(capacity, true);
+        this.next   .EnsureCapacity(capacity, true);
+        this.values .EnsureCapacity(capacity, true);
+
+        this.buckets.Count = this.hashes.Count = this.keys.Count = this.next.Count = this.values.Count = capacity;
+
+        for (uint index = this.buckets.Count; 0u != index--; )
+        this.buckets[index] = -1;
+
+        for (uint index = 0; index != this.count; ++index) {
+          uint hashIndex = (uint) (this.hashes[index] % capacity);
+
+          // …
+          this.next   [index]     = this.buckets[hashIndex];
+          this.buckets[hashIndex] = (int) index;
+        }
+      }
+
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public void                                                                                          TrimExcess                                                                                                 ()                                                                                     { /* Do nothing… */ }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public void                                                                                          TrimExcess                                                                                                 (uint                                                           capacity)              { /* Do nothing… */ }
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public bool                                                                                          TryAdd                                                                                                     (in PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>      element)               => this.TryAdd(in element.Key, in element.Value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public bool                                                                                          TryAdd                                                                                                     (in System.Collections.Generic.KeyValuePair <TKey, TValue>      element)               => this.TryAdd(element.Key,    element.Value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public bool                                                                                          TryAdd                                                                                                     (in TKey                                                        key, in TValue value)  { if (key is not null && !this.ContainsKey(in key)) { this.Add(in key, in value); return true; } return false; }
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public ref TValue                                                                                    TryAppend                                                                                                  (in PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>      element)               => ref this.TryAppend(in element.Key, in element.Value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public ref TValue                                                                                    TryAppend                                                                                                  (in System.Collections.Generic.KeyValuePair<TKey, TValue>       element)               { (TKey key, TValue value)[] pair = new[] {(element.Key, element.Value)}; return ref this.TryAppend(in System.Runtime.InteropServices.MemoryMarshal.GetReference(pair).key, in System.Runtime.InteropServices.MemoryMarshal.GetReference(pair).value); }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public ref TValue                                                                                    TryAppend                                                                                                  (in TKey                                                        key, in TValue  value) { int index = this.FindIndex(in key); return ref (index != -1 ? ref this.values[(uint) index] : ref (key is null ? ref Util.Reference<TValue>() : ref this.Insert(in key, in value, true))); }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public bool                                                                                          TryGetAlternateLookup<TAlternateKey>                                                                       (out RefDictionary<TKey, TValue>.AlternateLookup<TAlternateKey> lookup)                { lookup = this.GetAlternateLookup<TAlternateKey>(); return false; }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public bool                                                                                          TryGetValue                                                                                                (in TKey                                                        key, out TValue value) { int index = this.FindIndex(in key); if (index != -1) { value = this.values[(uint) index]; return true; } value = default!; return false; }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)]        void                                                                                          System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<TKey, TValue>>.Add          (System.Collections.Generic.KeyValuePair<TKey, TValue>          element)               => this.Add     (in element);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)]        void                                                                                          System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<TKey, TValue>>.Clear        ()                                                                                     => this.Clear   ();
+      [PatchMethod(AggressiveInlining), PatchResolution(0)]        bool                                                                                          System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<TKey, TValue>>.Contains     (System.Collections.Generic.KeyValuePair<TKey, TValue>   element)                      => this.Contains(in element);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)]        void                                                                                          System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<TKey, TValue>>.CopyTo       (System.Collections.Generic.KeyValuePair<TKey, TValue>[] array, int index)             { using (RefDictionary<TKey, TValue>.Enumerator enumerator = this.GetEnumerator()) { while (enumerator.MoveNext()) array[index++] = enumerator.Current; } }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)]        bool                                                                                          System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<TKey, TValue>>.Remove       (System.Collections.Generic.KeyValuePair<TKey, TValue>   element)                      => this.Remove       (in element);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)]        System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<TKey, TValue>> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>.GetEnumerator()                                                                                     => this.GetEnumerator();
+      [PatchMethod(AggressiveInlining), PatchResolution(0)]        void                                                                                          System.Collections.Generic.IDictionary<TKey, TValue>.Add                                                   (TKey         key, TValue value)                                                       => this.Add          (in key, in value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)]        bool                                                                                          System.Collections.Generic.IDictionary<TKey, TValue>.ContainsKey                                           (TKey         key)                                                                     => this.ContainsKey  (in key);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)]        bool                                                                                          System.Collections.Generic.IDictionary<TKey, TValue>.Remove                                                (TKey         key)                                                                     => this.Remove       (in key);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)]        bool                                                                                          System.Collections.Generic.IDictionary<TKey, TValue>.TryGetValue                                           (TKey         key,   out TValue value)                                                 => this.TryGetValue  (in key, out value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)]        void                                                                                          System.Collections.ICollection.CopyTo                                                                      (System.Array array, int        index)                                                 { foreach (ref readonly PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue> element in this) switch (array) { case System.Collections.Generic.KeyValuePair<TKey, TValue>[] elements: elements[index++] = element; break; default: ((PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>[]) array)[index++] = element; break; } }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)]        void                                                                                          System.Collections.IDictionary.Add                                                                         (object       key,   object?    value)                                                 => this.Add          ((TKey) key, (TValue) value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)]        void                                                                                          System.Collections.IDictionary.Clear                                                                       ()                                                                                     => this.Clear        ();
+      [PatchMethod(AggressiveInlining), PatchResolution(0)]        bool                                                                                          System.Collections.IDictionary.Contains                                                                    (object key)                                                                           => this.Contains     ((TKey) key);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)]        System.Collections.IDictionaryEnumerator                                                      System.Collections.IDictionary.GetEnumerator                                                               ()                                                                                     => this.GetEnumerator();
+      [PatchMethod(AggressiveInlining), PatchResolution(0)]        void                                                                                          System.Collections.IDictionary.Remove                                                                      (object key)                                                                           => this.Remove       ((TKey) key);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)]        System.Collections.IEnumerator                                                                System.Collections.IEnumerable.GetEnumerator                                                               ()                                                                                     => this.GetEnumerator();
+
+      public ref          TValue this                                                     [in TKey key]                  { [PatchMethod(AggressiveInlining)] get { int index = this.FindIndex(in key); if (index != -1) return ref this.values[(uint) index]; if (key is null) throw new System.Collections.Generic.KeyNotFoundException(key?.ToString() ?? string.Empty); return ref this.Insert(in key, Util.Reference<TValue>(), false); } }
+      public ref readonly TValue this                                                     [in TKey key, in TValue value] { [PatchMethod(AggressiveInlining)] get { int index = this.FindIndex(in key); if (index != -1) return ref this.values[(uint) index]; return ref value; } }
+      TValue                     System.Collections.Generic.IDictionary<TKey, TValue>.this[TKey    key]                  { [PatchMethod(AggressiveInlining)] get => { int index = this.FindIndex(in key); if (index == -1) { throw new System.Collections.Generic.KeyNotFoundException(key?.ToString() ?? string.Empty); } return this.Values[(uint) index]; } set => this[in key] = value; }
+      object?                    System.Collections.IDictionary.this                      [object  key]                  { get => ((System.Collections.Generic.IDictionary<TKey, TValue>) this)[(TKey) key]; set => ((System.Collections.Generic.IDictionary<TKey, TValue>) this)[(TKey) key] = (TValue) value; }
+    }
+      [System.Serializable] public class AnimationCurveDictionary : PatchOdyssey.Collections.RefDictionary<string, UnityEngine.AnimationCurve> { [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveDictionary() : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveDictionary(int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveDictionary(System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveDictionary(int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class BooleanDictionary        : PatchOdyssey.Collections.RefDictionary<string, System     .Boolean>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public BooleanDictionary       () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BooleanDictionary       (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BooleanDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BooleanDictionary       (System.Collections.Generic.IDictionary<string, System     .Boolean>        dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BooleanDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BooleanDictionary       (System.Collections.Generic.IDictionary<string, System     .Boolean>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class BoundsDictionary         : PatchOdyssey.Collections.RefDictionary<string, UnityEngine.Bounds>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsDictionary        () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsDictionary        (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class BoundsIntDictionary      : PatchOdyssey.Collections.RefDictionary<string, UnityEngine.BoundsInt>      { [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsIntDictionary     () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsIntDictionary     (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsIntDictionary     (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsIntDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsIntDictionary     (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsIntDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class ColorDictionary          : PatchOdyssey.Collections.RefDictionary<string, UnityEngine.Color>          { [PatchConstructor, PatchMethod(AggressiveInlining)] public ColorDictionary         () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ColorDictionary         (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ColorDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ColorDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ColorDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ColorDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class DoubleDictionary         : PatchOdyssey.Collections.RefDictionary<string, System     .Double>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public DoubleDictionary        () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public DoubleDictionary        (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public DoubleDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public DoubleDictionary        (System.Collections.Generic.IDictionary<string, System     .Double>         dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public DoubleDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public DoubleDictionary        (System.Collections.Generic.IDictionary<string, System     .Double>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class FloatDictionary          : PatchOdyssey.Collections.RefDictionary<string, System     .Single>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public FloatDictionary         () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public FloatDictionary         (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public FloatDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public FloatDictionary         (System.Collections.Generic.IDictionary<string, System     .Single>         dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public FloatDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public FloatDictionary         (System.Collections.Generic.IDictionary<string, System     .Single>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class GameObjectDictionary     : PatchOdyssey.Collections.RefDictionary<string, UnityEngine.GameObject>     { [PatchConstructor, PatchMethod(AggressiveInlining)] public GameObjectDictionary    () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GameObjectDictionary    (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GameObjectDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GameObjectDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GameObjectDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GameObjectDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class GradientDictionary       : PatchOdyssey.Collections.RefDictionary<string, UnityEngine.Gradient>       { [PatchConstructor, PatchMethod(AggressiveInlining)] public GradientDictionary      () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GradientDictionary      (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GradientDictionary      (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GradientDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GradientDictionary      (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GradientDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class IntDictionary            : PatchOdyssey.Collections.RefDictionary<string, System     .Int32>          { [PatchConstructor, PatchMethod(AggressiveInlining)] public IntDictionary           () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public IntDictionary           (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public IntDictionary           (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public IntDictionary           (System.Collections.Generic.IDictionary<string, System     .Int32>          dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public IntDictionary           (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public IntDictionary           (System.Collections.Generic.IDictionary<string, System     .Int32>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class LongDictionary           : PatchOdyssey.Collections.RefDictionary<string, System     .Int64>          { [PatchConstructor, PatchMethod(AggressiveInlining)] public LongDictionary          () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public LongDictionary          (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public LongDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public LongDictionary          (System.Collections.Generic.IDictionary<string, System     .Int64>          dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public LongDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public LongDictionary          (System.Collections.Generic.IDictionary<string, System     .Int64>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class RectDictionary           : PatchOdyssey.Collections.RefDictionary<string, UnityEngine.Rect>           { [PatchConstructor, PatchMethod(AggressiveInlining)] public RectDictionary          () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectDictionary          (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class RectIntDictionary        : PatchOdyssey.Collections.RefDictionary<string, UnityEngine.RectInt>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public RectIntDictionary       () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectIntDictionary       (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectIntDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectIntDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectIntDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectIntDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class StringDictionary         : PatchOdyssey.Collections.RefDictionary<string, System     .String>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public StringDictionary        () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public StringDictionary        (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public StringDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public StringDictionary        (System.Collections.Generic.IDictionary<string, System     .String>         dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public StringDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public StringDictionary        (System.Collections.Generic.IDictionary<string, System     .String>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class UIntDictionary           : PatchOdyssey.Collections.RefDictionary<string, System     .UInt32>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public UIntDictionary          () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public UIntDictionary          (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public UIntDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public UIntDictionary          (System.Collections.Generic.IDictionary<string, System     .UInt32>         dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public UIntDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public UIntDictionary          (System.Collections.Generic.IDictionary<string, System     .UInt32>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class ULongDictionary          : PatchOdyssey.Collections.RefDictionary<string, System     .UInt64>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public ULongDictionary         () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ULongDictionary         (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ULongDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ULongDictionary         (System.Collections.Generic.IDictionary<string, System     .UInt64>         dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ULongDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ULongDictionary         (System.Collections.Generic.IDictionary<string, System     .UInt64>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector2Dictionary        : PatchOdyssey.Collections.RefDictionary<string, UnityEngine.Vector2>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2Dictionary       () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2Dictionary       (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2Dictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2Dictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector2IntDictionary     : PatchOdyssey.Collections.RefDictionary<string, UnityEngine.Vector2Int>     { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2IntDictionary    () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2IntDictionary    (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2IntDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2IntDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector3Dictionary        : PatchOdyssey.Collections.RefDictionary<string, UnityEngine.Vector3>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3Dictionary       () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3Dictionary       (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3Dictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3Dictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector3IntDictionary     : PatchOdyssey.Collections.RefDictionary<string, UnityEngine.Vector3Int>     { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3IntDictionary    () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3IntDictionary    (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3IntDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3IntDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3IntDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector4Dictionary        : PatchOdyssey.Collections.RefDictionary<string, UnityEngine.Vector4>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector4Dictionary       () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector4Dictionary       (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector4Dictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector4Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector4Dictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector4Dictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+
+    public struct RefKeyValuePair<TKey, TValue> /* ⟶ Based on `System.Collections.Generic.KeyValuePair<TKey, TValue>` */ {
+      internal     readonly PatchOdyssey.Collections.RefDictionary<TKey, TValue> dictionary;
+      internal     readonly uint                                                 index;
+      public   ref readonly TKey                                                 Key => ref (this.referenced ? ref this.dictionary.keys[this.index] : ref System.Runtime.InteropServices.MemoryMarshal.GetReference(this.pair).key);
+      internal     readonly (TKey key, TValue value)[]                           pair; // ⟶ `System.Collections.Generic.KeyValuePair<TKey, TValue>` but `ref`-errable
+      internal     readonly bool                                                 referenced;
+      public   ref          TValue                                               Value => ref (this.referenced ? ref this.dictionary.values[this.index] : ref System.Runtime.InteropServices.MemoryMarshal.GetReference(this.pair).value);
+
+      /* … */
+      [PatchConstructor, PatchMethod(AggressiveInlining)] internal RefKeyValuePair(PatchOdyssey.Collections.RefDictionary<TKey, TValue> dictionary, uint      index) { this.dictionary = dictionary; this.index = index; this.pair = null!;                this.referenced = true; }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public   RefKeyValuePair(in TKey                                              key,        in TValue value) { this.dictionary = null!;      this.index = 0u;    this.pair = new[] {(key, value)}; this.referenced = false; }
+
+      /* … */
+      [PatchMethod(AggressiveInlining)] public          void   Deconstruct(out TKey key, out TValue value) { key = this.Key; value = this.Value; }
+      [PatchMethod(AggressiveInlining)] public override string ToString   ()                               => $"[{this.Key}, {this.Value}]";
+
+      [PatchMethod(AggressiveInlining)]
+      public static implicit operator System.Collections.Generic.KeyValuePair<TKey, TValue>(in RefKeyValuePair<TKey, TValue> pair) => new(pair.Key, pair.Value);
+    }
+
+    [System.Serializable]
+    public class RefList<T> : PatchOdyssey.Collections.RefReadOnlyList<T>, System.Collections.Generic.IList<T>, System.Collections.ICollection, System.Collections.IList {
+      public new struct Enumerator : System.Collections.Generic.IEnumerator<T> {
+        public           ref T                                                  Current => ref this.enumerator.list.GetValue((uint) this.enumerator.index);
+        private required PatchOdyssey.Collections.RefReadOnlyList<T>.Enumerator enumerator;
+        T                                                                       System.Collections.Generic.IEnumerator<T>.Current => this.Current;
+        object                                                                  System.Collections.IEnumerator.Current            => this.Current!;
+
+        /* … */
+        [PatchConstructor, PatchMethod(AggressiveInlining)]
         public Enumerator(RefList<T> list) {
           this.enumerator = new(list);
         }
@@ -1395,24 +1400,24 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       }
 
       /* … */
-      public  new uint Capacity                                             { get => this.capacity; set => this.EnsureCapacity(value); }
-      private     uint capacity                                             =  0u;
-      int              System.Collections.Generic.ICollection<T>.Count      => ((int) this.Count);
-      bool             System.Collections.Generic.ICollection<T>.IsReadOnly => false;
-      int              System.Collections.ICollection.Count                 => ((int) this.Count);
-      bool             System.Collections.ICollection.IsSynchronized        => false;
-      object           System.Collections.ICollection.SyncRoot              => this;
-      bool             System.Collections.IList.IsFixedSize                 => false;
-      bool             System.Collections.IList.IsReadOnly                  => false;
+      public                                                            new uint Capacity                                             { get => this.capacity; set => this.EnsureCapacity(value); }
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private     uint capacity                                             =  0u;
+      int                                                                        System.Collections.Generic.ICollection<T>.Count      => ((int) this.Count);
+      bool                                                                       System.Collections.Generic.ICollection<T>.IsReadOnly => false;
+      int                                                                        System.Collections.ICollection.Count                 => ((int) this.Count);
+      bool                                                                       System.Collections.ICollection.IsSynchronized        => false;
+      object                                                                     System.Collections.ICollection.SyncRoot              => this;
+      bool                                                                       System.Collections.IList.IsFixedSize                 => false;
+      bool                                                                       System.Collections.IList.IsReadOnly                  => false;
 
       /* … */
-      [PatchMethod(AggressiveInlining)] public    RefList()                                    : base()                                            {}
-      [PatchMethod(AggressiveInlining)] public    RefList(uint                       capacity) : base(capacity = RefList<T>.GetCapacity(capacity)) => this.capacity = capacity;
-      [PatchMethod(AggressiveInlining)] public    RefList(RefList<T>                 list)     : this((Program.RefReadOnlyList<T>) list)           {}
-      [PatchMethod(AggressiveInlining)] public    RefList(Program.RefReadOnlyList<T> list)     : this(list.Items, 0u, list.Count)                  {}
-      [PatchMethod(AggressiveInlining)] protected RefList(T[]                        array, uint index, uint length)                               => System.Array.Copy(array, (int) index, this.Items = Program.RefReadOnlyList<T>.CreateInstance(this.capacity = RefList<T>.GetCapacity(this.Count = length)), 0, (int) length);
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList()                                                     : base()                                                   {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(uint                                        capacity) : base(capacity = RefList<T>.GetCapacity(capacity))        => this.capacity = capacity;
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(RefList<T>                                  list)     : this((PatchOdyssey.Collections.RefReadOnlyList<T>) list) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(PatchOdyssey.Collections.RefReadOnlyList<T> list)     : this(list.Items, 0u, list.Count)                         {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] protected RefList(T[]                                         array, uint index, uint length)                                      => System.Array.Copy(array, (int) index, this.Items = PatchOdyssey.Collections.RefReadOnlyList<T>.CreateInstance(this.capacity = RefList<T>.GetCapacity(this.Count = length)), 0, (int) length);
 
-      [PatchMethod(AggressiveInlining)]
+      [PatchConstructor, PatchMethod(AggressiveInlining)]
       public RefList(System.Collections.Generic.IEnumerable<T> enumerable) {
         this.Count = Util.EnumerableCount(enumerable);
 
@@ -1428,30 +1433,30 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       }
 
       /* … */
-      [PatchMethod(AggressiveInlining)] public                 void                  Add           (in T                                      element)                                                   => this.Insert     (this.Count, element);
-      [PatchMethod(AggressiveInlining)] public    ref readonly T                     Append        (in T                                      element)                                                   {  this.Insert     (this.Count, element); return ref element; }
-      [PatchMethod(AggressiveInlining)] public                 void                  AddRange      (System.Collections.Generic.IEnumerable<T> enumerable)                                                => this.InsertRange(this.Count, enumerable);
-      [PatchMethod(AggressiveInlining)] public    new          RefList<T>            AsCopy        ()                                                                                                    => new(this);
-      [PatchMethod(AggressiveInlining)] public                 void                  Clear         ()                                                                                                    { this.capacity = this.Count = 0u; this.Items = System.Array.Empty<T>(); }
-      [PatchMethod(AggressiveInlining)] public                 RefList<U>            ConvertAll<U> (Program.RefConverter<T, U> converter)                                                                { RefList<U> list = new(this.Count); for (; list.Count != this.Count; ++list.Count) { list.SetValue(converter(ref this.GetValue(list.Count)), list.Count); } return list; }
-      [PatchMethod(AggressiveInlining)] public                 uint                  EnsureCapacity(uint                       capacity)                                                                 { if (capacity > this.capacity) { T[] list = this.Items; System.Array.Copy(list, 0, this.Items = RefReadOnlyList<T>.CreateInstance(this.capacity = RefList<T>.GetCapacity(capacity)), 0, (int) this.Count); } return this.capacity; }
-      [PatchMethod(AggressiveInlining)] public                 bool                  Exists        (Program.RefPredicate<T>    predicate)                                                                { for (uint index = 0u; index != this.Count; ++index) {                                           if (predicate(ref this.GetValue(index))) return true; }    return false; }
-      [PatchMethod(AggressiveInlining)] public                 T?                    Find          (Program.RefPredicate<T>    predicate)                                                                { for (uint index = 0u; index != this.Count; ++index) { ref T element = ref this.GetValue(index); if (predicate(ref element))              return element; } return default; }
-      [PatchMethod(AggressiveInlining)] public                 RefList<T>            FindAll       (Program.RefPredicate<T>    predicate)                                                                { RefList<T> list = new(this.Count); for (uint index = 0u; index != this.Count; ++index) { ref T element = ref this.GetValue(index); if (predicate(ref element)) list.SetValue(in element, list.Count++); } list.TrimExcess(); return list; }
-      [PatchMethod(AggressiveInlining)] public                 int                   FindIndex     (Program.RefPredicate<T>    predicate)                                                                => this.FindIndex(0u, this.Count, predicate);
-      [PatchMethod(AggressiveInlining)] public                 int                   FindIndex     (uint                       index, Program.RefPredicate<T> predicate)                                 { for                                                       (; index < this.Count; ++index) { if (predicate(ref this.GetValue(index))) return (int) index; } return -1; }
-      [PatchMethod(AggressiveInlining)] public                 int                   FindIndex     (uint                       index, uint                    length, Program.RefPredicate<T> predicate) { for (uint end = System.Math.Min(this.Count, index + length); index < end;        ++index) { if (predicate(ref this.GetValue(index))) return (int) index; } return -1; }
-      [PatchMethod(AggressiveInlining)] public                 int                   FindLastIndex (Program.RefPredicate<T>    predicate)                                                                => this.FindLastIndex(0u, this.Count, predicate);
-      [PatchMethod(AggressiveInlining)] public                 int                   FindLastIndex (uint                       index, Program.RefPredicate<T> predicate)                                 { for (uint end = this.Count;                                  end-- > index; ) { if (predicate(ref this.GetValue(end))) return (int) end; } return -1; }
-      [PatchMethod(AggressiveInlining)] public                 int                   FindLastIndex (uint                       index, uint                    length, Program.RefPredicate<T> predicate) { for (uint end = System.Math.Min(this.Count, index + length); end-- > index; ) { if (predicate(ref this.GetValue(end))) return (int) end; } return -1; }
-      [PatchMethod(AggressiveInlining)] public                 void                  ForEach       (Program.RefAction<T>       action)                                                                   { for (uint index = 0u; index != this.Count; ++index) action(ref this.GetValue(index)); }
-      [PatchMethod(AggressiveInlining)] protected static       uint                  GetCapacity   (uint                       count)                                                                    { if (0u != count) { count = System.Math.Max(count, 4u) - 1u; count |= count >> 1; count |= count >> 2; count |= count >> 4; count |= count >> 8; count |= count >> 16; return count + 1u; } return 0u; }
-      [PatchMethod(AggressiveInlining)] public    new          RefList<T>.Enumerator GetEnumerator ()                                                                                                    => new(this);
-      [PatchMethod(AggressiveInlining)] public    new          RefList<T>            GetRange      (uint index, uint length)                                                                             => new(this.Items, index, length);
+      [PatchMethod(AggressiveInlining)] public                 void                  Add           (in T                                      element)                                                                  => this.Insert     (this.Count, element);
+      [PatchMethod(AggressiveInlining)] public    ref readonly T                     Append        (in T                                      element)                                                                  {  this.Insert     (this.Count, element); return ref element; }
+      [PatchMethod(AggressiveInlining)] public                 void                  AddRange      (System.Collections.Generic.IEnumerable<T> enumerable)                                                               => this.InsertRange(this.Count, enumerable);
+      [PatchMethod(AggressiveInlining)] public    new          RefList<T>            AsCopy        ()                                                                                                                   => new(this);
+      [PatchMethod(AggressiveInlining)] public                 void                  Clear         ()                                                                                                                   { this.capacity = this.Count = 0u; this.Items = System.Array.Empty<T>(); }
+      [PatchMethod(AggressiveInlining)] public                 RefList<U>            ConvertAll<U> (PatchOdyssey.RefConverter<T, U> converter)                                                                          { RefList<U> list = new(this.Count); for (; list.Count != this.Count; ++list.Count) { list.SetValue(converter(ref this.GetValue(list.Count)), list.Count); } return list; }
+      [PatchMethod(AggressiveInlining)] public                 uint                  EnsureCapacity(uint                            capacity, bool precise = false)                                                     { if (capacity > this.capacity) { T[] list = this.Items; System.Array.Copy(list, 0, this.Items = RefReadOnlyList<T>.CreateInstance(this.capacity = !precise ? RefList<T>.GetCapacity(capacity) : capacity), 0, (int) this.Count); } return this.capacity; }
+      [PatchMethod(AggressiveInlining)] public                 bool                  Exists        (PatchOdyssey.RefPredicate<T>    predicate)                                                                          { for (uint index = 0u; index != this.Count; ++index) {                                           if (predicate(ref this.GetValue(index))) return true; }    return false; }
+      [PatchMethod(AggressiveInlining)] public                 T?                    Find          (PatchOdyssey.RefPredicate<T>    predicate)                                                                          { for (uint index = 0u; index != this.Count; ++index) { ref T element = ref this.GetValue(index); if (predicate(ref element))              return element; } return default; }
+      [PatchMethod(AggressiveInlining)] public                 RefList<T>            FindAll       (PatchOdyssey.RefPredicate<T>    predicate)                                                                          { RefList<T> list = new(this.Count); for (uint index = 0u; index != this.Count; ++index) { ref T element = ref this.GetValue(index); if (predicate(ref element)) list.SetValue(in element, list.Count++); } list.TrimExcess(); return list; }
+      [PatchMethod(AggressiveInlining)] public                 int                   FindIndex     (PatchOdyssey.RefPredicate<T>    predicate)                                                                          => this.FindIndex(0u, this.Count, predicate);
+      [PatchMethod(AggressiveInlining)] public                 int                   FindIndex     (uint                            index, PatchOdyssey.RefPredicate<T> predicate)                                      { for                                                       (; index < this.Count; ++index) { if (predicate(ref this.GetValue(index))) return (int) index; } return -1; }
+      [PatchMethod(AggressiveInlining)] public                 int                   FindIndex     (uint                            index, uint                         length, PatchOdyssey.RefPredicate<T> predicate) { for (uint end = System.Math.Min(this.Count, index + length); index < end;        ++index) { if (predicate(ref this.GetValue(index))) return (int) index; } return -1; }
+      [PatchMethod(AggressiveInlining)] public                 int                   FindLastIndex (PatchOdyssey.RefPredicate<T>    predicate)                                                                          => this.FindLastIndex(0u, this.Count, predicate);
+      [PatchMethod(AggressiveInlining)] public                 int                   FindLastIndex (uint                            index, PatchOdyssey.RefPredicate<T> predicate)                                      { for (uint end = this.Count;                                  end-- > index; ) { if (predicate(ref this.GetValue(end))) return (int) end; } return -1; }
+      [PatchMethod(AggressiveInlining)] public                 int                   FindLastIndex (uint                            index, uint                         length, PatchOdyssey.RefPredicate<T> predicate) { for (uint end = System.Math.Min(this.Count, index + length); end-- > index; ) { if (predicate(ref this.GetValue(end))) return (int) end; } return -1; }
+      [PatchMethod(AggressiveInlining)] public                 void                  ForEach       (PatchOdyssey.RefAction<T>       action)                                                                             { for (uint index = 0u; index != this.Count; ++index) action(ref this.GetValue(index)); }
+      [PatchMethod(AggressiveInlining)] protected static       uint                  GetCapacity   (uint                            count)                                                                              { if (0u != count) { count = System.Math.Max(count, 4u) - 1u; count |= count >> 1; count |= count >> 2; count |= count >> 4; count |= count >> 8; count |= count >> 16; return count + 1u; } return 0u; }
+      [PatchMethod(AggressiveInlining)] public    new          RefList<T>.Enumerator GetEnumerator ()                                                                                                                   => new(this);
+      [PatchMethod(AggressiveInlining)] public    new          RefList<T>            GetRange      (uint index, uint length)                                                                                            => new(this.Items, index, length);
 
-      private void HeapSort(uint begin, uint end, Program.RefComparison<T> comparison) /* ⟶ See `https://web.archive.org/web/20170509032649/http://www.cdn.geeksforgeeks.org/heap-sort/` */ {
+      private void HeapSort(uint begin, uint end, PatchOdyssey.RefComparison<T> comparison) /* ⟶ See `https://web.archive.org/web/20170509032649/http://www.cdn.geeksforgeeks.org/heap-sort/` */ {
         [PatchMethod(AggressiveInlining)]
-        static void Build(RefList<T> list, uint end, uint index, Program.RefComparison<T> comparison) {
+        static void Build(RefList<T> list, uint end, uint index, PatchOdyssey.RefComparison<T> comparison) {
           uint largest = index;
           uint left    = (index * 2u) + 1u;
           uint right   = (index * 2u) + 2u;
@@ -1490,7 +1495,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         ++this.Count;
       }
 
-      private void InsertionSort(uint begin, uint end, Program.RefComparison<T> comparison) /* ⟶ See `https://web.archive.org/web/20240629152053/https://www.geeksforgeeks.org/insertion-sort-algorithm/` */ {
+      private void InsertionSort(uint begin, uint end, PatchOdyssey.RefComparison<T> comparison) /* ⟶ See `https://web.archive.org/web/20240629152053/https://www.geeksforgeeks.org/insertion-sort-algorithm/` */ {
         for (uint index = begin + 1u; end != index; ++index) {
           T   element  = this.GetValue(index);
           int subindex = ((int) index) - 1;
@@ -1530,9 +1535,9 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         return ref element;
       }
 
-      private void QuickSort(uint begin, uint end, Program.RefComparison<T> comparison) /* ⟶ See `https://web.archive.org/web/20240629152053/https://www.geeksforgeeks.org/quick-sort-algorithm/` */ {
+      private void QuickSort(uint begin, uint end, PatchOdyssey.RefComparison<T> comparison) /* ⟶ See `https://web.archive.org/web/20240629152053/https://www.geeksforgeeks.org/quick-sort-algorithm/` */ {
         [PatchMethod(AggressiveInlining)]
-        static uint Partition(RefList<T> list, uint begin, uint end, Program.RefComparison<T> comparison) {
+        static uint Partition(RefList<T> list, uint begin, uint end, PatchOdyssey.RefComparison<T> comparison) {
           int   index = ((int) begin) - 1;
           ref T pivot = ref list.GetValue(end);
 
@@ -1558,42 +1563,42 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         }
       }
 
-      [PatchMethod(AggressiveInlining)] public      bool       Remove                                            (in T                            element)                                                                          { int index = this.IndexOf(element); if (index != -1) { this.RemoveAt((uint) index); return true; } return false; }
-      [PatchMethod(AggressiveInlining)] public      uint       RemoveAll                                         (Program.RefPredicate        <T> predicate)                                                                        { T[] array = (T[]) this.Items.Clone(); uint length = 0u; for (uint index = 0u; index != this.Count; ++index) { ref T element = ref this.GetValue(index); if (!predicate(ref element)) array[length++] = element; } length = this.Count - length; this.Count -= length; this.Items = array; return length; }
-      [PatchMethod(AggressiveInlining)] public      uint       RemoveAll                                         (Program.RefReadOnlyPredicate<T> predicate)                                                                        => this.RemoveAll((ref T element) => predicate(in element));
-      [PatchMethod(AggressiveInlining)] public      uint       RemoveAll                                         (System.Predicate            <T> predicate)                                                                        => this.RemoveAll((ref T element) => predicate   (element));
-      [PatchMethod(AggressiveInlining)] public      void       RemoveAt                                          (uint                            index)                                                                            { while                                (++index < this.Count)                      { this.SetValue(in this.GetValue(index - 0u), index - 1u); } this.Count -= index == this.Count ? 1u : 0u; }
-      [PatchMethod(AggressiveInlining)] public      void       RemoveRange                                       (uint                            index, uint length)                                                               { for (uint subindex = index + length; subindex < this.Count; ++index, ++subindex) { this.SetValue(in this.GetValue(subindex),   index); }      this.Count -= index <= this.Count ? this.Count - index : 0u; }
-      [PatchMethod(AggressiveInlining)] public      void       Reverse                                           ()                                                                                                                 => this      .Reverse(0u,          this.Count);
-      [PatchMethod(AggressiveInlining)] public      void       Reverse                                           (uint index, uint length)                                                                                          => this.Items.Reverse((int) index, (int) length);
-      [PatchMethod(AggressiveInlining)] public  new RefList<T> Slice                                             (uint index, uint length)                                                                                          => new(this.Items, index, length);
-      [PatchMethod(AggressiveInlining)] public      void       Sort                                              ()                                                                                                                 => this.Sort(0u, this.Count, System.Collections.Generic.Comparer<T>.Default);
-      [PatchMethod(AggressiveInlining)] public      void       Sort                                              (System.Collections.Generic.IComparer<T>? comparer)                                                                => this.Sort(0u, this.Count, comparer);
-      [PatchMethod(AggressiveInlining)] public      void       Sort                                              (Program.RefComparison               <T>  comparison)                                                              => this.Sort(0u, this.Count, comparison);
-      [PatchMethod(AggressiveInlining)] public      void       Sort                                              (Program.RefReadOnlyComparison       <T>  comparison)                                                              => this.Sort((ref T a, ref T b) => comparison(in a, in b));
-      [PatchMethod(AggressiveInlining)] public      void       Sort                                              (System.Comparison                   <T>  comparison)                                                              => this.Sort((ref T a, ref T b) => comparison(a,    b));
-      [PatchMethod(AggressiveInlining)] private     void       Sort                                              (uint                                     begin, uint end,    Program.RefComparison               <T>  comparison) { if (this.Count <= 16u) this.InsertionSort(begin, end, comparison); else if (this.Count > System.Math.Log(this.Count) * 2.0) this.HeapSort(begin, end, comparison); else this.QuickSort(begin, end - 1u, comparison); }
-      [PatchMethod(AggressiveInlining)] public      void       Sort                                              (uint                                     index, uint length, System.Collections.Generic.IComparer<T>? comparer)   { comparer ??= System.Collections.Generic.Comparer<T>.Default; this.Sort(index, System.Math.Min(this.Count, index + length), (ref T a, ref T b) => comparer!.Compare(a, b)); }
-      [PatchMethod(AggressiveInlining)] public  new ref T[]    ToArray                                           ()                                                                                                                 => ref this.Items;
-      [PatchMethod(AggressiveInlining)] public      void       TrimExcess                                        ()                                                                                                                 => this.TrimExcess(this.Count);
-      [PatchMethod(AggressiveInlining)] public      void       TrimExcess                                        (uint                    capacity)                                                                                 { capacity = RefList<T>.GetCapacity(capacity); if (capacity < this.capacity && capacity >= this.Count) System.Array.Resize(ref this.Items, (int) (this.capacity = capacity)); }
-      [PatchMethod(AggressiveInlining)] public      bool       TrueForAll                                        (Program.RefPredicate<T> predicate)                                                                                { for (uint index = 0u; index != this.Count; ++index) { if (!predicate(ref this.GetValue(index))) return false; } return true; }
-      [PatchMethod(AggressiveInlining)] void                   System.Collections.Generic.ICollection<T>.Add     (T                       element)                                                                                  => this      .Add     (element);
-      [PatchMethod(AggressiveInlining)] void                   System.Collections.Generic.ICollection<T>.Clear   ()                                                                                                                 => this      .Clear   ();
-      [PatchMethod(AggressiveInlining)] bool                   System.Collections.Generic.ICollection<T>.Contains(T            element)                                                                                             => this      .Contains(element);
-      [PatchMethod(AggressiveInlining)] void                   System.Collections.Generic.ICollection<T>.CopyTo  (T[]          array, int index)                                                                                    => this      .CopyTo  (array, (uint) index);
-      [PatchMethod(AggressiveInlining)] bool                   System.Collections.Generic.ICollection<T>.Remove  (T            element)                                                                                             => this      .Remove  (element);
-      [PatchMethod(AggressiveInlining)] int                    System.Collections.Generic.IList<T>.IndexOf       (T            element)                                                                                             => this      .IndexOf (element);
-      [PatchMethod(AggressiveInlining)] void                   System.Collections.Generic.IList<T>.Insert        (int          index, T element)                                                                                    => this      .Insert  ((uint) index, element);
-      [PatchMethod(AggressiveInlining)] void                   System.Collections.Generic.IList<T>.RemoveAt      (int          index)                                                                                               => this      .RemoveAt((uint) index);
-      [PatchMethod(AggressiveInlining)] void                   System.Collections.ICollection.CopyTo             (System.Array array, int index)                                                                                    => this.Items.CopyTo  (array, index);
-      [PatchMethod(AggressiveInlining)] int                    System.Collections.IList.Add                      (object?      element)                                                                                             {  this      .Add     ((T) element!); return (int) this.Count; }
-      [PatchMethod(AggressiveInlining)] void                   System.Collections.IList.Clear                    ()                                                                                                                 => this      .Clear   ();
-      [PatchMethod(AggressiveInlining)] bool                   System.Collections.IList.Contains                 (object? element)                                                                                                  => this.Items.IndexOf (element) != this.Items.GetLowerBound(0) - 1;
-      [PatchMethod(AggressiveInlining)] int                    System.Collections.IList.IndexOf                  (object? element)                                                                                                  => this.Items.IndexOf (element);
-      [PatchMethod(AggressiveInlining)] void                   System.Collections.IList.Insert                   (int     index, object? element)                                                                                   => this      .Insert  ((uint) index, (T) element!);
-      [PatchMethod(AggressiveInlining)] void                   System.Collections.IList.Remove                   (object? element)                                                                                                  => this      .Remove  ((T) element!);
-      [PatchMethod(AggressiveInlining)] void                   System.Collections.IList.RemoveAt                 (int     index)                                                                                                    => this      .RemoveAt((uint) index);
+      [PatchMethod(AggressiveInlining)] public      bool       Remove                                            (in T                                 element)                                                                { int index = this.IndexOf(element); if (index != -1) { this.RemoveAt((uint) index); return true; } return false; }
+      [PatchMethod(AggressiveInlining)] public      uint       RemoveAll                                         (PatchOdyssey.RefPredicate        <T> predicate)                                                              { T[] array = (T[]) this.Items.Clone(); uint length = 0u; for (uint index = 0u; index != this.Count; ++index) { ref T element = ref this.GetValue(index); if (!predicate(ref element)) array[length++] = element; } length = this.Count - length; this.Count -= length; this.Items = array; return length; }
+      [PatchMethod(AggressiveInlining)] public      uint       RemoveAll                                         (PatchOdyssey.RefReadOnlyPredicate<T> predicate)                                                              => this.RemoveAll((ref T element) => predicate(in element));
+      [PatchMethod(AggressiveInlining)] public      uint       RemoveAll                                         (System.Predicate                 <T> predicate)                                                              => this.RemoveAll((ref T element) => predicate   (element));
+      [PatchMethod(AggressiveInlining)] public      void       RemoveAt                                          (uint                                 index)                                                                  { while                                (++index < this.Count)                      { this.SetValue(in this.GetValue(index - 0u), index - 1u); } this.Count -= index == this.Count ? 1u : 0u; }
+      [PatchMethod(AggressiveInlining)] public      void       RemoveRange                                       (uint                                 index, uint length)                                                     { for (uint subindex = index + length; subindex < this.Count; ++index, ++subindex) { this.SetValue(in this.GetValue(subindex),   index); }      this.Count -= index <= this.Count ? this.Count - index : 0u; }
+      [PatchMethod(AggressiveInlining)] public      void       Reverse                                           ()                                                                                                            => this      .Reverse(0u,          this.Count);
+      [PatchMethod(AggressiveInlining)] public      void       Reverse                                           (uint index, uint length)                                                                                     => this.Items.Reverse((int) index, (int) length);
+      [PatchMethod(AggressiveInlining)] public  new RefList<T> Slice                                             (uint index, uint length)                                                                                     => new(this.Items, index, length);
+      [PatchMethod(AggressiveInlining)] public      void       Sort                                              ()                                                                                                            => this.Sort(0u, this.Count, System.Collections.Generic.Comparer<T>.Default);
+      [PatchMethod(AggressiveInlining)] public      void       Sort                                              (PatchOdyssey.RefComparison          <T>  comparison)                                                         => this.Sort(0u, this.Count, comparison);
+      [PatchMethod(AggressiveInlining)] public      void       Sort                                              (PatchOdyssey.RefReadOnlyComparison  <T>  comparison)                                                         => this.Sort((ref T a, ref T b) => comparison(in a, in b));
+      [PatchMethod(AggressiveInlining)] public      void       Sort                                              (System.Collections.Generic.IComparer<T>? comparer)                                                           => this.Sort(0u, this.Count, comparer);
+      [PatchMethod(AggressiveInlining)] public      void       Sort                                              (System.Comparison                   <T>  comparison)                                                         => this.Sort((ref T a, ref T b) => comparison(a,    b));
+      [PatchMethod(AggressiveInlining)] private     void       Sort                                              (uint                                begin, uint end,    PatchOdyssey.RefComparison          <T>  comparison) { if (this.Count <= 16u) this.InsertionSort(begin, end, comparison); else if (this.Count > System.Math.Log(this.Count) * 2.0) this.HeapSort(begin, end, comparison); else this.QuickSort(begin, end - 1u, comparison); }
+      [PatchMethod(AggressiveInlining)] public      void       Sort                                              (uint                                index, uint length, System.Collections.Generic.IComparer<T>? comparer)   { comparer ??= System.Collections.Generic.Comparer<T>.Default; this.Sort(index, System.Math.Min(this.Count, index + length), (ref T a, ref T b) => comparer!.Compare(a, b)); }
+      [PatchMethod(AggressiveInlining)] public  new ref T[]    ToArray                                           ()                                                                                                            => ref this.Items;
+      [PatchMethod(AggressiveInlining)] public      void       TrimExcess                                        ()                                                                                                            => this.TrimExcess(this.Count);
+      [PatchMethod(AggressiveInlining)] public      void       TrimExcess                                        (uint                         capacity)                                                                       { capacity = RefList<T>.GetCapacity(capacity); if (capacity < this.capacity && capacity >= this.Count) System.Array.Resize(ref this.Items, (int) (this.capacity = capacity)); }
+      [PatchMethod(AggressiveInlining)] public      bool       TrueForAll                                        (PatchOdyssey.RefPredicate<T> predicate)                                                                      { for (uint index = 0u; index != this.Count; ++index) { if (!predicate(ref this.GetValue(index))) return false; } return true; }
+      [PatchMethod(AggressiveInlining)] void                   System.Collections.Generic.ICollection<T>.Add     (T                            element)                                                                        => this      .Add     (element);
+      [PatchMethod(AggressiveInlining)] void                   System.Collections.Generic.ICollection<T>.Clear   ()                                                                                                            => this      .Clear   ();
+      [PatchMethod(AggressiveInlining)] bool                   System.Collections.Generic.ICollection<T>.Contains(T            element)                                                                                        => this      .Contains(element);
+      [PatchMethod(AggressiveInlining)] void                   System.Collections.Generic.ICollection<T>.CopyTo  (T[]          array, int index)                                                                               => this      .CopyTo  (array, (uint) index);
+      [PatchMethod(AggressiveInlining)] bool                   System.Collections.Generic.ICollection<T>.Remove  (T            element)                                                                                        => this      .Remove  (element);
+      [PatchMethod(AggressiveInlining)] int                    System.Collections.Generic.IList<T>.IndexOf       (T            element)                                                                                        => this      .IndexOf (element);
+      [PatchMethod(AggressiveInlining)] void                   System.Collections.Generic.IList<T>.Insert        (int          index, T element)                                                                               => this      .Insert  ((uint) index, element);
+      [PatchMethod(AggressiveInlining)] void                   System.Collections.Generic.IList<T>.RemoveAt      (int          index)                                                                                          => this      .RemoveAt((uint) index);
+      [PatchMethod(AggressiveInlining)] void                   System.Collections.ICollection.CopyTo             (System.Array array, int index)                                                                               => this.Items.CopyTo  (array, index);
+      [PatchMethod(AggressiveInlining)] int                    System.Collections.IList.Add                      (object?      element)                                                                                        {  this      .Add     ((T) element!); return (int) this.Count; }
+      [PatchMethod(AggressiveInlining)] void                   System.Collections.IList.Clear                    ()                                                                                                            => this      .Clear   ();
+      [PatchMethod(AggressiveInlining)] bool                   System.Collections.IList.Contains                 (object? element)                                                                                             => this.Items.IndexOf (element) != this.Items.GetLowerBound(0) - 1;
+      [PatchMethod(AggressiveInlining)] int                    System.Collections.IList.IndexOf                  (object? element)                                                                                             => this.Items.IndexOf (element);
+      [PatchMethod(AggressiveInlining)] void                   System.Collections.IList.Insert                   (int     index, object? element)                                                                              => this      .Insert  ((uint) index, (T) element!);
+      [PatchMethod(AggressiveInlining)] void                   System.Collections.IList.Remove                   (object? element)                                                                                             => this      .Remove  ((T) element!);
+      [PatchMethod(AggressiveInlining)] void                   System.Collections.IList.RemoveAt                 (int     index)                                                                                               => this      .RemoveAt((uint) index);
 
       /* … */
       public new ref T          this                                    [uint         index] => ref this.GetValue(index);
@@ -1601,22 +1606,204 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       T                         System.Collections.Generic.IList<T>.this[int          index] { get => this[(uint) index]; set => this[(uint) index] = value; }
       object?                   System.Collections.IList.this           [int          index] { get => this[(uint) index]; set => this[(uint) index] = (T) value!; }
     }
+      [System.Serializable] public class AnimationCurveList : PatchOdyssey.Collections.RefList<UnityEngine.AnimationCurve> { [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveList() : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveList(uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveList(System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class BooleanList        : PatchOdyssey.Collections.RefList<System     .Boolean>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public BooleanList       () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BooleanList       (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BooleanList       (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class BoundsList         : PatchOdyssey.Collections.RefList<UnityEngine.Bounds>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsList        () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsList        (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsList        (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class BoundsIntList      : PatchOdyssey.Collections.RefList<UnityEngine.BoundsInt>      { [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsIntList     () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsIntList     (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsIntList     (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class ColorList          : PatchOdyssey.Collections.RefList<UnityEngine.Color>          { [PatchConstructor, PatchMethod(AggressiveInlining)] public ColorList         () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ColorList         (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ColorList         (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class DoubleList         : PatchOdyssey.Collections.RefList<System     .Double>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public DoubleList        () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public DoubleList        (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public DoubleList        (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class FloatList          : PatchOdyssey.Collections.RefList<System     .Single>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public FloatList         () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public FloatList         (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public FloatList         (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class GameObjectList     : PatchOdyssey.Collections.RefList<UnityEngine.GameObject>     { [PatchConstructor, PatchMethod(AggressiveInlining)] public GameObjectList    () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GameObjectList    (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GameObjectList    (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class GradientList       : PatchOdyssey.Collections.RefList<UnityEngine.Gradient>       { [PatchConstructor, PatchMethod(AggressiveInlining)] public GradientList      () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GradientList      (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GradientList      (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class IntList            : PatchOdyssey.Collections.RefList<System     .Int32>          { [PatchConstructor, PatchMethod(AggressiveInlining)] public IntList           () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public IntList           (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public IntList           (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class LongList           : PatchOdyssey.Collections.RefList<System     .Int64>          { [PatchConstructor, PatchMethod(AggressiveInlining)] public LongList          () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public LongList          (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public LongList          (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class RectList           : PatchOdyssey.Collections.RefList<UnityEngine.Rect>           { [PatchConstructor, PatchMethod(AggressiveInlining)] public RectList          () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectList          (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectList          (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class RectIntList        : PatchOdyssey.Collections.RefList<UnityEngine.RectInt>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public RectIntList       () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectIntList       (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectIntList       (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class StringList         : PatchOdyssey.Collections.RefList<System     .String>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public StringList        () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public StringList        (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public StringList        (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class UIntList           : PatchOdyssey.Collections.RefList<System     .UInt32>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public UIntList          () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public UIntList          (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public UIntList          (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class ULongList          : PatchOdyssey.Collections.RefList<System     .UInt64>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public ULongList         () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ULongList         (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ULongList         (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class Vector2List        : PatchOdyssey.Collections.RefList<UnityEngine.Vector2>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2List       () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2List       (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2List       (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class Vector2IntList     : PatchOdyssey.Collections.RefList<UnityEngine.Vector2Int>     { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2IntList    () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2IntList    (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2IntList    (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class Vector3List        : PatchOdyssey.Collections.RefList<UnityEngine.Vector3>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3List       () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3List       (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3List       (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class Vector3IntList     : PatchOdyssey.Collections.RefList<UnityEngine.Vector3Int>     { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3IntList    () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3IntList    (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3IntList    (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class Vector4List        : PatchOdyssey.Collections.RefList<UnityEngine.Vector4>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector4List       () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector4List       (uint capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector4List       (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
 
     public abstract class RefReadOnlyComparer<T> : System.Collections.Generic.Comparer<T>;
 
+    [System.Serializable]
+    public class RefReadOnlyDictionary<TKey, TValue> : PatchOdyssey.Collections.RefDictionary<TKey, TValue>, System.Collections.Generic.IDictionary<TKey, TValue>, System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>, System.Collections.IDictionary /* ⟶ Retroactively designed after `RefDictionary<…>`’s implementation */ {
+      public struct Enumerator : System.Collections.Generic.IEnumerator<PatchOdyssey.Collections.RefReadOnlyKeyValuePair<TKey, TValue>> /* ⟶ Based on `System.Collections.Generic.Dictionary<TKey, TValue>.KeyCollection.Enumerator` */ {
+        public  readonly ref                                           PatchOdyssey.Collections.RefReadOnlyKeyValuePair<TKey, TValue>   Current { [PatchMethod(AggressiveInlining)] get => { this.current = new[] {new PatchOdyssey.Collections.RefReadOnlyKeyValuePair<TKey, TValue>(this.enumerator.Current)}; return ref Util.ArrayReference(this.current); } }
+        public                                                         PatchOdyssey.Collections.RefReadOnlyKeyValuePair<TKey, TValue>[] current;
+        private readonly                                               RefDictionary<TKey, TValue>.Enumerator                           enumerator;
+        PatchOdyssey.Collections.RefReadOnlyKeyValuePair<TKey, TValue>                                                                  System.Collections.Generic.IEnumerator<PatchOdyssey.Collections.RefReadOnlyKeyValuePair<TKey, TValue>>.Current => this.Current;
+        object                                                                                                                          System.Collections.IEnumerator.Current                                                                         => this.Current!;
+
+        /* … */
+        [PatchConstructor, PatchMethod(AggressiveInlining)]
+        internal Enumerator(RefReadOnlyDictionary<TKey, TValue> dictionary) => this.enumerator = ((PatchOdyssey.Collections.RefDictionary<TKey, TValue>) dictionary).GetEnumerator();
+
+        /* … */
+        [PatchMethod(AggressiveInlining)] public void Dispose                                () => this.enumerator.Dispose ();
+        [PatchMethod(AggressiveInlining)] public bool MoveNext                               () => this.enumerator.MoveNext();
+        [PatchMethod(AggressiveInlining)] public void Reset                                  () => this.enumerator.Reset   ();
+        [PatchMethod(AggressiveInlining)] bool        System.Collections.IEnumerator.MoveNext() => this           .MoveNext();
+        [PatchMethod(AggressiveInlining)] void        System.Collections.IEnumerator.Reset   () => this           .Reset   ();
+        [PatchMethod(AggressiveInlining)] void        System.IDisposable.Dispose             () => this           .Dispose ();
+      }
+
+      public sealed class KeyCollection : PatchOdyssey.Collections.RefDictionary<TKey, TValue>.KeyCollection {
+        // ⟶ Aliases `PatchOdyssey.Collections.RefDictionary<TKey, TValue>.KeyCollection.Enumerator` for its `struct Enumerator` subtype
+        [PatchMethod(AggressiveInlining)]
+        public KeyCollection(RefReadOnlyDictionary<TKey, TValue> dictionary) : base((PatchOdyssey.Collections.RefDictionary<TKey, TValue>) dictionary) {}
+      }
+
+      public sealed class ValueCollection : PatchOdyssey.Collections.RefDictionary<TKey, TValue>.ValueCollection {
+        public struct Enumerator : System.Collections.Generic.IEnumerator<TValue> /* ⟶ Based on `System.Collections.Generic.Dictionary<TKey, TValue>.ValueCollection.Enumerator` */ {
+          public  ref readonly TValue                                                 Current => ref this.enumerator.Current.Value;
+          private     readonly RefDictionary<TKey, TValue>.ValueCollection.Enumerator enumerator;
+          TValue                                                                      System.Collections.Generic.IEnumerator<TValue>.Current => this.Current;
+          object                                                                      System.Collections.IEnumerator.Current                 => this.Current!;
+
+          /* … */
+          [PatchConstructor, PatchMethod(AggressiveInlining)]
+          internal Enumerator(RefDictionary<TKey, TValue> dictionary) => this.enumerator = dictionary.Values.GetEnumerator();
+
+          /* … */
+          [PatchMethod(AggressiveInlining)] public void Dispose                                () => this.enumerator.Dispose ();
+          [PatchMethod(AggressiveInlining)] public bool MoveNext                               () => this.enumerator.MoveNext();
+          [PatchMethod(AggressiveInlining)] public void Reset                                  () => this.enumerator.Reset   ();
+          [PatchMethod(AggressiveInlining)] bool        System.Collections.IEnumerator.MoveNext() => this           .MoveNext();
+          [PatchMethod(AggressiveInlining)] void        System.Collections.IEnumerator.Reset   () => this           .Reset   ();
+          [PatchMethod(AggressiveInlining)] void        System.IDisposable.Dispose             () => this           .Dispose ();
+        }
+
+        /* … */
+        [PatchMethod(AggressiveInlining)]
+        public ValueCollection(RefReadOnlyDictionary<TKey, TValue> dictionary) : base((PatchOdyssey.Collections.RefDictionary<TKey, TValue>) dictionary) {}
+
+        /* … */
+        [PatchMethod(AggressiveInlining)]
+        public ValueCollection.Enumerator GetEnumerator() => new(base.dictionary);
+      }
+
+      public static readonly RefReadOnlyDictionary<TKey, TValue>            Empty                                                                                                    =  new();
+      public new             System.Collections.Generic.IEnumerable<TKey>   Keys                                                                                                     => base.Keys;
+      public new             System.Collections.Generic.IEnumerable<TValue> Values                                                                                                   => base.Values;
+      bool                                                                  System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<TKey, TValue>>.IsReadOnly => true;
+      int                                                                   System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<TKey, TValue>>.Count      => ((int) this.Count);
+      System.Collections.Generic.ICollection<TKey>                          System.Collections.Generic.IDictionary<TKey, TValue>.Keys                                                => this.Keys;
+      System.Collections.Generic.ICollection<TValue>                        System.Collections.Generic.IDictionary<TKey, TValue>.Values                                              => this.Values;
+      int                                                                   System.Collections.Generic.IReadOnlyCollection<TKey, TValue>.Count                                       => ((int) this.Count);
+      System.Collections.Generic.IEnumerable<TKey>                          System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>.Keys                                        => this.Keys;
+      System.Collections.Generic.IEnumerable<TValue>                        System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>.Values                                      => this.Values;
+      bool                                                                  System.Collections.IDictionary.IsFixedSize                                                               => false;
+      bool                                                                  System.Collections.IDictionary.IsReadOnly                                                                => true;
+      System.Collections.ICollection                                        System.Collections.IDictionary.Keys                                                                      => this.Keys;
+      System.Collections.ICollection                                        System.Collections.IDictionary.Values                                                                    => this.Values;
+
+      /* … */
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public RefReadOnlyDictionary()                                                                                                                                                                             : base()                     {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public RefReadOnlyDictionary(System.Collections.Generic.IEqualityComparer<TKey>                                                   comparer)                                                                : base(comparer)             {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public RefReadOnlyDictionary(PatchOdyssey.Collections.RefDictionary      <TKey, TValue>                                           dictionary)                                                              : base(dictionary)           {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public RefReadOnlyDictionary(System.Collections.Generic.IEnumerable      <PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>> enumerable)                                                              : base(enumerable)           {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public RefReadOnlyDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair <TKey, TValue>> enumerable)                                                              : base(enumerable)           {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public RefReadOnlyDictionary(PatchOdyssey.Collections.RefDictionary      <TKey, TValue>                                           dictionary, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(dictionary, comparer) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public RefReadOnlyDictionary(System.Collections.Generic.IEnumerable      <PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>> enumerable, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(enumerable, comparer) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public RefReadOnlyDictionary(System.Collections.Generic.IEnumerable      <System.Collections.Generic.KeyValuePair <TKey, TValue>> enumerable, System.Collections.Generic.IEqualityComparer<TKey> comparer) : base(enumerable, comparer) {}
+
+      /* … */
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public new void                                           Add                                                                     (in PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue> element)                                        => this.Add(element.Key, element.Value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public new void                                           Add                                                                     (in System.Collections.Generic.KeyValuePair <TKey, TValue> element)                                        => this.Add(element.Key, element.Value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public new void                                           Add                                                                     (in TKey                                                   key, in TValue value)                           { throw new System.NotSupportedException("Dictionary is read-only"); }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public new void                                           AddRange                                                                (System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>> enumerable) { throw new System.NotSupportedException("Dictionary is read-only"); }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public new void                                           Clear                                                                   ()                                                                                                         { throw new System.NotSupportedException("Dictionary is read-only"); }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public new RefReadOnlyDictionary<TKey, TValue>.Enumerator GetEnumerator                                                           ()                                                                                                         => new(this); // ⟶ `System.Collections.Generic.IEnumerable<PatchOdyssey.Collections.RefReadOnlyKeyValuePair<TKey, TValue>>`
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public new bool                                           Remove                                                                  (in TKey                                                   key)                                            { throw new System.NotSupportedException("Dictionary is read-only"); return false; }
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public new bool                                           Remove                                                                  (in PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue> element)                                        { throw new System.NotSupportedException("Dictionary is read-only"); return false; }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public new bool                                           Remove                                                                  (in System.Collections.Generic.KeyValuePair <TKey, TValue> element)                                        { throw new System.NotSupportedException("Dictionary is read-only"); return false; }
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public new bool                                           TryAppend                                                               (in PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue> element)                                        => this.TryAdd(in element.Key, in element.Value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public new bool                                           TryAppend                                                               (in System.Collections.Generic.KeyValuePair <TKey, TValue> element)                                        => this.TryAdd(in element.Key, in element.Value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public new bool                                           TryAppend                                                               (in TKey                                                   key, in TValue value)                           { throw new System.NotSupportedException("Dictionary is read-only"); }
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public new bool                                           TryAdd                                                                  (in PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue> element)                                        => this.TryAdd(in element.Key, in element.Value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public new bool                                           TryAdd                                                                  (in System.Collections.Generic.KeyValuePair <TKey, TValue> element)                                        => this.TryAdd(in element.Key, in element.Value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public new bool                                           TryAdd                                                                  (in TKey                                                   key, in TValue value)                           { throw new System.NotSupportedException("Dictionary is read-only"); }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] void                                                      System.Collections.Generic.IDictionary<TKey, TValue>.Add                (TKey                                                      key, TValue    value)                           => this.Add        (in key, in value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] bool                                                      System.Collections.Generic.IDictionary<TKey, TValue>.ContainsKey        (TKey                                                      key)                                            => this.ContainsKey(in key);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] bool                                                      System.Collections.Generic.IDictionary<TKey, TValue>.Remove             (TKey                                                      key)                                            => this.Remove     (in key);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] bool                                                      System.Collections.Generic.IDictionary<TKey, TValue>.TryGetValue        (TKey                                                      key, out TValue value)                          => this.TryGetValue(in key, out value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] bool                                                      System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>.ContainsKey(TKey                                                      key)                                            => this.ContainsKey(in key);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] bool                                                      System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>.TryGetValue(TKey                                                      key,   out TValue value)                        => this.TryGetValue(in key, out value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] void                                                      System.Collections.ICollection.CopyTo                                   (System.Array                                              array, int        index)                        => ((PatchOdyssey.Collections.RefDictionary<TKey, TValue>) this).CopyTo(array, index);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] void                                                      System.Collections.IDictionary.Add                                      (object                                                    key,   object?    value)                        => this.Add          ((TKey) key, (TValue) value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] void                                                      System.Collections.IDictionary.Clear                                    ()                                                                                                         => this.Clear        ();
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] bool                                                      System.Collections.IDictionary.Contains                                 (object key)                                                                                               => this.Contains     ((TKey) key);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] System.Collections.IDictionaryEnumerator                  System.Collections.IDictionary.GetEnumerator                            ()                                                                                                         => this.GetEnumerator();
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] void                                                      System.Collections.IDictionary.Remove                                   (object key)                                                                                               => this.Remove       ((TKey) key);
+
+      TValue System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>.this[TKey key] { [PatchMethod(AggressiveInlining)] get => {
+        int index = this.FindIndex(in key);
+
+        // …
+        if (index == -1)
+          throw new System.Collections.Generic.KeyNotFoundException(key?.ToString() ?? string.Empty);
+
+        return this.Values[(uint) index];
+      } }
+    }
+      [System.Serializable] public class AnimationCurveReadOnlyDictionary : PatchOdyssey.Collections.RefReadOnlyDictionary<string, UnityEngine.AnimationCurve> { [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveReadOnlyDictionary(int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveReadOnlyDictionary(int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveReadOnlyDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class BooleanReadOnlyDictionary        : PatchOdyssey.Collections.RefReadOnlyDictionary<string, System     .Boolean>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public BooleanReadOnlyDictionary       (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BooleanReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BooleanReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, System     .Boolean>        dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BooleanReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BooleanReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, System     .Boolean>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class BoundsReadOnlyDictionary         : PatchOdyssey.Collections.RefReadOnlyDictionary<string, UnityEngine.Bounds>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsReadOnlyDictionary        (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsReadOnlyDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsReadOnlyDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, UnityEngine.Bounds>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class BoundsIntReadOnlyDictionary      : PatchOdyssey.Collections.RefReadOnlyDictionary<string, UnityEngine.BoundsInt>      { [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsIntReadOnlyDictionary     (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsIntReadOnlyDictionary     (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsIntReadOnlyDictionary     (System.Collections.Generic.IDictionary<string, UnityEngine.BoundsInt>      dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class ColorReadOnlyDictionary          : PatchOdyssey.Collections.RefReadOnlyDictionary<string, UnityEngine.Color>          { [PatchConstructor, PatchMethod(AggressiveInlining)] public ColorReadOnlyDictionary         (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ColorReadOnlyDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ColorReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ColorReadOnlyDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ColorReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, UnityEngine.Color>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class DoubleReadOnlyDictionary         : PatchOdyssey.Collections.RefReadOnlyDictionary<string, System     .Double>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public DoubleReadOnlyDictionary        (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public DoubleReadOnlyDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public DoubleReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System     .Double>         dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public DoubleReadOnlyDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public DoubleReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System     .Double>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class FloatReadOnlyDictionary          : PatchOdyssey.Collections.RefReadOnlyDictionary<string, System     .Single>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public FloatReadOnlyDictionary         (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public FloatReadOnlyDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public FloatReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System     .Single>         dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public FloatReadOnlyDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public FloatReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System     .Single>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class GameObjectReadOnlyDictionary     : PatchOdyssey.Collections.RefReadOnlyDictionary<string, UnityEngine.GameObject>     { [PatchConstructor, PatchMethod(AggressiveInlining)] public GameObjectReadOnlyDictionary    (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GameObjectReadOnlyDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GameObjectReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GameObjectReadOnlyDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GameObjectReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.GameObject>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class GradientReadOnlyDictionary       : PatchOdyssey.Collections.RefReadOnlyDictionary<string, UnityEngine.Gradient>       { [PatchConstructor, PatchMethod(AggressiveInlining)] public GradientReadOnlyDictionary      (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GradientReadOnlyDictionary      (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GradientReadOnlyDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GradientReadOnlyDictionary      (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GradientReadOnlyDictionary      (System.Collections.Generic.IDictionary<string, UnityEngine.Gradient>       dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class IntReadOnlyDictionary            : PatchOdyssey.Collections.RefReadOnlyDictionary<string, System     .Int32>          { [PatchConstructor, PatchMethod(AggressiveInlining)] public IntReadOnlyDictionary           (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public IntReadOnlyDictionary           (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public IntReadOnlyDictionary           (System.Collections.Generic.IDictionary<string, System     .Int32>          dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public IntReadOnlyDictionary           (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public IntReadOnlyDictionary           (System.Collections.Generic.IDictionary<string, System     .Int32>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class LongReadOnlyDictionary           : PatchOdyssey.Collections.RefReadOnlyDictionary<string, System     .Int64>          { [PatchConstructor, PatchMethod(AggressiveInlining)] public LongReadOnlyDictionary          (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public LongReadOnlyDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public LongReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System     .Int64>          dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public LongReadOnlyDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public LongReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System     .Int64>          dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class RectReadOnlyDictionary           : PatchOdyssey.Collections.RefReadOnlyDictionary<string, UnityEngine.Rect>           { [PatchConstructor, PatchMethod(AggressiveInlining)] public RectReadOnlyDictionary          (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectReadOnlyDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectReadOnlyDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, UnityEngine.Rect>           dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class RectIntReadOnlyDictionary        : PatchOdyssey.Collections.RefReadOnlyDictionary<string, UnityEngine.RectInt>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public RectIntReadOnlyDictionary       (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectIntReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectIntReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectIntReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectIntReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.RectInt>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class StringReadOnlyDictionary         : PatchOdyssey.Collections.RefReadOnlyDictionary<string, System     .String>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public StringReadOnlyDictionary        (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public StringReadOnlyDictionary        (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public StringReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System     .String>         dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public StringReadOnlyDictionary        (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public StringReadOnlyDictionary        (System.Collections.Generic.IDictionary<string, System     .String>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class UIntReadOnlyDictionary           : PatchOdyssey.Collections.RefReadOnlyDictionary<string, System     .UInt32>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public UIntReadOnlyDictionary          (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public UIntReadOnlyDictionary          (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public UIntReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System     .UInt32>         dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public UIntReadOnlyDictionary          (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public UIntReadOnlyDictionary          (System.Collections.Generic.IDictionary<string, System     .UInt32>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class ULongReadOnlyDictionary          : PatchOdyssey.Collections.RefReadOnlyDictionary<string, System     .UInt64>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public ULongReadOnlyDictionary         (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ULongReadOnlyDictionary         (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ULongReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System     .UInt64>         dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ULongReadOnlyDictionary         (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ULongReadOnlyDictionary         (System.Collections.Generic.IDictionary<string, System     .UInt64>         dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector2ReadOnlyDictionary        : PatchOdyssey.Collections.RefReadOnlyDictionary<string, UnityEngine.Vector2>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2ReadOnlyDictionary       (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2ReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2ReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector2IntReadOnlyDictionary     : PatchOdyssey.Collections.RefReadOnlyDictionary<string, UnityEngine.Vector2Int>     { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2IntReadOnlyDictionary    (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2IntReadOnlyDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector2Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector3ReadOnlyDictionary        : PatchOdyssey.Collections.RefReadOnlyDictionary<string, UnityEngine.Vector3>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3ReadOnlyDictionary       (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3ReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3ReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector3IntReadOnlyDictionary     : PatchOdyssey.Collections.RefReadOnlyDictionary<string, UnityEngine.Vector3Int>     { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyDictionary    (System.Collections.Generic.IDictionary<string, UnityEngine.Vector3Int>     dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+      [System.Serializable] public class Vector4ReadOnlyDictionary        : PatchOdyssey.Collections.RefReadOnlyDictionary<string, UnityEngine.Vector4>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector4ReadOnlyDictionary       (System.Collections.Generic.IDictionary<string, UnityEngine.Vector4>        dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
+
+    internal struct RefReadOnlyKeyValuePair<TKey, TValue> /* ⟶ See `PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>` */ {
+      public   ref readonly TKey                                                   Key => ref this.pair.Key;
+      private      readonly PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue> pair;
+      public   ref readonly TValue                                                 Value => ref this.pair.Value;
+
+      /* … */
+      [PatchConstructor, PatchMethod(AggressiveInlining)]
+      internal RefReadOnlyKeyValuePair(in PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue> pair) => this.pair = pair;
+
+      /* … */
+      [PatchMethod(AggressiveInlining)] public          void   Deconstruct(out TKey key, out TValue value) => this.pair.Deconstruct(out key, out value);
+      [PatchMethod(AggressiveInlining)] public override string ToString   ()                               => this.pair.ToString   ();
+
+      [PatchMethod(AggressiveInlining)]
+      public static implicit operator System.Collections.Generic.KeyValuePair<TKey, TValue>(in RefReadOnlyKeyValuePair<TKey, TValue> pair) => new(pair.Key, pair.Value);
+    }
+
+    [System.Serializable]
     public class RefReadOnlyList<T> : System.Collections.Generic.IEnumerable<T>, System.Collections.Generic.IReadOnlyList<T> /* ⟶ Based on `System.Collections.Generic.List<T>` and `System.Collections.ObjectModel.ReadOnlyCollection<T>` */ {
       public struct Enumerator : System.Collections.Generic.IEnumerator<T> {
         public   ref readonly T                  Current => ref this.list.GetValue((uint) this.index);
-        internal              int                index;
-        internal              RefReadOnlyList<T> list;
+        internal required     int                index;
+        internal required     RefReadOnlyList<T> list;
         T                                        System.Collections.Generic.IEnumerator<T>.Current => this.Current;
         object                                   System.Collections.IEnumerator.Current            => this.Current!;
 
         /* … */
-        [PatchMethod(AggressiveInlining)]
+        [PatchConstructor, PatchMethod(AggressiveInlining)]
         public Enumerator(RefReadOnlyList<T> list) {
-          this.index = -1;
-          this.list  = list;
+          this.Reset();
+          this.list = list;
         }
 
         /* … */
@@ -1629,19 +1816,20 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       }
 
       /* … */
-      public   uint Capacity                                                => this.Count;
-      public   uint Count { get; protected set; }                           =  0u;
-      internal T[]  Items                                                   =  System.Array.Empty<T>();
-      int           System.Collections.Generic.IReadOnlyCollection<T>.Count => ((int) this.Count);
+      public                                                                             uint               Capacity                                                => this.Count;
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] public                   uint               Count { get; internal set; }                            =  0u;
+      public                                                             static readonly RefReadOnlyList<T> Empty                                                   = new();
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] internal                 T[]                Items                                                   =  System.Array.Empty<T>();
+      int                                                                                                   System.Collections.Generic.IReadOnlyCollection<T>.Count => ((int) this.Count);
 
       /* … ⟶ Availability of `System.Runtime.InteropServices.CollectionMarshal.AsSpan(…)` would replace `RefReadOnlyList<T>`’s entire purpose */
-      [PatchMethod(AggressiveInlining)] public             RefReadOnlyList()                                                  {}
-      [PatchMethod(AggressiveInlining)] protected          RefReadOnlyList(uint               capacity)                       =>                                  this.Items = RefReadOnlyList<T>.CreateInstance(capacity);
-      [PatchMethod(AggressiveInlining)] public             RefReadOnlyList(RefReadOnlyList<T> list)                           { this.Count = list.Count;          this.Items = (T[]) list.Items.Clone(); }
-      [PatchMethod(AggressiveInlining)] protected internal RefReadOnlyList(T[]                array)                          { this.Count = (uint) array.Length; this.Items = array; }
-      [PatchMethod(AggressiveInlining)] protected          RefReadOnlyList(T[]                array, uint index, uint length) => System.Array.Copy(array, (int) index, this.Items = RefReadOnlyList<T>.CreateInstance(this.Count = length), 0, (int) length);
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public             RefReadOnlyList()                                                  {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] protected          RefReadOnlyList(uint               capacity)                       =>                                  this.Items = RefReadOnlyList<T>.CreateInstance(capacity);
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public             RefReadOnlyList(RefReadOnlyList<T> list)                           { this.Count = list.Count;          this.Items = (T[]) list.Items.Clone(); }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] protected internal RefReadOnlyList(T[]                array)                          { this.Count = (uint) array.Length; this.Items = array; }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] protected          RefReadOnlyList(T[]                array, uint index, uint length) => System.Array.Copy(array, (int) index, this.Items = RefReadOnlyList<T>.CreateInstance(this.Count = length), 0, (int) length);
 
-      [PatchMethod(AggressiveInlining)]
+      [PatchConstructor, PatchMethod(AggressiveInlining)]
       public RefReadOnlyList(System.Collections.Generic.IEnumerable<T> enumerable) {
         this.Count = Util.EnumerableCount(enumerable);
 
@@ -1656,53 +1844,53 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       }
 
       /* … */
-      [PatchMethod(AggressiveInlining)] public            RefReadOnlyList<T>            AsCopy        ()                                                                                                                                                             => new(this);
-      [PatchMethod(AggressiveInlining)] public            RefReadOnlyList<T>            AsReadOnly    ()                                                                                                                                                             =>     this;
-      [PatchMethod(AggressiveInlining)] public            int                           BinarySearch  (in T                               element)                                                                                                                   => this.Items.BinarySearch(0,           (int) this.Count, element);
-      [PatchMethod(AggressiveInlining)] public            int                           BinarySearch  (in T                               element, System.Collections.Generic.IComparer<T>? comparer)                                                                => this      .BinarySearch(0u,          this.Count,       element, comparer);
-      [PatchMethod(AggressiveInlining)] public            int                           BinarySearch  (uint                               index,   uint                                     length, in T element, System.Collections.Generic.IComparer<T>? comparer) => this.Items.BinarySearch((int) index, (int) length,     element, comparer);
-      [PatchMethod(AggressiveInlining)] public            bool                          Contains      (in T                               element)                                                                                                                   => this.IndexOf(element, 0u, this.Count) != -1;
-      [PatchMethod(AggressiveInlining)] public            RefReadOnlyList<U>            ConvertAll<U> (Program.RefReadOnlyConverter<T, U> converter)                                                                                                                 { RefReadOnlyList<U> list = new(this.Count); for (; list.Count != this.Count; ++list.Count) { list.SetValue(converter(in this.GetValue(list.Count)), list.Count); } return list; }
-      [PatchMethod(AggressiveInlining)] public            RefReadOnlyList<U>            ConvertAll<U> (System.Converter            <T, U> converter)                                                                                                                 => this.ConvertAll((in T element) => converter(element));
-      [PatchMethod(AggressiveInlining)] public            void                          CopyTo        (T[]                                array)                                                                                                                     => this.CopyTo    (0u, array, 0u,    this.Count);
-      [PatchMethod(AggressiveInlining)] public            void                          CopyTo        (T[]                                array, uint index)                                                                                                         => this.CopyTo    (0u, array, index, this.Count);
-      [PatchMethod(AggressiveInlining)] public            void                          CopyTo        (uint                               index, T[]  array, uint arrayIndex, uint length)                                                                           => System.Array.Copy(this.Items, index, array, arrayIndex, length); // ⟶ Possible over-read
-      [PatchMethod(AggressiveInlining)] internal static   T[]                           CreateInstance(uint                               length)                                                                                                                    => 0u != length ? new T[length] : System.Array.Empty<T>(); // ⟶ Faster with `System.GC.AllocateUninitializedArray<T>(…, false)`
-      [PatchMethod(AggressiveInlining)] public            bool                          Exists        (Program.RefReadOnlyPredicate<T>    predicate)                                                                                                                 { for (uint index = 0u; index != this.Count; ++index) { if (predicate(in this.GetValue(index))) return true; } return false; }
-      [PatchMethod(AggressiveInlining)] public            bool                          Exists        (System.Predicate            <T>    predicate)                                                                                                                 => this.Exists((in T element) => predicate(element));
-      [PatchMethod(AggressiveInlining)] public            T?                            Find          (Program.RefReadOnlyPredicate<T>    predicate)                                                                                                                 { for (uint index = 0u; index != this.Count; ++index) { ref readonly T element = ref this.GetValue(index); if (predicate(in element)) return element; } return default; }
-      [PatchMethod(AggressiveInlining)] public            T?                            Find          (System.Predicate            <T>    predicate)                                                                                                                 => this.Find((in T element) => predicate(element));
-      [PatchMethod(AggressiveInlining)] public            RefReadOnlyList<T>            FindAll       (Program.RefReadOnlyPredicate<T>    predicate)                                                                                                                 { RefReadOnlyList<T> list = new(this.Count); for (uint index = 0u; index != this.Count; ++index) { ref readonly T element = ref this.GetValue(index); if (predicate(in element)) list.SetValue(in element, list.Count++); } return list; }
-      [PatchMethod(AggressiveInlining)] public            RefReadOnlyList<T>            FindAll       (System.Predicate            <T>    predicate)                                                                                                                 => this.FindAll  ((in T element) => predicate(element));
-      [PatchMethod(AggressiveInlining)] public            int                           FindIndex     (Program.RefReadOnlyPredicate<T>    predicate)                                                                                                                 => this.FindIndex(0u, this.Count, predicate);
-      [PatchMethod(AggressiveInlining)] public            int                           FindIndex     (System.Predicate            <T>    predicate)                                                                                                                 => this.FindIndex(0u, this.Count, predicate);
-      [PatchMethod(AggressiveInlining)] public            int                           FindIndex     (uint                               index, Program.RefReadOnlyPredicate<T> predicate)                                                                          { for (; index < this.Count; ++index) { if (predicate(in this.GetValue(index))) return (int) index; } return -1; }
-      [PatchMethod(AggressiveInlining)] public            int                           FindIndex     (uint                               index, System.Predicate            <T> predicate)                                                                          => this.FindIndex(index, index <= this.Count ? this.Count - index : 0u, predicate);
-      [PatchMethod(AggressiveInlining)] public            int                           FindIndex     (uint                               index, uint                            length, Program.RefReadOnlyPredicate<T> predicate)                                  { for (uint end = System.Math.Min(this.Count, index + length); end > index; ++index) { if (predicate(in this.GetValue(index))) return (int) index; } return -1; }
-      [PatchMethod(AggressiveInlining)] public            int                           FindIndex     (uint                               index, uint                            length, System.Predicate            <T> predicate)                                  => this.Items.FindIndex    ((int) index, (int) length, predicate);
-      [PatchMethod(AggressiveInlining)] public            int                           FindLastIndex (Program.RefReadOnlyPredicate<T>    predicate)                                                                                                                 => this      .FindLastIndex(0u,          this.Count,   predicate);
-      [PatchMethod(AggressiveInlining)] public            int                           FindLastIndex (System.Predicate            <T>    predicate)                                                                                                                 => this      .FindLastIndex(0u,          this.Count,   predicate);
-      [PatchMethod(AggressiveInlining)] public            int                           FindLastIndex (uint                               index, Program.RefReadOnlyPredicate<T> predicate)                                                                          { for (uint end = this.Count; end-- > index; ) { if (predicate(in this.GetValue(end))) return (int) end; } return -1; }
-      [PatchMethod(AggressiveInlining)] public            int                           FindLastIndex (uint                               index, System.Predicate            <T> predicate)                                                                          => this.FindLastIndex(index, index <= this.Count ? this.Count - index : 0u, predicate);
-      [PatchMethod(AggressiveInlining)] public            int                           FindLastIndex (uint                               index, uint                           length, Program.RefReadOnlyPredicate<T> predicate)                                   { for (uint end = System.Math.Min(this.Count, index + length); end-- > index; ) { if (predicate(in this.GetValue(end))) return (int) end; } return -1; }
-      [PatchMethod(AggressiveInlining)] public            int                           FindLastIndex (uint                               index, uint                           length, System.Predicate            <T> predicate)                                   => this.Items.FindLastIndex((int) index, (int) length, predicate);
-      [PatchMethod(AggressiveInlining)] public            void                          ForEach       (Program.RefReadOnlyAction<T>       action)                                                                                                                    { for (uint index = 0u; index != this.Count; ++index) action(in this.GetValue(index)); }
-      [PatchMethod(AggressiveInlining)] public            void                          ForEach       (System.Action            <T>       action)                                                                                                                    => this.ForEach((in T element) => action(element));
-      [PatchMethod(AggressiveInlining)] public            RefReadOnlyList<T>.Enumerator GetEnumerator ()                                                                                                                                                             => new(this);
-      [PatchMethod(AggressiveInlining)] public            RefReadOnlyList<T>            GetRange      (uint index, uint length)                                                                                                                                      => new(this.Items, index, length);
-      [PatchMethod(AggressiveInlining)] internal          ref T                         GetValue      (uint index)                                                                                                                                                   => ref System.Runtime.CompilerServices.Unsafe.Add(ref System.Runtime.InteropServices.MemoryMarshal.GetReference(this.Items), (int) index);
-      [PatchMethod(AggressiveInlining)] public            int                           IndexOf       (in T element)                                                                                                                                                 => this      .IndexOf    (element, 0u,          this.Count);
-      [PatchMethod(AggressiveInlining)] public            int                           IndexOf       (in T element, uint index)                                                                                                                                     => this      .IndexOf    (element, index,       index <= this.Count ? this.Count - index : 0u);
-      [PatchMethod(AggressiveInlining)] public            int                           IndexOf       (in T element, uint index, uint length)                                                                                                                        => this.Items.IndexOf    (element, (int) index, (int) length);
-      [PatchMethod(AggressiveInlining)] public            int                           LastIndexOf   (in T element)                                                                                                                                                 => this      .LastIndexOf(element, 0u,          this.Count);
-      [PatchMethod(AggressiveInlining)] public            int                           LastIndexOf   (in T element, uint index)                                                                                                                                     => this      .LastIndexOf(element, index,       index <= this.Count ? this.Count - index : 0u);
-      [PatchMethod(AggressiveInlining)] public            int                           LastIndexOf   (in T element, uint index, uint length)                                                                                                                        => this.Items.LastIndexOf(element, (int) index, (int) length);
-      [PatchMethod(AggressiveInlining)] internal          void                          SetValue      (in T element, uint index)                                                                                                                                     { ref T reference = ref System.Runtime.CompilerServices.Unsafe.Add(ref System.Runtime.InteropServices.MemoryMarshal.GetReference(this.Items), (int) index); reference = element; }
-      [PatchMethod(AggressiveInlining)] public            RefReadOnlyList<T>            Slice         (uint index,   uint length)                                                                                                                                    => new(this.Items, index, length);
-      [PatchMethod(AggressiveInlining)] public            ref readonly T[]              ToArray       ()                                                                                                                                                             => ref this.Items;
-      [PatchMethod(AggressiveInlining)] public   override string                        ToString      ()                                                                                                                                                             { uint end = this.Count, index = 0u; if (end != index) unsafe { System.Text.StringBuilder builder = new(); for (char* separator = stackalloc char[] {',', ' '}; ; builder.Append(separator, 2)) { builder.Append(this.GetValue(index)); if (end == ++index) return builder.ToString(); } } return string.Empty; }
-      [PatchMethod(AggressiveInlining)] public            bool                          TrueForAll    (Program.RefReadOnlyPredicate<T> predicate)                                                                                                                    { for (uint index = 0u; index != this.Count; ++index) { if (!predicate(in this.GetValue(index))) return false; } return true; }
-      [PatchMethod(AggressiveInlining)] public            bool                          TrueForAll    (System.Predicate            <T> predicate)                                                                                                                    => this.TrueForAll((in T element) => predicate(element));
+      [PatchMethod(AggressiveInlining)] public            RefReadOnlyList<T>            AsCopy        ()                                                                                                                                                                  => new(this);
+      [PatchMethod(AggressiveInlining)] public            RefReadOnlyList<T>            AsReadOnly    ()                                                                                                                                                                  =>     this;
+      [PatchMethod(AggressiveInlining)] public            int                           BinarySearch  (in T                                    element)                                                                                                                   => this.Items.BinarySearch(0,           (int) this.Count, element);
+      [PatchMethod(AggressiveInlining)] public            int                           BinarySearch  (in T                                    element, System.Collections.Generic.IComparer<T>? comparer)                                                                => this      .BinarySearch(0u,          this.Count,       element, comparer);
+      [PatchMethod(AggressiveInlining)] public            int                           BinarySearch  (uint                                    index,   uint                                     length, in T element, System.Collections.Generic.IComparer<T>? comparer) => this.Items.BinarySearch((int) index, (int) length,     element, comparer);
+      [PatchMethod(AggressiveInlining)] public            bool                          Contains      (in T                                    element)                                                                                                                   => this.IndexOf(element, 0u, this.Count) != -1;
+      [PatchMethod(AggressiveInlining)] public            RefReadOnlyList<U>            ConvertAll<U> (PatchOdyssey.RefReadOnlyConverter<T, U> converter)                                                                                                                 { RefReadOnlyList<U> list = new(this.Count); for (; list.Count != this.Count; ++list.Count) { list.SetValue(converter(in this.GetValue(list.Count)), list.Count); } return list; }
+      [PatchMethod(AggressiveInlining)] public            RefReadOnlyList<U>            ConvertAll<U> (System.Converter                 <T, U> converter)                                                                                                                 => this.ConvertAll((in T element) => converter(element));
+      [PatchMethod(AggressiveInlining)] public            void                          CopyTo        (T[]                                     array)                                                                                                                     => this.CopyTo    (0u, array, 0u,    this.Count);
+      [PatchMethod(AggressiveInlining)] public            void                          CopyTo        (T[]                                     array, uint index)                                                                                                         => this.CopyTo    (0u, array, index, this.Count);
+      [PatchMethod(AggressiveInlining)] public            void                          CopyTo        (uint                                    index, T[]  array, uint arrayIndex, uint length)                                                                           => System.Array.Copy(this.Items, index, array, arrayIndex, length); // ⟶ Possible over-read
+      [PatchMethod(AggressiveInlining)] internal static   T[]                           CreateInstance(uint                                    length)                                                                                                                    => 0u != length ? new T[length] : System.Array.Empty<T>(); // ⟶ Faster with `System.GC.AllocateUninitializedArray<T>(…, false)`
+      [PatchMethod(AggressiveInlining)] public            bool                          Exists        (PatchOdyssey.RefReadOnlyPredicate<T>    predicate)                                                                                                                 { for (uint index = 0u; index != this.Count; ++index) { if (predicate(in this.GetValue(index))) return true; } return false; }
+      [PatchMethod(AggressiveInlining)] public            bool                          Exists        (System.Predicate                 <T>    predicate)                                                                                                                 => this.Exists((in T element) => predicate(element));
+      [PatchMethod(AggressiveInlining)] public            T?                            Find          (PatchOdyssey.RefReadOnlyPredicate<T>    predicate)                                                                                                                 { for (uint index = 0u; index != this.Count; ++index) { ref readonly T element = ref this.GetValue(index); if (predicate(in element)) return element; } return default; }
+      [PatchMethod(AggressiveInlining)] public            T?                            Find          (System.Predicate                 <T>    predicate)                                                                                                                 => this.Find((in T element) => predicate(element));
+      [PatchMethod(AggressiveInlining)] public            RefReadOnlyList<T>            FindAll       (PatchOdyssey.RefReadOnlyPredicate<T>    predicate)                                                                                                                 { RefReadOnlyList<T> list = new(this.Count); for (uint index = 0u; index != this.Count; ++index) { ref readonly T element = ref this.GetValue(index); if (predicate(in element)) list.SetValue(in element, list.Count++); } return list; }
+      [PatchMethod(AggressiveInlining)] public            RefReadOnlyList<T>            FindAll       (System.Predicate                 <T>    predicate)                                                                                                                 => this.FindAll  ((in T element) => predicate(element));
+      [PatchMethod(AggressiveInlining)] public            int                           FindIndex     (PatchOdyssey.RefReadOnlyPredicate<T>    predicate)                                                                                                                 => this.FindIndex(0u, this.Count, predicate);
+      [PatchMethod(AggressiveInlining)] public            int                           FindIndex     (System.Predicate                 <T>    predicate)                                                                                                                 => this.FindIndex(0u, this.Count, predicate);
+      [PatchMethod(AggressiveInlining)] public            int                           FindIndex     (uint                                    index, PatchOdyssey.RefReadOnlyPredicate<T> predicate)                                                                     { for (; index < this.Count; ++index) { if (predicate(in this.GetValue(index))) return (int) index; } return -1; }
+      [PatchMethod(AggressiveInlining)] public            int                           FindIndex     (uint                                    index, System.Predicate                 <T> predicate)                                                                     => this.FindIndex(index, index <= this.Count ? this.Count - index : 0u, predicate);
+      [PatchMethod(AggressiveInlining)] public            int                           FindIndex     (uint                                    index, uint                                 length, PatchOdyssey.RefReadOnlyPredicate<T> predicate)                        { for (uint end = System.Math.Min(this.Count, index + length); end > index; ++index) { if (predicate(in this.GetValue(index))) return (int) index; } return -1; }
+      [PatchMethod(AggressiveInlining)] public            int                           FindIndex     (uint                                    index, uint                                 length, System.Predicate                 <T> predicate)                        => this.Items.FindIndex    ((int) index, (int) length, predicate);
+      [PatchMethod(AggressiveInlining)] public            int                           FindLastIndex (PatchOdyssey.RefReadOnlyPredicate<T>    predicate)                                                                                                                 => this      .FindLastIndex(0u,          this.Count,   predicate);
+      [PatchMethod(AggressiveInlining)] public            int                           FindLastIndex (System.Predicate                 <T>    predicate)                                                                                                                 => this      .FindLastIndex(0u,          this.Count,   predicate);
+      [PatchMethod(AggressiveInlining)] public            int                           FindLastIndex (uint                                    index, PatchOdyssey.RefReadOnlyPredicate<T> predicate)                                                                     { for (uint end = this.Count; end-- > index; ) { if (predicate(in this.GetValue(end))) return (int) end; } return -1; }
+      [PatchMethod(AggressiveInlining)] public            int                           FindLastIndex (uint                                    index, System.Predicate                 <T> predicate)                                                                     => this.FindLastIndex(index, index <= this.Count ? this.Count - index : 0u, predicate);
+      [PatchMethod(AggressiveInlining)] public            int                           FindLastIndex (uint                                    index, uint                                 length, PatchOdyssey.RefReadOnlyPredicate<T> predicate)                        { for (uint end = System.Math.Min(this.Count, index + length); end-- > index; ) { if (predicate(in this.GetValue(end))) return (int) end; } return -1; }
+      [PatchMethod(AggressiveInlining)] public            int                           FindLastIndex (uint                                    index, uint                                 length, System.Predicate                 <T> predicate)                        => this.Items.FindLastIndex((int) index, (int) length, predicate);
+      [PatchMethod(AggressiveInlining)] public            void                          ForEach       (PatchOdyssey.RefReadOnlyAction<T>       action)                                                                                                                    { for (uint index = 0u; index != this.Count; ++index) action(in this.GetValue(index)); }
+      [PatchMethod(AggressiveInlining)] public            void                          ForEach       (System.Action                 <T>       action)                                                                                                                    => this.ForEach((in T element) => action(element));
+      [PatchMethod(AggressiveInlining)] public            RefReadOnlyList<T>.Enumerator GetEnumerator ()                                                                                                                                                                  => new(this);
+      [PatchMethod(AggressiveInlining)] public            RefReadOnlyList<T>            GetRange      (uint index, uint length)                                                                                                                                           => new(this.Items, index, length);
+      [PatchMethod(AggressiveInlining)] internal          ref T                         GetValue      (uint index)                                                                                                                                                        => ref Util.ArrayReferenceAt(in this.Items, index);
+      [PatchMethod(AggressiveInlining)] public            int                           IndexOf       (in T element)                                                                                                                                                      => this      .IndexOf    (element, 0u,          this.Count);
+      [PatchMethod(AggressiveInlining)] public            int                           IndexOf       (in T element, uint index)                                                                                                                                          => this      .IndexOf    (element, index,       index <= this.Count ? this.Count - index : 0u);
+      [PatchMethod(AggressiveInlining)] public            int                           IndexOf       (in T element, uint index, uint length)                                                                                                                             => this.Items.IndexOf    (element, (int) index, (int) length);
+      [PatchMethod(AggressiveInlining)] public            int                           LastIndexOf   (in T element)                                                                                                                                                      => this      .LastIndexOf(element, 0u,          this.Count);
+      [PatchMethod(AggressiveInlining)] public            int                           LastIndexOf   (in T element, uint index)                                                                                                                                          => this      .LastIndexOf(element, index,       index <= this.Count ? this.Count - index : 0u);
+      [PatchMethod(AggressiveInlining)] public            int                           LastIndexOf   (in T element, uint index, uint length)                                                                                                                             => this.Items.LastIndexOf(element, (int) index, (int) length);
+      [PatchMethod(AggressiveInlining)] internal          void                          SetValue      (in T element, uint index)                                                                                                                                          => Util.ArrayReferenceAt(in this.Items, index) = element;
+      [PatchMethod(AggressiveInlining)] public            RefReadOnlyList<T>            Slice         (uint index,   uint length)                                                                                                                                         => new(this.Items, index, length);
+      [PatchMethod(AggressiveInlining)] public            ref readonly T[]              ToArray       ()                                                                                                                                                                  => ref this.Items;
+      [PatchMethod(AggressiveInlining)] public   override string                        ToString      ()                                                                                                                                                                  { uint end = this.Count, index = 0u; if (end != index) unsafe { System.Text.StringBuilder builder = new(); for (char* separator = stackalloc char[] {',', ' '}; ; builder.Append(separator, 2)) { builder.Append(this.GetValue(index)); if (end == ++index) return builder.ToString(); } } return string.Empty; }
+      [PatchMethod(AggressiveInlining)] public            bool                          TrueForAll    (PatchOdyssey.RefReadOnlyPredicate<T> predicate)                                                                                                                    { for (uint index = 0u; index != this.Count; ++index) { if (!predicate(in this.GetValue(index))) return false; } return true; }
+      [PatchMethod(AggressiveInlining)] public            bool                          TrueForAll    (System.Predicate                 <T> predicate)                                                                                                                    => this.TrueForAll((in T element) => predicate(element));
 
       [PatchMethod(AggressiveInlining)] System.Collections.IEnumerator            System.Collections.IEnumerable.GetEnumerator           () => (System.Collections.IEnumerator)            this.GetEnumerator();
       [PatchMethod(AggressiveInlining)] System.Collections.Generic.IEnumerator<T> System.Collections.Generic.IEnumerable<T>.GetEnumerator() => (System.Collections.Generic.IEnumerator<T>) this.GetEnumerator();
@@ -1712,6 +1900,27 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       public              RefReadOnlyList<T> this                                            [System.Range range] => new(this.Items[range]);
       T                                      System.Collections.Generic.IReadOnlyList<T>.this[int          index] => this[(uint) index];
     }
+      [System.Serializable] public class AnimationCurveReadOnlyList : PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.AnimationCurve> { [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveReadOnlyList() : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveReadOnlyList(System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class BooleanReadOnlyList        : PatchOdyssey.Collections.RefReadOnlyList<System     .Boolean>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public BooleanReadOnlyList       () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BooleanReadOnlyList       (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class BoundsReadOnlyList         : PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.Bounds>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsReadOnlyList        () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsReadOnlyList        (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class BoundsIntReadOnlyList      : PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.BoundsInt>      { [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsIntReadOnlyList     () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public BoundsIntReadOnlyList     (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class ColorReadOnlyList          : PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.Color>          { [PatchConstructor, PatchMethod(AggressiveInlining)] public ColorReadOnlyList         () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ColorReadOnlyList         (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class DoubleReadOnlyList         : PatchOdyssey.Collections.RefReadOnlyList<System     .Double>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public DoubleReadOnlyList        () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public DoubleReadOnlyList        (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class FloatReadOnlyList          : PatchOdyssey.Collections.RefReadOnlyList<System     .Single>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public FloatReadOnlyList         () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public FloatReadOnlyList         (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class GameObjectReadOnlyList     : PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.GameObject>     { [PatchConstructor, PatchMethod(AggressiveInlining)] public GameObjectReadOnlyList    () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GameObjectReadOnlyList    (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class GradientReadOnlyList       : PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.Gradient>       { [PatchConstructor, PatchMethod(AggressiveInlining)] public GradientReadOnlyList      () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public GradientReadOnlyList      (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class IntReadOnlyList            : PatchOdyssey.Collections.RefReadOnlyList<System     .Int32>          { [PatchConstructor, PatchMethod(AggressiveInlining)] public IntReadOnlyList           () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public IntReadOnlyList           (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class LongReadOnlyList           : PatchOdyssey.Collections.RefReadOnlyList<System     .Int64>          { [PatchConstructor, PatchMethod(AggressiveInlining)] public LongReadOnlyList          () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public LongReadOnlyList          (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class RectReadOnlyList           : PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.Rect>           { [PatchConstructor, PatchMethod(AggressiveInlining)] public RectReadOnlyList          () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectReadOnlyList          (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class RectIntReadOnlyList        : PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.RectInt>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public RectIntReadOnlyList       () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public RectIntReadOnlyList       (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class StringReadOnlyList         : PatchOdyssey.Collections.RefReadOnlyList<System     .String>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public StringReadOnlyList        () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public StringReadOnlyList        (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class UIntReadOnlyList           : PatchOdyssey.Collections.RefReadOnlyList<System     .UInt32>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public UIntReadOnlyList          () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public UIntReadOnlyList          (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class ULongReadOnlyList          : PatchOdyssey.Collections.RefReadOnlyList<System     .UInt64>         { [PatchConstructor, PatchMethod(AggressiveInlining)] public ULongReadOnlyList         () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public ULongReadOnlyList         (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class Vector2ReadOnlyList        : PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.Vector2>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2ReadOnlyList       () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2ReadOnlyList       (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class Vector2IntReadOnlyList     : PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.Vector2Int>     { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2IntReadOnlyList    () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector2IntReadOnlyList    (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class Vector3ReadOnlyList        : PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.Vector3>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3ReadOnlyList       () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3ReadOnlyList       (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class Vector3IntReadOnlyList     : PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.Vector3Int>     { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyList    () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector3IntReadOnlyList    (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
+      [System.Serializable] public class Vector4ReadOnlyList        : PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.Vector4>        { [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector4ReadOnlyList       () : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public Vector4ReadOnlyList       (System.Collections.Generic.IEnumerable<T> enumerable) : base(enumerable) {} }
 
     [System.Runtime.CompilerServices.CollectionBuilder(typeof(Sequence), nameof(Sequence.Create))]
     internal readonly ref struct Sequence : System.Collections.Generic.IEnumerable<int> /* ⟶ Based on collection expressions i.e. `[1, 2, …, 3]` */ {
@@ -1917,18 +2126,19 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
   }
 
   /* … */
-  public delegate void    Handler<T>                 (object? target,   in T    data) where T : PatchOdyssey.Collections.Event; // ⟶ Handles completed `Load`, `Wait`, … operations i.e. `System.EventHandler`
-  public delegate object? Interpolator               (double  progress, object? a, object? b);                                  // ⟶ Interpolates `::begin` and `::end` properties in `Animation.UIKeyframe["…"]`
-  public delegate T       Interpolator         <T>   (double  progress, in T    a, in T    b);                                  //    ^^
-  public delegate void    RefAction            <T>   (ref T   value);                                                           // ⟶ Based on `System.Action<T>`
-  public delegate int     RefComparison        <T>   (ref T   a, ref T b);                                                      // ⟶ Based on `System.Comparison<T>`
-  public delegate U       RefConverter         <T, U>(ref T   value);                                                           // ⟶ Based on `System.Converter<T, U>`
-  public delegate bool    RefPredicate         <T>   (ref T   value);                                                           // ⟶ Based on `System.Predicate<T>`
-  public delegate void    RefReadOnlyAction    <T>   (in  T   value);                                                           // ⟶ Based on `System.Action<T>`
-  public delegate int     RefReadOnlyComparison<T>   (in  T   a, in  T b);                                                      // ⟶ Based on `System.Comparison<T>`
-  public delegate U       RefReadOnlyConverter <T, U>(in  T   value);                                                           // ⟶ Based on `System.Converter<T, U>`
-  public delegate bool    RefReadOnlyPredicate <T>   (in  T   value);                                                           // ⟶ Based on `System.Predicate<T>`
-  public delegate double  Tweener                    (double  time);                                                            // ⟶ Adjusts interpolation be-tween `Interpolator(…)`’s `progress` from `a` to `b`
+  public delegate object  DictionaryGUIField         (UnityEngine.Rect position, object value);                                          //
+  public delegate void    Handler<T>                 (object? target,            in T    data) where T : PatchOdyssey.Collections.Event; // ⟶ Handles completed `Load`, `Wait`, … operations i.e. `System.EventHandler`
+  public delegate object? Interpolator               (double  progress,          object? a, object? b);                                  // ⟶ Interpolates `::begin` and `::end` properties in `Animation.UIKeyframe["…"]`
+  public delegate T       Interpolator         <T>   (double  progress,          in T    a, in T    b);                                  //    ^^
+  public delegate void    RefAction            <T>   (ref T   value);                                                                    // ⟶ Based on `System.Action<T>`
+  public delegate int     RefComparison        <T>   (ref T   a, ref T b);                                                               // ⟶ Based on `System.Comparison<T>`
+  public delegate U       RefConverter         <T, U>(ref T   value);                                                                    // ⟶ Based on `System.Converter<T, U>`
+  public delegate bool    RefPredicate         <T>   (ref T   value);                                                                    // ⟶ Based on `System.Predicate<T>`
+  public delegate void    RefReadOnlyAction    <T>   (in  T   value);                                                                    // ⟶ Based on `System.Action<T>`
+  public delegate int     RefReadOnlyComparison<T>   (in  T   a, in  T b);                                                               // ⟶ Based on `System.Comparison<T>`
+  public delegate U       RefReadOnlyConverter <T, U>(in  T   value);                                                                    // ⟶ Based on `System.Converter<T, U>`
+  public delegate bool    RefReadOnlyPredicate <T>   (in  T   value);                                                                    // ⟶ Based on `System.Predicate<T>`
+  public delegate double  Tweener                    (double  time);                                                                     // ⟶ Adjusts interpolation be-tween `Interpolator(…)`’s `progress` from `a` to `b`
 
   public sealed class ReadOnlyInInspectorAttribute : UnityEngine.PropertyAttribute, Unity.Collections.ReadOnlyAttribute {
     /* ⟶ Display property in Unity Inspector as “read-only” */
@@ -1945,38 +2155,43 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
 
   /* … */
   #if UNITY_EDITOR
-    public class EditorDictionaryDrawer<TKey, TValue> : UnityEditor.PropertyDrawer {
+    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ReadOnlyInInspectorAttribute))]
+    public class ReadOnlyInInspectorDrawer : UnityEditor.PropertyDrawer {
+      public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent         label)                                  => UnityEditor.EditorGUI.GetPropertyHeight(property, label, true);
+      public override void  OnGUI            (UnityEngine.Rect               position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) { UnityEngine.GUI.enabled = false; UnityEditor.EditorGUI.PropertyField(position, property, label, true); UnityEngine.GUI.enabled = true; }
+    }
+
+    public class RefDictionaryDrawer<TKey, TValue> : UnityEditor.PropertyDrawer {
       private bool foldout = false;
 
       /* … */
+      [PatchMethod(AggressiveInlining)]
       private System.Collections.Generic.IDictionary<TKey, TValue> Ensure(UnityEditor.SerializedProperty property) {
-        System.Collections.Generic.IDictionary<TKey, TValue> dictionary = this.fieldInfo.GetValue(property.serializedObject.targetObject) as System.Collections.Generic.IDictionary<TKey, TValue> ?? new PatchOdyssey.Collections.EditorDictionary<TKey, TValue>();
+        System.Collections.Generic.IDictionary<TKey, TValue> dictionary = this.fieldInfo.GetValue(property.serializedObject.targetObject) as System.Collections.Generic.IDictionary<TKey, TValue> ?? new PatchOdyssey.Collections.RefDictionary<TKey, TValue>();
 
         this.fieldInfo.SetValue(property.serializedObject.targetObject, dictionary);
         return dictionary;
       }
 
+      [PatchMethod(AggressiveInlining)]
       public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
         return base.GetPropertyHeight(property, label) * (this.foldout || UnityEditor.EditorPrefs.GetBool(label.text) ? System.Math.Max(this.Ensure(property).Count, 1) + 1 : 1);
       }
 
+      [PatchMethod(AggressiveInlining)]
       public override void OnGUI(UnityEngine.Rect position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
-        System.Collections.Generic.IDictionary<TKey, TValue>                     dictionary           = this.Ensure(property);
-        bool                                                                     dictionaryIsReadOnly = dictionary.IsReadOnly; // ⟶ `PatchOdyssey.Collections.EditorReadOnlyDictionary<TKey, TValue>` or `System.Collections.ObjectModel.ReadOnlyDictionary<TKey, TValue>`
-        float                                                                    size                 = position.height = base.GetPropertyHeight(property, label);
-        (UnityEngine.Rect add, UnityEngine.Rect clear, UnityEngine.Rect foldout) positions            = (
-          add    : new(position.x + (position.width - Util.PercentOf(size, 200.0f)), position.y, 0.0f           + size, position.height),
-          clear  : new(position.x + (position.width - Util.PercentOf(size, 100.0f)), position.y, 0.0f           + size, position.height),
-          foldout: new(position.x,                                                   position.y, position.width - size, position.height)
+        System.Collections.Generic.IDictionary<TKey, TValue>                     dictionary = this.Ensure(property);
+        float                                                                    size       = position.height = base.GetPropertyHeight(property, label);
+        (UnityEngine.Rect add, UnityEngine.Rect clear, UnityEngine.Rect foldout) positions  = (
+          add    : new(position.x + (position.width - Util.PercOf(size, 200.0f)), position.y, 0.0f           + size, position.height),
+          clear  : new(position.x + (position.width - Util.PercOf(size, 100.0f)), position.y, 0.0f           + size, position.height),
+          foldout: new(position.x,                                                position.y, position.width - size, position.height)
         );
 
         // …
-        if (!dictionaryIsReadOnly) {
+        if (!dictionary.IsReadOnly) {
           if (UnityEngine.GUI.Button(positions.add, new UnityEngine.GUIContent("+", "Add field"), UnityEditor.EditorStyles.miniButton))
-          dictionary.TryAdd(
-            typeof(TKey) != typeof(string) ? System.Activator.CreateInstance<TKey>  () : (TKey)   (""   as object),
-            typeof(TValue).IsValueType     ? System.Activator.CreateInstance<TValue>() : (TValue) (null as object)!
-          );
+          dictionary.TryAdd(typeof(TKey) != typeof(string) ? System.Activator.CreateInstance<TKey>() : (TKey) (string.Empty as object), typeof(TValue).IsValueType ? System.Activator.CreateInstance<TValue>() : (TValue) (null as object)!);
 
           if (UnityEngine.GUI.Button(positions.clear, new UnityEngine.GUIContent("×", "Clear dictionary"), UnityEditor.EditorStyles.miniButtonRight))
           dictionary.Clear();
@@ -1987,115 +2202,95 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
           this.foldout = UnityEditor.EditorGUI.  Foldout(positions.foldout, this.foldout, label, true);
         if (UnityEditor.EditorGUI.EndChangeCheck()) UnityEditor.EditorPrefs.SetBool(label.text, this.foldout);
 
-        // …
-        if (!this.foldout)
-        return;
-
-        if (0 == dictionary.Count) {
-          UnityEngine.GUI.Label(new(position.x, position.y + position.height, position.width, position.height), "Dictionary is empty");
-          return;
-        }
-
-        foreach (System.Collections.Generic.KeyValuePair<TKey, TValue> element in dictionary)
-        if (element.Key is not null) {
-          (TKey key, TValue value)                                                            = (element.Key, element.Value);
-          (UnityEngine.Rect key, UnityEngine.Rect value, UnityEngine.Rect clear) subpositions = (
-            key  : new(position.x                                                 + (dictionaryIsReadOnly ? size : 0.0f), position.y += position.height, Util.PercentOf(position.width - size, 40.0f), position.height),
-            value: new(position.x + Util.PercentOf(position.width - size,  40.0f) + (dictionaryIsReadOnly ? size : 0.0f), position.y,                    Util.PercentOf(position.width - size, 60.0f), position.height),
-            clear: new(position.x + Util.PercentOf(position.width - size, 100.0f),                                        position.y,                    size,                                         position.height)
-          );
-
-          // …
-          UnityEditor.EditorGUI.BeginChangeCheck();
-            if (dictionaryIsReadOnly) UnityEngine.GUI.Label(subpositions.key, key.ToString());
-            else key = (TKey) PatchOdyssey.Collections.EditorDictionary<TKey, TValue>.DelegateGUIField<TKey>()!(subpositions.key, key);
-          if (UnityEditor.EditorGUI.EndChangeCheck()) {
-            dictionary.Remove(element.Key);
-            dictionary.Add   (key, value);
-
-            break;
+        if (this.foldout) {
+          if (0 == dictionary.Count) {
+            UnityEngine.GUI.Label(new(position.x, position.y + position.height, position.width, position.height), "Dictionary is empty");
+            return;
           }
 
-          UnityEditor.EditorGUI.BeginChangeCheck();
-            value = (TValue) PatchOdyssey.Collections.EditorDictionary<TKey, TValue>.DelegateGUIField<TValue>()!(subpositions.value, value!);
-          if (UnityEditor.EditorGUI.EndChangeCheck()) {
-            dictionary[key] = value;
-            break;
-          }
+          foreach (System.Collections.Generic.KeyValuePair<TKey, TValue> element in dictionary)
+          if (element.Key is not null) {
+            (TKey key, TValue value)                                                            = (element.Key, element.Value);
+            (UnityEngine.Rect key, UnityEngine.Rect value, UnityEngine.Rect clear) subpositions = (
+              key  : new(position.x                                              + (dictionary.IsReadOnly ? size : 0.0f), position.y += position.height, Util.PercOf(position.width - size, 40.0f), position.height),
+              value: new(position.x + Util.PercOf(position.width - size,  40.0f) + (dictionary.IsReadOnly ? size : 0.0f), position.y,                    Util.PercOf(position.width - size, 60.0f), position.height),
+              clear: new(position.x + Util.PercOf(position.width - size, 100.0f),                                         position.y,                    size,                                      position.height)
+            );
 
-          if (!dictionaryIsReadOnly)
-          if (UnityEngine.GUI.Button(subpositions.clear, new UnityEngine.GUIContent("×", "Clear item"), UnityEditor.EditorStyles.miniButtonRight)) {
-            dictionary.Remove(key);
-            break;
+            // …
+            UnityEditor.EditorGUI.BeginChangeCheck();
+              if (dictionary.IsReadOnly) UnityEngine.GUI.Label(subpositions.key, key.ToString());
+              else key = (TKey) PatchOdyssey.Collections.RefDictionary<TKey, TValue>.DelegateGUIField<TKey>()!(subpositions.key, key);
+            if (UnityEditor.EditorGUI.EndChangeCheck()) {
+              dictionary.Remove(element.Key);
+              dictionary.Add   (key, value);
+
+              break;
+            }
+
+            UnityEditor.EditorGUI.BeginChangeCheck();
+              value = (TValue) PatchOdyssey.Collections.RefDictionary<TKey, TValue>.DelegateGUIField<TValue>()!(subpositions.value, value!);
+            if (UnityEditor.EditorGUI.EndChangeCheck()) {
+              dictionary[key] = value;
+              break;
+            }
+
+            if (!dictionary.IsReadOnly)
+            if (UnityEngine.GUI.Button(subpositions.clear, new UnityEngine.GUIContent("×", "Clear item"), UnityEditor.EditorStyles.miniButtonRight)) {
+              dictionary.Remove(key);
+              break;
+            }
           }
         }
       }
     }
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.AnimationCurveDictionary))]         public class AnimationCurveDictionaryDrawer         : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.AnimationCurve> {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.AnimationCurveReadOnlyDictionary))] public class AnimationCurveReadOnlyDictionaryDrawer : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.AnimationCurve> {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.BooleanDictionary))]                public class BooleanDictionaryDrawer                : PatchOdyssey.EditorDictionaryDrawer<string, System     .Boolean>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.BooleanReadOnlyDictionary))]        public class BooleanReadOnlyDictionaryDrawer        : PatchOdyssey.EditorDictionaryDrawer<string, System     .Boolean>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.BoundsDictionary))]                 public class BoundsDictionaryDrawer                 : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Bounds>         {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.BoundsReadOnlyDictionary))]         public class BoundsReadOnlyDictionaryDrawer         : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Bounds>         {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.BoundsIntDictionary))]              public class BoundsIntDictionaryDrawer              : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.BoundsInt>      {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.BoundsIntReadOnlyDictionary))]      public class BoundsIntReadOnlyDictionaryDrawer      : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.BoundsInt>      {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.ColorDictionary))]                  public class ColorDictionaryDrawer                  : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Color>          {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.ColorReadOnlyDictionary))]          public class ColorReadOnlyDictionaryDrawer          : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Color>          {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.DoubleDictionary))]                 public class DoubleDictionaryDrawer                 : PatchOdyssey.EditorDictionaryDrawer<string, System     .Double>         {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.DoubleReadOnlyDictionary))]         public class DoubleReadOnlyDictionaryDrawer         : PatchOdyssey.EditorDictionaryDrawer<string, System     .Double>         {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.FloatDictionary))]                  public class FloatDictionaryDrawer                  : PatchOdyssey.EditorDictionaryDrawer<string, System     .Single>         {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.FloatReadOnlyDictionary))]          public class FloatReadOnlyDictionaryDrawer          : PatchOdyssey.EditorDictionaryDrawer<string, System     .Single>         {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.GameObjectDictionary))]             public class GameObjectDictionaryDrawer             : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.GameObject>     {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.GameObjectReadOnlyDictionary))]     public class GameObjectReadOnlyDictionaryDrawer     : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.GameObject>     {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.GradientDictionary))]               public class GradientDictionaryDrawer               : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Gradient>       {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.GradientReadOnlyDictionary))]       public class GradientReadOnlyDictionaryDrawer       : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Gradient>       {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.IntDictionary))]                    public class IntDictionaryDrawer                    : PatchOdyssey.EditorDictionaryDrawer<string, System     .Int32>          {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.IntReadOnlyDictionary))]            public class IntReadOnlyDictionaryDrawer            : PatchOdyssey.EditorDictionaryDrawer<string, System     .Int32>          {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.LongDictionary))]                   public class LongDictionaryDrawer                   : PatchOdyssey.EditorDictionaryDrawer<string, System     .Int64>          {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.LongReadOnlyDictionary))]           public class LongReadOnlyDictionaryDrawer           : PatchOdyssey.EditorDictionaryDrawer<string, System     .Int64>          {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.RectDictionary))]                   public class RectDictionaryDrawer                   : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Rect>           {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.RectReadOnlyDictionary))]           public class RectReadOnlyDictionaryDrawer           : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Rect>           {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.RectIntDictionary))]                public class RectIntDictionaryDrawer                : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.RectInt>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.RectIntReadOnlyDictionary))]        public class RectIntReadOnlyDictionaryDrawer        : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.RectInt>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.StringDictionary))]                 public class StringDictionaryDrawer                 : PatchOdyssey.EditorDictionaryDrawer<string, System     .String>         {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.StringReadOnlyDictionary))]         public class StringReadOnlyDictionaryDrawer         : PatchOdyssey.EditorDictionaryDrawer<string, System     .String>         {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.UIntDictionary))]                   public class UIntDictionaryDrawer                   : PatchOdyssey.EditorDictionaryDrawer<string, System     .UInt32>         {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.UIntReadOnlyDictionary))]           public class UIntReadOnlyDictionaryDrawer           : PatchOdyssey.EditorDictionaryDrawer<string, System     .UInt32>         {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.ULongDictionary))]                  public class ULongDictionaryDrawer                  : PatchOdyssey.EditorDictionaryDrawer<string, System     .UInt64>         {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.ULongReadOnlyDictionary))]          public class ULongReadOnlyDictionaryDrawer          : PatchOdyssey.EditorDictionaryDrawer<string, System     .UInt64>         {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector2Dictionary))]                public class Vector2DictionaryDrawer                : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector2>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector2ReadOnlyDictionary))]        public class Vector2ReadOnlyDictionaryDrawer        : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector2>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector2IntDictionary))]             public class Vector2IntDictionaryDrawer             : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector2Int>     {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector2IntReadOnlyDictionary))]     public class Vector2IntReadOnlyDictionaryDrawer     : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector2Int>     {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector3Dictionary))]                public class Vector3DictionaryDrawer                : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector3>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector3ReadOnlyDictionary))]        public class Vector3ReadOnlyDictionaryDrawer        : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector3>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector3IntDictionary))]             public class Vector3IntDictionaryDrawer             : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector3Int>     {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector3IntReadOnlyDictionary))]     public class Vector3IntReadOnlyDictionaryDrawer     : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector3Int>     {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector4Dictionary))]                public class Vector4DictionaryDrawer                : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector4>        {}
-      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector4ReadOnlyDictionary))]        public class Vector4ReadOnlyDictionaryDrawer        : PatchOdyssey.EditorDictionaryDrawer<string, UnityEngine.Vector4>        {}
-
-    [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ReadOnlyInInspectorAttribute))]
-    public class ReadOnlyInInspectorDrawer : UnityEditor.PropertyDrawer {
-      public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
-        return UnityEditor.EditorGUI.GetPropertyHeight(property, label, true);
-      }
-
-      public override void OnGUI(UnityEngine.Rect position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
-        UnityEngine.GUI.enabled = false;
-        UnityEditor.EditorGUI.PropertyField(position, property, label, true);
-        UnityEngine.GUI.enabled = true;
-      }
-    }
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.AnimationCurveDictionary))]         public class AnimationCurveDictionaryDrawer         : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.AnimationCurve> {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.AnimationCurveReadOnlyDictionary))] public class AnimationCurveReadOnlyDictionaryDrawer : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.AnimationCurve> {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.BooleanDictionary))]                public class BooleanDictionaryDrawer                : PatchOdyssey.RefDictionaryDrawer<string, System     .Boolean>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.BooleanReadOnlyDictionary))]        public class BooleanReadOnlyDictionaryDrawer        : PatchOdyssey.RefDictionaryDrawer<string, System     .Boolean>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.BoundsDictionary))]                 public class BoundsDictionaryDrawer                 : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.Bounds>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.BoundsReadOnlyDictionary))]         public class BoundsReadOnlyDictionaryDrawer         : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.Bounds>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.BoundsIntDictionary))]              public class BoundsIntDictionaryDrawer              : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.BoundsInt>      {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.BoundsIntReadOnlyDictionary))]      public class BoundsIntReadOnlyDictionaryDrawer      : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.BoundsInt>      {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.ColorDictionary))]                  public class ColorDictionaryDrawer                  : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.Color>          {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.ColorReadOnlyDictionary))]          public class ColorReadOnlyDictionaryDrawer          : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.Color>          {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.DoubleDictionary))]                 public class DoubleDictionaryDrawer                 : PatchOdyssey.RefDictionaryDrawer<string, System     .Double>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.DoubleReadOnlyDictionary))]         public class DoubleReadOnlyDictionaryDrawer         : PatchOdyssey.RefDictionaryDrawer<string, System     .Double>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.FloatDictionary))]                  public class FloatDictionaryDrawer                  : PatchOdyssey.RefDictionaryDrawer<string, System     .Single>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.FloatReadOnlyDictionary))]          public class FloatReadOnlyDictionaryDrawer          : PatchOdyssey.RefDictionaryDrawer<string, System     .Single>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.GameObjectDictionary))]             public class GameObjectDictionaryDrawer             : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.GameObject>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.GameObjectReadOnlyDictionary))]     public class GameObjectReadOnlyDictionaryDrawer     : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.GameObject>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.GradientDictionary))]               public class GradientDictionaryDrawer               : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.Gradient>       {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.GradientReadOnlyDictionary))]       public class GradientReadOnlyDictionaryDrawer       : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.Gradient>       {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.IntDictionary))]                    public class IntDictionaryDrawer                    : PatchOdyssey.RefDictionaryDrawer<string, System     .Int32>          {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.IntReadOnlyDictionary))]            public class IntReadOnlyDictionaryDrawer            : PatchOdyssey.RefDictionaryDrawer<string, System     .Int32>          {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.LongDictionary))]                   public class LongDictionaryDrawer                   : PatchOdyssey.RefDictionaryDrawer<string, System     .Int64>          {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.LongReadOnlyDictionary))]           public class LongReadOnlyDictionaryDrawer           : PatchOdyssey.RefDictionaryDrawer<string, System     .Int64>          {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.RectDictionary))]                   public class RectDictionaryDrawer                   : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.Rect>           {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.RectReadOnlyDictionary))]           public class RectReadOnlyDictionaryDrawer           : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.Rect>           {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.RectIntDictionary))]                public class RectIntDictionaryDrawer                : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.RectInt>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.RectIntReadOnlyDictionary))]        public class RectIntReadOnlyDictionaryDrawer        : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.RectInt>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.StringDictionary))]                 public class StringDictionaryDrawer                 : PatchOdyssey.RefDictionaryDrawer<string, System     .String>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.StringReadOnlyDictionary))]         public class StringReadOnlyDictionaryDrawer         : PatchOdyssey.RefDictionaryDrawer<string, System     .String>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.UIntDictionary))]                   public class UIntDictionaryDrawer                   : PatchOdyssey.RefDictionaryDrawer<string, System     .UInt32>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.UIntReadOnlyDictionary))]           public class UIntReadOnlyDictionaryDrawer           : PatchOdyssey.RefDictionaryDrawer<string, System     .UInt32>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.ULongDictionary))]                  public class ULongDictionaryDrawer                  : PatchOdyssey.RefDictionaryDrawer<string, System     .UInt64>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.ULongReadOnlyDictionary))]          public class ULongReadOnlyDictionaryDrawer          : PatchOdyssey.RefDictionaryDrawer<string, System     .UInt64>         {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector2Dictionary))]                public class Vector2DictionaryDrawer                : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.Vector2>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector2ReadOnlyDictionary))]        public class Vector2ReadOnlyDictionaryDrawer        : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.Vector2>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector2IntDictionary))]             public class Vector2IntDictionaryDrawer             : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.Vector2Int>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector2IntReadOnlyDictionary))]     public class Vector2IntReadOnlyDictionaryDrawer     : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.Vector2Int>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector3Dictionary))]                public class Vector3DictionaryDrawer                : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.Vector3>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector3ReadOnlyDictionary))]        public class Vector3ReadOnlyDictionaryDrawer        : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.Vector3>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector3IntDictionary))]             public class Vector3IntDictionaryDrawer             : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.Vector3Int>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector3IntReadOnlyDictionary))]     public class Vector3IntReadOnlyDictionaryDrawer     : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.Vector3Int>     {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector4Dictionary))]                public class Vector4DictionaryDrawer                : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.Vector4>        {}
+      [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.Collections.Vector4ReadOnlyDictionary))]        public class Vector4ReadOnlyDictionaryDrawer        : PatchOdyssey.RefDictionaryDrawer<string, UnityEngine.Vector4>        {}
 
     [UnityEditor.CustomPropertyDrawer(typeof(PatchOdyssey.ReadWriteInInspectorAttribute))]
     public class ReadWriteInInspectorDrawer : UnityEditor.PropertyDrawer {
-      public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
-        return UnityEditor.EditorGUI.GetPropertyHeight(property, label, true);
-      }
-
-      public override void OnGUI(UnityEngine.Rect position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
-        UnityEditor.EditorGUI.PropertyField(position, property, label, true);
-      }
+      public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent         label)                                  => UnityEditor.EditorGUI.GetPropertyHeight(property, label, true);
+      public override void  OnGUI            (UnityEngine.Rect               position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) => UnityEditor.EditorGUI.PropertyField    (position, property, label, true);
     }
   #endif
 }
@@ -2161,6 +2356,40 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     [PatchMethod(AggressiveInlining)] public static ref readonly T       Append<T>(this System.Collections.ArrayList             arrayList, in T       value) { arrayList.Add    (value); return value; }
     [PatchMethod(AggressiveInlining)] public static ref readonly T       Append<T>(this System.Collections.Generic.LinkedList<T> list,      in T       value) { list     .AddLast(value); return value; }
     [PatchMethod(AggressiveInlining)] public static ref readonly T       Append<T>(this System.Collections.Generic.List      <T> list,      in T       value) { list     .Add    (value); return value; }
+
+    [PatchMethod(AggressiveInlining)] public static T[]                                                                       AsCopy<T>           (this T[]                                                                       array)                            => (T[])          array.Clone();
+    [PatchMethod(AggressiveInlining)] public static System.Array                                                              AsCopy              (this System.Array                                                              array)                            => (System.Array) array.Clone();
+    [PatchMethod(AggressiveInlining)] public static System.ArraySegment<T>                                                    AsCopy<T>           (this System.ArraySegment<T>                                                    arraySegment)                     => new(Util.ArrayFrom(arraySegment));
+    [PatchMethod(AggressiveInlining)] public static System.Collections.ArrayList                                              AsCopy              (this System.Collections.ArrayList                                              arrayList)                        => (System.Collections.ArrayList) arrayList.Clone();
+    [PatchMethod(AggressiveInlining)] public static System.Collections.BitArray                                               AsCopy              (this System.Collections.BitArray                                               bits)                             => (System.Collections.BitArray)  bits     .Clone();
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Queue                                                  AsCopy              (this System.Collections.Queue                                                  queue)                            => (System.Collections.Queue)     queue    .Clone();
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.SortedDictionary<TKey, TValue>                 AsCopy<TKey, TValue>(this System.Collections.Generic.Dictionary      <TKey, TValue>                 dictionary)                       => new(dictionary, dictionary.Comparer);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.HashSet         <T>                            AsCopy<T>           (this System.Collections.Generic.HashSet         <T>                            hashset)                          => new(hashset, hashset.Comparer);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.LinkedList      <T>                            AsCopy<T>           (this System.Collections.Generic.LinkedList      <T>                            list)                             => new(list);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.List            <T>                            AsCopy<T>           (this System.Collections.Generic.List            <T>                            list)                             => new(list);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.Queue           <T>                            AsCopy<T>           (this System.Collections.Generic.Queue           <T>                            queue)                            => new(queue);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.SortedDictionary<TKey, TValue>                 AsCopy<TKey, TValue>(this System.Collections.Generic.SortedDictionary<TKey, TValue>                 sortedDictionary)                 => new(sortedDictionary, sortedDictionary.Comparer);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.SortedList      <T>                            AsCopy<T>           (this System.Collections.Generic.SortedList      <T>                            sortedList)                       => new(sortedList,       sortedList      .Comparer);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.SortedSet       <T>                            AsCopy<T>           (this System.Collections.Generic.SortedSet       <T>                            sortedSet)                        => new(sortedSet,        sortedSet       .Comparer);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.Stack           <T>                            AsCopy<T>           (this System.Collections.Generic.Stack           <T>                            stack)                            => new(stack);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Hashtable                                              AsCopy              (this System.Collections.Hashtable                                              hashtable)                        => (System.Collections.Hashtable) hashtable.Clone(); // ⟶ `new(hashtable, hashtable.EqualityComparer)`
+    [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ObservableCollection        <T>            AsCopy<T>           (this System.Collections.ObjectModel.ObservableCollection        <T>            collection)                       => new(collection);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyCollection          <T>            AsCopy<T>           (this System.Collections.ObjectModel.ReadOnlyCollection          <T>            collection)                       => new(new System.Collections.Generic.List                    <T>           (collection));
+    [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyDictionary          <TKey, TValue> AsCopy<TKey, TValue>(this System.Collections.ObjectModel.ReadOnlyDictionary          <TKey, TValue> dictionary)                       => new(new System.Collections.Generic.Dictionary              <TKey, TValue>(dictionary));
+    [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyObservableCollection<T>            AsCopy<T>           (this System.Collections.ObjectModel.ReadOnlyObservableCollection<T>            collection)                       => new(new System.Collections.ObjectModel.ObservableCollection<T>           (collection));
+    [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyCollection          <T>            AsCopy<T>           (this System.Collections.ObjectModel.ReadOnlySet                 <T>            set)                              => new(new System.Collections.Generic.HashSet                 <T>           (set));
+    [PatchMethod(AggressiveInlining)] public static System.Collections.SortedList                                             AsCopy              (this System.Collections.SortedList                                             sortedList)                       => (System.Collections.SortedList) sortedList.Clone();
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.HybridDictionary                           AsCopy              (this System.Collections.Specialized.HybridDictionary                           dictionary)                       => dictionary.AsCopy(false);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.HybridDictionary                           AsCopy              (this System.Collections.Specialized.HybridDictionary                           dictionary, bool caseInsensitive) { System.Collections.Specialized.HybridDictionary copy = new(dictionary.Count, caseInsensitive); foreach (System.Collections.DictionaryEntry element in dictionary) { copy.Add(element.Key, element.Value); } return copy; };
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.ListDictionary                             AsCopy              (this System.Collections.Specialized.ListDictionary                             dictionary)                       { System.Collections.Specialized.ListDictionary copy = new(); foreach (System.Collections.DictionaryEntry element in dictionary) { copy.Add(element.Key, element.Value); } return copy; }
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.NameValueCollection                        AsCopy              (this System.Collections.Specialized.NameValueCollection                        collection)                       => new(collection);
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.OrderedDictionary                          AsCopy              (this System.Collections.Specialized.OrderedDictionary                          dictionary)                       { System.Collections.Specialized.OrderedDictionary copy = new(dictionary.Count); foreach (System.Collections.DictionaryEntry element in dictionary) { copy.Add(element.Key, element.Value); } return copy; }
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.StringCollection                           AsCopy              (this System.Collections.Specialized.StringCollection                           collection)                       { System.Collections.Specialized.StringCollection copy = new(); string[] subcopy = new string[collection.Count]; collection.CopyTo(subcopy, 0); copy.AddRange(subcopy); return copy; }
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.StringDictionary                           AsCopy              (this System.Collections.Specialized.StringDictionary                           dictionary)                       { System.Collections.Specialized.StringDictionary copy = new(dictionary.Count); foreach (System.Collections.DictionaryEntry element in dictionary) { copy.Add(element.Key, element.Value); } return copy; }
+    [PatchMethod(AggressiveInlining)] public static System.Collections.Stack                                                  AsCopy              (this System.Collections.Stack                                                  stack)                            => new(stack);
+    [PatchMethod(AggressiveInlining)] public static System.IO.MemoryStream                                                    AsCopy              (this System.IO.MemoryStream                                                    stream)                           { try { return new(stream.GetBuffer(), 0, stream.Length, stream.CanWrite, true); } catch (System.UnauthorizedAccessException exception) {} return new(Util.ArrayFrom(stream), 0, stream.Length, stream.CanWrite, false); }
+    [PatchMethod(AggressiveInlining)] public static System.Memory        <T>                                                  AsCopy<T>           (this System.Memory        <T>                                                  memory)                           => new(Util.ArrayFrom(memory));
+    [PatchMethod(AggressiveInlining)] public static System.ReadOnlyMemory<T>                                                  AsCopy<T>           (this System.ReadOnlyMemory<T>                                                  memory)                           => new(Util.ArrayFrom(memory));
 
     [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyCollection<T>            AsReadOnly<T>           (this T[]                                                  array)      => System.Array.AsReadOnly<T>(array);
     [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyDictionary<TKey, TValue> AsReadOnly<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary) { (dictionary as System.Collections.Generic.Dictionary<TKey, TValue>)?.TrimExcess(/* dictionary.Keys.Count */); return new(dictionary); } // ⟶ `System.Collections.Generic.CollectionExtensions.AsReadOnly<TKey, TValue>(dictionary);`
@@ -2261,20 +2490,9 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     [PatchMethod(AggressiveInlining)] public static uint CountHierarchyByTag(this UnityEngine.Component  component,  string tag) => component.gameObject.CountHierarchyByTag(tag);
     [PatchMethod(AggressiveInlining)] public static uint CountHierarchyByTag(this UnityEngine.GameObject gameObject, string tag) { return gameObject.CountDescendantsByTag(tag) + (gameObject.tag == tag ? 1u : 0u); }
 
-    [PatchMethod(AggressiveInlining)]
-    public static PatchOdyssey.Collections.GameObjectEnumerator EnumerateChildren(this UnityEngine.GameObject gameObject) {
-      return new(GameObjectEnumerator.Kind.Children, gameObject.transform);
-    }
-
-    [PatchMethod(AggressiveInlining)]
-    public static PatchOdyssey.Collections.GameObjectEnumerator EnumerateDescendants(this UnityEngine.GameObject gameObject) {
-      return new(GameObjectEnumerator.Kind.Descendants, gameObject.transform);
-    }
-
-    [PatchMethod(AggressiveInlining)]
-    public static PatchOdyssey.Collections.GameObjectEnumerator EnumerateHierarchy(this UnityEngine.GameObject gameObject) {
-      return new(GameObjectEnumerator.Kind.Hierarchy, gameObject.transform);
-    }
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectEnumerator EnumerateChildren   (this UnityEngine.GameObject gameObject) => new(GameObjectEnumerator.Kind.Children,    gameObject.transform);
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectEnumerator EnumerateDescendants(this UnityEngine.GameObject gameObject) => new(GameObjectEnumerator.Kind.Descendants, gameObject.transform);
+    [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectEnumerator EnumerateHierarchy  (this UnityEngine.GameObject gameObject) => new(GameObjectEnumerator.Kind.Hierarchy,   gameObject.transform);
 
     [PatchMethod(AggressiveInlining)] public static T                     EnsureComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => (T) gameObject.EnsureComponent(typeof(T));
     [PatchMethod(AggressiveInlining)] public static UnityEngine.Component EnsureComponent   (this UnityEngine.GameObject gameObject, System.Type type)               { UnityEngine.Component? component = gameObject.GetComponent(type); return null != component ? component : gameObject.AddComponent(type); }
@@ -2283,9 +2501,6 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     public static bool Exists<T>(this T[] array, System.Predicate<T> predicate) {
       return System.Array.Exists<T>(array, predicate);
     }
-
-    [PatchMethod(AggressiveInlining)] public static void Fill<T>(this T[] array, T value)                       { System.Array.Fill<T>(array, value); }
-    [PatchMethod(AggressiveInlining)] public static void Fill<T>(this T[] array, T value, int index, int count) { System.Array.Fill<T>(array, value, index, count); }
 
     [PatchMethod(AggressiveInlining)]
     public static T? Find<T>(this T[] array, System.Predicate<T> predicate) {
@@ -2646,39 +2861,8 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       return null!; // ⟶ `structure` is null
     }
 
-    [PatchMethod(AggressiveInlining)] public static T[]                                                                       AsCopy<T>           (this T[]                                                                       array)                            => (T[])          array.Clone();
-    [PatchMethod(AggressiveInlining)] public static System.Array                                                              AsCopy              (this System.Array                                                              array)                            => (System.Array) array.Clone();
-    [PatchMethod(AggressiveInlining)] public static System.ArraySegment<T>                                                    AsCopy<T>           (this System.ArraySegment<T>                                                    arraySegment)                     => new(Util.ArrayFrom(arraySegment));
-    [PatchMethod(AggressiveInlining)] public static System.Collections.ArrayList                                              AsCopy              (this System.Collections.ArrayList                                              arrayList)                        => (System.Collections.ArrayList) arrayList.Clone();
-    [PatchMethod(AggressiveInlining)] public static System.Collections.BitArray                                               AsCopy              (this System.Collections.BitArray                                               bits)                             => (System.Collections.BitArray)  bits     .Clone();
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Queue                                                  AsCopy              (this System.Collections.Queue                                                  queue)                            => (System.Collections.Queue)     queue    .Clone();
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.SortedDictionary<TKey, TValue>                 AsCopy<TKey, TValue>(this System.Collections.Generic.Dictionary      <TKey, TValue>                 dictionary)                       => new(dictionary, dictionary.Comparer);
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.HashSet         <T>                            AsCopy<T>           (this System.Collections.Generic.HashSet         <T>                            hashset)                          => new(hashset, hashset.Comparer);
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.LinkedList      <T>                            AsCopy<T>           (this System.Collections.Generic.LinkedList      <T>                            list)                             => new(list);
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.List            <T>                            AsCopy<T>           (this System.Collections.Generic.List            <T>                            list)                             => new(list);
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.Queue           <T>                            AsCopy<T>           (this System.Collections.Generic.Queue           <T>                            queue)                            => new(queue);
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.SortedDictionary<TKey, TValue>                 AsCopy<TKey, TValue>(this System.Collections.Generic.SortedDictionary<TKey, TValue>                 sortedDictionary)                 => new(sortedDictionary, sortedDictionary.Comparer);
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.SortedList      <T>                            AsCopy<T>           (this System.Collections.Generic.SortedList      <T>                            sortedList)                       => new(sortedList,       sortedList      .Comparer);
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.SortedSet       <T>                            AsCopy<T>           (this System.Collections.Generic.SortedSet       <T>                            sortedSet)                        => new(sortedSet,        sortedSet       .Comparer);
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Generic.Stack           <T>                            AsCopy<T>           (this System.Collections.Generic.Stack           <T>                            stack)                            => new(stack);
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Hashtable                                              AsCopy              (this System.Collections.Hashtable                                              hashtable)                        => (System.Collections.Hashtable) hashtable.Clone(); // ⟶ `new(hashtable, hashtable.EqualityComparer)`
-    [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ObservableCollection        <T>            AsCopy<T>           (this System.Collections.ObjectModel.ObservableCollection        <T>            collection)                       => new(collection);
-    [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyCollection          <T>            AsCopy<T>           (this System.Collections.ObjectModel.ReadOnlyCollection          <T>            collection)                       => new(new System.Collections.Generic.List                    <T>           (collection));
-    [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyDictionary          <TKey, TValue> AsCopy<TKey, TValue>(this System.Collections.ObjectModel.ReadOnlyDictionary          <TKey, TValue> dictionary)                       => new(new System.Collections.Generic.Dictionary              <TKey, TValue>(dictionary));
-    [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyObservableCollection<T>            AsCopy<T>           (this System.Collections.ObjectModel.ReadOnlyObservableCollection<T>            collection)                       => new(new System.Collections.ObjectModel.ObservableCollection<T>           (collection));
-    [PatchMethod(AggressiveInlining)] public static System.Collections.ObjectModel.ReadOnlyCollection          <T>            AsCopy<T>           (this System.Collections.ObjectModel.ReadOnlySet                 <T>            set)                              => new(new System.Collections.Generic.HashSet                 <T>           (set));
-    [PatchMethod(AggressiveInlining)] public static System.Collections.SortedList                                             AsCopy              (this System.Collections.SortedList                                             sortedList)                       => (System.Collections.SortedList) sortedList.Clone();
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.HybridDictionary                           AsCopy              (this System.Collections.Specialized.HybridDictionary                           dictionary)                       => dictionary.AsCopy(false);
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.HybridDictionary                           AsCopy              (this System.Collections.Specialized.HybridDictionary                           dictionary, bool caseInsensitive) { System.Collections.Specialized.HybridDictionary copy = new(dictionary.Count, caseInsensitive); foreach (System.Collections.DictionaryEntry element in dictionary) { copy.Add(element.Key, element.Value); } return copy; };
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.ListDictionary                             AsCopy              (this System.Collections.Specialized.ListDictionary                             dictionary)                       { System.Collections.Specialized.ListDictionary copy = new(); foreach (System.Collections.DictionaryEntry element in dictionary) { copy.Add(element.Key, element.Value); } return copy; }
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.NameValueCollection                        AsCopy              (this System.Collections.Specialized.NameValueCollection                        collection)                       => new(collection);
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.OrderedDictionary                          AsCopy              (this System.Collections.Specialized.OrderedDictionary                          dictionary)                       { System.Collections.Specialized.OrderedDictionary copy = new(dictionary.Count); foreach (System.Collections.DictionaryEntry element in dictionary) { copy.Add(element.Key, element.Value); } return copy; }
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.StringCollection                           AsCopy              (this System.Collections.Specialized.StringCollection                           collection)                       { System.Collections.Specialized.StringCollection copy = new(); string[] subcopy = new string[collection.Count]; collection.CopyTo(subcopy, 0); copy.AddRange(subcopy); return copy; }
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Specialized.StringDictionary                           AsCopy              (this System.Collections.Specialized.StringDictionary                           dictionary)                       { System.Collections.Specialized.StringDictionary copy = new(dictionary.Count); foreach (System.Collections.DictionaryEntry element in dictionary) { copy.Add(element.Key, element.Value); } return copy; }
-    [PatchMethod(AggressiveInlining)] public static System.Collections.Stack                                                  AsCopy              (this System.Collections.Stack                                                  stack)                            => new(stack);
-    [PatchMethod(AggressiveInlining)] public static System.IO.MemoryStream                                                    AsCopy              (this System.IO.MemoryStream                                                    stream)                           { try { return new(stream.GetBuffer(), 0, stream.Length, stream.CanWrite, true); } catch (System.UnauthorizedAccessException exception) {} return new(Util.ArrayFrom(stream), 0, stream.Length, stream.CanWrite, false); }
-    [PatchMethod(AggressiveInlining)] public static System.Memory        <T>                                                  AsCopy<T>           (this System.Memory        <T>                                                  memory)                           => new(Util.ArrayFrom(memory));
-    [PatchMethod(AggressiveInlining)] public static System.ReadOnlyMemory<T>                                                  AsCopy<T>           (this System.ReadOnlyMemory<T>                                                  memory)                           => new(Util.ArrayFrom(memory));
+    [PatchMethod(AggressiveInlining)] public static ref T ArrayReference  <T>(in T[] array)             { return ref System.Runtime.InteropServices.MemoryMarshal.GetReference(new System.Span<T>(array)); }
+    [PatchMethod(AggressiveInlining)] public static ref T ArrayReferenceAt<T>(in T[] array, uint index) { return ref System.Runtime.CompilerServices.Unsafe.Add(ref Util.ArrayReference(in array), (int) index); }
 
     [PatchMethod(AggressiveInlining)] public static uint CheckWait            () => Util.CheckWaitForCoroutine();
     [PatchMethod(AggressiveInlining)] public static uint CheckWaitForCoroutine() => 0u;
@@ -2797,7 +2981,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       return enumerator;
     }
 
-    public static UnityEngine.Vector2    ExcludeVectorAxes       (UnityEngine.Vector2    vector, UnityEngine.Vector2    axes) { return new(axes.x != 1.0f ? vector.x : 0.0f, axes.y != 1.0f ? vector.y : 0.0f); }
+    public static UnityEngine.Vector2    ExcludeVectorAxes       (in UnityEngine.Vector2    vector, UnityEngine.Vector2    axes) { return new(axes.x != 1.0f ? vector.x : 0.0f, axes.y != 1.0f ? vector.y : 0.0f); }
     public static UnityEngine.Vector2    ExcludeVectorAxes       (UnityEngine.Vector2    vector, UnityEngine.Vector2Int axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y));
     public static UnityEngine.Vector2    ExcludeVectorAxes       (UnityEngine.Vector2    vector, UnityEngine.Vector3    axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y));
     public static UnityEngine.Vector2    ExcludeVectorAxes       (UnityEngine.Vector2    vector, UnityEngine.Vector3Int axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y));
@@ -3395,19 +3579,19 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       return path;
     }
 
-    public static decimal Percent(decimal percentage) => percentage / 100.0m;
-    public static double  Percent(double  percentage) => percentage / 100.0;
-    public static float   Percent(float   percentage) => percentage / 100.0f;
+    [PatchMethod(AggressiveInlining), PatchResolution(0)] public static decimal Perc(decimal percentage) => percentage / 100.0m;
+    [PatchMethod(AggressiveInlining), PatchResolution(2)] public static double  Perc(double  percentage) => percentage / 100.0;
+    [PatchMethod(AggressiveInlining), PatchResolution(1)] public static float   Perc(float   percentage) => percentage / 100.0f;
 
-    public static decimal PercentOf(decimal value, decimal percentage) => System.Math.Min(value, (decimal) percentage) * (System.Math.Max(value, (decimal) percentage) / 100.0m);
-    public static decimal PercentOf(decimal value, double  percentage) => System.Math.Min(value, (decimal) percentage) * (System.Math.Max(value, (decimal) percentage) / 100.0m);
-    public static decimal PercentOf(decimal value, float   percentage) => System.Math.Min(value, (decimal) percentage) * (System.Math.Max(value, (decimal) percentage) / 100.0m);
-    public static double  PercentOf(double  value, decimal percentage) => System.Math.Min(value, (double)  percentage) * (System.Math.Max(value, (double)  percentage) / 100.0);
-    public static double  PercentOf(double  value, double  percentage) => System.Math.Min(value, (double)  percentage) * (System.Math.Max(value, (double)  percentage) / 100.0);
-    public static double  PercentOf(double  value, float   percentage) => System.Math.Min(value, (double)  percentage) * (System.Math.Max(value, (double)  percentage) / 100.0);
-    public static float   PercentOf(float   value, decimal percentage) => System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f);
-    public static float   PercentOf(float   value, double  percentage) => System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f);
-    public static float   PercentOf(float   value, float   percentage) => System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f);
+    [PatchMethod(AggressiveInlining), PatchResolution(0)] public static decimal PercOf(decimal value, decimal percentage) => System.Math.Min(value, (decimal) percentage) * (System.Math.Max(value, (decimal) percentage) / 100.0m);
+    [PatchMethod(AggressiveInlining), PatchResolution(2)] public static decimal PercOf(decimal value, double  percentage) => System.Math.Min(value, (decimal) percentage) * (System.Math.Max(value, (decimal) percentage) / 100.0m);
+    [PatchMethod(AggressiveInlining), PatchResolution(1)] public static decimal PercOf(decimal value, float   percentage) => System.Math.Min(value, (decimal) percentage) * (System.Math.Max(value, (decimal) percentage) / 100.0m);
+    [PatchMethod(AggressiveInlining), PatchResolution(0)] public static double  PercOf(double  value, decimal percentage) => System.Math.Min(value, (double)  percentage) * (System.Math.Max(value, (double)  percentage) / 100.0);
+    [PatchMethod(AggressiveInlining), PatchResolution(2)] public static double  PercOf(double  value, double  percentage) => System.Math.Min(value, (double)  percentage) * (System.Math.Max(value, (double)  percentage) / 100.0);
+    [PatchMethod(AggressiveInlining), PatchResolution(1)] public static double  PercOf(double  value, float   percentage) => System.Math.Min(value, (double)  percentage) * (System.Math.Max(value, (double)  percentage) / 100.0);
+    [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float   PercOf(float   value, decimal percentage) => System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f);
+    [PatchMethod(AggressiveInlining), PatchResolution(2)] public static float   PercOf(float   value, double  percentage) => System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f);
+    [PatchMethod(AggressiveInlining), PatchResolution(1)] public static float   PercOf(float   value, float   percentage) => System.Math.Min(value, (float)   percentage) * (System.Math.Max(value, (float)   percentage) / 100.0f);
 
     // public static void PreloadURI           (string path)                                         => Util.LoadUri           (path, null, Util.LoadAsynchronously, Util.LoadWithCache);
     // public static void PreloadURIAsAudioClip(string path, UnityEngine.AudioType? encoding = null) => Util.LoadUriAsAudioClip(path, null, Util.LoadAsynchronously, Util.LoadWithCache, encoding);
@@ -3417,6 +3601,11 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     public static UnityEngine.Rect RectFromCorners(UnityEngine.Vector3[] corners) {
       // ⟶ Origin begins from bottom-left rather than top-left
       return new(corners[0].x, corners[0].y, corners[3].x - corners[0].x, corners[1].y - corners[0].y);
+    }
+
+    [PatchMethod(AggressiveInlining)]
+    public static ref T Reference<T>() {
+      return ref System.Runtime.InteropServices.MemoryMarshal.GetReference(new T[] {default!});
     }
 
     public static UnityEngine.Vector2 SetVectorAxis(UnityEngine.Vector2 vector, UnityEngine.Vector2Int axis, float value) => Util.SetVectorAxis(vector, new UnityEngine.Vector2((float) axis.x, (float) axis.y), value);

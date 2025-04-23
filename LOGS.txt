@@ -43,13 +43,21 @@ April 15th, 2025 — April 16th, 2025
 
 April 20th, 2025 — April 22nd, 2025
 • Developed `Mono<T>` structure for monostate (localized singleton) variables
-• Developed `RefList<T>` and `RefReadOnlyList<T>` classes to allow in-place value-type modification of list elements
-• Optimized out `System.Array` bounds-checking with `ref System.Runtime.CompilerServices.Unsafe.Add(ref System.Runtime.InteropServices.MemoryMarshal.GetReference(array), index)` instead of `ref array[index]`
+• Developed `RefDictionary<…>`, `RefList<T>`, `RefReadOnlyDictionary<…>`, and `RefReadOnlyList<T>` classes to allow in-place value-type modification of dictionary/ list elements
+• Optimized out `System.Array` bounds-checking with `Util.ArrayReference[At](…)` instead of `ref array[index]`
+
+April 23rd, 2025
 • …
+
+📆
+• Lessons learned: Learning C# technical details and ECS is a time investment that must be managed within the timeline of the project
+―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+REQUIREMENTS
+• Development log
+• Final Major Project
+• Online portfolio — think “once:blank”, “dafluffypotato.com”, and others
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 TODO
-• Consider a `PatchDictionary` (and `PatchReadOnlyDictionary`) instead of `EditorDictionary`
-• Ensure `EditorDictionary` `ref`s its internal `System.Array` fields
 • Add `TrimExcess(uint)` to custom lists
 • ECS-ify the `Event`s i.e. `SortedDictionary` to `SortedList`
 • There's only ever one synchronous load in the list and it's either getting the payload or waiting for an asynchronous one.. Check if it's called up in a `repeated` `LoadUri(…)` call
