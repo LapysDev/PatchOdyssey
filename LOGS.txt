@@ -47,6 +47,12 @@ April 20th, 2025 — April 22nd, 2025
 • Optimized out `System.Array` bounds-checking with `Util.ArrayReference[At](…)` instead of `ref array[index]`
 
 April 23rd, 2025
+• Added `Event::epoch` property to track initial time of signaling
+• Added `Event::metadata` field to store call-site arguments
+• Added `TrimExcess(uint)` method to `RefList<T>` and `SharedList<T>` classes
+• Added `ToString()` method overrides to `PatchOdyssey.Collections` structures
+
+April 24th, 2025
 • …
 
 📆
@@ -58,12 +64,10 @@ REQUIREMENTS
 • Online portfolio — think “once:blank”, “dafluffypotato.com”, and others
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 TODO
-• Add `TrimExcess(uint)` to custom lists
+• Use `ListDictionary` for `UISequence`
+|
 • ECS-ify the `Event`s i.e. `SortedDictionary` to `SortedList`
 • There's only ever one synchronous load in the list and it's either getting the payload or waiting for an asynchronous one.. Check if it's called up in a `repeated` `LoadUri(…)` call
-• Use `ListDictionary` for `UISequence`
-• `Event`s now store callsite arguments in `metadata` field alongside a `timestamp` field
-• `ToString(…)` for all custom types
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 ROADMAP
 • … — Keep Mesh as child GameObject of scripted parent GameObjects
