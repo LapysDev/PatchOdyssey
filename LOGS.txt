@@ -53,6 +53,9 @@ April 23rd, 2025
 • Added `ToString()` method overrides to `PatchOdyssey.Collections` structures
 
 April 24th, 2025
+• Updated `Animation.UISequence` from an internal `System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>` to an internal `System.Collections.Specialized.ListDictionary`
+
+April 25th, 2025
 • …
 
 📆
@@ -64,8 +67,6 @@ REQUIREMENTS
 • Online portfolio — think “once:blank”, “dafluffypotato.com”, and others
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 TODO
-• Use `ListDictionary` for `UISequence`
-|
 • ECS-ify the `Event`s i.e. `SortedDictionary` to `SortedList`
 • There's only ever one synchronous load in the list and it's either getting the payload or waiting for an asynchronous one.. Check if it's called up in a `repeated` `LoadUri(…)` call
 ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
@@ -79,6 +80,8 @@ IDEAS
 • Character names: “Audu”, “Aure”, “Xinis”, …
 • Each section is a unique Scene with a Loading UI menu as their start
 • Enemies have drop-glow, too. NPCs don't
+• Fogged-out chunk sides
+• Hexagon chunks as opposed to square chunks
 • Monster autonomy, Tamer autonomy ⟶ Player lassoes wild monster, is teleported on them as Rider — material changes to white with animated scaling and invulnerability
 • NPCs notice you in anticipation before responding — not all monsters are immediately hostile
 • Opening Looney Tunes vignette that leads into tutorial section

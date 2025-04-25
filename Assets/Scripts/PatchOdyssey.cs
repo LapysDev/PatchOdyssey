@@ -360,7 +360,7 @@ namespace System.Runtime.Versioning {
 
       [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public override bool Equals     (object?  value) => value is Range range && this.Equals(range);
       [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public          bool Equals     (in Range range) => this.End.Equals(range.End) && this.Start.Equals(range.Start);
-      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public override int  GetHashCode()               => this.End.GetHashCode() + this.Start.GetHashCode(); // TODO: HashCode.Combine
+      [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)] public override int  GetHashCode()               => System.HashCode.Combine(this.End, this.Start);
 
       [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
       public (int Offset, int Length) GetOffsetAndLength(int length) {
@@ -408,40 +408,144 @@ namespace System.Runtime.Versioning {
 /* PatchOdyssey */
 namespace PatchOdyssey /* ⟶ Class types and delegates */ {
   namespace Animation {
-    public class UIKeyframe /* ⟶ Not a `struct`, inherited by `Animation.UISequence` */ {
-      public readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>? begin      = null;
-      public          System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>? end        { get => this.properties; init => this.properties = value!; }
-      public readonly string?                                                             name       = null;
-      public readonly System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>  properties = new(new System.Collections.Generic.Dictionary<string, object?>());
+    public class UIKeyframe : System.Collections.Specialized.ListDictionary, System.Collections.IDictionary, System.Collections.Generic.IReadOnlyDictionary<string, object?> /* ⟶ Optimized for less than 10 properties using an internal singly-linked list; See `https://web.archive.org/web/20241209052731/https://learn.microsoft.com/en-us/dotnet/api/system.collections.specialized.listdictionary?view=net-9.0` */ {
+      public struct Enumerator : System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object?>>, System.Collections.IDictionaryEnumerator {
+        public  System.Collections.Generic.KeyValuePair<string, object?> Current { get { System.Collections.DictionaryEntry element = this.Current; return new(element.Key, element.Value); } }
+        private System.Collections.IDictionaryEnumerator                 enumerator;
+        System.Collections.Generic.KeyValuePair<string, object?>         System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object?>>.Current => this           .Current;
+        System.Collections.DictionaryEntry                               System.Collections.IDictionaryEnumerator.Entry                                                           => this.enumerator.Current;
+        object                                                           System.Collections.IDictionaryEnumerator.Key                                                             => this.enumerator.Current.Key;
+        object?                                                          System.Collections.IDictionaryEnumerator.Value                                                           => this.enumerator.Current.Value;
+        object                                                           System.Collections.IEnumerator.Current                                                                   => this           .Current;
 
-      /* … ⟶ Will modify specified `::begin` and `::end` properties to ensure they have the same keys */
-      [PatchConstructor]
-      internal UIKeyframe(in string name, in System.Collections.Generic.IDictionary<string, object?> properties) {
-        this.name = name;
+        /* … */
+        [PatchConstructor, PatchMethod(AggressiveInlining)]
+        internal Enumerator(UIKeyframe keyframe) => this.enumerator = ((System.Collections.Specialized.ListDictionary) keyframe).GetEnumerator();
 
-        if (properties is not null)
-        this.properties = new(properties);
+        /* … */
+        [PatchMethod(AggressiveInlining)] public void Dispose                                () { /* Do nothing… */ }
+        [PatchMethod(AggressiveInlining)] public bool MoveNext                               () => this.enumerator.MoveNext();
+        [PatchMethod(AggressiveInlining)] public void Reset                                  () => this.enumerator.Reset   ();
+        [PatchMethod(AggressiveInlining)] bool        System.Collections.IEnumerator.MoveNext() => this           .MoveNext();
+        [PatchMethod(AggressiveInlining)] void        System.Collections.IEnumerator.Reset   () => this           .Reset   ();
+        [PatchMethod(AggressiveInlining)] void        System.IDisposable.Dispose             () => this           .Dispose ();
       }
 
-      [PatchConstructor]
-      internal UIKeyframe(in string name, in System.Collections.Generic.IDictionary<string, object?> begin, in System.Collections.Generic.IDictionary<string, object?> end) {
+      public sealed class KeyEnumerable : System.Collections.Generic.IEnumerable<string> {
+        private readonly UIKeyframe keyframe;
+
+        /* … */
+        [PatchConstructor, PatchMethod(AggressiveInlining)]
+        internal KeyEnumerable(UIKeyframe keyframe) => this.keyframe = keyframe;
+
+        /* … */
+        [PatchMethod(AggressiveInlining)] UIKeyframe.KeyEnumerator                       GetEnumerator                                               () => new(keyframe);
+        [PatchMethod(AggressiveInlining)] System.Collections.Generic.IEnumerator<string> System.Collections.Generic.IEnumerable<string>.GetEnumerator() => this.GetEnumerator();
+        [PatchMethod(AggressiveInlining)] System.Collections.IEnumerator                 System.Collections.IEnumerable.GetEnumerator                () => this.GetEnumerator();
+      }
+
+      public struct KeyEnumerator : System.Collections.Generic.IEnumerator<string> {
+        public  string                                   Current => (string) this.enumerator.Current.Key;
+        private System.Collections.IDictionaryEnumerator enumerator;
+        string                                           System.Collections.Generic.IEnumerator<string>.Current => this.Current;
+        object                                           System.Collections.IEnumerator.Current                 => this.Current!;
+
+        /* … */
+        [PatchConstructor, PatchMethod(AggressiveInlining)]
+        internal KeyEnumerator(UIKeyframe keyframe) => this.enumerator = ((System.Collections.Specialized.ListDictionary) keyframe).GetEnumerator();
+
+        /* … */
+        [PatchMethod(AggressiveInlining)] public void Dispose                                () { /* Do nothing… */ }
+        [PatchMethod(AggressiveInlining)] public bool MoveNext                               () => this.enumerator.MoveNext();
+        [PatchMethod(AggressiveInlining)] public void Reset                                  () => this.enumerator.Reset   ();
+        [PatchMethod(AggressiveInlining)] bool        System.Collections.IEnumerator.MoveNext() => this           .MoveNext();
+        [PatchMethod(AggressiveInlining)] void        System.Collections.IEnumerator.Reset   () => this           .Reset   ();
+        [PatchMethod(AggressiveInlining)] void        System.IDisposable.Dispose             () => this           .Dispose ();
+      }
+
+      public sealed class ValueEnumerable : System.Collections.Generic.IEnumerable<object?> {
+        private readonly UIKeyframe keyframe;
+
+        /* … */
+        [PatchConstructor, PatchMethod(AggressiveInlining)]
+        internal ValueEnumerable(UIKeyframe keyframe) => this.keyframe = keyframe;
+
+        /* … */
+        [PatchMethod(AggressiveInlining)] UIKeyframe.ValueEnumerator                     GetEnumerator                                               () => new(keyframe);
+        [PatchMethod(AggressiveInlining)] System.Collections.Generic.IEnumerator<string> System.Collections.Generic.IEnumerable<string>.GetEnumerator() => this.GetEnumerator();
+        [PatchMethod(AggressiveInlining)] System.Collections.IEnumerator                 System.Collections.IEnumerable.GetEnumerator                () => this.GetEnumerator();
+      }
+
+      public struct ValueEnumerator : System.Collections.Generic.IEnumerator<object?> {
+        public  object?                                  Current => this.enumerator.Current.Value;
+        private System.Collections.IDictionaryEnumerator enumerator;
+        object?                                          System.Collections.Generic.IEnumerator<object?>.Current => this.Current;
+        object                                           System.Collections.IEnumerator.Current                  => this.Current!;
+
+        /* … */
+        [PatchConstructor, PatchMethod(AggressiveInlining)]
+        internal ValueEnumerator(UIKeyframe keyframe) => this.enumerator = ((System.Collections.Specialized.ListDictionary) keyframe).GetEnumerator();
+
+        /* … */
+        [PatchMethod(AggressiveInlining)] public void Dispose                                () { /* Do nothing… */ }
+        [PatchMethod(AggressiveInlining)] public bool MoveNext                               () => this.enumerator.MoveNext();
+        [PatchMethod(AggressiveInlining)] public void Reset                                  () => this.enumerator.Reset   ();
+        [PatchMethod(AggressiveInlining)] bool        System.Collections.IEnumerator.MoveNext() => this           .MoveNext();
+        [PatchMethod(AggressiveInlining)] void        System.Collections.IEnumerator.Reset   () => this           .Reset   ();
+        [PatchMethod(AggressiveInlining)] void        System.IDisposable.Dispose             () => this           .Dispose ();
+      }
+
+      /* … */
+      public            uint                                           Count                                                                                                          => base.Count;
+      internal readonly System.Collections.Specialized.ListDictionary? begin                                                                                                          =  null;
+      internal          System.Collections.Specialized.ListDictionary? end                                                                                                            { get => this.properties; private init {} };
+      public   readonly string?                                        name                                                                                                           =  null; // ⟶ Explicitly not `string.Empty`
+      public            System.Collections.Specialized.ListDictionary  properties                                                                                                     => (System.Collections.Specialized.ListDictionary) this;
+      int                                                              System.Collections.Generic.IReadOnlyCollection<System.Collections.Generic.KeyValuePair<string, object?>>.Count => base.Count;
+      System.Collections.Generic.IEnumerable<string>                   System.Collections.Generic.IReadOnlyDictionary<string, object?>.Keys                                           => new UIKeyframe.KeyEnumerable  (this);
+      System.Collections.Generic.IEnumerable<object?>                  System.Collections.Generic.IReadOnlyDictionary<string, object?>.Values                                         => new UIKeyframe.ValueEnumerable(this);
+      int                                                              System.Collections.ICollection.Count                                                                           => base.Count;
+      bool                                                             System.Collections.ICollection.IsSynchronized                                                                  => false;
+      object                                                           System.Collections.ICollection.SyncRoot                                                                        => this;
+      bool                                                             System.Collections.IDictionary.IsFixedSize                                                                     => true;
+      bool                                                             System.Collections.IDictionary.IsReadOnly                                                                      => true;
+      System.Collections.ICollection                                   System.Collections.IDictionary.Keys                                                                            => base.Keys;
+      System.Collections.ICollection                                   System.Collections.IDictionary.Values                                                                          => base.Values;
+
+      /* … */
+      [PatchConstructor, PatchMethod(AggressiveInlining)]
+      public UIKeyframe(string name, System.Collections.Generic.IReadOnlyDictionary<string, object?> properties) {
         this.name = name;
 
-        if (begin is not null && end is not null) {
-          (int begin, int end) offsets = (begin.Keys.Count, end.Keys.Count);
-          string[]             names   = new string[offsets.begin + offsets.end];
-
-          // …
-          begin.Keys.CopyTo(names, 0);
-          end  .Keys.CopyTo(names, offsets.begin);
-
-          foreach (string _ in new System.ReadOnlySpan<string>(names, offsets.begin, offsets.end))   { if (!begin.ContainsKey(_)) end  .Remove(_); }
-          foreach (string _ in new System.ReadOnlySpan<string>(names, 0,             offsets.begin)) { if (!end  .ContainsKey(_)) begin.Remove(_); }
-
-          this.begin = begin.AsReadOnly();
-          this.end   = end  .AsReadOnly(); // ⟶ `this.end = …;`
-        }
+        foreach (System.Collections.Generic.KeyValuePair<TKey, TValue> property in properties)
+        this.properties.Add(property.Key, property.Value);
       }
+
+      [PatchConstructor, PatchMethod(AggressiveInlining)]
+      protected internal UIKeyframe(string name, System.Collections.Generic.IReadOnlyDictionary<string, object?> begin, System.Collections.Generic.IReadOnlyDictionary<string, object?> end) {
+        this.begin = new();
+        this.end   = new();
+        this.name  = name;
+
+        foreach (System.Collections.Generic.KeyValuePair<string, object?> property in begin) { if (end  .ContainsKey(property.Key)) this.begin.Add(property.Key, property.Value); }
+        foreach (System.Collections.Generic.KeyValuePair<string, object?> property in end)   { if (begin.ContainsKey(property.Key)) this.end  .Add(property.Key, property.Value); }
+      }
+
+      /* … */
+      [PatchMethod(AggressiveInlining)] System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object?>> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object?>>.GetEnumerator()                                      => new UIKeyframe.Enumerator(this);
+      [PatchMethod(AggressiveInlining)] bool                                                                                             System.Collections.Generic.IReadOnlyDictionary<string, object?>.ContainsKey                                   (string       key)                      => base.Contains(key);
+      [PatchMethod(AggressiveInlining)] bool                                                                                             System.Collections.Generic.IReadOnlyDictionary<string, object?>.TryGetValue                                   (string       key,   out object? value) { if (base.Contains(key)) { value = base[key]; return true; } value = default; return false; }
+      [PatchMethod(AggressiveInlining)] void                                                                                             System.Collections.ICollection.CopyTo                                                                         (System.Array array, int         index) => base.CopyTo(array, index);
+      [PatchMethod(AggressiveInlining)] void                                                                                             System.Collections.IDictionary.Add                                                                            (object       key,   object?     value) => throw new System.NotSupportedException("UI keyframe is read-only");
+      [PatchMethod(AggressiveInlining)] void                                                                                             System.Collections.IDictionary.Clear                                                                          ()                                      => throw new System.NotSupportedException("UI keyframe is read-only");
+      [PatchMethod(AggressiveInlining)] bool                                                                                             System.Collections.IDictionary.Contains                                                                       (object key)                            => base.Contains     (key);
+      [PatchMethod(AggressiveInlining)] System.Collections.IDictionaryEnumerator                                                         System.Collections.IDictionary.GetEnumerator                                                                  ()                                      => base.GetEnumerator();
+      [PatchMethod(AggressiveInlining)] void                                                                                             System.Collections.IDictionary.Remove                                                                         (object key)                            => throw new System.NotSupportedException("UI keyframe is read-only");
+      [PatchMethod(AggressiveInlining)] System.Collections.IEnumerator                                                                   System.Collections.IEnumerable.GetEnumerator                                                                  ()                                      => base.GetEnumerator();
+
+      public object? this                                                                [string key] { get => base[key]; set => base[key] = value; }
+      object?        System.Collections.Generic.IReadOnlyDictionary<string, object?>.this[string key] { get; }
+      object?        System.Collections.IDictionary.this                                 [object key] { get => base[key]; set => base[key] = value; }
     }
 
     public class UISequence : PatchOdyssey.Animation.UIKeyframe, System.Collections.IEnumerable {
@@ -454,6 +558,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       private readonly System.Collections.Generic.SortedList<double, PatchOdyssey.Animation.UIKeyframe>                                                            keyframes         =  new(1);
       private          double                                                                                                                                      timestamp         =  0.0;
 
+      /* TODO */
       /* … ⟶ `𝑓 UISequence([optional] name, duration, [optional] delay, [optional] easing, [optional] interpolator, begin, end) { … }` */
       [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration,                                                                                    System.Collections.Generic.Dictionary <string, object?> begin, System.Collections.Generic.Dictionary <string, object?> end) : this(null!, duration, 0.0,   null!,  null!,        begin,                                                             end)                                                             {}
       [PatchConstructor, PatchMethod(AggressiveInlining)] public UISequence             (double duration,                                                                                    System.Collections.Generic.IDictionary<string, object?> begin, System.Collections.Generic.IDictionary<string, object?> end) : this(null!, duration, 0.0,   null!,  null!,        new System.Collections.Generic.Dictionary<string, object?>(begin), new System.Collections.Generic.Dictionary<string, object?>(end)) {}
@@ -919,7 +1024,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         public ref TValue this[in TAlternateKey key] { get => ref Util.Reference<TValue>(); }
       }
 
-      public struct Enumerator : System.Collections.Generic.IEnumerator<PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>>, System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<TKey, TValue>>, System.Collections.IDictionaryEnumerator /* ⟶ Based on `System.Collections.Generic.Dictionary<TKey, TValue>.Dictionary` */ {
+      public struct Enumerator : System.Collections.Generic.IEnumerator<PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>>, System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<TKey, TValue>>, System.Collections.IDictionaryEnumerator /* ⟶ Based on `System.Collections.Generic.Dictionary<TKey, TValue>.Enumerator` */ {
         private class Index { public uint value = 0u; }
 
         public                 ref PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>   Current => ref System.Runtime.InteropServices.MemoryMarshal.GetReference(this.current);
@@ -1369,7 +1474,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
 
       public ref          TValue this                                                     [in TKey key]                  { [PatchMethod(AggressiveInlining)] get { int index = this.FindIndex(in key); if (index != -1) return ref this.values[(uint) index]; if (key is null) throw new System.Collections.Generic.KeyNotFoundException(key?.ToString() ?? string.Empty); return ref this.Insert(in key, Util.Reference<TValue>(), false); } }
       public ref readonly TValue this                                                     [in TKey key, in TValue value] { [PatchMethod(AggressiveInlining)] get { int index = this.FindIndex(in key); if (index != -1) return ref this.values[(uint) index]; return ref value; } }
-      TValue                     System.Collections.Generic.IDictionary<TKey, TValue>.this[TKey    key]                  { [PatchMethod(AggressiveInlining)] get => { int index = this.FindIndex(in key); if (index == -1) { throw new System.Collections.Generic.KeyNotFoundException(key?.ToString() ?? string.Empty); } return this.Values[(uint) index]; } set => this[in key] = value; }
+      TValue                     System.Collections.Generic.IDictionary<TKey, TValue>.this[TKey    key]                  { [PatchMethod(AggressiveInlining)] get { int index = this.FindIndex(in key); if (index == -1) { throw new System.Collections.Generic.KeyNotFoundException(key?.ToString() ?? string.Empty); } return this.Values[(uint) index]; } set => this[in key] = value; }
       object?                    System.Collections.IDictionary.this                      [object  key]                  { get => ((System.Collections.Generic.IDictionary<TKey, TValue>) this)[(TKey) key]; set => ((System.Collections.Generic.IDictionary<TKey, TValue>) this)[(TKey) key] = (TValue) value; }
     }
       [System.Serializable] public class AnimationCurveDictionary : PatchOdyssey.Collections.RefDictionary<string, UnityEngine.AnimationCurve> { [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveDictionary() : base() {} [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveDictionary(int capacity) : base(capacity) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveDictionary(System.Collections.Generic.IEqualityComparer<string> comparer) : base(comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary) : base(dictionary) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveDictionary(int capacity, System.Collections.Generic.IEqualityComparer<string> comparer) : base(capacity, comparer) {} [PatchConstructor, PatchMethod(AggressiveInlining)] public AnimationCurveDictionary(System.Collections.Generic.IDictionary<string, UnityEngine.AnimationCurve> dictionary, System.Collections.Generic.IEqualityComparer<string> comparer) : base(dictionary, comparer) {} }
@@ -1699,7 +1804,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
     [System.Serializable]
     public class RefReadOnlyDictionary<TKey, TValue> : PatchOdyssey.Collections.RefDictionary<TKey, TValue>, System.Collections.Generic.IDictionary<TKey, TValue>, System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>, System.Collections.IDictionary /* ⟶ Retroactively designed after `RefDictionary<…>`’s implementation */ {
       public struct Enumerator : System.Collections.Generic.IEnumerator<PatchOdyssey.Collections.RefReadOnlyKeyValuePair<TKey, TValue>> /* ⟶ Based on `System.Collections.Generic.Dictionary<TKey, TValue>.KeyCollection.Enumerator` */ {
-        public  readonly ref                                           PatchOdyssey.Collections.RefReadOnlyKeyValuePair<TKey, TValue>   Current { [PatchMethod(AggressiveInlining)] get => { this.current = new[] {new PatchOdyssey.Collections.RefReadOnlyKeyValuePair<TKey, TValue>(this.enumerator.Current)}; return ref Util.ArrayReference(this.current); } }
+        public  readonly ref                                           PatchOdyssey.Collections.RefReadOnlyKeyValuePair<TKey, TValue>   Current { [PatchMethod(AggressiveInlining)] get { this.current = new[] {new PatchOdyssey.Collections.RefReadOnlyKeyValuePair<TKey, TValue>(this.enumerator.Current)}; return ref Util.ArrayReference(this.current); } }
         public                                                         PatchOdyssey.Collections.RefReadOnlyKeyValuePair<TKey, TValue>[] current;
         private readonly                                               RefDictionary<TKey, TValue>.Enumerator                           enumerator;
         PatchOdyssey.Collections.RefReadOnlyKeyValuePair<TKey, TValue>                                                                  System.Collections.Generic.IEnumerator<PatchOdyssey.Collections.RefReadOnlyKeyValuePair<TKey, TValue>>.Current => this.Current;
@@ -1807,7 +1912,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [PatchMethod(AggressiveInlining), PatchResolution(0)] System.Collections.IDictionaryEnumerator                  System.Collections.IDictionary.GetEnumerator                            ()                                                                                                         => this.GetEnumerator();
       [PatchMethod(AggressiveInlining), PatchResolution(0)] void                                                      System.Collections.IDictionary.Remove                                   (object key)                                                                                               => this.Remove       ((TKey) key);
 
-      TValue System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>.this[TKey key] { [PatchMethod(AggressiveInlining)] get => {
+      TValue System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>.this[TKey key] { [PatchMethod(AggressiveInlining)] get {
         int index = this.FindIndex(in key);
 
         // …
