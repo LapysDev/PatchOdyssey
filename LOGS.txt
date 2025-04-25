@@ -60,23 +60,23 @@ April 25th, 2025
 
 📆
 • Lessons learned: Learning C# technical details and ECS is a time investment that must be managed within the timeline of the project
-―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
-REQUIREMENTS
+
+REQUIREMENTS_✅_____________________________________________________________________________________
 • Development log
 • Final Major Project
 • Online portfolio — think “once:blank”, “dafluffypotato.com”, and others
-―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
-TODO
-• ECS-ify the `Event`s i.e. `SortedDictionary` to `SortedList`
+
+TODO_📝_____________________________________________________________________________________________
+• ECS-ify the `Event`s i.e. `SortedDictionary` to `SortedList`?
 • There's only ever one synchronous load in the list and it's either getting the payload or waiting for an asynchronous one.. Check if it's called up in a `repeated` `LoadUri(…)` call
-―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
-ROADMAP
+
+ROADMAP_🗺️__________________________________________________________________________________________
 • … — Keep Mesh as child GameObject of scripted parent GameObjects
 • Core utilities — PatchOdyssey.cs
 • User Interface — UI.cs
 • UI sequencing — Game.cs
-―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
-IDEAS
+
+IDEAS_💭____________________________________________________________________________________________
 • Character names: “Audu”, “Aure”, “Xinis”, …
 • Each section is a unique Scene with a Loading UI menu as their start
 • Enemies have drop-glow, too. NPCs don't
@@ -89,9 +89,7 @@ IDEAS
 • Player failure still means progress
 • Vignette UI that reddens slightly (no shake) on damage and shakes on attack
 
-Adobe sucs cption stock
-―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
-ENTITY COMPONENT SYSTEM (UNITY DOTS)
+ENTITY_COMPONENT_SYSTEM_(UNITY DOTS)_🌐_____________________________________________________________
 • Install 2D Sprite, Entities, Entities Graphics, and Unity Physics packages
 • Set project to not rebuild
 • Create Sub Scene (bottom of the list) for Entities (converts everything in it to entities)
