@@ -1,4 +1,4 @@
-using PatchOdyssey;
+// using PatchOdyssey;
 
 /* … */
 [UnityEngine.RequireComponent(typeof(UnityEngine.Canvas))]
@@ -6,15 +6,15 @@ using PatchOdyssey;
 [UnityEngine.RequireComponent(typeof(UnityEngine.UI.GraphicRaycaster))]
 [UnityEngine.RequireComponent(typeof(UnityEngine.RectTransform))]
 public class UI : UnityEngine.MonoBehaviour {
-  private void Start() {
-    UnityEngine.Debug.Log("Hello, World!");
-    Util.WaitForTimerUntil(3.0, static (target, data) => UnityEngine.Debug.Log($"target: {target is null}; data: {data.data}"));
-    Util.WaitForTimerEvery(5.0, static (target, data) => UnityEngine.Debug.Log($"target: {target is null}; data: {data.data}"));
-  }
+  // private void Start() {
+  //   UnityEngine.Debug.Log("Hello, World!");
+  //   Util.WaitForTimerUntil(3.0, static (target, data) => UnityEngine.Debug.Log($"target: {target is null}; data: {data.data}"));
+  //   Util.WaitForTimerEvery(5.0, static (target, data) => UnityEngine.Debug.Log($"target: {target is null}; data: {data.data}"));
+  // }
 
-  private void Update() {
-    Util.CheckWaitForTimer();
-  }
+  // private void Update() {
+  //   Util.CheckWaitForTimer();
+  // }
 //   public enum T : byte {} // → Dummy type
 
 //   public sealed class ComponentLoadInfo {

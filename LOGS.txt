@@ -1,70 +1,86 @@
 March 30, 2025 – April 2nd, 2025
-• Added initializer-list support for `System.Collections.Generic.` -`Queue<T>` and -`Stack<T>` via an extended `::Add(this, …)` method.
-• Added `GameObjectEnumerator` and `GameObjectSharedList<T>` to `PatchOdyssey.Collections` namespace for faster `UnityEngine.Component` tree hierarchy traversal methods.
-• Changed from possibly-overloaded `null == …` nullity checks to `… is null` checks.
-• Changed `float`-based functions to use `double` instead.
-• Configured script warnings as errors for developing robust game code i.e. `/warnaserror`
-• Modified all basic/ wrapper functions as inline i.e. `[PatchMethod(AggressiveInlining)]`.
-• Optimized `PatchOdyssey.Extensions` and `PatchOdyssey.Util` features.
-• Parity between `System.Array` and `System.Collections.Generic.List<T>` features.
-• Updated `UnityEngine.Component` tree hierarchy traversal methods e.g. `::FindChildBy*(this, …)`, `::FindHierarchyBy*(this, …)`, …, e.t.c. with `::FindChildByIndex(…)` being the only exception.
-• Updated C# compile commands to enable nullish annotations i.e. `/nullable` — saves on typing `#nullable enable annotations` at the beginning of every script.
-• Updated from C# .NET 9 to .NET 10 i.e. `/langversion:10`
-• Used C# `event` feature instead of manually implementing `System.Collections.Generic.Stack<delegate>` handler.
+• Attributed basic/ wrapper functions as inline i.e. `[PatchMethod(AggressiveInlining)]`
+• Changed from possibly-overloaded `null == …` nullity checks to `… is null` checks
+• Configured C# build compilations to enable nullish annotations i.e. `/nullable` — saves on typing `#nullable enable annotations` at the beginning of every script.
+• Configured C# from the .NET 9 runtime to the .NET 10 runtime i.e. `/langversion:10`
+• Configured C# script warnings as errors for developing robust game code i.e. `/warnaserror`
+• Developed `GameObjectEnumerator` and `GameObjectSharedList<T>` for faster `UnityEngine.GameObject` (and `UnityEngine.Component`) tree hierarchy traversal
+• Extended `Add(…)` method to support initialization list for `System.Collections.Generic.Queue<T>` and `System.Collections.Generic.Stack<T>`
+• Optimized `PatchOdyssey.Extensions` and `PatchOdyssey.Util` features
+• Optimized `UnityEngine.GameObject` (and `UnityEngine.Component`) extension methods e.g. `::FindChildBy*(this, …)`
+• Parity between `System.Array` and `System.Collections.Generic.List<T>` features
+• Preferred `double`-based functions over `float`-based design
+• Preferred `event` feature instead of manually tracking stacks of `delegate`s
 
 April 3rd, 2025
-• Acknowledged `System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>` interface — and promptly redacted its conflicts with `System.Collections.Generic.IDictionary<TKey, TValue>`.
-• Added `AddRange(…)` method to `PatchOdyssey.Collections.EditorDictionary<TKey, TValue>`, `PatchOdyssey.Collections.EditorReadOnlyDictionary<TKey, TValue>` and `System.Collections.Generic.IDictionary<TKey, TValue>` types.
-• Added `TryAdd(…)` method to `PatchOdyssey.Collections.EditorDictionary<TKey, TValue>`, `PatchOdyssey.Collections.EditorReadOnlyDictionary<TKey, TValue>` and `System.Collections.Generic.IDictionary<TKey, TValue>` types.
-• Implemented `EditorReadOnlyDictionary<TKey, TValue>` using `System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>`.
-• Shimmed `required` keyword with manual `System.*` polyfill.
-• Updated from C# .NET 10 to Unity's Preview C# version i.e. `/langversion:preview`.
-• Updated standard `System.Delegate`s (`System.Func`) to user-defined `delegate`s (e.g. `Interpolator`, `RefAction`) for better code communication.
+• Acknowledged `System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>` interface — and promptly redacted its conflicts with `System.Collections.Generic.IDictionary<TKey, TValue>`
+• Configured C# from the .NET 10 runtime to the Unity’s Preview C# version i.e. `/langversion:preview`
+• Extended `AddRange(…)` method for `EditorDictionary<…>`, `EditorReadOnlyDictionary<…>` and `System.Collections.Generic.IDictionary<…>` types
+• Extended `TryAdd(…)` method for `EditorDictionary<…>`, `EditorReadOnlyDictionary<…>` and `System.Collections.Generic.IDictionary<…>` types
+• Implemented `EditorReadOnlyDictionary<…>` using `System.Collections.Generic.IReadOnlyDictionary<…>`
+• Shimmed `required`
+• Preferred user-defined `delegate`s (e.g. `Interpolator`, `RefAction`) over standard `System.Delegate`s (e.g. `System.Func`)
 
 April 4th, 2025 – April 7th, 2025
-• Implemented `PatchOdyssey.Util.HandlerInfo` for handling events e.g. `Load*(…)`, `Wait*(…)`, …, e.t.c. like a “fat” `delegate` with additional data.
+• Developed `PatchOdyssey.Util.HandlerInfo` for handling events e.g. `Load*(…)`, `Wait*(…)`, …, e.t.c. like a “fat” `delegate` with additional data
 • Supplemented `event` properties with `PatchOdyssey.Collections.EventHandler` class — supporting `System.Delegate` invocation lists, operator overloads, …, e.t.c.
-• Supplemented `System.EventArgs` with `PatchOdyssey.Collections.Event` generic.
+• Supplemented `System.EventArgs` with `PatchOdyssey.Collections.Event` generic
 
 April 8th, 2025 – April 9th, 2025
-• Modified all constructors as setting required members i.e. `[PatchConstructor]`.
-• Refactored `Util.WaitEvery(…)`, `Util.WaitForTimerEvery(…)`, `Util.WaitForTimerUntil(…)`, and `Util.WaitUntil(…)` functions
+• Attributed constructors as setting required members i.e. `[PatchConstructor]`
+• Refactored `Wait*(…)` and `Util.WaitForTimer*(…)` utilities
 
 April 10th, 2025 – April 13th, 2025
-• Added `Util.WaitForCoroutineEvery(…)` and `Util.WaitForCoroutineUntil(…)` functions
-• Learned Unity's Entity Component System (ECS) feature using their Data-Oriented Technology Stack (DOTS) — https://www.youtube.com/watch?v=1gSnTlUjs-s
+• Developed `Util.WaitForCoroutineEvery(…)` and `Util.WaitForCoroutineUntil(…)` utilities
+• Learned Unity’s Entity Component System (ECS) feature using their Data-Oriented Technology Stack (DOTS) — https://www.youtube.com/watch?v=1gSnTlUjs-s
 
 April 14th, 2025 – April 15th, 2025
 • Refactored `EventHandler<T>`, `HandlerInfo<T>`, and other associated code
 
 April 15th, 2025 — April 16th, 2025
 • Designated `System.Math` for non-game-specific, `Unity.Mathematics` for ECS-specific, and `UnityEngine.Mathf` for game-specific mathematics
-• Refactored `LoadURI*(…)` functions
+• Refactored `LoadURI*(…)` utilities
+• Shimmed `init`
+• Shimmed `System.HashCode`
 
 April 20th, 2025 — April 22nd, 2025
 • Developed `Mono<T>` structure for monostate (localized singleton) variables
 • Developed `RefDictionary<…>`, `RefList<T>`, `RefReadOnlyDictionary<…>`, and `RefReadOnlyList<T>` classes to allow in-place value-type modification of dictionary/ list elements
-• Optimized out `System.Array` bounds-checking with `Util.ArrayReference[At](…)` instead of `ref array[index]`
+• Optimized out `System.Array` bounds-checking with `ArrayReference*(…)` utilities instead of `ref array[index]`
+• Shimmed `System.Index`, `System.Range`, and collection expressions
+• Use test Unity project to test smaller scale code i.e.
+  ```csharp
+    public static class Program {
+      [UnityEngine.RuntimeInitializeOnLoadMethod]
+      private static void Main() => new UnityEngine.GameObject("…", typeof(MyMonoBehaviour));
+    }
+  ```
 
 April 23rd, 2025
 • Added `Event::epoch` property to track initial time of signaling
 • Added `Event::metadata` field to store call-site arguments
-• Added `TrimExcess(uint)` method to `RefList<T>` and `SharedList<T>` classes
 • Added `ToString()` method overrides to `PatchOdyssey.Collections` structures
+• Extended `TrimExcess(uint)` method for `RefList<T>` and `SharedList<T>` classes
 
 April 24th, 2025
-• Updated `Animation.UISequence` from an internal `System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>` to an internal `System.Collections.Specialized.ListDictionary`
+• Refactored `Animation.UISequence` from an internal `System.Collections.ObjectModel.ReadOnlyDictionary<string, object?>` to an internal `System.Collections.Specialized.ListDictionary`
 
-April 25th, 2025
+April 28th, 2025
+• Developed `PatchOdyssey.Traits` namespace for basic generic metaprogramming
+• Disregarded some null checks — responsibility is on the user’s end
+• Extended `Fill(…)` method for `RefList<T>`, `SharedList<T>`, and `System.Collections.Generic.IList<T>` interfaces
+• Extended `TryAppend(…)` method for `RefList<T>`, `SharedList<T>`, and `System.Collections.Generic.IList<T>` interfaces
+• Renamed `EditorDictionaryDrawer<…>` (and `EditorReadOnlyDictionaryDrawer<…>`) to `RefDictionaryDrawer<…>` (and `RefReadOnlyDictionaryDrawer<…>` respectively)
+
+April 29th, 2025
+• Lots of refactoring, especially for Unity’s lack of `System.Runtime.CompilerServices.Unsafe.Add(…)` method
+
+April 30th, 2025
 • …
 
 📆
-• Lessons learned: Learning C# technical details and ECS is a time investment that must be managed within the timeline of the project
-
-REQUIREMENTS_✅_____________________________________________________________________________________
-• Development log
-• Final Major Project
-• Online portfolio — think “once:blank”, “dafluffypotato.com”, and others
+• Lesson learned: Learning C# technical details and ECS is a time investment that must be managed within the timeline of the project
+• Lesson learned: Premature optimization can be a tricky challenge to deal with i.e. “Keep It Simple, Stupid”
 
 TODO_📝_____________________________________________________________________________________________
 • ECS-ify the `Event`s i.e. `SortedDictionary` to `SortedList`?
@@ -75,6 +91,11 @@ ROADMAP_🗺️_________________________________________________________________
 • Core utilities — PatchOdyssey.cs
 • User Interface — UI.cs
 • UI sequencing — Game.cs
+
+REQUIREMENTS_✅_____________________________________________________________________________________
+• Development log
+• Final Major Project
+• Online portfolio — think “once:blank”, “dafluffypotato.com”, and others
 
 IDEAS_💭____________________________________________________________________________________________
 • Character names: “Audu”, “Aure”, “Xinis”, …
