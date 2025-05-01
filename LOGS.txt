@@ -72,14 +72,15 @@ April 28th, 2025
 • Extended `TryAppend(…)` method for `RefList<T>`, `SharedList<T>`, and `System.Collections.Generic.IList<T>` interfaces
 • Renamed `EditorDictionaryDrawer<…>` (and `EditorReadOnlyDictionaryDrawer<…>`) to `RefDictionaryDrawer<…>` (and `RefReadOnlyDictionaryDrawer<…>` respectively)
 
-April 29th, 2025
+April 29th, 2025 – April 30th, 2025
 • Lots of refactoring, especially for Unity’s lack of `System.Runtime.CompilerServices.Unsafe.Add(…)` method
 
-April 30th, 2025
+May 1st, 2025
+• Developed `RefSortedCollection<…>` class to allow in-place value-type modification of elements unlike `System.Collections.Generic.SortedDictionary<…>` and `System.Collections.Generic.SortedList<…>`
 • …
 
 📆
-• Lesson learned: Learning C# technical details and ECS is a time investment that must be managed within the timeline of the project
+• Lesson learned: Learning C# technical details and ECS is a time investment that must be planned for within the timeline of the project
 • Lesson learned: Premature optimization can be a tricky challenge to deal with i.e. “Keep It Simple, Stupid”
 
 TODO_📝_____________________________________________________________________________________________
