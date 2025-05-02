@@ -76,7 +76,12 @@ April 29th, 2025 – April 30th, 2025
 • Lots of refactoring, especially for Unity’s lack of `System.Runtime.CompilerServices.Unsafe.Add(…)` method
 
 May 1st, 2025
+• Acknowledged `System.IEquatable<T>` interface for `PatchOdyssey.Collections` structures (and classes)
+• Developed `RefComparer<T>`, `RefEqualityComparer<T>`, `RefReadOnlyComparer<T>` and `RefReadOnlyEqualityComparer<T>`
 • Developed `RefSortedCollection<…>` class to allow in-place value-type modification of elements unlike `System.Collections.Generic.SortedDictionary<…>` and `System.Collections.Generic.SortedList<…>`
+
+May 2nd, 2025
+• Implemented `Ref*Equatable<T>` interfaces for `PatchOdyssey.Collections.*` classes
 • …
 
 📆
@@ -84,6 +89,7 @@ May 1st, 2025
 • Lesson learned: Premature optimization can be a tricky challenge to deal with i.e. “Keep It Simple, Stupid”
 
 TODO_📝_____________________________________________________________________________________________
+• Add `IRefComparer` to `RefList`
 • ECS-ify the `Event`s i.e. `SortedDictionary` to `SortedList`?
 • There's only ever one synchronous load in the list and it's either getting the payload or waiting for an asynchronous one.. Check if it's called up in a `repeated` `LoadUri(…)` call
 
