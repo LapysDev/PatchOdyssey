@@ -81,17 +81,22 @@ May 1st, 2025
 • Developed `RefSortedCollection<…>` class to allow in-place value-type modification of elements unlike `System.Collections.Generic.SortedDictionary<…>` and `System.Collections.Generic.SortedList<…>`
 
 May 2nd, 2025
-• Implemented `Ref*Equatable<T>` interfaces for `PatchOdyssey.Collections.*` classes
-• …
+• Implemented `*Ref*Comparer<T>` and `Ref*Equatable<T>` features for `PatchOdyssey.Collections.*` classes
+
+May 3rd, 2025
+• GOT TODO DONE!
 
 📆
 • Lesson learned: Learning C# technical details and ECS is a time investment that must be planned for within the timeline of the project
 • Lesson learned: Premature optimization can be a tricky challenge to deal with i.e. “Keep It Simple, Stupid”
 
 TODO_📝_____________________________________________________________________________________________
-• Add `IRefComparer` to `RefList`
+• Add `IRefReadOnlyComparer` to `RefReadOnlyDictionary`
+• Add `IRefReadOnlyComparer` to `RefReadOnlyList`
+• Add `IRefComparer` to `RefSortedCollection`
+• Swap some `System.Array` functionality within `RefList` and `RefReadOnlyList`
 • ECS-ify the `Event`s i.e. `SortedDictionary` to `SortedList`?
-• There's only ever one synchronous load in the list and it's either getting the payload or waiting for an asynchronous one.. Check if it's called up in a `repeated` `LoadUri(…)` call
+• There’s only ever one synchronous load in the list and it's either getting the payload or waiting for an asynchronous one.. Check if it's called up in a `repeated` `LoadUri(…)` call
 
 ROADMAP_🗺️__________________________________________________________________________________________
 • … — Keep Mesh as child GameObject of scripted parent GameObjects
