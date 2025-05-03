@@ -84,16 +84,15 @@ May 2nd, 2025
 • Implemented `*Ref*Comparer<T>` and `Ref*Equatable<T>` features for `PatchOdyssey.Collections.*` classes
 
 May 3rd, 2025
-• GOT TODO DONE!
+c GOT TODO DONE!
 
 📆
+• Lesson learned: C# Mono with invalid IL instructions from creating delegates dynamically
 • Lesson learned: Learning C# technical details and ECS is a time investment that must be planned for within the timeline of the project
 • Lesson learned: Premature optimization can be a tricky challenge to deal with i.e. “Keep It Simple, Stupid”
 
 TODO_📝_____________________________________________________________________________________________
-• Add `IRefReadOnlyComparer` to `RefReadOnlyDictionary`
-• Add `IRefReadOnlyComparer` to `RefReadOnlyList`
-• Add `IRefComparer` to `RefSortedCollection`
+• Key-specific methods to `RefSortedCollection`
 • Swap some `System.Array` functionality within `RefList` and `RefReadOnlyList`
 • ECS-ify the `Event`s i.e. `SortedDictionary` to `SortedList`?
 • There’s only ever one synchronous load in the list and it's either getting the payload or waiting for an asynchronous one.. Check if it's called up in a `repeated` `LoadUri(…)` call
