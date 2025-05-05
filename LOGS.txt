@@ -84,18 +84,17 @@ May 2nd, 2025
 • Implemented `*Ref*Comparer<T>` and `Ref*Equatable<T>` features for `PatchOdyssey.Collections.*` classes
 
 May 3rd, 2025
-c GOT TODO DONE!
+• Acknowledged refactoring the `*Event`s into a structure of arrays format would have had faster cache/ memory locality
+• Updated `RefList<T>` and `RefReadOnlyList<T>` internals to use `RefReadOnlyEqualityComparer<T>`s for its `::*IndexOf(…)` methods
+
+May 5th, 2025
+• Refactored `::Find*(…)` methods for `PatchOdyssey.Collections.*` list classes with a sentinel `::Null` field
+• There’s only ever one synchronous load in the list and it's either getting the payload or waiting for an asynchronous one.. Check if it's called up in a `repeated` `LoadUri(…)` call
 
 📆
 • Lesson learned: C# Mono with invalid IL instructions from creating delegates dynamically
 • Lesson learned: Learning C# technical details and ECS is a time investment that must be planned for within the timeline of the project
 • Lesson learned: Premature optimization can be a tricky challenge to deal with i.e. “Keep It Simple, Stupid”
-
-TODO_📝_____________________________________________________________________________________________
-• Key-specific methods to `RefSortedCollection`
-• Swap some `System.Array` functionality within `RefList` and `RefReadOnlyList`
-• ECS-ify the `Event`s i.e. `SortedDictionary` to `SortedList`?
-• There’s only ever one synchronous load in the list and it's either getting the payload or waiting for an asynchronous one.. Check if it's called up in a `repeated` `LoadUri(…)` call
 
 ROADMAP_🗺️__________________________________________________________________________________________
 • … — Keep Mesh as child GameObject of scripted parent GameObjects
@@ -110,6 +109,7 @@ REQUIREMENTS_✅________________________________________________________________
 
 IDEAS_💭____________________________________________________________________________________________
 • Character names: “Audu”, “Aure”, “Xinis”, …
+• Complement the player usually
 • Each section is a unique Scene with a Loading UI menu as their start
 • Enemies have drop-glow, too. NPCs don't
 • Fogged-out chunk sides
