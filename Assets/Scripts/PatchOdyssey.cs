@@ -1198,9 +1198,9 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [PatchConstructor, PatchMethod(AggressiveInlining), PatchResolution(1)] public RefDictionary(System.Collections.Generic.IEnumerable       <PatchOdyssey.Collections.RefReadOnlyKeyValuePair<TKey, TValue>> enumerable)                                                               : this(enumerable,                                                                                                  null!)    {}
       [PatchConstructor, PatchMethod(AggressiveInlining), PatchResolution(0)] public RefDictionary(System.Collections.Generic.IEnumerable       <System.Collections.Generic.KeyValuePair<TKey, TValue>>          enumerable)                                                               : this(enumerable,                                                                                                  null!)    {}
       [PatchConstructor, PatchMethod(AggressiveInlining), PatchResolution(0)] public RefDictionary(System.Collections.Generic.IDictionary       <TKey, TValue>                                                   dictionary, PatchOdyssey.Collections.IRefEqualityComparer<TKey> comparer) : this((System.Collections.Generic.IEnumerable<PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>>) dictionary, comparer) {}
-      [PatchConstructor, PatchMethod(AggressiveInlining), PatchResolution(1)] public RefDictionary(System.Collections.Generic.IEnumerable       <PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>>         enumerable, PatchOdyssey.Collections.IRefEqualityComparer<TKey> comparer) : this(enumerable is null ? 0u : Util.EnumerableCount(enumerable),                                                  comparer) => this.AddRange(enumerable!);
-      [PatchConstructor, PatchMethod(AggressiveInlining), PatchResolution(1)] public RefDictionary(System.Collections.Generic.IEnumerable       <PatchOdyssey.Collections.RefReadOnlyKeyValuePair<TKey, TValue>> enumerable, PatchOdyssey.Collections.IRefEqualityComparer<TKey> comparer) : this(enumerable is null ? 0u : Util.EnumerableCount(enumerable),                                                  comparer) => this.AddRange(enumerable!);
-      [PatchConstructor, PatchMethod(AggressiveInlining), PatchResolution(0)] public RefDictionary(System.Collections.Generic.IEnumerable       <System.Collections.Generic.KeyValuePair<TKey, TValue>>          enumerable, PatchOdyssey.Collections.IRefEqualityComparer<TKey> comparer) : this(enumerable is null ? 0u : Util.EnumerableCount(enumerable),                                                  comparer) => this.AddRange(enumerable!);
+      [PatchConstructor, PatchMethod(AggressiveInlining), PatchResolution(1)] public RefDictionary(System.Collections.Generic.IEnumerable       <PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>>         enumerable, PatchOdyssey.Collections.IRefEqualityComparer<TKey> comparer) : this(enumerable is null ? 0u : Util.Enumerable.Count(enumerable),                                                 comparer) => this.AddRange(enumerable!);
+      [PatchConstructor, PatchMethod(AggressiveInlining), PatchResolution(1)] public RefDictionary(System.Collections.Generic.IEnumerable       <PatchOdyssey.Collections.RefReadOnlyKeyValuePair<TKey, TValue>> enumerable, PatchOdyssey.Collections.IRefEqualityComparer<TKey> comparer) : this(enumerable is null ? 0u : Util.Enumerable.Count(enumerable),                                                 comparer) => this.AddRange(enumerable!);
+      [PatchConstructor, PatchMethod(AggressiveInlining), PatchResolution(0)] public RefDictionary(System.Collections.Generic.IEnumerable       <System.Collections.Generic.KeyValuePair<TKey, TValue>>          enumerable, PatchOdyssey.Collections.IRefEqualityComparer<TKey> comparer) : this(enumerable is null ? 0u : Util.Enumerable.Count(enumerable),                                                 comparer) => this.AddRange(enumerable!);
       [PatchConstructor, PatchMethod(AggressiveInlining), PatchResolution(0)] public RefDictionary(uint                                                                                                          capacity,   PatchOdyssey.Collections.IRefEqualityComparer<TKey> comparer)                                                                                                                               { this.Initialize(capacity); this.Comparer = comparer ?? PatchOdyssey.Collections.RefEqualityComparer<TKey>.Default; }
 
       /* … */
@@ -1579,7 +1579,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
 
       [PatchConstructor, PatchMethod(AggressiveInlining)]
       public RefList(System.Collections.Generic.IEnumerable<T> enumerable) {
-        base.Count = Util.EnumerableCount(enumerable);
+        base.Count = Util.Enumerable.Count(enumerable);
 
         if (!base.IsEmpty()) {
           this.capacity = RefList<T>.GetCapacity(base.Count);
@@ -1694,7 +1694,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       }
 
       public void InsertRange(uint index, System.Collections.Generic.IEnumerable<T> enumerable) {
-        uint count = Util.EnumerableCount(enumerable);
+        uint count = Util.Enumerable.Count(enumerable);
 
         // …
         if (this.capacity < this.Count + count)
@@ -2110,7 +2110,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
 
       [PatchConstructor, PatchMethod(AggressiveInlining)]
       public RefReadOnlyList(System.Collections.Generic.IEnumerable<T> enumerable) {
-        this.Count = Util.EnumerableCount(enumerable);
+        this.Count = Util.Enumerable.Count(enumerable);
 
         if (!this.IsEmpty()) {
           this.Items = new T[this.Count];
@@ -2447,26 +2447,26 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       bool        System.Collections.IList.IsReadOnly                  => false;
 
       /* … */
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(uint                                      capacity = 0u)                                                                                       { SharedList<T>.List.EnsureCapacity(System.Math.Max(capacity, SharedList<T>.List.Capacity)); }
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(T[]                                       array)                   : this(array,                      (uint) array       .Length)              {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Array                              array)                   : this(array,                      (uint) array       .Length)              {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.ArraySegment<T>                    arraySegment)            : this(arraySegment,               (uint) arraySegment.Count)               {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.ArrayList              arrayList)               : this(arrayList,                  (uint) arrayList   .Count)               {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.Generic.HashSet    <T> hashset)                 : this(hashset,                    (uint) hashset     .Count)               {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.Generic.IEnumerable<T> enumerable)              : this(enumerable,                 (uint) Util.EnumerableCount(enumerable)) {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.Generic.LinkedList <T> list)                    : this(list,                       (uint) list     .Count)                  {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.Generic.List       <T> list)                    : this(list,                       (uint) list     .Count)                  {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.Generic.Queue      <T> queue)                   : this(queue,                      (uint) queue    .Count)                  {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.Generic.SortedSet  <T> sortedSet)               : this(sortedSet,                  (uint) sortedSet.Count)                  {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.Generic.Stack      <T> stack)                   : this(stack,                      (uint) stack    .Count)                  {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.IEnumerable            enumerable)              : this(enumerable,                 (uint) Util.EnumerableCount(enumerable)) {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.Queue                  queue)                   : this(queue,                      (uint) queue     .Count)                 {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.SortedList             sortedList)              : this(sortedList,                 (uint) sortedList.Count)                 {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.Stack                  stack)                   : this(stack,                      (uint) stack     .Count)                 {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Memory        <T>                  memory)                  : this(Util.Array<T>.From(memory), (uint) memory    .Length)                {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.ReadOnlyMemory<T>                  memory)                  : this(Util.Array<T>.From(memory), (uint) memory    .Length)                {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] private SharedList(System.Collections.IEnumerable            enumerable, uint length) : this(length)                                                              { if (enumerable is SharedList<T>) return; SharedList<T>.List.Clear(); foreach (object value in enumerable) SharedList<T>.List.Add((T) value); }
-      [PatchConstructor, PatchMethod(AggressiveInlining)] private SharedList(System.Collections.Generic.IEnumerable<T> enumerable, uint length) : this(length)                                                              { if (enumerable is SharedList<T>) return; SharedList<T>.List.Clear(); SharedList<T>.List.AddRange(enumerable); }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(uint                                      capacity = 0u)                                                                                        { SharedList<T>.List.EnsureCapacity(System.Math.Max(capacity, SharedList<T>.List.Capacity)); }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(T[]                                       array)                   : this(array,                      (uint) array       .Length)               {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Array                              array)                   : this(array,                      (uint) array       .Length)               {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.ArraySegment<T>                    arraySegment)            : this(arraySegment,               (uint) arraySegment.Count)                {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.ArrayList              arrayList)               : this(arrayList,                  (uint) arrayList   .Count)                {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.Generic.HashSet    <T> hashset)                 : this(hashset,                    (uint) hashset     .Count)                {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.Generic.IEnumerable<T> enumerable)              : this(enumerable,                 (uint) Util.Enumerable.Count(enumerable)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.Generic.LinkedList <T> list)                    : this(list,                       (uint) list     .Count)                   {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.Generic.List       <T> list)                    : this(list,                       (uint) list     .Count)                   {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.Generic.Queue      <T> queue)                   : this(queue,                      (uint) queue    .Count)                   {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.Generic.SortedSet  <T> sortedSet)               : this(sortedSet,                  (uint) sortedSet.Count)                   {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.Generic.Stack      <T> stack)                   : this(stack,                      (uint) stack    .Count)                   {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.IEnumerable            enumerable)              : this(enumerable,                 (uint) Util.Enumerable.Count(enumerable)) {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.Queue                  queue)                   : this(queue,                      (uint) queue     .Count)                  {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.SortedList             sortedList)              : this(sortedList,                 (uint) sortedList.Count)                  {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Collections.Stack                  stack)                   : this(stack,                      (uint) stack     .Count)                  {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.Memory        <T>                  memory)                  : this(Util.Array<T>.From(memory), (uint) memory    .Length)                 {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  SharedList(System.ReadOnlyMemory<T>                  memory)                  : this(Util.Array<T>.From(memory), (uint) memory    .Length)                 {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] private SharedList(System.Collections.IEnumerable            enumerable, uint length) : this(length)                                                               { if (enumerable is SharedList<T>) return; SharedList<T>.List.Clear(); foreach (object value in enumerable) SharedList<T>.List.Add((T) value); }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] private SharedList(System.Collections.Generic.IEnumerable<T> enumerable, uint length) : this(length)                                                               { if (enumerable is SharedList<T>) return; SharedList<T>.List.Clear(); SharedList<T>.List.AddRange(enumerable); }
 
       /* … */
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public void                                           Add                                                                 (in T                                      element)                                                                               =>     SharedList<T>.List.Add          (in element);
@@ -2703,6 +2703,168 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         [PatchMethod(AggressiveInlining), PatchResolution(0)] object                                         System.ICloneable.Clone                                                       ()                                                                                                                                =>     this.Clone ();
         [PatchMethod(AggressiveInlining), PatchResolution(0)] bool                                           System.IEquatable<GameObjectSharedList<T>>.Equals                             (GameObjectSharedList<T> list)                                                                                                    =>     this.Equals(list);
       }
+
+    public struct Vector2Bool : PatchOdyssey.Collections.IRefEquatable<Vector2Bool> {
+      public readonly static Vector2Bool down  = new(false, true);
+      public readonly static Vector2Bool left  = new(true,  false);
+      public readonly static Vector2Bool one   = new(true,  true);
+      public readonly static Vector2Bool right = new(true,  false);
+      public readonly static Vector2Bool up    = new(false, true);
+      public readonly static Vector2Bool zero  = new(false, false);
+
+      public bool x = false;
+      public bool y = false;
+
+      /* … */
+      [PatchMethod(AggressiveInlining)] public Vector2Bool()               {}
+      [PatchMethod(AggressiveInlining)] public Vector2Bool(bool x, bool y) { this.x = x; this.y = y; }
+
+      /* … */
+      [PatchMethod(AggressiveInlining)] public          bool        Equals                                                            (in Vector2Bool vector)                          => this.x == vector.x && this.y == vector.y;
+      [PatchMethod(AggressiveInlining)] public override bool        Equals                                                            (object?        value)                           => value is Vector2Bool vector && this.Equals(vector);
+      [PatchMethod(AggressiveInlining)] public override int         GetHashCode                                                       ()                                               => System.HashCode.Combine(this.x, this.y);
+      [PatchMethod(AggressiveInlining)] public static   Vector2Bool Max                                                               (in Vector2Bool vectorA, in Vector2Bool vectorB) => new(vectorA.x || vectorB.x, vectorA.y || vectorB.y);
+      [PatchMethod(AggressiveInlining)] public static   Vector2Bool Min                                                               (in Vector2Bool vectorA, in Vector2Bool vectorB) => new(vectorA.x && vectorB.x, vectorA.y && vectorB.y);
+      [PatchMethod(AggressiveInlining)] public          void        Scale                                                             (in Vector2Bool scale)                           => this.Set(scale.x && this.x, scale.y && this.y);
+      [PatchMethod(AggressiveInlining)] public static   Vector2Bool Scale                                                             (in Vector2Bool vector, in Vector2Bool scale)    => new(scale.x && vector.x, scale.y && vector.y);
+      [PatchMethod(AggressiveInlining)] public          void        Set                                                               (bool           x,      bool           y)        { this.x = x; this.y = y; }
+      [PatchMethod(AggressiveInlining)] public override string      ToString                                                          ()                                               => $"({this.x.ToString()}, {this.y.ToString()})";
+      [PatchMethod(AggressiveInlining)] public          string      ToString                                                          (System.IFormatProvider? provider)               => $"({this.x.ToString(provider)}, {this.y.ToString(provider)})";
+      [PatchMethod(AggressiveInlining)] bool                        PatchOdyssey.Collections.IRefEquatable<Vector2Bool>.Equals        (ref Vector2Bool         vector)                 => this.Equals(in vector);
+      [PatchMethod(AggressiveInlining)] bool                        PatchOdyssey.Collections.IRefReadOnlyEquatable<Vector2Bool>.Equals(in  Vector2Bool         vector)                 => this.Equals(in vector);
+      [PatchMethod(AggressiveInlining)] bool                        System.IEquatable<Vector2Bool>.Equals                             (Vector2Bool             vector)                 => this.Equals(vector);
+
+      [PatchMethod(AggressiveInlining)] public static Vector2Bool operator + (in Vector2Bool vector)                          => vector;
+      [PatchMethod(AggressiveInlining)] public static Vector2Bool operator - (in Vector2Bool vector)                          => vector;
+      [PatchMethod(AggressiveInlining)] public static Vector2Bool operator + (in Vector2Bool vectorA, in Vector2Bool vectorB) => new(vectorA.x || vectorB.x, vectorA.y || vectorB.y);
+      [PatchMethod(AggressiveInlining)] public static Vector2Bool operator - (in Vector2Bool vectorA, in Vector2Bool vectorB) => new(0 != ((vectorA.x ? 1 : 0) ^ (vectorB.x ? 1 : 0)), 0 != ((vectorA.y ? 1 : 0) ^ (vectorB.y ? 1 : 0)));
+      [PatchMethod(AggressiveInlining)] public static Vector2Bool operator * (in Vector2Bool vector,  bool           boolean) => new(boolean   && vector .x, boolean   && vector .y);
+      [PatchMethod(AggressiveInlining)] public static Vector2Bool operator * (in Vector2Bool vectorA, in Vector2Bool vectorB) => new(vectorA.x && vectorB.x, vectorA.y && vectorB.y);
+      [PatchMethod(AggressiveInlining)] public static Vector2Bool operator / (in Vector2Bool vector,  bool           boolean) => new(boolean   && vector .x, boolean   && vector .y);
+      [PatchMethod(AggressiveInlining)] public static bool        operator ==(in Vector2Bool vectorA, in Vector2Bool vectorB) =>  vectorA.Equals(in vectorB);
+      [PatchMethod(AggressiveInlining)] public static bool        operator !=(in Vector2Bool vectorA, in Vector2Bool vectorB) => !vectorA.Equals(in vectorB);
+
+      [PatchMethod(AggressiveInlining)] public static explicit operator UnityEngine.Vector2Int              (in Vector2Bool                          vector) => new(vector.x ? 1 : 0, vector.y ? 1 : 0);
+      [PatchMethod(AggressiveInlining)] public static explicit operator PatchOdyssey.Collections.Vector3Bool(in Vector2Bool                          vector) => new(vector.x,         vector.y);
+      [PatchMethod(AggressiveInlining)] public static explicit operator Vector2Bool                         (in PatchOdyssey.Collections.Vector3Bool vector) => new(vector.x,         vector.y);
+
+      public bool this[uint index] {
+        get { switch (index) { case 0u: return this.x;         case 1u: return this.y;         default: throw new System.IndexOutOfRangeException("Invalid `Vector2Bool` index!"); } }
+        set { switch (index) { case 0u: this.x = value; break; case 1u: this.y = value; break; default: throw new System.IndexOutOfRangeException("Invalid `Vector2Bool` index!"); } }
+      }
+    }
+
+    public struct Vector3Bool : PatchOdyssey.Collections.IRefEquatable<Vector3Bool> {
+      public readonly static Vector3Bool back    = new(false, false, true);
+      public readonly static Vector3Bool down    = new(false, true,  false);
+      public readonly static Vector3Bool forward = new(false, false, true);
+      public readonly static Vector3Bool left    = new(true,  false, false);
+      public readonly static Vector3Bool one     = new(true,  true,  true);
+      public readonly static Vector3Bool right   = new(true,  false, false);
+      public readonly static Vector3Bool up      = new(false, true,  false);
+      public readonly static Vector3Bool zero    = new(false, false, false);
+
+      public bool x = false;
+      public bool y = false;
+      public bool z = false;
+
+      /* … */
+      [PatchMethod(AggressiveInlining)] public Vector3Bool()                       {}
+      [PatchMethod(AggressiveInlining)] public Vector3Bool(bool x, bool y)         { this.x = x; this.y = y; }
+      [PatchMethod(AggressiveInlining)] public Vector3Bool(bool x, bool y, bool z) { this.x = x; this.y = y; this.z = z; }
+
+
+      /* … */
+      [PatchMethod(AggressiveInlining)] public          bool        Equals                                                            (in Vector3Bool vector)                           => this.x == vector.x && this.y == vector.y && this.z == vector.z;
+      [PatchMethod(AggressiveInlining)] public override bool        Equals                                                            (object?        value)                            => value is Vector3Bool vector && this.Equals(vector);
+      [PatchMethod(AggressiveInlining)] public override int         GetHashCode                                                       ()                                                => System.HashCode.Combine(this.x, this.y, this.z);
+      [PatchMethod(AggressiveInlining)] public static   Vector3Bool Max                                                               (in Vector3Bool vectorA, in Vector3Bool vectorB)  => new(vectorA.x || vectorB.x, vectorA.y || vectorB.y, vectorA.z || vectorB.z);
+      [PatchMethod(AggressiveInlining)] public static   Vector3Bool Min                                                               (in Vector3Bool vectorA, in Vector3Bool vectorB)  => new(vectorA.x && vectorB.x, vectorA.y && vectorB.y, vectorA.z && vectorB.z);
+      [PatchMethod(AggressiveInlining)] public          void        Scale                                                             (in Vector3Bool scale)                            => this.Set(scale.x && this.x, scale.y && this.y, scale.z && this.z);
+      [PatchMethod(AggressiveInlining)] public static   Vector3Bool Scale                                                             (in Vector3Bool vector, in Vector3Bool scale)     => new(scale.x && vector.x, scale.y && vector.y, scale.z && vector.z);
+      [PatchMethod(AggressiveInlining)] public          void        Set                                                               (bool           x,      bool           y, bool z) { this.x = x; this.y = y; this.z = z; }
+      [PatchMethod(AggressiveInlining)] public override string      ToString                                                          ()                                                => $"({this.x.ToString()}, {this.y.ToString()}, {this.z.ToString()})";
+      [PatchMethod(AggressiveInlining)] public          string      ToString                                                          (System.IFormatProvider? provider)                => $"({this.x.ToString(provider)}, {this.y.ToString(provider)}, {this.z.ToString(provider)})";
+      [PatchMethod(AggressiveInlining)] bool                        PatchOdyssey.Collections.IRefEquatable<Vector3Bool>.Equals        (ref Vector3Bool         vector)                  => this.Equals(in vector);
+      [PatchMethod(AggressiveInlining)] bool                        PatchOdyssey.Collections.IRefReadOnlyEquatable<Vector3Bool>.Equals(in  Vector3Bool         vector)                  => this.Equals(in vector);
+      [PatchMethod(AggressiveInlining)] bool                        System.IEquatable<Vector3Bool>.Equals                             (Vector3Bool             vector)                  => this.Equals(vector);
+
+      [PatchMethod(AggressiveInlining)] public static Vector3Bool operator + (in Vector3Bool vector)                          => vector;
+      [PatchMethod(AggressiveInlining)] public static Vector3Bool operator - (in Vector3Bool vector)                          => vector;
+      [PatchMethod(AggressiveInlining)] public static Vector3Bool operator + (in Vector3Bool vectorA, in Vector3Bool vectorB) => new(vectorA.x || vectorB.x, vectorA.y || vectorB.y, vectorA.z || vectorB.z);
+      [PatchMethod(AggressiveInlining)] public static Vector3Bool operator - (in Vector3Bool vectorA, in Vector3Bool vectorB) => new(0 != ((vectorA.x ? 1 : 0) ^ (vectorB.x ? 1 : 0)), 0 != ((vectorA.y ? 1 : 0) ^ (vectorB.y ? 1 : 0)), 0 != ((vectorA.z ? 1 : 0) ^ (vectorB.z ? 1 : 0)));
+      [PatchMethod(AggressiveInlining)] public static Vector3Bool operator * (in Vector3Bool vector,  bool           boolean) => new(boolean   && vector .x, boolean   && vector .y, boolean   && vector .z);
+      [PatchMethod(AggressiveInlining)] public static Vector3Bool operator * (in Vector3Bool vectorA, in Vector3Bool vectorB) => new(vectorA.x && vectorB.x, vectorA.y && vectorB.y, vectorA.z && vectorB.z);
+      [PatchMethod(AggressiveInlining)] public static Vector3Bool operator / (in Vector3Bool vector,  bool           boolean) => new(boolean   && vector .x, boolean   && vector .y, boolean   && vector .z);
+      [PatchMethod(AggressiveInlining)] public static bool        operator ==(in Vector3Bool vectorA, in Vector3Bool vectorB) =>  vectorA.Equals(in vectorB);
+      [PatchMethod(AggressiveInlining)] public static bool        operator !=(in Vector3Bool vectorA, in Vector3Bool vectorB) => !vectorA.Equals(in vectorB);
+
+      [PatchMethod(AggressiveInlining)]
+      public static explicit operator UnityEngine.Vector3Int(in Vector3Bool vector) => new(vector.x ? 1 : 0, vector.y ? 1 : 0, vector.z ? 1 : 0);
+
+      public bool this[uint index] {
+        get { switch (index) { case 0u: return this.x;         case 1u: return this.y;         case 2u: return this.z;         default: throw new System.IndexOutOfRangeException("Invalid `Vector3Bool` index!"); } }
+        set { switch (index) { case 0u: this.x = value; break; case 1u: this.y = value; break; case 2u: this.z = value; break; default: throw new System.IndexOutOfRangeException("Invalid `Vector3Bool` index!"); } }
+      }
+    }
+
+    public struct Vector4Bool : PatchOdyssey.Collections.IRefEquatable<Vector4Bool> {
+      public readonly static Vector4Bool back    = new(false, false, true,  false);
+      public readonly static Vector4Bool down    = new(false, true,  false, false);
+      public readonly static Vector4Bool forward = new(false, false, true,  false);
+      public readonly static Vector4Bool left    = new(true,  false, false, false);
+      public readonly static Vector4Bool one     = new(true,  true,  true,  false);
+      public readonly static Vector4Bool right   = new(true,  false, false, false);
+      public readonly static Vector4Bool up      = new(false, true,  false, false);
+      public readonly static Vector4Bool zero    = new(false, false, false, false);
+
+      public bool x = false;
+      public bool y = false;
+      public bool z = false;
+      public bool w = false;
+
+      /* … */
+      [PatchMethod(AggressiveInlining)] public Vector4Bool()                               {}
+      [PatchMethod(AggressiveInlining)] public Vector4Bool(bool x, bool y)                 { this.x = x; this.y = y; }
+      [PatchMethod(AggressiveInlining)] public Vector4Bool(bool x, bool y, bool z)         { this.x = x; this.y = y; this.z = z; }
+      [PatchMethod(AggressiveInlining)] public Vector4Bool(bool x, bool y, bool z, bool w) { this.x = x; this.y = y; this.z = z; this.w = w; }
+
+
+      /* … */
+      [PatchMethod(AggressiveInlining)] public          bool        Equals                                                            (in Vector4Bool vector)                                   => this.x == vector.x && this.y == vector.y && this.z == vector.z && this.w == vector.w;
+      [PatchMethod(AggressiveInlining)] public override bool        Equals                                                            (object?        value)                                    => value is Vector4Bool vector && this.Equals(vector);
+      [PatchMethod(AggressiveInlining)] public override int         GetHashCode                                                       ()                                                        => System.HashCode.Combine(this.x, this.y, this.z, this.w);
+      [PatchMethod(AggressiveInlining)] public static   Vector4Bool Max                                                               (in Vector4Bool vectorA, in Vector4Bool vectorB)          => new(vectorA.x || vectorB.x, vectorA.y || vectorB.y, vectorA.z || vectorB.z, vectorA.w || vectorB.w);
+      [PatchMethod(AggressiveInlining)] public static   Vector4Bool Min                                                               (in Vector4Bool vectorA, in Vector4Bool vectorB)          => new(vectorA.x && vectorB.x, vectorA.y && vectorB.y, vectorA.z && vectorB.z, vectorA.w && vectorB.w);
+      [PatchMethod(AggressiveInlining)] public          void        Scale                                                             (in Vector4Bool scale)                                    => this.Set(scale.x && this.x, scale.y && this.y, scale.z && this.z, scale.w && this.w);
+      [PatchMethod(AggressiveInlining)] public static   Vector4Bool Scale                                                             (in Vector4Bool vector, in Vector4Bool scale)             => new(scale.x && vector.x, scale.y && vector.y, scale.z && vector.z, scale.w && vector.w);
+      [PatchMethod(AggressiveInlining)] public          void        Set                                                               (bool           x,      bool           y, bool z, bool w) { this.x = x; this.y = y; this.z = z; this.w = w; }
+      [PatchMethod(AggressiveInlining)] public override string      ToString                                                          ()                                                        => $"({this.x.ToString()}, {this.y.ToString()}, {this.z.ToString()}, {this.w.ToString()})";
+      [PatchMethod(AggressiveInlining)] public          string      ToString                                                          (System.IFormatProvider? provider)                        => $"({this.x.ToString(provider)}, {this.y.ToString(provider)}, {this.z.ToString(provider)}, {this.w.ToString(provider)})";
+      [PatchMethod(AggressiveInlining)] bool                        PatchOdyssey.Collections.IRefEquatable<Vector4Bool>.Equals        (ref Vector4Bool         vector)                          => this.Equals(in vector);
+      [PatchMethod(AggressiveInlining)] bool                        PatchOdyssey.Collections.IRefReadOnlyEquatable<Vector4Bool>.Equals(in  Vector4Bool         vector)                          => this.Equals(in vector);
+      [PatchMethod(AggressiveInlining)] bool                        System.IEquatable<Vector4Bool>.Equals                             (Vector4Bool             vector)                          => this.Equals(vector);
+
+      [PatchMethod(AggressiveInlining)] public static Vector4Bool operator + (in Vector4Bool vector)                          => vector;
+      [PatchMethod(AggressiveInlining)] public static Vector4Bool operator - (in Vector4Bool vector)                          => vector;
+      [PatchMethod(AggressiveInlining)] public static Vector4Bool operator + (in Vector4Bool vectorA, in Vector4Bool vectorB) => new(vectorA.x || vectorB.x, vectorA.y || vectorB.y, vectorA.z || vectorB.z, vectorA.w || vectorB.w);
+      [PatchMethod(AggressiveInlining)] public static Vector4Bool operator - (in Vector4Bool vectorA, in Vector4Bool vectorB) => new(0 != ((vectorA.x ? 1 : 0) ^ (vectorB.x ? 1 : 0)), 0 != ((vectorA.y ? 1 : 0) ^ (vectorB.y ? 1 : 0)), 0 != ((vectorA.z ? 1 : 0) ^ (vectorB.z ? 1 : 0)), 0 != ((vectorA.w ? 1 : 0) ^ (vectorB.w ? 1 : 0)));
+      [PatchMethod(AggressiveInlining)] public static Vector4Bool operator * (in Vector4Bool vector,  bool           boolean) => new(boolean   && vector .x, boolean   && vector .y, boolean   && vector .z, boolean   && vector .z);
+      [PatchMethod(AggressiveInlining)] public static Vector4Bool operator * (in Vector4Bool vectorA, in Vector4Bool vectorB) => new(vectorA.x && vectorB.x, vectorA.y && vectorB.y, vectorA.z && vectorB.z, vectorA.w && vectorB.w);
+      [PatchMethod(AggressiveInlining)] public static Vector4Bool operator / (in Vector4Bool vector,  bool           boolean) => new(boolean   && vector .x, boolean   && vector .y, boolean   && vector .z, boolean   && vector .w);
+      [PatchMethod(AggressiveInlining)] public static bool        operator ==(in Vector4Bool vectorA, in Vector4Bool vectorB) =>  vectorA.Equals(in vectorB);
+      [PatchMethod(AggressiveInlining)] public static bool        operator !=(in Vector4Bool vectorA, in Vector4Bool vectorB) => !vectorA.Equals(in vectorB);
+
+      [PatchMethod(AggressiveInlining)] public static explicit operator PatchOdyssey.Collections.Vector2Bool(in Vector4Bool                          vector) => new(vector.x, vector.y);
+      [PatchMethod(AggressiveInlining)] public static explicit operator PatchOdyssey.Collections.Vector3Bool(in Vector4Bool                          vector) => new(vector.x, vector.y, vector.z);
+      [PatchMethod(AggressiveInlining)] public static explicit operator Vector4Bool                         (in PatchOdyssey.Collections.Vector2Bool vector) => new(vector.x, vector.y);
+      [PatchMethod(AggressiveInlining)] public static explicit operator Vector4Bool                         (in PatchOdyssey.Collections.Vector3Bool vector) => new(vector.x, vector.y, vector.z);
+
+      public bool this[uint index] {
+        get { switch (index) { case 0u: return this.x;         case 1u: return this.y;         case 2u: return this.z;         case 3u: return this.w;         default: throw new System.IndexOutOfRangeException("Invalid `Vector4Bool` index!"); } }
+        set { switch (index) { case 0u: this.x = value; break; case 1u: this.y = value; break; case 2u: this.z = value; break; case 3u: this.w = value; break; default: throw new System.IndexOutOfRangeException("Invalid `Vector4Bool` index!"); } }
+      }
+    }
 
     internal /* readonly */ struct WaitInfo : PatchOdyssey.Collections.IRefEquatable<WaitInfo> /* ⟶ Considered `UnityEngine.MonoBehaviour::Invoke[Repeating](nameof(𝑓) or ((System.Delegate) 𝑓).Method.Name, delay[, interval])` */ {
       private sealed class Waiter : UnityEngine.MonoBehaviour {}
@@ -3375,7 +3537,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.Generic.SortedSet       <T>                            sortedSet)        => 0  == sortedSet       .Count;
     [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.Generic.Stack           <T>                            stack)            => 0  == stack           .Count;
     [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Hashtable                                              hashtable)        => 0  == hashtable       .Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.IEnumerable                                            enumerable)       => 0u == Util.EnumerableCount(enumerable);
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.IEnumerable                                            enumerable)       => 0u == Util.Enumerable.Count(enumerable);
     [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.ObjectModel.ObservableCollection        <T>            collection)       => 0  == collection.Count;
     [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.ObjectModel.ReadOnlyCollection          <T>            collection)       => 0  == collection.Count;
     [PatchMethod(AggressiveInlining)] public static bool IsEmpty<TKey, TValue>(this    System.Collections.ObjectModel.ReadOnlyDictionary          <TKey, TValue> dictionary)       => 0  == dictionary.Count;
@@ -3684,6 +3846,109 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       [PatchMethod(AggressiveInlining)] private unsafe static void UnmanagedCopy<U>(U[] sourceArray, uint sourceIndex, U[] destinationArray, uint destinationIndex, uint count) where U : unmanaged => System.Buffer.BlockCopy(sourceArray, (int) sourceIndex * sizeof(U), destinationArray, (int) destinationIndex * sizeof(U), (int) count * sizeof(U));
     }
 
+    public static class Enumerable {
+      [PatchMethod(AggressiveInlining)]
+      public static uint Count(System.Collections.IEnumerable enumerable) {
+        uint count = 0u;
+
+        // …
+        for (System.Collections.IEnumerator enumerator = enumerable.GetEnumerator(); enumerator.MoveNext(); )
+        ++count;
+
+        return count;
+      }
+
+      [PatchMethod(AggressiveInlining)]
+      public static uint Count<T>(System.Collections.Generic.IEnumerable<T> enumerable) {
+        uint count = 0u;
+
+        // …
+        using (System.Collections.Generic.IEnumerator<T> enumerator = enumerable.GetEnumerator()) {
+          while (enumerator.MoveNext())
+          ++count;
+        }
+
+        return count;
+      }
+    }
+
+    public static class Enumerator {
+      [PatchMethod(AggressiveInlining)]
+      public static uint Count(System.Collections.IEnumerator enumerator, bool preserve = true) {
+        uint count = 0u;
+        uint index = 0u;
+
+        // …
+        if  (preserve) { while (enumerator.MoveNext()) ++index; }
+        for (enumerator.Reset(); enumerator.MoveNext(); ) ++count;
+        if  (preserve) { for (enumerator.Reset(); count != index; ++index) enumerator.MoveNext(); } // ⟶ Reset `enumerator` to initially passed state
+
+        return count;
+      }
+
+      [PatchMethod(AggressiveInlining)]
+      public static uint Count<T>(System.Collections.Generic.IEnumerator<T> enumerator, bool preserve = true) {
+        uint count = Enumerator.Count((System.Collections.IEnumerator) enumerator, preserve);
+
+        // …
+        if (!preserve)
+        enumerator.Dispose();
+
+        return count;
+      }
+
+      [PatchMethod(AggressiveInlining)]
+      public static TEnumerable? MoveNext<TEnumerable>(in TEnumerable enumerator, uint length = 1u, bool preserve = true) where TEnumerable : System.Collections.IEnumerator {
+        uint count = 0u;
+        uint index = 0u;
+
+        // …
+        if (preserve) {
+          while (enumerator.MoveNext())                       ++index;
+          for   (enumerator.Reset(); enumerator.MoveNext(); ) ++count;
+
+          enumerator.Reset();
+          for (uint subindex = index; count != subindex; ++subindex) enumerator.MoveNext();
+        }
+
+        while (0u != length--)
+        if (!enumerator.MoveNext()) {
+          if (preserve) {
+            for (enumerator.Reset(); count != index; ++index)
+            enumerator.MoveNext(); // ⟶ Reset `enumerator` to initially passed state
+          }
+
+          return default;
+        }
+
+        return enumerator;
+      }
+
+      [PatchMethod(AggressiveInlining)]
+      public static TEnumerable? MoveTo<TEnumerable>(in TEnumerable enumerator, uint position, bool preserve = true) where TEnumerable : System.Collections.IEnumerator {
+        uint count = 0u;
+        uint index = 0u;
+
+        // …
+        if (preserve) {
+          while (enumerator.MoveNext())
+          ++index;
+        }
+
+        for (enumerator.Reset(); 0u != position--; ++count)
+        if (!enumerator.MoveNext()) {
+          if (preserve) {
+            for (enumerator.Reset(); count != index; ++index)
+            enumerator.MoveNext(); // ⟶ Reset `enumerator` to initially passed state
+          }
+
+          return default;
+        }
+
+        return enumerator;
+      }
+    }
+
     public static class Load {
       internal abstract class CachedIndex {}
       internal abstract class FailedIndex {}
@@ -3950,7 +4215,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
           // …
           if (null != audioClip)
-          audioClip.name = "🎵 " + System.IO.Path.GetFileName(request.url);
+          audioClip.name = $"🎵 {System.IO.Path.GetFileName(request.url)}";
 
           return audioClip;
         }),
@@ -4004,7 +4269,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         ([PatchMethod(AggressiveInlining)] static (request) => {
           UnityEngine.Texture2D texture = new(2, 2, UnityEngine.TextureFormat.RGBA32, -1, false);
 
-          texture.name = "🖼️ " + System.IO.Path.GetFileName(request.url);
+          texture.name = $"🖼️ {System.IO.Path.GetFileName(request.url)}";
           return UnityEngine.ImageConversion.LoadImage(texture, request.downloadHandler.data, true) ? texture : null;
         }),
         ([PatchMethod(AggressiveInlining)] static (cached) => {
@@ -4060,6 +4325,276 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       [PatchMethod(AggressiveInlining)] private unsafe static ref          U UnmanagedArrayAt       <U>(U[]                       array, uint index) where U : unmanaged { fixed (U* address = array) return ref address[index]; }
       [PatchMethod(AggressiveInlining)] private unsafe static ref readonly U UnmanagedReadOnlySpanAt<U>(in System.ReadOnlySpan<U> span,  int  index) where U : unmanaged { fixed (U* address = span)  return ref *(address + index); }
       [PatchMethod(AggressiveInlining)] private unsafe static ref          U UnmanagedSpanAt        <U>(in System.Span        <U> span,  int  index) where U : unmanaged { fixed (U* address = span)  return ref *(address + index); }
+    }
+
+    public static class Vector {
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Exclude       (in UnityEngine.Vector2    vector, uint                                    index) { switch (index) { case 0u: return Vector.Exclude(vector, new PatchOdyssey.Collections.Vector2Bool(true, false));               case 1u: return Vector.Exclude(vector, new PatchOdyssey.Collections.Vector2Bool(false, true)); }                                                                                                                                                                                                                                         throw new System.IndexOutOfRangeException("Invalid `Vector2` index!"); }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int Exclude       (in UnityEngine.Vector2Int vector, uint                                    index) { switch (index) { case 0u: return Vector.Exclude(vector, new PatchOdyssey.Collections.Vector2Bool(true, false));               case 1u: return Vector.Exclude(vector, new PatchOdyssey.Collections.Vector2Bool(false, true)); }                                                                                                                                                                                                                                         throw new System.IndexOutOfRangeException("Invalid `Vector2Int` index!"); }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    Exclude       (in UnityEngine.Vector3    vector, uint                                    index) { switch (index) { case 0u: return Vector.Exclude(vector, new PatchOdyssey.Collections.Vector3Bool(true, false, false));        case 1u: return Vector.Exclude(vector, new PatchOdyssey.Collections.Vector3Bool(false, true, false));        case 2u: return Vector.Exclude(vector, new PatchOdyssey.Collections.Vector3Bool(false, false, true)); }                                                                                                                     throw new System.IndexOutOfRangeException("Invalid `Vector3` index!"); }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int Exclude       (in UnityEngine.Vector3Int vector, uint                                    index) { switch (index) { case 0u: return Vector.Exclude(vector, new PatchOdyssey.Collections.Vector3Bool(true, false, false));        case 1u: return Vector.Exclude(vector, new PatchOdyssey.Collections.Vector3Bool(false, true, false));        case 2u: return Vector.Exclude(vector, new PatchOdyssey.Collections.Vector3Bool(false, false, true)); }                                                                                                                     throw new System.IndexOutOfRangeException("Invalid `Vector3Int` index!"); }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    Exclude       (in UnityEngine.Vector4    vector, uint                                    index) { switch (index) { case 0u: return Vector.Exclude(vector, new PatchOdyssey.Collections.Vector4Bool(true, false, false, false)); case 1u: return Vector.Exclude(vector, new PatchOdyssey.Collections.Vector4Bool(false, true, false, false)); case 2u: return Vector.Exclude(vector, new PatchOdyssey.Collections.Vector4Bool(false, false, true, false)); case 3u: return Vector.Exclude(vector, new PatchOdyssey.Collections.Vector4Bool(false, false, false, true)); } throw new System.IndexOutOfRangeException("Invalid `Vector4` index!"); }
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static UnityEngine.Vector2    Exclude       (in UnityEngine.Vector2    vector, in PatchOdyssey.Collections.Vector2Bool axes)  => new(axes.x ? 0.0f : vector.x, axes.y ? 0.0f : vector.y);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Exclude       (in UnityEngine.Vector2    vector, in PatchOdyssey.Collections.Vector3Bool axes)  => Vector.Exclude(vector, (PatchOdyssey.Collections.Vector2Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Exclude       (in UnityEngine.Vector2    vector, in PatchOdyssey.Collections.Vector4Bool axes)  => Vector.Exclude(vector, (PatchOdyssey.Collections.Vector2Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Exclude       (in UnityEngine.Vector2    vector, in UnityEngine.Vector2                  axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1.0f, axes.y == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Exclude       (in UnityEngine.Vector2    vector, in UnityEngine.Vector2Int               axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1,    axes.y == 1));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Exclude       (in UnityEngine.Vector2    vector, in UnityEngine.Vector3                  axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1.0f, axes.y == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Exclude       (in UnityEngine.Vector2    vector, in UnityEngine.Vector3Int               axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1,    axes.y == 1));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Exclude       (in UnityEngine.Vector2    vector, in UnityEngine.Vector4                  axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1.0f, axes.y == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static UnityEngine.Vector2Int Exclude       (in UnityEngine.Vector2Int vector, in PatchOdyssey.Collections.Vector2Bool axes)  => new(axes.x ? 0 : vector.x, axes.y ? 0 : vector.y);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int Exclude       (in UnityEngine.Vector2Int vector, in PatchOdyssey.Collections.Vector3Bool axes)  => Vector.Exclude(vector, (PatchOdyssey.Collections.Vector2Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int Exclude       (in UnityEngine.Vector2Int vector, in PatchOdyssey.Collections.Vector4Bool axes)  => Vector.Exclude(vector, (PatchOdyssey.Collections.Vector2Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Exclude       (in UnityEngine.Vector2Int vector, in UnityEngine.Vector2                  axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1.0f, axes.y == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Exclude       (in UnityEngine.Vector2Int vector, in UnityEngine.Vector2Int               axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1,    axes.y == 1));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Exclude       (in UnityEngine.Vector2Int vector, in UnityEngine.Vector3                  axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1.0f, axes.y == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Exclude       (in UnityEngine.Vector2Int vector, in UnityEngine.Vector3Int               axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1,    axes.y == 1));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Exclude       (in UnityEngine.Vector2Int vector, in UnityEngine.Vector4                  axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1.0f, axes.y == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    Exclude       (in UnityEngine.Vector3    vector, in PatchOdyssey.Collections.Vector2Bool axes)  => Vector.Exclude(vector, (PatchOdyssey.Collections.Vector3Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static UnityEngine.Vector3    Exclude       (in UnityEngine.Vector3    vector, in PatchOdyssey.Collections.Vector3Bool axes)  => new(axes.x ? 0.0f : vector.x, axes.y ? 0.0f : vector.y, axes.z ? 0.0f : vector.z);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    Exclude       (in UnityEngine.Vector3    vector, in PatchOdyssey.Collections.Vector4Bool axes)  => Vector.Exclude(vector, (PatchOdyssey.Collections.Vector3Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    Exclude       (in UnityEngine.Vector3    vector, in UnityEngine.Vector2                  axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1.0f, axes.y == 1.0f, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    Exclude       (in UnityEngine.Vector3    vector, in UnityEngine.Vector2Int               axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1,    axes.y == 1,    true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    Exclude       (in UnityEngine.Vector3    vector, in UnityEngine.Vector3                  axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1.0f, axes.y == 1.0f, axes.z == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    Exclude       (in UnityEngine.Vector3    vector, in UnityEngine.Vector3Int               axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1,    axes.y == 1,    axes.z == 1));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    Exclude       (in UnityEngine.Vector3    vector, in UnityEngine.Vector4                  axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1.0f, axes.y == 1.0f, axes.z == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int Exclude       (in UnityEngine.Vector3Int vector, in PatchOdyssey.Collections.Vector2Bool axes)  => Vector.Exclude(vector, (PatchOdyssey.Collections.Vector3Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static UnityEngine.Vector3Int Exclude       (in UnityEngine.Vector3Int vector, in PatchOdyssey.Collections.Vector3Bool axes)  => new(axes.x ? 0 : vector.x, axes.y ? 0 : vector.y, axes.z ? 0 : vector.z);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int Exclude       (in UnityEngine.Vector3Int vector, in PatchOdyssey.Collections.Vector4Bool axes)  => Vector.Exclude(vector, (PatchOdyssey.Collections.Vector3Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int Exclude       (in UnityEngine.Vector3Int vector, in UnityEngine.Vector2                  axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1.0f, axes.y == 1.0f, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int Exclude       (in UnityEngine.Vector3Int vector, in UnityEngine.Vector2Int               axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1,    axes.y == 1,    true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int Exclude       (in UnityEngine.Vector3Int vector, in UnityEngine.Vector3                  axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1.0f, axes.y == 1.0f, axes.z == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int Exclude       (in UnityEngine.Vector3Int vector, in UnityEngine.Vector3Int               axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1,    axes.y == 1,    axes.z == 1));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int Exclude       (in UnityEngine.Vector3Int vector, in UnityEngine.Vector4                  axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1.0f, axes.y == 1.0f, axes.z == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    Exclude       (in UnityEngine.Vector4    vector, in PatchOdyssey.Collections.Vector2Bool axes)  => Vector.Exclude(vector, (PatchOdyssey.Collections.Vector4Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    Exclude       (in UnityEngine.Vector4    vector, in PatchOdyssey.Collections.Vector3Bool axes)  => Vector.Exclude(vector, (PatchOdyssey.Collections.Vector4Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static UnityEngine.Vector4    Exclude       (in UnityEngine.Vector4    vector, in PatchOdyssey.Collections.Vector4Bool axes)  => new(axes.x ? 0.0f : vector.x, axes.y ? 0.0f : vector.y, axes.z ? 0.0f : vector.z, axes.w ? 0.0f : vector.w);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    Exclude       (in UnityEngine.Vector4    vector, in UnityEngine.Vector2                  axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector4Bool(axes.x == 1.0f, axes.y == 1.0f, true,           true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    Exclude       (in UnityEngine.Vector4    vector, in UnityEngine.Vector2Int               axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector4Bool(axes.x == 1,    axes.y == 1,    true,           true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    Exclude       (in UnityEngine.Vector4    vector, in UnityEngine.Vector3                  axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector4Bool(axes.x == 1.0f, axes.y == 1.0f, axes.z == 1.0f, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    Exclude       (in UnityEngine.Vector4    vector, in UnityEngine.Vector3Int               axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector4Bool(axes.x == 1,    axes.y == 1,    axes.z == 1,    true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    Exclude       (in UnityEngine.Vector4    vector, in UnityEngine.Vector4                  axes)  => Vector.Exclude(vector, new PatchOdyssey.Collections.Vector4Bool(axes.x == 1.0f, axes.y == 1.0f, axes.z == 1.0f, axes.w == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    ExcludeBack   (in UnityEngine.Vector3    vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector3Bool.back);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int ExcludeBack   (in UnityEngine.Vector3Int vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector3Bool.back);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    ExcludeDown   (in UnityEngine.Vector2    vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector2Bool.down);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int ExcludeDown   (in UnityEngine.Vector2Int vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector2Bool.down);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    ExcludeDown   (in UnityEngine.Vector3    vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector3Bool.down);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int ExcludeDown   (in UnityEngine.Vector3Int vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector3Bool.down);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    ExcludeForward(in UnityEngine.Vector3    vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector3Bool.forward);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int ExcludeForward(in UnityEngine.Vector3Int vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector3Bool.forward);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    ExcludeLeft   (in UnityEngine.Vector2    vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector2Bool.left);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int ExcludeLeft   (in UnityEngine.Vector2Int vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector2Bool.left);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    ExcludeLeft   (in UnityEngine.Vector3    vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector3Bool.left);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int ExcludeLeft   (in UnityEngine.Vector3Int vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector3Bool.left);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    ExcludeRight  (in UnityEngine.Vector2    vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector2Bool.right);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int ExcludeRight  (in UnityEngine.Vector2Int vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector2Bool.right);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    ExcludeRight  (in UnityEngine.Vector3    vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector3Bool.right);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int ExcludeRight  (in UnityEngine.Vector3Int vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector3Bool.right);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    ExcludeUp     (in UnityEngine.Vector2    vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector2Bool.up);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int ExcludeUp     (in UnityEngine.Vector2Int vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector2Bool.up);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    ExcludeUp     (in UnityEngine.Vector3    vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector3Bool.up);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int ExcludeUp     (in UnityEngine.Vector3Int vector)                                                => Vector.Exclude       (vector, PatchOdyssey.Collections.Vector3Bool.up);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    ExcludeDepth  (in UnityEngine.Vector3    vector)                                                => Vector.ExcludeForward(vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int ExcludeDepth  (in UnityEngine.Vector3Int vector)                                                => Vector.ExcludeForward(vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    ExcludeHeight (in UnityEngine.Vector2    vector)                                                => Vector.ExcludeUp     (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int ExcludeHeight (in UnityEngine.Vector2Int vector)                                                => Vector.ExcludeUp     (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    ExcludeHeight (in UnityEngine.Vector3    vector)                                                => Vector.ExcludeUp     (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int ExcludeHeight (in UnityEngine.Vector3Int vector)                                                => Vector.ExcludeUp     (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    ExcludeWidth  (in UnityEngine.Vector2    vector)                                                => Vector.ExcludeRight  (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int ExcludeWidth  (in UnityEngine.Vector2Int vector)                                                => Vector.ExcludeRight  (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    ExcludeWidth  (in UnityEngine.Vector3    vector)                                                => Vector.ExcludeRight  (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int ExcludeWidth  (in UnityEngine.Vector3Int vector)                                                => Vector.ExcludeRight  (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    ExcludeX      (in UnityEngine.Vector2    vector)                                                => Vector.Exclude       (vector, new PatchOdyssey.Collections.Vector2Bool(true,  false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int ExcludeX      (in UnityEngine.Vector2Int vector)                                                => Vector.Exclude       (vector, new PatchOdyssey.Collections.Vector2Bool(true,  false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    ExcludeX      (in UnityEngine.Vector3    vector)                                                => Vector.Exclude       (vector, new PatchOdyssey.Collections.Vector3Bool(true,  false, false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int ExcludeX      (in UnityEngine.Vector3Int vector)                                                => Vector.Exclude       (vector, new PatchOdyssey.Collections.Vector3Bool(true,  false, false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    ExcludeX      (in UnityEngine.Vector4    vector)                                                => Vector.Exclude       (vector, new PatchOdyssey.Collections.Vector4Bool(true,  false, false, false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    ExcludeY      (in UnityEngine.Vector2    vector)                                                => Vector.Exclude       (vector, new PatchOdyssey.Collections.Vector2Bool(false, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int ExcludeY      (in UnityEngine.Vector2Int vector)                                                => Vector.Exclude       (vector, new PatchOdyssey.Collections.Vector2Bool(false, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    ExcludeY      (in UnityEngine.Vector3    vector)                                                => Vector.Exclude       (vector, new PatchOdyssey.Collections.Vector3Bool(false, true,  false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int ExcludeY      (in UnityEngine.Vector3Int vector)                                                => Vector.Exclude       (vector, new PatchOdyssey.Collections.Vector3Bool(false, true,  false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    ExcludeY      (in UnityEngine.Vector4    vector)                                                => Vector.Exclude       (vector, new PatchOdyssey.Collections.Vector4Bool(false, true,  false, false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    ExcludeZ      (in UnityEngine.Vector3    vector)                                                => Vector.Exclude       (vector, new PatchOdyssey.Collections.Vector3Bool(false, false, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int ExcludeZ      (in UnityEngine.Vector3Int vector)                                                => Vector.Exclude       (vector, new PatchOdyssey.Collections.Vector3Bool(false, false, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    ExcludeZ      (in UnityEngine.Vector4    vector)                                                => Vector.Exclude       (vector, new PatchOdyssey.Collections.Vector4Bool(false, false, true, false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    ExcludeW      (in UnityEngine.Vector4    vector)                                                => Vector.Exclude       (vector, new PatchOdyssey.Collections.Vector4Bool(false, false, false, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector2    vector, uint                                    index) => index < 2u ? vector[(int) index] : float.NaN;
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetAxis       (in UnityEngine.Vector2Int vector, uint                                    index) => index < 2u ? vector[(int) index] : int  .MinValue;
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector3    vector, uint                                    index) => index < 3u ? vector[(int) index] : float.NaN;
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetAxis       (in UnityEngine.Vector3Int vector, uint                                    index) => index < 3u ? vector[(int) index] : int  .MinValue;
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector4    vector, uint                                    index) => index < 4u ? vector[(int) index] : float.NaN;
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static float                  GetAxis       (in UnityEngine.Vector2    vector, in PatchOdyssey.Collections.Vector2Bool axes)  => axes.x ? vector.x : axes.y ? vector.y : float.NaN;
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector2    vector, in PatchOdyssey.Collections.Vector3Bool axes)  => Vector.GetAxis(vector, (PatchOdyssey.Collections.Vector2Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector2    vector, in PatchOdyssey.Collections.Vector4Bool axes)  => Vector.GetAxis(vector, (PatchOdyssey.Collections.Vector2Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector2    vector, in UnityEngine.Vector2                  axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector2Bool(0.0f != axes.x, 0.0f != axes.y));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector2    vector, in UnityEngine.Vector2Int               axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector2Bool(0    != axes.x, 0    != axes.y));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector2    vector, in UnityEngine.Vector3                  axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector2Bool(0.0f != axes.x, 0.0f != axes.y));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector2    vector, in UnityEngine.Vector3Int               axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector2Bool(0    != axes.x, 0    != axes.y));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector2    vector, in UnityEngine.Vector4                  axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector2Bool(0.0f != axes.x, 0.0f != axes.y));
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static int                    GetAxis       (in UnityEngine.Vector2Int vector, in PatchOdyssey.Collections.Vector2Bool axes)  => axes.x ? vector.x : axes.y ? vector.y : int.MinValue;
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetAxis       (in UnityEngine.Vector2Int vector, in PatchOdyssey.Collections.Vector3Bool axes)  => Vector.GetAxis(vector, (PatchOdyssey.Collections.Vector2Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetAxis       (in UnityEngine.Vector2Int vector, in PatchOdyssey.Collections.Vector4Bool axes)  => Vector.GetAxis(vector, (PatchOdyssey.Collections.Vector2Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector2Int vector, in UnityEngine.Vector2                  axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector2Bool(0.0f != axes.x, 0.0f != axes.y));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector2Int vector, in UnityEngine.Vector2Int               axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector2Bool(0    != axes.x, 0    != axes.y));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector2Int vector, in UnityEngine.Vector3                  axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector2Bool(0.0f != axes.x, 0.0f != axes.y));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector2Int vector, in UnityEngine.Vector3Int               axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector2Bool(0    != axes.x, 0    != axes.y));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector2Int vector, in UnityEngine.Vector4                  axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector2Bool(0.0f != axes.x, 0.0f != axes.y));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector3    vector, in PatchOdyssey.Collections.Vector2Bool axes)  => Vector.GetAxis(vector, (PatchOdyssey.Collections.Vector3Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static float                  GetAxis       (in UnityEngine.Vector3    vector, in PatchOdyssey.Collections.Vector3Bool axes)  => axes.x ? vector.x : axes.y ? vector.y : axes.z ? vector.z : float.NaN;
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector3    vector, in PatchOdyssey.Collections.Vector4Bool axes)  => Vector.GetAxis(vector, (PatchOdyssey.Collections.Vector3Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector3    vector, in UnityEngine.Vector2                  axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector3Bool(0.0f != axes.x, 0.0f != axes.y, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector3    vector, in UnityEngine.Vector2Int               axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector3Bool(0    != axes.x, 0    != axes.y, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector3    vector, in UnityEngine.Vector3                  axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector3Bool(0.0f != axes.x, 0.0f != axes.y, 0.0f != axes.z));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector3    vector, in UnityEngine.Vector3Int               axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector3Bool(0    != axes.x, 0    != axes.y, 0    != axes.z));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector3    vector, in UnityEngine.Vector4                  axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector3Bool(0.0f != axes.x, 0.0f != axes.y, 0.0f != axes.z));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetAxis       (in UnityEngine.Vector3Int vector, in PatchOdyssey.Collections.Vector2Bool axes)  => Vector.GetAxis(vector, (PatchOdyssey.Collections.Vector3Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static int                    GetAxis       (in UnityEngine.Vector3Int vector, in PatchOdyssey.Collections.Vector3Bool axes)  => axes.x ? vector.x : axes.y ? vector.y : axes.z ? vector.z : int.MinValue;
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetAxis       (in UnityEngine.Vector3Int vector, in PatchOdyssey.Collections.Vector4Bool axes)  => Vector.GetAxis(vector, (PatchOdyssey.Collections.Vector3Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetAxis       (in UnityEngine.Vector3Int vector, in UnityEngine.Vector2                  axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector3Bool(0.0f != axes.x, 0.0f != axes.y, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetAxis       (in UnityEngine.Vector3Int vector, in UnityEngine.Vector2Int               axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector3Bool(0    != axes.x, 0    != axes.y, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetAxis       (in UnityEngine.Vector3Int vector, in UnityEngine.Vector3                  axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector3Bool(0.0f != axes.x, 0.0f != axes.y, 0.0f != axes.z));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetAxis       (in UnityEngine.Vector3Int vector, in UnityEngine.Vector3Int               axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector3Bool(0    != axes.x, 0    != axes.y, 0    != axes.z));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetAxis       (in UnityEngine.Vector3Int vector, in UnityEngine.Vector4                  axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector3Bool(0.0f != axes.x, 0.0f != axes.y, 0.0f != axes.z));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector4    vector, in PatchOdyssey.Collections.Vector2Bool axes)  => Vector.GetAxis(vector, (PatchOdyssey.Collections.Vector4Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector4    vector, in PatchOdyssey.Collections.Vector3Bool axes)  => Vector.GetAxis(vector, (PatchOdyssey.Collections.Vector4Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static float                  GetAxis       (in UnityEngine.Vector4    vector, in PatchOdyssey.Collections.Vector4Bool axes)  => axes.x ? vector.x : axes.y ? vector.y : axes.z ? vector.z : axes.w ? vector.w : float.NaN;
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector4    vector, in UnityEngine.Vector2                  axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector4Bool(0.0f != axes.x, 0.0f != axes.y, true,           true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector4    vector, in UnityEngine.Vector2Int               axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector4Bool(0    != axes.x, 0    != axes.y, true,           true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector4    vector, in UnityEngine.Vector3                  axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector4Bool(0.0f != axes.x, 0.0f != axes.y, 0.0f != axes.z, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector4    vector, in UnityEngine.Vector3Int               axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector4Bool(0    != axes.x, 0    != axes.y, 0    != axes.z, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetAxis       (in UnityEngine.Vector4    vector, in UnityEngine.Vector4                  axes)  => Vector.GetAxis(vector, new PatchOdyssey.Collections.Vector4Bool(0.0f != axes.x, 0.0f != axes.y, 0.0f != axes.z, 0.0f != axes.w));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetBackAxis   (in UnityEngine.Vector3    vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector3Bool.back);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetBackAxis   (in UnityEngine.Vector3Int vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector3Bool.back);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetDownAxis   (in UnityEngine.Vector2    vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector2Bool.down);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetDownAxis   (in UnityEngine.Vector2Int vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector2Bool.down);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetDownAxis   (in UnityEngine.Vector3    vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector3Bool.down);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetDownAxis   (in UnityEngine.Vector3Int vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector3Bool.down);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetForwardAxis(in UnityEngine.Vector3    vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector3Bool.forward);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetForwardAxis(in UnityEngine.Vector3Int vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector3Bool.forward);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetLeftAxis   (in UnityEngine.Vector2    vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector2Bool.left);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetLeftAxis   (in UnityEngine.Vector2Int vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector2Bool.left);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetLeftAxis   (in UnityEngine.Vector3    vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector3Bool.left);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetLeftAxis   (in UnityEngine.Vector3Int vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector3Bool.left);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetRightAxis  (in UnityEngine.Vector2    vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector2Bool.right);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetRightAxis  (in UnityEngine.Vector2Int vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector2Bool.right);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetRightAxis  (in UnityEngine.Vector3    vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector3Bool.right);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetRightAxis  (in UnityEngine.Vector3Int vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector3Bool.right);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetUpAxis     (in UnityEngine.Vector2    vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector2Bool.up);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetUpAxis     (in UnityEngine.Vector2Int vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector2Bool.up);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetUpAxis     (in UnityEngine.Vector3    vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector3Bool.up);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetUpAxis     (in UnityEngine.Vector3Int vector)                                                => Vector.GetAxis       (vector, PatchOdyssey.Collections.Vector3Bool.up);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetDepthAxis  (in UnityEngine.Vector3    vector)                                                => Vector.GetForwardAxis(vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetDepthAxis  (in UnityEngine.Vector3Int vector)                                                => Vector.GetForwardAxis(vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetHeightAxis (in UnityEngine.Vector2    vector)                                                => Vector.GetUpAxis     (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetHeightAxis (in UnityEngine.Vector2Int vector)                                                => Vector.GetUpAxis     (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetHeightAxis (in UnityEngine.Vector3    vector)                                                => Vector.GetUpAxis     (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetHeightAxis (in UnityEngine.Vector3Int vector)                                                => Vector.GetUpAxis     (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetWidthAxis  (in UnityEngine.Vector2    vector)                                                => Vector.GetRightAxis  (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetWidthAxis  (in UnityEngine.Vector2Int vector)                                                => Vector.GetRightAxis  (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetWidthAxis  (in UnityEngine.Vector3    vector)                                                => Vector.GetRightAxis  (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetWidthAxis  (in UnityEngine.Vector3Int vector)                                                => Vector.GetRightAxis  (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetXAxis      (in UnityEngine.Vector2    vector)                                                => Vector.GetAxis       (vector, new PatchOdyssey.Collections.Vector2Bool(true,  false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetXAxis      (in UnityEngine.Vector2Int vector)                                                => Vector.GetAxis       (vector, new PatchOdyssey.Collections.Vector2Bool(true,  false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetXAxis      (in UnityEngine.Vector3    vector)                                                => Vector.GetAxis       (vector, new PatchOdyssey.Collections.Vector3Bool(true,  false, false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetXAxis      (in UnityEngine.Vector3Int vector)                                                => Vector.GetAxis       (vector, new PatchOdyssey.Collections.Vector3Bool(true,  false, false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetXAxis      (in UnityEngine.Vector4    vector)                                                => Vector.GetAxis       (vector, new PatchOdyssey.Collections.Vector4Bool(true,  false, false, false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetYAxis      (in UnityEngine.Vector2    vector)                                                => Vector.GetAxis       (vector, new PatchOdyssey.Collections.Vector2Bool(false, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetYAxis      (in UnityEngine.Vector2Int vector)                                                => Vector.GetAxis       (vector, new PatchOdyssey.Collections.Vector2Bool(false, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetYAxis      (in UnityEngine.Vector3    vector)                                                => Vector.GetAxis       (vector, new PatchOdyssey.Collections.Vector3Bool(false, true,  false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetYAxis      (in UnityEngine.Vector3Int vector)                                                => Vector.GetAxis       (vector, new PatchOdyssey.Collections.Vector3Bool(false, true,  false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetYAxis      (in UnityEngine.Vector4    vector)                                                => Vector.GetAxis       (vector, new PatchOdyssey.Collections.Vector4Bool(false, true,  false, false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetZAxis      (in UnityEngine.Vector3    vector)                                                => Vector.GetAxis       (vector, new PatchOdyssey.Collections.Vector3Bool(false, false, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int                    GetZAxis      (in UnityEngine.Vector3Int vector)                                                => Vector.GetAxis       (vector, new PatchOdyssey.Collections.Vector3Bool(false, false, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetZAxis      (in UnityEngine.Vector4    vector)                                                => Vector.GetAxis       (vector, new PatchOdyssey.Collections.Vector4Bool(false, false, true, false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static float                  GetWAxis      (in UnityEngine.Vector4    vector)                                                => Vector.GetAxis       (vector, new PatchOdyssey.Collections.Vector4Bool(false, false, false, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Mask          (in UnityEngine.Vector2    vector, uint                                    index) { switch (index) { case 0u: return Vector.Mask(vector, new PatchOdyssey.Collections.Vector2Bool(true, false));               case 1u: return Vector.Mask(vector, new PatchOdyssey.Collections.Vector2Bool(false, true)); }                                                                                                                                                                                                                                   throw new System.IndexOutOfRangeException("Invalid `Vector2` index!"); }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int Mask          (in UnityEngine.Vector2Int vector, uint                                    index) { switch (index) { case 0u: return Vector.Mask(vector, new PatchOdyssey.Collections.Vector2Bool(true, false));               case 1u: return Vector.Mask(vector, new PatchOdyssey.Collections.Vector2Bool(false, true)); }                                                                                                                                                                                                                                   throw new System.IndexOutOfRangeException("Invalid `Vector2Int` index!"); }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    Mask          (in UnityEngine.Vector3    vector, uint                                    index) { switch (index) { case 0u: return Vector.Mask(vector, new PatchOdyssey.Collections.Vector3Bool(true, false, false));        case 1u: return Vector.Mask(vector, new PatchOdyssey.Collections.Vector3Bool(false, true, false));        case 2u: return Vector.Mask(vector, new PatchOdyssey.Collections.Vector3Bool(false, false, true)); }                                                                                                                  throw new System.IndexOutOfRangeException("Invalid `Vector3` index!"); }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int Mask          (in UnityEngine.Vector3Int vector, uint                                    index) { switch (index) { case 0u: return Vector.Mask(vector, new PatchOdyssey.Collections.Vector3Bool(true, false, false));        case 1u: return Vector.Mask(vector, new PatchOdyssey.Collections.Vector3Bool(false, true, false));        case 2u: return Vector.Mask(vector, new PatchOdyssey.Collections.Vector3Bool(false, false, true)); }                                                                                                                  throw new System.IndexOutOfRangeException("Invalid `Vector3Int` index!"); }
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    Mask          (in UnityEngine.Vector4    vector, uint                                    index) { switch (index) { case 0u: return Vector.Mask(vector, new PatchOdyssey.Collections.Vector4Bool(true, false, false, false)); case 1u: return Vector.Mask(vector, new PatchOdyssey.Collections.Vector4Bool(false, true, false, false)); case 2u: return Vector.Mask(vector, new PatchOdyssey.Collections.Vector4Bool(false, false, true, false)); case 3u: return Vector.Mask(vector, new PatchOdyssey.Collections.Vector4Bool(false, false, false, true)); } throw new System.IndexOutOfRangeException("Invalid `Vector4` index!"); }
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static UnityEngine.Vector2    Mask          (in UnityEngine.Vector2    vector, in PatchOdyssey.Collections.Vector2Bool axes)  => new(axes.x ? vector.x : 0.0f, axes.y ? vector.y : 0.0f);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Mask          (in UnityEngine.Vector2    vector, in PatchOdyssey.Collections.Vector3Bool axes)  => Vector.Mask(vector, (PatchOdyssey.Collections.Vector2Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Mask          (in UnityEngine.Vector2    vector, in PatchOdyssey.Collections.Vector4Bool axes)  => Vector.Mask(vector, (PatchOdyssey.Collections.Vector2Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Mask          (in UnityEngine.Vector2    vector, in UnityEngine.Vector2                  axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1.0f, axes.y == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Mask          (in UnityEngine.Vector2    vector, in UnityEngine.Vector2Int               axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1,    axes.y == 1));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Mask          (in UnityEngine.Vector2    vector, in UnityEngine.Vector3                  axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1.0f, axes.y == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Mask          (in UnityEngine.Vector2    vector, in UnityEngine.Vector3Int               axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1,    axes.y == 1));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Mask          (in UnityEngine.Vector2    vector, in UnityEngine.Vector4                  axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1.0f, axes.y == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static UnityEngine.Vector2Int Mask          (in UnityEngine.Vector2Int vector, in PatchOdyssey.Collections.Vector2Bool axes)  => new(axes.x ? vector.x : 0, axes.y ? vector.y : 0);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int Mask          (in UnityEngine.Vector2Int vector, in PatchOdyssey.Collections.Vector3Bool axes)  => Vector.Mask(vector, (PatchOdyssey.Collections.Vector2Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int Mask          (in UnityEngine.Vector2Int vector, in PatchOdyssey.Collections.Vector4Bool axes)  => Vector.Mask(vector, (PatchOdyssey.Collections.Vector2Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Mask          (in UnityEngine.Vector2Int vector, in UnityEngine.Vector2                  axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1.0f, axes.y == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Mask          (in UnityEngine.Vector2Int vector, in UnityEngine.Vector2Int               axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1,    axes.y == 1));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Mask          (in UnityEngine.Vector2Int vector, in UnityEngine.Vector3                  axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1.0f, axes.y == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Mask          (in UnityEngine.Vector2Int vector, in UnityEngine.Vector3Int               axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1,    axes.y == 1));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    Mask          (in UnityEngine.Vector2Int vector, in UnityEngine.Vector4                  axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector2Bool(axes.x == 1.0f, axes.y == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    Mask          (in UnityEngine.Vector3    vector, in PatchOdyssey.Collections.Vector2Bool axes)  => Vector.Mask(vector, (PatchOdyssey.Collections.Vector3Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static UnityEngine.Vector3    Mask          (in UnityEngine.Vector3    vector, in PatchOdyssey.Collections.Vector3Bool axes)  => new(axes.x ? vector.x : 0.0f, axes.y ? vector.y : 0.0f, axes.z ? vector.z : 0.0f);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    Mask          (in UnityEngine.Vector3    vector, in PatchOdyssey.Collections.Vector4Bool axes)  => Vector.Mask(vector, (PatchOdyssey.Collections.Vector3Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    Mask          (in UnityEngine.Vector3    vector, in UnityEngine.Vector2                  axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1.0f, axes.y == 1.0f, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    Mask          (in UnityEngine.Vector3    vector, in UnityEngine.Vector2Int               axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1,    axes.y == 1,    true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    Mask          (in UnityEngine.Vector3    vector, in UnityEngine.Vector3                  axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1.0f, axes.y == 1.0f, axes.z == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    Mask          (in UnityEngine.Vector3    vector, in UnityEngine.Vector3Int               axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1,    axes.y == 1,    axes.z == 1));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    Mask          (in UnityEngine.Vector3    vector, in UnityEngine.Vector4                  axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1.0f, axes.y == 1.0f, axes.z == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int Mask          (in UnityEngine.Vector3Int vector, in PatchOdyssey.Collections.Vector2Bool axes)  => Vector.Mask(vector, (PatchOdyssey.Collections.Vector3Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static UnityEngine.Vector3Int Mask          (in UnityEngine.Vector3Int vector, in PatchOdyssey.Collections.Vector3Bool axes)  => new(axes.x ? vector.x : 0, axes.y ? vector.y : 0, axes.z ? vector.z : 0);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int Mask          (in UnityEngine.Vector3Int vector, in PatchOdyssey.Collections.Vector4Bool axes)  => Vector.Mask(vector, (PatchOdyssey.Collections.Vector3Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int Mask          (in UnityEngine.Vector3Int vector, in UnityEngine.Vector2                  axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1.0f, axes.y == 1.0f, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int Mask          (in UnityEngine.Vector3Int vector, in UnityEngine.Vector2Int               axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1,    axes.y == 1,    true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int Mask          (in UnityEngine.Vector3Int vector, in UnityEngine.Vector3                  axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1.0f, axes.y == 1.0f, axes.z == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int Mask          (in UnityEngine.Vector3Int vector, in UnityEngine.Vector3Int               axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1,    axes.y == 1,    axes.z == 1));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int Mask          (in UnityEngine.Vector3Int vector, in UnityEngine.Vector4                  axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector3Bool(axes.x == 1.0f, axes.y == 1.0f, axes.z == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    Mask          (in UnityEngine.Vector4    vector, in PatchOdyssey.Collections.Vector2Bool axes)  => Vector.Mask(vector, (PatchOdyssey.Collections.Vector4Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    Mask          (in UnityEngine.Vector4    vector, in PatchOdyssey.Collections.Vector3Bool axes)  => Vector.Mask(vector, (PatchOdyssey.Collections.Vector4Bool) axes);
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static UnityEngine.Vector4    Mask          (in UnityEngine.Vector4    vector, in PatchOdyssey.Collections.Vector4Bool axes)  => new(axes.x ? vector.x : 0.0f, axes.y ? vector.y : 0.0f, axes.z ? vector.z : 0.0f, axes.w ? vector.w : 0.0f);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    Mask          (in UnityEngine.Vector4    vector, in UnityEngine.Vector2                  axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector4Bool(axes.x == 1.0f, axes.y == 1.0f, true,           true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    Mask          (in UnityEngine.Vector4    vector, in UnityEngine.Vector2Int               axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector4Bool(axes.x == 1,    axes.y == 1,    true,           true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    Mask          (in UnityEngine.Vector4    vector, in UnityEngine.Vector3                  axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector4Bool(axes.x == 1.0f, axes.y == 1.0f, axes.z == 1.0f, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    Mask          (in UnityEngine.Vector4    vector, in UnityEngine.Vector3Int               axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector4Bool(axes.x == 1,    axes.y == 1,    axes.z == 1,    true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    Mask          (in UnityEngine.Vector4    vector, in UnityEngine.Vector4                  axes)  => Vector.Mask(vector, new PatchOdyssey.Collections.Vector4Bool(axes.x == 1.0f, axes.y == 1.0f, axes.z == 1.0f, axes.w == 1.0f));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    MaskBack      (in UnityEngine.Vector3    vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector3Bool.back);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int MaskBack      (in UnityEngine.Vector3Int vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector3Bool.back);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    MaskDown      (in UnityEngine.Vector2    vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector2Bool.down);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int MaskDown      (in UnityEngine.Vector2Int vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector2Bool.down);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    MaskDown      (in UnityEngine.Vector3    vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector3Bool.down);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int MaskDown      (in UnityEngine.Vector3Int vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector3Bool.down);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    MaskForward   (in UnityEngine.Vector3    vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector3Bool.forward);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int MaskForward   (in UnityEngine.Vector3Int vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector3Bool.forward);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    MaskLeft      (in UnityEngine.Vector2    vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector2Bool.left);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int MaskLeft      (in UnityEngine.Vector2Int vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector2Bool.left);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    MaskLeft      (in UnityEngine.Vector3    vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector3Bool.left);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int MaskLeft      (in UnityEngine.Vector3Int vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector3Bool.left);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    MaskRight     (in UnityEngine.Vector2    vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector2Bool.right);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int MaskRight     (in UnityEngine.Vector2Int vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector2Bool.right);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    MaskRight     (in UnityEngine.Vector3    vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector3Bool.right);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int MaskRight     (in UnityEngine.Vector3Int vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector3Bool.right);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    MaskUp        (in UnityEngine.Vector2    vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector2Bool.up);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int MaskUp        (in UnityEngine.Vector2Int vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector2Bool.up);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    MaskUp        (in UnityEngine.Vector3    vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector3Bool.up);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int MaskUp        (in UnityEngine.Vector3Int vector)                                                => Vector.Mask       (vector, PatchOdyssey.Collections.Vector3Bool.up);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    MaskDepth     (in UnityEngine.Vector3    vector)                                                => Vector.MaskForward(vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int MaskDepth     (in UnityEngine.Vector3Int vector)                                                => Vector.MaskForward(vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    MaskHeight    (in UnityEngine.Vector2    vector)                                                => Vector.MaskUp     (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int MaskHeight    (in UnityEngine.Vector2Int vector)                                                => Vector.MaskUp     (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    MaskHeight    (in UnityEngine.Vector3    vector)                                                => Vector.MaskUp     (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int MaskHeight    (in UnityEngine.Vector3Int vector)                                                => Vector.MaskUp     (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    MaskWidth     (in UnityEngine.Vector2    vector)                                                => Vector.MaskRight  (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int MaskWidth     (in UnityEngine.Vector2Int vector)                                                => Vector.MaskRight  (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    MaskWidth     (in UnityEngine.Vector3    vector)                                                => Vector.MaskRight  (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int MaskWidth     (in UnityEngine.Vector3Int vector)                                                => Vector.MaskRight  (vector);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    MaskX         (in UnityEngine.Vector2    vector)                                                => Vector.Mask       (vector, new PatchOdyssey.Collections.Vector2Bool(true,  false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int MaskX         (in UnityEngine.Vector2Int vector)                                                => Vector.Mask       (vector, new PatchOdyssey.Collections.Vector2Bool(true,  false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    MaskX         (in UnityEngine.Vector3    vector)                                                => Vector.Mask       (vector, new PatchOdyssey.Collections.Vector3Bool(true,  false, false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int MaskX         (in UnityEngine.Vector3Int vector)                                                => Vector.Mask       (vector, new PatchOdyssey.Collections.Vector3Bool(true,  false, false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    MaskX         (in UnityEngine.Vector4    vector)                                                => Vector.Mask       (vector, new PatchOdyssey.Collections.Vector4Bool(true,  false, false, false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2    MaskY         (in UnityEngine.Vector2    vector)                                                => Vector.Mask       (vector, new PatchOdyssey.Collections.Vector2Bool(false, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector2Int MaskY         (in UnityEngine.Vector2Int vector)                                                => Vector.Mask       (vector, new PatchOdyssey.Collections.Vector2Bool(false, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    MaskY         (in UnityEngine.Vector3    vector)                                                => Vector.Mask       (vector, new PatchOdyssey.Collections.Vector3Bool(false, true,  false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int MaskY         (in UnityEngine.Vector3Int vector)                                                => Vector.Mask       (vector, new PatchOdyssey.Collections.Vector3Bool(false, true,  false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    MaskY         (in UnityEngine.Vector4    vector)                                                => Vector.Mask       (vector, new PatchOdyssey.Collections.Vector4Bool(false, true,  false, false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3    MaskZ         (in UnityEngine.Vector3    vector)                                                => Vector.Mask       (vector, new PatchOdyssey.Collections.Vector3Bool(false, false, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector3Int MaskZ         (in UnityEngine.Vector3Int vector)                                                => Vector.Mask       (vector, new PatchOdyssey.Collections.Vector3Bool(false, false, true));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    MaskZ         (in UnityEngine.Vector4    vector)                                                => Vector.Mask       (vector, new PatchOdyssey.Collections.Vector4Bool(false, false, true, false));
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static UnityEngine.Vector4    MaskW         (in UnityEngine.Vector4    vector)                                                => Vector.Mask       (vector, new PatchOdyssey.Collections.Vector4Bool(false, false, false, true));
     }
 
     public static class Wait {
@@ -4167,155 +4702,13 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     private static readonly System.Collections.ObjectModel.ReadOnlyCollection<int>                 MouseButtons      = new[] {Util.MouseButtonLeft, Util.MouseButtonRight, Util.MouseButtonMiddle}.AsReadOnly();
 
     /* … */
-    public static UnityEngine.Vector3[] CornersFromRect(in UnityEngine.Rect rectangle) {
-      // ⟶ Origin begins from bottom-left rather than top-left
-      return new UnityEngine.Vector3[4] {
-        new(rectangle.xMin, rectangle.yMax, 0.0f),
-        new(rectangle.xMin, rectangle.yMin, 0.0f),
-        new(rectangle.xMax, rectangle.yMin, 0.0f),
-        new(rectangle.xMax, rectangle.yMax, 0.0f)
-      };
-    }
-
-    public static UnityEngine.Vector3[]? CornersFromRectTransform(System.Action<UnityEngine.Vector3[]?>? transformMethod) {
-      UnityEngine.Vector3[]? corners = null;
-
-      // …
-      if (transformMethod?.Target is UnityEngine.RectTransform)
-      transformMethod(corners = new UnityEngine.Vector3[4]);
-
-      return corners;
-    }
-
-    [PatchMethod(AggressiveInlining)] public static uint EnumerableCount   (System.Collections.IEnumerable            enumerable) => Util.EnumeratorCount(enumerable.GetEnumerator(), false);
-    [PatchMethod(AggressiveInlining)] public static uint EnumerableCount<T>(System.Collections.Generic.IEnumerable<T> enumerable) => Util.EnumeratorCount(enumerable.GetEnumerator(), false);
-
-    [PatchMethod(AggressiveInlining)]
-    public static uint EnumeratorCount(System.Collections.IEnumerator enumerator, bool preserve = true) {
-      uint count = 0u;
-      uint index = 0u;
-
-      // …
-      if (preserve) {
-        while (enumerator.MoveNext())
-        ++index;
-      }
-
-      for (enumerator.Reset(); enumerator.MoveNext(); )
-      ++count;
-
-      if (preserve) {
-        for (enumerator.Reset(); count != index; ++index)
-        enumerator.MoveNext(); // ⟶ Reset `enumerator` to initially passed state
-      }
-
-      return count;
-    }
-
-    [PatchMethod(AggressiveInlining)]
-    public static uint EnumeratorCount<T>(System.Collections.Generic.IEnumerator<T> enumerator, bool preserve = true) {
-      uint count = Util.EnumeratorCount((System.Collections.IEnumerator) enumerator, preserve);
-
-      // …
-      if (!preserve)
-      enumerator.Dispose();
-
-      return count;
-    }
-
-    [PatchMethod(AggressiveInlining)]
-    public static T? EnumeratorMoveTo<T>(in T enumerator, uint position, bool preserve = true) where T : System.Collections.IEnumerator {
-      uint count = 0u;
-      uint index = 0u;
-
-      // …
-      if (preserve) {
-        while (enumerator.MoveNext())
-        ++index;
-      }
-
-      for (enumerator.Reset(); 0u != position--; ++count)
-      if (!enumerator.MoveNext()) {
-        if (preserve) {
-          for (enumerator.Reset(); count != index; ++index)
-          enumerator.MoveNext(); // ⟶ Reset `enumerator` to initially passed state
-        }
-
-        return default;
-      }
-
-      return enumerator;
-    }
-
-    public static UnityEngine.Vector2    ExcludeVectorAxes       (in UnityEngine.Vector2    vector, UnityEngine.Vector2    axes) { return new(axes.x != 1.0f ? vector.x : 0.0f, axes.y != 1.0f ? vector.y : 0.0f); }
-    public static UnityEngine.Vector2    ExcludeVectorAxes       (UnityEngine.Vector2    vector, UnityEngine.Vector2Int axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y));
-    public static UnityEngine.Vector2    ExcludeVectorAxes       (UnityEngine.Vector2    vector, UnityEngine.Vector3    axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y));
-    public static UnityEngine.Vector2    ExcludeVectorAxes       (UnityEngine.Vector2    vector, UnityEngine.Vector3Int axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y));
-    public static UnityEngine.Vector2    ExcludeVectorAxes       (UnityEngine.Vector2    vector, UnityEngine.Vector4    axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector2   ((float) axes.x, (float) axes.y));
-    public static UnityEngine.Vector2Int ExcludeVectorAxes       (UnityEngine.Vector2Int vector, UnityEngine.Vector2    axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y));
-    public static UnityEngine.Vector2Int ExcludeVectorAxes       (UnityEngine.Vector2Int vector, UnityEngine.Vector2Int axes) { return new(axes.x != 1 ? vector.x : 0, axes.y != 1 ? vector.y : 0); }
-    public static UnityEngine.Vector2Int ExcludeVectorAxes       (UnityEngine.Vector2Int vector, UnityEngine.Vector3    axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y));
-    public static UnityEngine.Vector2Int ExcludeVectorAxes       (UnityEngine.Vector2Int vector, UnityEngine.Vector3Int axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y));
-    public static UnityEngine.Vector2Int ExcludeVectorAxes       (UnityEngine.Vector2Int vector, UnityEngine.Vector4    axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector2Int((int)   axes.x, (int)   axes.y));
-    public static UnityEngine.Vector3    ExcludeVectorAxes       (UnityEngine.Vector3    vector, UnityEngine.Vector2    axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) 1.0f));
-    public static UnityEngine.Vector3    ExcludeVectorAxes       (UnityEngine.Vector3    vector, UnityEngine.Vector2Int axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) 1.0f));
-    public static UnityEngine.Vector3    ExcludeVectorAxes       (UnityEngine.Vector3    vector, UnityEngine.Vector3    axes) { return new(axes.x != 1.0f ? vector.x : 0.0f, axes.y != 1.0f ? vector.y : 0.0f, axes.z != 1.0f ? vector.z : 0.0f); }
-    public static UnityEngine.Vector3    ExcludeVectorAxes       (UnityEngine.Vector3    vector, UnityEngine.Vector3Int axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) axes.z));
-    public static UnityEngine.Vector3    ExcludeVectorAxes       (UnityEngine.Vector3    vector, UnityEngine.Vector4    axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector3   ((float) axes.x, (float) axes.y, (float) axes.z));
-    public static UnityEngine.Vector3Int ExcludeVectorAxes       (UnityEngine.Vector3Int vector, UnityEngine.Vector2    axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   0));
-    public static UnityEngine.Vector3Int ExcludeVectorAxes       (UnityEngine.Vector3Int vector, UnityEngine.Vector2Int axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   0));
-    public static UnityEngine.Vector3Int ExcludeVectorAxes       (UnityEngine.Vector3Int vector, UnityEngine.Vector3    axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   axes.z));
-    public static UnityEngine.Vector3Int ExcludeVectorAxes       (UnityEngine.Vector3Int vector, UnityEngine.Vector3Int axes) { return new(axes.x != 1 ? vector.x : 0, axes.y != 1 ? vector.y : 0, axes.z != 1 ? vector.z : 0); }
-    public static UnityEngine.Vector3Int ExcludeVectorAxes       (UnityEngine.Vector3Int vector, UnityEngine.Vector4    axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector3Int((int)   axes.x, (int)   axes.y, (int)   axes.z));
-    public static UnityEngine.Vector4    ExcludeVectorAxes       (UnityEngine.Vector4    vector, UnityEngine.Vector2    axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) 1.0f,   (float) 1.0f));
-    public static UnityEngine.Vector4    ExcludeVectorAxes       (UnityEngine.Vector4    vector, UnityEngine.Vector2Int axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) 1.0f,   (float) 1.0f));
-    public static UnityEngine.Vector4    ExcludeVectorAxes       (UnityEngine.Vector4    vector, UnityEngine.Vector3    axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) axes.z, (float) 1.0f));
-    public static UnityEngine.Vector4    ExcludeVectorAxes       (UnityEngine.Vector4    vector, UnityEngine.Vector3Int axes) => Util.ExcludeVectorAxes(vector, new UnityEngine.Vector4   ((float) axes.x, (float) axes.y, (float) axes.z, (float) 1.0f));
-    public static UnityEngine.Vector4    ExcludeVectorAxes       (UnityEngine.Vector4    vector, UnityEngine.Vector4    axes) { return new(axes.x != 1.0f ? vector.x : 0.0f, axes.y != 1.0f ? vector.y : 0.0f, axes.z != 1.0f ? vector.z : 0.0f, axes.w != 1.0f ? vector.w : 0.0f); }
-    public static UnityEngine.Vector3    ExcludeVectorBackAxes   (UnityEngine.Vector3    vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector3   .back);
-    public static UnityEngine.Vector3Int ExcludeVectorBackAxes   (UnityEngine.Vector3Int vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector3Int.back);
-    public static UnityEngine.Vector2    ExcludeVectorDownAxes   (UnityEngine.Vector2    vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector2   .down);
-    public static UnityEngine.Vector2Int ExcludeVectorDownAxes   (UnityEngine.Vector2Int vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector2Int.down);
-    public static UnityEngine.Vector3    ExcludeVectorDownAxes   (UnityEngine.Vector3    vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector3   .down);
-    public static UnityEngine.Vector3Int ExcludeVectorDownAxes   (UnityEngine.Vector3Int vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector3Int.down);
-    public static UnityEngine.Vector3    ExcludeVectorForwardAxes(UnityEngine.Vector3    vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector3   .forward);
-    public static UnityEngine.Vector3Int ExcludeVectorForwardAxes(UnityEngine.Vector3Int vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector3Int.forward);
-    public static UnityEngine.Vector2    ExcludeVectorLeftAxes   (UnityEngine.Vector2    vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector2   .left);
-    public static UnityEngine.Vector2Int ExcludeVectorLeftAxes   (UnityEngine.Vector2Int vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector2Int.left);
-    public static UnityEngine.Vector3    ExcludeVectorLeftAxes   (UnityEngine.Vector3    vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector3   .left);
-    public static UnityEngine.Vector3Int ExcludeVectorLeftAxes   (UnityEngine.Vector3Int vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector3Int.left);
-    public static UnityEngine.Vector2    ExcludeVectorRightAxes  (UnityEngine.Vector2    vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector2   .right);
-    public static UnityEngine.Vector2Int ExcludeVectorRightAxes  (UnityEngine.Vector2Int vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector2Int.right);
-    public static UnityEngine.Vector3    ExcludeVectorRightAxes  (UnityEngine.Vector3    vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector3   .right);
-    public static UnityEngine.Vector3Int ExcludeVectorRightAxes  (UnityEngine.Vector3Int vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector3Int.right);
-    public static UnityEngine.Vector2    ExcludeVectorUpAxes     (UnityEngine.Vector2    vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector2   .up);
-    public static UnityEngine.Vector2Int ExcludeVectorUpAxes     (UnityEngine.Vector2Int vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector2Int.up);
-    public static UnityEngine.Vector3    ExcludeVectorUpAxes     (UnityEngine.Vector3    vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector3   .up);
-    public static UnityEngine.Vector3Int ExcludeVectorUpAxes     (UnityEngine.Vector3Int vector)                              => Util.ExcludeVectorAxes       (vector, UnityEngine.Vector3Int.up);
-    public static UnityEngine.Vector3    ExcludeVectorDepthAxes  (UnityEngine.Vector3    vector)                              => Util.ExcludeVectorForwardAxes(vector);
-    public static UnityEngine.Vector3Int ExcludeVectorDepthAxes  (UnityEngine.Vector3Int vector)                              => Util.ExcludeVectorForwardAxes(vector);
-    public static UnityEngine.Vector2    ExcludeVectorHeightAxes (UnityEngine.Vector2    vector)                              => Util.ExcludeVectorUpAxes     (vector);
-    public static UnityEngine.Vector2Int ExcludeVectorHeightAxes (UnityEngine.Vector2Int vector)                              => Util.ExcludeVectorUpAxes     (vector);
-    public static UnityEngine.Vector3    ExcludeVectorHeightAxes (UnityEngine.Vector3    vector)                              => Util.ExcludeVectorUpAxes     (vector);
-    public static UnityEngine.Vector3Int ExcludeVectorHeightAxes (UnityEngine.Vector3Int vector)                              => Util.ExcludeVectorUpAxes     (vector);
-    public static UnityEngine.Vector2    ExcludeVectorWidthAxes  (UnityEngine.Vector2    vector)                              => Util.ExcludeVectorRightAxes  (vector);
-    public static UnityEngine.Vector2Int ExcludeVectorWidthAxes  (UnityEngine.Vector2Int vector)                              => Util.ExcludeVectorRightAxes  (vector);
-    public static UnityEngine.Vector3    ExcludeVectorWidthAxes  (UnityEngine.Vector3    vector)                              => Util.ExcludeVectorRightAxes  (vector);
-    public static UnityEngine.Vector3Int ExcludeVectorWidthAxes  (UnityEngine.Vector3Int vector)                              => Util.ExcludeVectorRightAxes  (vector);
-    public static UnityEngine.Vector2    ExcludeVectorXAxes      (UnityEngine.Vector2    vector)                              => Util.ExcludeVectorAxes       (vector, new UnityEngine.Vector2   ((float) 1.0f, (float) 0.0f));
-    public static UnityEngine.Vector2Int ExcludeVectorXAxes      (UnityEngine.Vector2Int vector)                              => Util.ExcludeVectorAxes       (vector, new UnityEngine.Vector2Int((int)   1,    (int)   0));
-    public static UnityEngine.Vector3    ExcludeVectorXAxes      (UnityEngine.Vector3    vector)                              => Util.ExcludeVectorAxes       (vector, new UnityEngine.Vector3   ((float) 1.0f, (float) 0.0f, (float) 0.0f));
-    public static UnityEngine.Vector3Int ExcludeVectorXAxes      (UnityEngine.Vector3Int vector)                              => Util.ExcludeVectorAxes       (vector, new UnityEngine.Vector3Int((int)   1,    (int)   0,    (int)   0));
-    public static UnityEngine.Vector4    ExcludeVectorXAxes      (UnityEngine.Vector4    vector)                              => Util.ExcludeVectorAxes       (vector, new UnityEngine.Vector4   ((float) 1.0f, (float) 0.0f, (float) 0.0f, (float) 0.0f));
-    public static UnityEngine.Vector2    ExcludeVectorYAxes      (UnityEngine.Vector2    vector)                              => Util.ExcludeVectorAxes       (vector, new UnityEngine.Vector2   ((float) 0.0f, (float) 1.0f));
-    public static UnityEngine.Vector2Int ExcludeVectorYAxes      (UnityEngine.Vector2Int vector)                              => Util.ExcludeVectorAxes       (vector, new UnityEngine.Vector2Int((int)   0,    (int)   1));
-    public static UnityEngine.Vector3    ExcludeVectorYAxes      (UnityEngine.Vector3    vector)                              => Util.ExcludeVectorAxes       (vector, new UnityEngine.Vector3   ((float) 0.0f, (float) 1.0f, (float) 0.0f));
-    public static UnityEngine.Vector3Int ExcludeVectorYAxes      (UnityEngine.Vector3Int vector)                              => Util.ExcludeVectorAxes       (vector, new UnityEngine.Vector3Int((int)   0,    (int)   1,    (int)   0));
-    public static UnityEngine.Vector4    ExcludeVectorYAxes      (UnityEngine.Vector4    vector)                              => Util.ExcludeVectorAxes       (vector, new UnityEngine.Vector4   ((float) 0.0f, (float) 1.0f, (float) 0.0f, (float) 0.0f));
-    public static UnityEngine.Vector3    ExcludeVectorZAxes      (UnityEngine.Vector3    vector)                              => Util.ExcludeVectorAxes       (vector, new UnityEngine.Vector3   ((float) 0.0f, (float) 0.0f, (float) 1.0f));
-    public static UnityEngine.Vector3Int ExcludeVectorZAxes      (UnityEngine.Vector3Int vector)                              => Util.ExcludeVectorAxes       (vector, new UnityEngine.Vector3Int((int)   0,    (int)   0,    (int)   1));
-    public static UnityEngine.Vector4    ExcludeVectorZAxes      (UnityEngine.Vector4    vector)                              => Util.ExcludeVectorAxes       (vector, new UnityEngine.Vector4   ((float) 0.0f, (float) 0.0f, (float) 1.0f, (float) 0.0f));
-    public static UnityEngine.Vector4    ExcludeVectorWAxes      (UnityEngine.Vector4    vector)                              => Util.ExcludeVectorAxes       (vector, new UnityEngine.Vector4   ((float) 0.0f, (float) 0.0f, (float) 0.0f, (float) 1.0f));
+    [PatchMethod(AggressiveInlining)] // ⟶ Origin begins from bottom-left rather than top-left
+    public static UnityEngine.Vector3[] CornersFrom(in UnityEngine.Rect rectangle) => new UnityEngine.Vector3[4] {
+      new(rectangle.xMin, rectangle.yMax, 0.0f),
+      new(rectangle.xMin, rectangle.yMin, 0.0f),
+      new(rectangle.xMax, rectangle.yMin, 0.0f),
+      new(rectangle.xMax, rectangle.yMax, 0.0f)
+    };
 
     [PatchMethod(AggressiveInlining)]
     public static string GetAssetPath() => Util.NormalizeURI(UnityEngine.Application.streamingAssetsPath);
@@ -4358,143 +4751,28 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     [PatchMethod(AggressiveInlining)] public static ref readonly System.Collections.ObjectModel.ReadOnlyCollection<int>                 GetMouseButtons() => ref Util.MouseButtons;
     [PatchMethod(AggressiveInlining)] public static ref readonly System.Collections.ObjectModel.ReadOnlyCollection<UnityEngine.KeyCode> GetKeys        () => ref Util.Keys;
 
-    public static UnityEngine.Vector2    GetVectorAxes       (UnityEngine.Vector2    vector, UnityEngine.Vector2    axes) { return new(0.0f != axes.x ? vector.x : 0.0f, 0.0f != axes.y ? vector.y : 0.0f); }
-    public static UnityEngine.Vector2    GetVectorAxes       (UnityEngine.Vector2    vector, UnityEngine.Vector2Int axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector2((float) axes.x, (float) axes.y));
-    public static UnityEngine.Vector2    GetVectorAxes       (UnityEngine.Vector2    vector, UnityEngine.Vector3    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector2((float) axes.x, (float) axes.y));
-    public static UnityEngine.Vector2    GetVectorAxes       (UnityEngine.Vector2    vector, UnityEngine.Vector3Int axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector2((float) axes.x, (float) axes.y));
-    public static UnityEngine.Vector2    GetVectorAxes       (UnityEngine.Vector2    vector, UnityEngine.Vector4    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector2((float) axes.x, (float) axes.y));
-    public static UnityEngine.Vector2Int GetVectorAxes       (UnityEngine.Vector2Int vector, UnityEngine.Vector2Int axes) { return new(0 != axes.x ? vector.x : 0, 0 != axes.y ? vector.y : 0); }
-    public static UnityEngine.Vector2Int GetVectorAxes       (UnityEngine.Vector2Int vector, UnityEngine.Vector2    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int) axes.x, (int) axes.y));
-    public static UnityEngine.Vector2Int GetVectorAxes       (UnityEngine.Vector2Int vector, UnityEngine.Vector3    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int) axes.x, (int) axes.y));
-    public static UnityEngine.Vector2Int GetVectorAxes       (UnityEngine.Vector2Int vector, UnityEngine.Vector3Int axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int) axes.x, (int) axes.y));
-    public static UnityEngine.Vector2Int GetVectorAxes       (UnityEngine.Vector2Int vector, UnityEngine.Vector4    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector2Int((int) axes.x, (int) axes.y));
-    public static UnityEngine.Vector3    GetVectorAxes       (UnityEngine.Vector3    vector, UnityEngine.Vector3    axes) { return new(0.0f != axes.x ? vector.x : 0.0f, 0.0f != axes.y ? vector.y : 0.0f, 0.0f != axes.z ? vector.z : 0.0f); }
-    public static UnityEngine.Vector3    GetVectorAxes       (UnityEngine.Vector3    vector, UnityEngine.Vector2    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector3((float) axes.x, (float) axes.y, (float) 0.0f));
-    public static UnityEngine.Vector3    GetVectorAxes       (UnityEngine.Vector3    vector, UnityEngine.Vector2Int axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector3((float) axes.x, (float) axes.y, (float) 0.0f));
-    public static UnityEngine.Vector3    GetVectorAxes       (UnityEngine.Vector3    vector, UnityEngine.Vector3Int axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector3((float) axes.x, (float) axes.y, (float) axes.z));
-    public static UnityEngine.Vector3    GetVectorAxes       (UnityEngine.Vector3    vector, UnityEngine.Vector4    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector3((float) axes.x, (float) axes.y, (float) axes.z));
-    public static UnityEngine.Vector3Int GetVectorAxes       (UnityEngine.Vector3Int vector, UnityEngine.Vector3Int axes) { return new(0 != axes.x ? vector.x : 0, 0 != axes.y ? vector.y : 0, 0 != axes.z ? vector.z : 0); }
-    public static UnityEngine.Vector3Int GetVectorAxes       (UnityEngine.Vector3Int vector, UnityEngine.Vector2    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int) axes.x, (int) axes.y, (int) 0));
-    public static UnityEngine.Vector3Int GetVectorAxes       (UnityEngine.Vector3Int vector, UnityEngine.Vector2Int axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int) axes.x, (int) axes.y, (int) 0));
-    public static UnityEngine.Vector3Int GetVectorAxes       (UnityEngine.Vector3Int vector, UnityEngine.Vector3    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int) axes.x, (int) axes.y, (int) axes.z));
-    public static UnityEngine.Vector3Int GetVectorAxes       (UnityEngine.Vector3Int vector, UnityEngine.Vector4    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector3Int((int) axes.x, (int) axes.y, (int) axes.z));
-    public static UnityEngine.Vector4    GetVectorAxes       (UnityEngine.Vector4    vector, UnityEngine.Vector4    axes) { return new(0.0f != axes.x ? vector.x : 0.0f, 0.0f != axes.y ? vector.y : 0.0f, 0.0f != axes.z ? vector.z : 0.0f, 0.0f != axes.w ? vector.w : 0.0f); }
-    public static UnityEngine.Vector4    GetVectorAxes       (UnityEngine.Vector4    vector, UnityEngine.Vector2    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector4((float) axes.x, (float) axes.y, (float) 0.0f,   (float) 0.0f));
-    public static UnityEngine.Vector4    GetVectorAxes       (UnityEngine.Vector4    vector, UnityEngine.Vector2Int axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector4((float) axes.x, (float) axes.y, (float) 0.0f,   (float) 0.0f));
-    public static UnityEngine.Vector4    GetVectorAxes       (UnityEngine.Vector4    vector, UnityEngine.Vector3    axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector4((float) axes.x, (float) axes.y, (float) axes.z, (float) 0.0f));
-    public static UnityEngine.Vector4    GetVectorAxes       (UnityEngine.Vector4    vector, UnityEngine.Vector3Int axes) => Util.GetVectorAxes(vector, new UnityEngine.Vector4((float) axes.x, (float) axes.y, (float) axes.z, (float) 0.0f));
-    public static float                  GetVectorAxis       (UnityEngine.Vector2    vector, UnityEngine.Vector2    axis) => (float) Util.GetVectorAxis(new UnityEngine.Vector4((float) vector.x, (float) vector.y, (float) 0.0f, (float) 0.0f),     new UnityEngine.Vector4   ((float) axis.x, (float) axis.y, (float) 0.0f, (float) 0.0f));
-    public static float                  GetVectorAxis       (UnityEngine.Vector2    vector, UnityEngine.Vector2Int axis) => (float) Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector2   ((float) axis.x, (float) axis.y));
-    public static float                  GetVectorAxis       (UnityEngine.Vector2    vector, UnityEngine.Vector3    axis) => (float) Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector2   ((float) axis.x, (float) axis.y));
-    public static float                  GetVectorAxis       (UnityEngine.Vector2    vector, UnityEngine.Vector3Int axis) => (float) Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector2   ((float) axis.x, (float) axis.y));
-    public static float                  GetVectorAxis       (UnityEngine.Vector2    vector, UnityEngine.Vector4    axis) => (float) Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector2   ((float) axis.x, (float) axis.y));
-    public static int                    GetVectorAxis       (UnityEngine.Vector2Int vector, UnityEngine.Vector2Int axis) => (int)   Util.GetVectorAxis(new UnityEngine.Vector4((int) vector.x, (int) vector.y, (int) 0.0f, (int) 0.0f),             new UnityEngine.Vector4   ((int)   axis.x, (int)   axis.y, (int) 0.0f, (int) 0.0f));
-    public static int                    GetVectorAxis       (UnityEngine.Vector2Int vector, UnityEngine.Vector2    axis) => (int)   Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector2Int((int)   axis.x, (int)   axis.y));
-    public static int                    GetVectorAxis       (UnityEngine.Vector2Int vector, UnityEngine.Vector3    axis) => (int)   Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector2Int((int)   axis.x, (int)   axis.y));
-    public static int                    GetVectorAxis       (UnityEngine.Vector2Int vector, UnityEngine.Vector3Int axis) => (int)   Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector2Int((int)   axis.x, (int)   axis.y));
-    public static int                    GetVectorAxis       (UnityEngine.Vector2Int vector, UnityEngine.Vector4    axis) => (int)   Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector2Int((int)   axis.x, (int)   axis.y));
-    public static float                  GetVectorAxis       (UnityEngine.Vector3    vector, UnityEngine.Vector3    axis) => (float) Util.GetVectorAxis(new UnityEngine.Vector4((float) vector.x, (float) vector.y, (float) vector.z, (float) 0.0f), new UnityEngine.Vector4   ((float) axis.x, (float) axis.y, (float) axis.z, (float) 0.0f));
-    public static float                  GetVectorAxis       (UnityEngine.Vector3    vector, UnityEngine.Vector2    axis) => (float) Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector3   ((float) axis.x, (float) axis.y, (float) 0.0f));
-    public static float                  GetVectorAxis       (UnityEngine.Vector3    vector, UnityEngine.Vector2Int axis) => (float) Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector3   ((float) axis.x, (float) axis.y, (float) 0.0f));
-    public static float                  GetVectorAxis       (UnityEngine.Vector3    vector, UnityEngine.Vector3Int axis) => (float) Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector3   ((float) axis.x, (float) axis.y, (float) axis.z));
-    public static float                  GetVectorAxis       (UnityEngine.Vector3    vector, UnityEngine.Vector4    axis) => (float) Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector3   ((float) axis.x, (float) axis.y, (float) axis.z));
-    public static int                    GetVectorAxis       (UnityEngine.Vector3Int vector, UnityEngine.Vector3Int axis) => (int)   Util.GetVectorAxis(new UnityEngine.Vector4((int) vector.x, (int) vector.y, (int) vector.z, (int) 0.0f),         new UnityEngine.Vector4   ((int)   axis.x, (int)   axis.y, (int)   axis.z, (int) 0.0f));
-    public static int                    GetVectorAxis       (UnityEngine.Vector3Int vector, UnityEngine.Vector2    axis) => (int)   Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector3Int((int)   axis.x, (int)   axis.y, (int)   0.0f));
-    public static int                    GetVectorAxis       (UnityEngine.Vector3Int vector, UnityEngine.Vector2Int axis) => (int)   Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector3Int((int)   axis.x, (int)   axis.y, (int)   0.0f));
-    public static int                    GetVectorAxis       (UnityEngine.Vector3Int vector, UnityEngine.Vector3    axis) => (int)   Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector3Int((int)   axis.x, (int)   axis.y, (int)   axis.z));
-    public static int                    GetVectorAxis       (UnityEngine.Vector3Int vector, UnityEngine.Vector4    axis) => (int)   Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector3Int((int)   axis.x, (int)   axis.y, (int)   axis.z));
-    public static float                  GetVectorAxis       (UnityEngine.Vector4    vector, UnityEngine.Vector2    axis) => (float) Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector4   ((float) axis.x, (float) axis.y, (float) 0.0f,   (float) 0.0f));
-    public static float                  GetVectorAxis       (UnityEngine.Vector4    vector, UnityEngine.Vector2Int axis) => (float) Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector4   ((float) axis.x, (float) axis.y, (float) 0.0f,   (float) 0.0f));
-    public static float                  GetVectorAxis       (UnityEngine.Vector4    vector, UnityEngine.Vector3    axis) => (float) Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector4   ((float) axis.x, (float) axis.y, (float) axis.z, (float) 0.0f));
-    public static float                  GetVectorAxis       (UnityEngine.Vector4    vector, UnityEngine.Vector3Int axis) => (float) Util.GetVectorAxis(vector,                                                                                      new UnityEngine.Vector4   ((float) axis.x, (float) axis.y, (float) axis.z, (float) 0.0f));
-    public static float                  GetVectorAxis       (UnityEngine.Vector4    vector, UnityEngine.Vector4    axis) { return 0.0f != axis.x ? vector.x : 0.0f != axis.y ? vector.y : 0.0f != axis.z ? vector.z : 0.0f != axis.w ? vector.w : float.NaN; }
-    public static UnityEngine.Vector3    GetVectorBackAxes   (UnityEngine.Vector3    vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector3   .back);
-    public static UnityEngine.Vector3Int GetVectorBackAxes   (UnityEngine.Vector3Int vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector3Int.back);
-    public static float                  GetVectorBackAxis   (UnityEngine.Vector3    vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector3   .back);
-    public static int                    GetVectorBackAxis   (UnityEngine.Vector3Int vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector3Int.back);
-    public static UnityEngine.Vector3    GetVectorDepthAxes  (UnityEngine.Vector3    vector)                              => Util.GetVectorForwardAxes(vector);
-    public static UnityEngine.Vector3Int GetVectorDepthAxes  (UnityEngine.Vector3Int vector)                              => Util.GetVectorForwardAxes(vector);
-    public static float                  GetVectorDepthAxis  (UnityEngine.Vector3    vector)                              => Util.GetVectorForwardAxis(vector);
-    public static int                    GetVectorDepthAxis  (UnityEngine.Vector3Int vector)                              => Util.GetVectorForwardAxis(vector);
-    public static UnityEngine.Vector2    GetVectorDownAxes   (UnityEngine.Vector2    vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector2   .down);
-    public static UnityEngine.Vector2Int GetVectorDownAxes   (UnityEngine.Vector2Int vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector2Int.down);
-    public static UnityEngine.Vector3    GetVectorDownAxes   (UnityEngine.Vector3    vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector3   .down);
-    public static UnityEngine.Vector3Int GetVectorDownAxes   (UnityEngine.Vector3Int vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector3Int.down);
-    public static float                  GetVectorDownAxis   (UnityEngine.Vector2    vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector2   .down);
-    public static int                    GetVectorDownAxis   (UnityEngine.Vector2Int vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector2Int.down);
-    public static float                  GetVectorDownAxis   (UnityEngine.Vector3    vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector3   .down);
-    public static int                    GetVectorDownAxis   (UnityEngine.Vector3Int vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector3Int.down);
-    public static UnityEngine.Vector3    GetVectorForwardAxes(UnityEngine.Vector3    vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector3   .forward);
-    public static UnityEngine.Vector3Int GetVectorForwardAxes(UnityEngine.Vector3Int vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector3Int.forward);
-    public static float                  GetVectorForwardAxis(UnityEngine.Vector3    vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector3   .forward);
-    public static int                    GetVectorForwardAxis(UnityEngine.Vector3Int vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector3Int.forward);
-    public static UnityEngine.Vector2    GetVectorHeightAxes (UnityEngine.Vector2    vector)                              => Util.GetVectorUpAxes     (vector);
-    public static UnityEngine.Vector2Int GetVectorHeightAxes (UnityEngine.Vector2Int vector)                              => Util.GetVectorUpAxes     (vector);
-    public static UnityEngine.Vector3    GetVectorHeightAxes (UnityEngine.Vector3    vector)                              => Util.GetVectorUpAxes     (vector);
-    public static UnityEngine.Vector3Int GetVectorHeightAxes (UnityEngine.Vector3Int vector)                              => Util.GetVectorUpAxes     (vector);
-    public static float                  GetVectorHeightAxis (UnityEngine.Vector2    vector)                              => Util.GetVectorUpAxis     (vector);
-    public static int                    GetVectorHeightAxis (UnityEngine.Vector2Int vector)                              => Util.GetVectorUpAxis     (vector);
-    public static float                  GetVectorHeightAxis (UnityEngine.Vector3    vector)                              => Util.GetVectorUpAxis     (vector);
-    public static int                    GetVectorHeightAxis (UnityEngine.Vector3Int vector)                              => Util.GetVectorUpAxis     (vector);
-    public static UnityEngine.Vector2    GetVectorLeftAxes   (UnityEngine.Vector2    vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector2   .left);
-    public static UnityEngine.Vector2Int GetVectorLeftAxes   (UnityEngine.Vector2Int vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector2Int.left);
-    public static UnityEngine.Vector3    GetVectorLeftAxes   (UnityEngine.Vector3    vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector3   .left);
-    public static UnityEngine.Vector3Int GetVectorLeftAxes   (UnityEngine.Vector3Int vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector3Int.left);
-    public static float                  GetVectorLeftAxis   (UnityEngine.Vector2    vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector2   .left);
-    public static int                    GetVectorLeftAxis   (UnityEngine.Vector2Int vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector2Int.left);
-    public static float                  GetVectorLeftAxis   (UnityEngine.Vector3    vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector3   .left);
-    public static int                    GetVectorLeftAxis   (UnityEngine.Vector3Int vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector3Int.left);
-    public static UnityEngine.Vector2    GetVectorRightAxes  (UnityEngine.Vector2    vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector2   .right);
-    public static UnityEngine.Vector2Int GetVectorRightAxes  (UnityEngine.Vector2Int vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector2Int.right);
-    public static UnityEngine.Vector3    GetVectorRightAxes  (UnityEngine.Vector3    vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector3   .right);
-    public static UnityEngine.Vector3Int GetVectorRightAxes  (UnityEngine.Vector3Int vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector3Int.right);
-    public static float                  GetVectorRightAxis  (UnityEngine.Vector2    vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector2   .right);
-    public static int                    GetVectorRightAxis  (UnityEngine.Vector2Int vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector2Int.right);
-    public static float                  GetVectorRightAxis  (UnityEngine.Vector3    vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector3   .right);
-    public static int                    GetVectorRightAxis  (UnityEngine.Vector3Int vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector3Int.right);
-    public static UnityEngine.Vector2    GetVectorUpAxes     (UnityEngine.Vector2    vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector2   .up);
-    public static UnityEngine.Vector2Int GetVectorUpAxes     (UnityEngine.Vector2Int vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector2Int.up);
-    public static UnityEngine.Vector3    GetVectorUpAxes     (UnityEngine.Vector3    vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector3   .up);
-    public static UnityEngine.Vector3Int GetVectorUpAxes     (UnityEngine.Vector3Int vector)                              => Util.GetVectorAxes       (vector, UnityEngine.Vector3Int.up);
-    public static float                  GetVectorUpAxis     (UnityEngine.Vector2    vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector2   .up);
-    public static int                    GetVectorUpAxis     (UnityEngine.Vector2Int vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector2Int.up);
-    public static float                  GetVectorUpAxis     (UnityEngine.Vector3    vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector3   .up);
-    public static int                    GetVectorUpAxis     (UnityEngine.Vector3Int vector)                              => Util.GetVectorAxis       (vector, UnityEngine.Vector3Int.up);
-    public static UnityEngine.Vector2    GetVectorWidthAxes  (UnityEngine.Vector2    vector)                              => Util.GetVectorRightAxes  (vector);
-    public static UnityEngine.Vector2Int GetVectorWidthAxes  (UnityEngine.Vector2Int vector)                              => Util.GetVectorRightAxes  (vector);
-    public static UnityEngine.Vector3    GetVectorWidthAxes  (UnityEngine.Vector3    vector)                              => Util.GetVectorRightAxes  (vector);
-    public static UnityEngine.Vector3Int GetVectorWidthAxes  (UnityEngine.Vector3Int vector)                              => Util.GetVectorRightAxes  (vector);
-    public static float                  GetVectorWidthAxis  (UnityEngine.Vector2    vector)                              => Util.GetVectorRightAxis  (vector);
-    public static int                    GetVectorWidthAxis  (UnityEngine.Vector2Int vector)                              => Util.GetVectorRightAxis  (vector);
-    public static float                  GetVectorWidthAxis  (UnityEngine.Vector3    vector)                              => Util.GetVectorRightAxis  (vector);
-    public static int                    GetVectorWidthAxis  (UnityEngine.Vector3Int vector)                              => Util.GetVectorRightAxis  (vector);
-    public static UnityEngine.Vector2    GetVectorXAxes      (UnityEngine.Vector2    vector)                              => Util.GetVectorAxes       (vector, new UnityEngine.Vector2   ((float) 1.0f, (float) 0.0f));
-    public static UnityEngine.Vector2Int GetVectorXAxes      (UnityEngine.Vector2Int vector)                              => Util.GetVectorAxes       (vector, new UnityEngine.Vector2Int((int)   1,    (int)   0));
-    public static UnityEngine.Vector3    GetVectorXAxes      (UnityEngine.Vector3    vector)                              => Util.GetVectorAxes       (vector, new UnityEngine.Vector3   ((float) 1.0f, (float) 0.0f, (float) 0.0f));
-    public static UnityEngine.Vector3Int GetVectorXAxes      (UnityEngine.Vector3Int vector)                              => Util.GetVectorAxes       (vector, new UnityEngine.Vector3Int((int)   1,    (int)   0,    (int)   0));
-    public static UnityEngine.Vector4    GetVectorXAxes      (UnityEngine.Vector4    vector)                              => Util.GetVectorAxes       (vector, new UnityEngine.Vector4   ((float) 1.0f, (float) 0.0f, (float) 0.0f, (float) 0.0f));
-    public static UnityEngine.Vector2    GetVectorYAxes      (UnityEngine.Vector2    vector)                              => Util.GetVectorAxes       (vector, new UnityEngine.Vector2   ((float) 0.0f, (float) 1.0f));
-    public static UnityEngine.Vector2Int GetVectorYAxes      (UnityEngine.Vector2Int vector)                              => Util.GetVectorAxes       (vector, new UnityEngine.Vector2Int((int)   0,    (int)   1));
-    public static UnityEngine.Vector3    GetVectorYAxes      (UnityEngine.Vector3    vector)                              => Util.GetVectorAxes       (vector, new UnityEngine.Vector3   ((float) 0.0f, (float) 1.0f, (float) 0.0f));
-    public static UnityEngine.Vector3Int GetVectorYAxes      (UnityEngine.Vector3Int vector)                              => Util.GetVectorAxes       (vector, new UnityEngine.Vector3Int((int)   0,    (int)   1,    (int)   0));
-    public static UnityEngine.Vector4    GetVectorYAxes      (UnityEngine.Vector4    vector)                              => Util.GetVectorAxes       (vector, new UnityEngine.Vector4   ((float) 0.0f, (float) 1.0f, (float) 0.0f, (float) 0.0f));
-    public static UnityEngine.Vector3    GetVectorZAxes      (UnityEngine.Vector3    vector)                              => Util.GetVectorAxes       (vector, new UnityEngine.Vector3   ((float) 0.0f, (float) 0.0f, (float) 1.0f));
-    public static UnityEngine.Vector3Int GetVectorZAxes      (UnityEngine.Vector3Int vector)                              => Util.GetVectorAxes       (vector, new UnityEngine.Vector3Int((int)   0,    (int)   0,    (int)   1));
-    public static UnityEngine.Vector4    GetVectorZAxes      (UnityEngine.Vector4    vector)                              => Util.GetVectorAxes       (vector, new UnityEngine.Vector4   ((float) 0.0f, (float) 0.0f, (float) 1.0f, (float) 0.0f));
-    public static UnityEngine.Vector4    GetVectorWAxes      (UnityEngine.Vector4    vector)                              => Util.GetVectorAxes       (vector, new UnityEngine.Vector4   ((float) 0.0f, (float) 0.0f, (float) 0.0f, (float) 1.0f));
-
-    public static UnityEngine.Bounds? LocalBoundsFromRectTransform(UnityEngine.RectTransform? transform) {
-      UnityEngine.Rect? rectangle = Util.LocalRectFromRectTransform(transform);
-      return rectangle is null ? null : new(transform!.position, new(rectangle?.width ?? 0.0f, rectangle?.height ?? 0.0f, 0.0f));
+    [PatchMethod(AggressiveInlining)]
+    public static UnityEngine.Bounds? LocalBoundsFrom(UnityEngine.RectTransform? transform) {
+      UnityEngine.Rect? rectangle = Util.LocalRectFrom(transform);
+      return rectangle is not null ? new(transform!.position, new((float) rectangle?.width!, (float) rectangle?.height!, 0.0f)) : null;
     }
 
-    public static UnityEngine.Vector3[]? LocalCornersFromRectTransform(UnityEngine.RectTransform? transform) {
-      return Util.CornersFromRectTransform(transform is null ? null : transform.GetLocalCorners);
+    [PatchMethod(AggressiveInlining)]
+    public static UnityEngine.Vector3[]? LocalCornersFrom(UnityEngine.RectTransform? transform) {
+      if (null != transform) {
+        UnityEngine.Vector3[] corners = new UnityEngine.Vector3[4];
+
+        transform.GetLocalCorners(corners);
+        return corners;
+      }
+
+      return null;
     }
 
-    public static UnityEngine.Rect? LocalRectFromRectTransform(UnityEngine.RectTransform? transform) {
-      UnityEngine.Vector3[]? corners = Util.LocalCornersFromRectTransform(transform);
-      return corners is null ? null : Util.RectFromCorners(corners);
+    [PatchMethod(AggressiveInlining)]
+    public static UnityEngine.Rect? LocalRectFrom(UnityEngine.RectTransform? transform) {
+      UnityEngine.Vector3[]? corners = Util.LocalCornersFrom(transform);
+      return corners is not null ? Util.RectFrom(corners) : null;
     }
 
     public static T Max<T>(System.Collections.Generic.IEnumerable<T> enumerable) where T : System.IComparable<T> {
@@ -4555,7 +4833,10 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     // public static void PreloadURIAsTexture2D(string path)                                         => Load.UriAsTexture2D(path, null, Util.Load.Asynchronously, Util.Load.WithCache);
 
     [PatchMethod(AggressiveInlining)] // ⟶ Origin begins from bottom-left rather than top-left
-    public static UnityEngine.Rect RectFromCorners(UnityEngine.Vector3[] corners) => new(Util.Reference<UnityEngine.Vector3>.At(corners, 0u).x, Util.Reference<UnityEngine.Vector3>.At(corners, 0u).y, Util.Reference<UnityEngine.Vector3>.At(corners, 3u).x - Util.Reference<UnityEngine.Vector3>.At(corners, 0u).x, Util.Reference<UnityEngine.Vector3>.At(corners, 1u).y - Util.Reference<UnityEngine.Vector3>.At(corners, 0u).y);
+    public static UnityEngine.Rect RectFrom(UnityEngine.Vector3[] corners) {
+      ref readonly UnityEngine.Vector3 origin = ref Util.Reference<UnityEngine.Vector3>.First(corners);
+      return new(origin.x, origin.y, Util.Reference<UnityEngine.Vector3>.At(corners, 3u).x - origin.x, Util.Reference<UnityEngine.Vector3>.At(corners, 1u).y - origin.y);
+    }
 
     [PatchMethod(AggressiveInlining)]
     public static ref U Reinterpret<T, U>(ref T value) => ref System.Runtime.CompilerServices.Unsafe.As<T, U>(ref value);
@@ -4654,18 +4935,28 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     [PatchMethod(AggressiveInlining)] public static object? Switch<T>(in T value, System.Collections.Generic.Dictionary         <T, object> expression, object? fallback = null) => Util.Switch<T>(value, (System.Collections.Generic.IReadOnlyDictionary<T, object>) expression, fallback);
     [PatchMethod(AggressiveInlining)] public static object? Switch<T>(in T value, System.Collections.Generic.IReadOnlyDictionary<T, object> expression, object? fallback = null) => expression?.TryGetValue(value, out object callback) ?? false ? callback : fallback;
 
-    public static UnityEngine.Bounds? WorldBoundsFromRectTransform(UnityEngine.RectTransform? transform) {
-      UnityEngine.Rect? rectangle = Util.WorldRectFromRectTransform(transform);
-      return rectangle is null ? null : new(transform!.position, new(rectangle?.width ?? 0.0f, rectangle?.height ?? 0.0f, 0.0f));
+    [PatchMethod(AggressiveInlining)]
+    public static UnityEngine.Bounds? WorldBoundsFrom(UnityEngine.RectTransform? transform) {
+      UnityEngine.Rect? rectangle = Util.WorldRectFrom(transform);
+      return rectangle is not null ? new(transform!.position, new((float) rectangle?.width!, (float) rectangle?.height!, 0.0f)) : null;
     }
 
-    public static UnityEngine.Vector3[]? WorldCornersFromRectTransform(UnityEngine.RectTransform? transform) {
-      return Util.CornersFromRectTransform(transform is null ? null : transform.GetWorldCorners);
+    [PatchMethod(AggressiveInlining)]
+    public static UnityEngine.Vector3[]? WorldCornersFrom(UnityEngine.RectTransform? transform) {
+      if (null != transform) {
+        UnityEngine.Vector3[] corners = new UnityEngine.Vector3[4];
+
+        transform.GetWorldCorners(corners);
+        return corners;
+      }
+
+      return null;
     }
 
-    public static UnityEngine.Rect? WorldRectFromRectTransform(UnityEngine.RectTransform? transform) {
-      UnityEngine.Vector3[]? corners = Util.WorldCornersFromRectTransform(transform);
-      return corners is null ? null : Util.RectFromCorners(corners);
+    [PatchMethod(AggressiveInlining)]
+    public static UnityEngine.Rect? WorldRectFrom(UnityEngine.RectTransform? transform) {
+      UnityEngine.Vector3[]? corners = Util.WorldCornersFrom(transform);
+      return corners is not null ? Util.RectFrom(corners) : null;
     }
   }
 }

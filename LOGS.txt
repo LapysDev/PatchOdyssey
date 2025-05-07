@@ -94,6 +94,8 @@ May 5th, 2025
 May 6th, 2025 – May 7th, 2025
 • …IndexFor<T>
 • …Load completed
+• Reordered Util
+• Vector2Bool, Vector3Bool, Vector4Bool
 
 📆
 • Lesson learned: C# Mono with invalid IL instructions from creating delegates dynamically
