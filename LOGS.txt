@@ -91,6 +91,10 @@ May 5th, 2025
 • Refactored `::Find*(…)` methods for `PatchOdyssey.Collections.*` list classes with a sentinel `::Null` field
 • There’s only ever one synchronous load in the list and it's either getting the payload or waiting for an asynchronous one.. Check if it's called up in a `repeated` `LoadUri(…)` call
 
+May 6th, 2025 – May 7th, 2025
+• …IndexFor<T>
+• …Load completed
+
 📆
 • Lesson learned: C# Mono with invalid IL instructions from creating delegates dynamically
 • Lesson learned: Learning C# technical details and ECS is a time investment that must be planned for within the timeline of the project

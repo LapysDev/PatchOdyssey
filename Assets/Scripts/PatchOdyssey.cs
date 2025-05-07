@@ -778,109 +778,109 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       public abstract object? Value    { get; }
     }
 
-    internal struct Index : PatchOdyssey.Collections.IRefComparable<Index>, PatchOdyssey.Collections.IRefEquatable<Index>, System.IConvertible {
+    internal struct IndexFor<T> : PatchOdyssey.Collections.IRefComparable<IndexFor<T>>, PatchOdyssey.Collections.IRefEquatable<IndexFor<T>>, System.IConvertible {
       internal uint value;
 
       /* … */
       [PatchConstructor, PatchMethod(AggressiveInlining)]
-      public Index(uint value = default) => this.value = value;
+      public IndexFor(uint value = default) => this.value = value;
 
       /* … */
-      [PatchMethod(AggressiveInlining)] public static   ulong                             BigMul                                                          (in Index indexA, in Index indexB)                                                                                                                                             => (ulong) System.Math.BigMul((int) indexA.value, (int) indexB.value);
-      [PatchMethod(AggressiveInlining)] public static   Index                             Clamp                                                           (in Index index,  in Index minimum, in Index maximum)                                                                                                                          => new    (System.Math.Clamp (index.value, minimum.value, maximum.value));
-      [PatchMethod(AggressiveInlining)] public          int                               CompareTo                                                       (in Index index)                                                                                                                                                               => this.value.CompareTo(index.value);
-      [PatchMethod(AggressiveInlining)] public          int                               CompareTo                                                       (object?  value)                                                                                                                                                               => this.value.CompareTo(value);
-      [PatchMethod(AggressiveInlining)] public static   (Index Quotient, Index Remainder) DivRem                                                          (in Index indexA, in Index indexB)                                                                                                                                             { long quotient = System.Math.DivRem((long) indexA.value, (long) indexB.value, out long remainder); return (new((uint) quotient), new((uint) remainder)); }
-      [PatchMethod(AggressiveInlining)] public          bool                              Equals                                                          (in Index index)                                                                                                                                                               => this.value.Equals     (index.value);
-      [PatchMethod(AggressiveInlining)] public override bool                              Equals                                                          (object?  value)                                                                                                                                                               => this.value.Equals     (value);
-      [PatchMethod(AggressiveInlining)] public override int                               GetHashCode                                                     ()                                                                                                                                                                             => this.value.GetHashCode();
-      [PatchMethod(AggressiveInlining)] public          System.TypeCode                   GetTypeCode                                                     ()                                                                                                                                                                             => System.Type.GetTypeCode(typeof(Index));
-      [PatchMethod(AggressiveInlining)] public static   bool                              IsEvenInteger                                                   (in Index                     index)                                                                                                                                           => 0 == (index.value & 1);
-      [PatchMethod(AggressiveInlining)] public static   bool                              IsOddInteger                                                    (in Index                     index)                                                                                                                                           => 1 == (index.value & 1);
-      [PatchMethod(AggressiveInlining)] public static   bool                              IsPow2                                                          (in Index                     index)                                                                                                                                           { Index logarithm = Index.Log2(index); uint exponent = 0u; while (0u != logarithm.value--) { exponent = 0u != exponent ? exponent << 1 : 2u; } return exponent == index.value; }
-      [PatchMethod(AggressiveInlining)] public static   byte                              LeadingZeroCount                                                (in Index                     index)                                                                                                                                           { byte n = 32; uint x = index.value, y; y = x >>> 16; if (0u != y) { n -= 16; x = y; } y = x >>> 8; if (0u != y) { n -= 8; x = y; } y = x >>> 4; if (0u != y) { n -= 4; x = y; } y = x >>> 2; if (0u != y) { n -= 2; x = y; } y = x >>> 1; if (0u != y) { return (byte) (n - 2u); } return (byte) (n - x); }
-      [PatchMethod(AggressiveInlining)] public static   Index                             Log2                                                            (in Index                     index)                                                                                                                                           { uint logarithm = 0u; for (uint exponent = index.value; 0u != exponent; exponent >>>= 1) { ++logarithm; } return new(logarithm); }
-      [PatchMethod(AggressiveInlining)] public static   ref readonly Index                Max                                                             (in Index                     indexA, in Index indexB)                                                                                                                         => ref (indexB.value > indexA.value ? ref indexB : ref indexA);
-      [PatchMethod(AggressiveInlining)] public static   ref readonly Index                Min                                                             (in Index                     indexA, in Index indexB)                                                                                                                         => ref (indexB.value < indexA.value ? ref indexB : ref indexA);
-      [PatchMethod(AggressiveInlining)] public static   Index                             Parse                                                           (string                       text)                                                                                                                                            => new((uint) long.Parse(text));
-      [PatchMethod(AggressiveInlining)] public static   Index                             Parse                                                           (string                       text,       System.Globalization.NumberStyles style)                                                                                             => new((uint) long.Parse(text, style));
-      [PatchMethod(AggressiveInlining)] public static   Index                             Parse                                                           (string                       text,       System.IFormatProvider?           provider)                                                                                          => new((uint) long.Parse(text, provider));
-      [PatchMethod(AggressiveInlining)] public static   Index                             Parse                                                           (in System.ReadOnlySpan<byte> bytes,      System.IFormatProvider?           provider)                                                                                          => new       (uint.Parse(System.Runtime.InteropServices.MemoryMarshal.Cast<byte, char>(bytes), System.Globalization.NumberStyles.Integer, provider));
-      [PatchMethod(AggressiveInlining)] public static   Index                             Parse                                                           (in System.ReadOnlySpan<char> characters, System.IFormatProvider?           provider)                                                                                          => new       (uint.Parse(characters,                                                           System.Globalization.NumberStyles.Integer, provider));
-      [PatchMethod(AggressiveInlining)] public static   Index                             Parse                                                           (string                       text,       System.Globalization.NumberStyles style,                                             System.IFormatProvider? provider)               => new((uint) long.Parse(text,                                                                 style,                                     provider));
-      [PatchMethod(AggressiveInlining)] public static   Index                             Parse                                                           (in System.ReadOnlySpan<byte> bytes,      System.Globalization.NumberStyles style = System.Globalization.NumberStyles.Integer, System.IFormatProvider? provider = null)        => new(       uint.Parse(System.Runtime.InteropServices.MemoryMarshal.Cast<byte, char>(bytes), style,                                     provider));
-      [PatchMethod(AggressiveInlining)] public static   Index                             Parse                                                           (in System.ReadOnlySpan<char> characters, System.Globalization.NumberStyles style = System.Globalization.NumberStyles.Integer, System.IFormatProvider? provider = null)        => new       (uint.Parse(characters,                                                           style,                                     provider));
-      [PatchMethod(AggressiveInlining)] public static   byte                              PopCount                                                        (in Index                     index)                                                                                                                                           { byte count = 0; for (uint value = index.value; 0u != value; value >>>= 1) { if (0 != (value & 1)) ++count; } return count; }
-      [PatchMethod(AggressiveInlining)] public static   Index                             RotateLeft                                                      (in Index                     index, uint count)                                                                                                                               => (index.value <<  (int) count) | (index.value >>> (int) (32u - count));
-      [PatchMethod(AggressiveInlining)] public static   Index                             RotateRight                                                     (in Index                     index, uint count)                                                                                                                               => (index.value >>> (int) count) | (index.value <<  (int) (32u - count));
-      [PatchMethod(AggressiveInlining)] public static   int                               Sign                                                            (in Index                     index)                                                                                                                                           => 0u == index.value ? 0 : 1;
-      [PatchMethod(AggressiveInlining)] public override string                            ToString                                                        ()                                                                                                                                                                             => this.value.ToString();
-      [PatchMethod(AggressiveInlining)] public          string                            ToString                                                        (string?                      format)                                                                                                                                          => this.value.ToString(format);
-      [PatchMethod(AggressiveInlining)] public          string                            ToString                                                        (System.IFormatProvider?      provider)                                                                                                                                        => this.value.ToString(provider);
-      [PatchMethod(AggressiveInlining)] public          string                            ToString                                                        (string?                      format, System.IFormatProvider? provider)                                                                                                        => this.value.ToString(format, provider);
-      [PatchMethod(AggressiveInlining)] public static   byte                              TrailingZeroCount                                               (in Index                     index)                                                                                                                                           { byte n = 31; uint x = index.value, y; if (0u == x) return 32; y = x << 16; if (0u != y) { n -= 16; x = y; } y = x << 8; if (0u != y) { n -= 8; x = y; } y = x << 4; if (0u != y) { n -= 4; x = y; } y = x << 2; if (0u != y) { n -= 2; x = y; } return (byte) (n - ((x << 1) >>> 31)); }
-      [PatchMethod(AggressiveInlining)] public          bool                              TryFormat                                                       (in System.Span<byte>         bytes,       out uint                          count, in System.ReadOnlySpan<char> format = default, System.IFormatProvider? provider = default) { bool formatted = this.value.TryFormat(System.Runtime.InteropServices.MemoryMarshal.Cast<byte, char>(bytes), out int subcount, format, provider);                               count  = (uint) subcount;       return formatted; }
-      [PatchMethod(AggressiveInlining)] public          bool                              TryFormat                                                       (in System.Span<char>         characters,  out uint                          count, in System.ReadOnlySpan<char> format = default, System.IFormatProvider? provider = default) { bool formatted = this.value.TryFormat(characters,                                                           out int subcount, format, provider);                               count  = (uint) subcount;       return formatted; }
-      [PatchMethod(AggressiveInlining)] public static   bool                              TryParse                                                        (string?                      text,        out Index                         result)                                                                                           { bool parsed    = long.TryParse(text,                                                                 System.Globalization.NumberStyles.Integer, null,     out long subresult); result = new((uint) subresult); return parsed; }
-      [PatchMethod(AggressiveInlining)] public static   bool                              TryParse                                                        (in System.ReadOnlySpan<byte> bytes,       out Index                         result)                                                                                           { bool parsed    = uint.TryParse(System.Runtime.InteropServices.MemoryMarshal.Cast<byte, char>(bytes), System.Globalization.NumberStyles.Integer, null,     out uint subresult); result = new(subresult);        return parsed; }
-      [PatchMethod(AggressiveInlining)] public static   bool                              TryParse                                                        (in System.ReadOnlySpan<char> characters,  out Index                         result)                                                                                           { bool parsed    = uint.TryParse(characters,                                                           System.Globalization.NumberStyles.Integer, null,     out uint subresult); result = new(subresult);        return parsed; }
-      [PatchMethod(AggressiveInlining)] public static   bool                              TryParse                                                        (string?                      text,        System.IFormatProvider?           provider, out Index               result)                                                         { bool parsed    = uint.TryParse(text,                                                                 System.Globalization.NumberStyles.Integer, provider, out uint subresult); result = new(subresult);        return parsed; }
-      [PatchMethod(AggressiveInlining)] public static   bool                              TryParse                                                        (in System.ReadOnlySpan<byte> bytes,       System.IFormatProvider?           provider, out Index               result)                                                         { bool parsed    = uint.TryParse(System.Runtime.InteropServices.MemoryMarshal.Cast<byte, char>(bytes), System.Globalization.NumberStyles.Integer, provider, out uint subresult); result = new(subresult);        return parsed; }
-      [PatchMethod(AggressiveInlining)] public static   bool                              TryParse                                                        (in System.ReadOnlySpan<char> characters,  System.IFormatProvider?           provider, out Index               result)                                                         { bool parsed    = uint.TryParse(characters,                                                           System.Globalization.NumberStyles.Integer, provider, out uint subresult); result = new(subresult);        return parsed; }
-      [PatchMethod(AggressiveInlining)] public static   bool                              TryParse                                                        (string?                      text,        System.Globalization.NumberStyles style,    System.IFormatProvider? provider, out Index result)                                     { bool parsed    = long.TryParse(text,                                                                 style,                                     provider, out long subresult); result = new((uint) subresult); return parsed; }
-      [PatchMethod(AggressiveInlining)] public static   bool                              TryParse                                                        (in System.ReadOnlySpan<byte> bytes,       System.Globalization.NumberStyles style,    System.IFormatProvider? provider, out Index result)                                     { bool parsed    = uint.TryParse(System.Runtime.InteropServices.MemoryMarshal.Cast<byte, char>(bytes), style,                                     provider, out uint subresult); result = new(subresult);        return parsed; }
-      [PatchMethod(AggressiveInlining)] public static   bool                              TryParse                                                        (in System.ReadOnlySpan<char> characters,  System.Globalization.NumberStyles style,    System.IFormatProvider? provider, out Index result)                                     { bool parsed    = uint.TryParse(characters,                                                           style,                                     provider, out uint subresult); result = new(subresult);        return parsed; }
-      [PatchMethod(AggressiveInlining)] int                                               PatchOdyssey.Collections.IRefComparable<Index>.CompareTo        (ref Index                    index)                                                                                                                                           => this.value.CompareTo  (index.value);
-      [PatchMethod(AggressiveInlining)] int                                               PatchOdyssey.Collections.IRefReadOnlyComparable<Index>.CompareTo(in  Index                    index)                                                                                                                                           => this.value.CompareTo  (index.value);
-      [PatchMethod(AggressiveInlining)] bool                                              PatchOdyssey.Collections.IRefEquatable<Index>.Equals            (ref Index                    index)                                                                                                                                           => this.value.Equals     (index.value);
-      [PatchMethod(AggressiveInlining)] bool                                              PatchOdyssey.Collections.IRefReadOnlyEquatable<Index>.Equals    (in  Index                    index)                                                                                                                                           => this.value.Equals     (index.value);
-      [PatchMethod(AggressiveInlining)] int                                               System.IComparable.CompareTo                                    (object?                      index)                                                                                                                                           => this.value.CompareTo  (index);
-      [PatchMethod(AggressiveInlining)] int                                               System.IComparable<Index>.CompareTo                             (Index                        index)                                                                                                                                           => this.value.CompareTo  (index.value);
-      [PatchMethod(AggressiveInlining)] System.TypeCode                                   System.IConvertible.GetTypeCode                                 ()                                                                                                                                                                             => this.value.GetTypeCode();
-      [PatchMethod(AggressiveInlining)] bool                                              System.IConvertible.ToBoolean                                   (System.IFormatProvider? provider)                                                                                                                                             => 0u != this.value ? true : false;
-      [PatchMethod(AggressiveInlining)] byte                                              System.IConvertible.ToByte                                      (System.IFormatProvider? provider)                                                                                                                                             => (byte) this.value;
-      [PatchMethod(AggressiveInlining)] char                                              System.IConvertible.ToChar                                      (System.IFormatProvider? provider)                                                                                                                                             => (char) this.value;
-      [PatchMethod(AggressiveInlining)] System.DateTime                                   System.IConvertible.ToDateTime                                  (System.IFormatProvider? provider)                                                                                                                                             => new(this.value);
-      [PatchMethod(AggressiveInlining)] decimal                                           System.IConvertible.ToDecimal                                   (System.IFormatProvider? provider)                                                                                                                                             => (decimal) this.value;
-      [PatchMethod(AggressiveInlining)] double                                            System.IConvertible.ToDouble                                    (System.IFormatProvider? provider)                                                                                                                                             => (double)  this.value;
-      [PatchMethod(AggressiveInlining)] short                                             System.IConvertible.ToInt16                                     (System.IFormatProvider? provider)                                                                                                                                             => (short)   this.value;
-      [PatchMethod(AggressiveInlining)] int                                               System.IConvertible.ToInt32                                     (System.IFormatProvider? provider)                                                                                                                                             => (int)     this.value;
-      [PatchMethod(AggressiveInlining)] long                                              System.IConvertible.ToInt64                                     (System.IFormatProvider? provider)                                                                                                                                             => (long)    this.value;
-      [PatchMethod(AggressiveInlining)] sbyte                                             System.IConvertible.ToSByte                                     (System.IFormatProvider? provider)                                                                                                                                             => (sbyte)   this.value;
-      [PatchMethod(AggressiveInlining)] float                                             System.IConvertible.ToSingle                                    (System.IFormatProvider? provider)                                                                                                                                             => (float)   this.value;
-      [PatchMethod(AggressiveInlining)] string                                            System.IConvertible.ToString                                    (System.IFormatProvider? provider)                                                                                                                                             => this.ToString();
-      [PatchMethod(AggressiveInlining)] object                                            System.IConvertible.ToType                                      (System.Type             type, System.IFormatProvider? provider)                                                                                                               => System.Convert.ChangeType(this.value, type, provider);
-      [PatchMethod(AggressiveInlining)] ushort                                            System.IConvertible.ToUInt16                                    (System.IFormatProvider? provider)                                                                                                                                             => (ushort) this.value;
-      [PatchMethod(AggressiveInlining)] uint                                              System.IConvertible.ToUInt32                                    (System.IFormatProvider? provider)                                                                                                                                             => (uint)   this.value;
-      [PatchMethod(AggressiveInlining)] ulong                                             System.IConvertible.ToUInt64                                    (System.IFormatProvider? provider)                                                                                                                                             => (ulong)  this.value;
-      [PatchMethod(AggressiveInlining)] bool                                              System.IEquatable<Index>.Equals                                 (Index                   index)                                                                                                                                                => this.value.Equals(index.value);
+      [PatchMethod(AggressiveInlining)] public static   ulong                                         BigMul                                                                (in IndexFor<T> indexA, in IndexFor<T> indexB)                                                                                                                                 => (ulong) System.Math.BigMul((int) indexA.value, (int) indexB.value);
+      [PatchMethod(AggressiveInlining)] public static   IndexFor<T>                                   Clamp                                                                 (in IndexFor<T> index,  in IndexFor<T> minimum, in IndexFor<T> maximum)                                                                                                        => new    (System.Math.Clamp (index.value, minimum.value, maximum.value));
+      [PatchMethod(AggressiveInlining)] public          int                                           CompareTo                                                             (in IndexFor<T> index)                                                                                                                                                         => this.value.CompareTo(index.value);
+      [PatchMethod(AggressiveInlining)] public          int                                           CompareTo                                                             (object?        value)                                                                                                                                                         => this.value.CompareTo(value);
+      [PatchMethod(AggressiveInlining)] public static   (IndexFor<T> Quotient, IndexFor<T> Remainder) DivRem                                                                (in IndexFor<T> indexA, in IndexFor<T> indexB)                                                                                                                                 { long quotient = System.Math.DivRem((long) indexA.value, (long) indexB.value, out long remainder); return (new((uint) quotient), new((uint) remainder)); }
+      [PatchMethod(AggressiveInlining)] public          bool                                          Equals                                                                (in IndexFor<T> index)                                                                                                                                                         => this.value.Equals     (index.value);
+      [PatchMethod(AggressiveInlining)] public override bool                                          Equals                                                                (object?        value)                                                                                                                                                         => this.value.Equals     (value);
+      [PatchMethod(AggressiveInlining)] public override int                                           GetHashCode                                                           ()                                                                                                                                                                             => this.value.GetHashCode();
+      [PatchMethod(AggressiveInlining)] public          System.TypeCode                               GetTypeCode                                                           ()                                                                                                                                                                             => System.Type.GetTypeCode(typeof(IndexFor<T>));
+      [PatchMethod(AggressiveInlining)] public static   bool                                          IsEvenInteger                                                         (in IndexFor<T>               index)                                                                                                                                           => 0 == (index.value & 1);
+      [PatchMethod(AggressiveInlining)] public static   bool                                          IsOddInteger                                                          (in IndexFor<T>               index)                                                                                                                                           => 1 == (index.value & 1);
+      [PatchMethod(AggressiveInlining)] public static   bool                                          IsPow2                                                                (in IndexFor<T>               index)                                                                                                                                           { IndexFor<T> logarithm = IndexFor<T>.Log2(index); uint exponent = 0u; while (0u != logarithm.value--) { exponent = 0u != exponent ? exponent << 1 : 2u; } return exponent == index.value; }
+      [PatchMethod(AggressiveInlining)] public static   byte                                          LeadingZeroCount                                                      (in IndexFor<T>               index)                                                                                                                                           { byte n = 32; uint x = index.value, y; y = x >>> 16; if (0u != y) { n -= 16; x = y; } y = x >>> 8; if (0u != y) { n -= 8; x = y; } y = x >>> 4; if (0u != y) { n -= 4; x = y; } y = x >>> 2; if (0u != y) { n -= 2; x = y; } y = x >>> 1; if (0u != y) { return (byte) (n - 2u); } return (byte) (n - x); }
+      [PatchMethod(AggressiveInlining)] public static   IndexFor<T>                                   Log2                                                                  (in IndexFor<T>               index)                                                                                                                                           { uint logarithm = 0u; for (uint exponent = index.value; 0u != exponent; exponent >>>= 1) { ++logarithm; } return new(logarithm); }
+      [PatchMethod(AggressiveInlining)] public static   ref readonly IndexFor<T>                      Max                                                                   (in IndexFor<T>               indexA, in IndexFor<T> indexB)                                                                                                                   => ref (indexB.value > indexA.value ? ref indexB : ref indexA);
+      [PatchMethod(AggressiveInlining)] public static   ref readonly IndexFor<T>                      Min                                                                   (in IndexFor<T>               indexA, in IndexFor<T> indexB)                                                                                                                   => ref (indexB.value < indexA.value ? ref indexB : ref indexA);
+      [PatchMethod(AggressiveInlining)] public static   IndexFor<T>                                   Parse                                                                 (string                       text)                                                                                                                                            => new((uint) long.Parse(text));
+      [PatchMethod(AggressiveInlining)] public static   IndexFor<T>                                   Parse                                                                 (string                       text,       System.Globalization.NumberStyles style)                                                                                             => new((uint) long.Parse(text, style));
+      [PatchMethod(AggressiveInlining)] public static   IndexFor<T>                                   Parse                                                                 (string                       text,       System.IFormatProvider?           provider)                                                                                          => new((uint) long.Parse(text, provider));
+      [PatchMethod(AggressiveInlining)] public static   IndexFor<T>                                   Parse                                                                 (in System.ReadOnlySpan<byte> bytes,      System.IFormatProvider?           provider)                                                                                          => new       (uint.Parse(System.Runtime.InteropServices.MemoryMarshal.Cast<byte, char>(bytes), System.Globalization.NumberStyles.Integer, provider));
+      [PatchMethod(AggressiveInlining)] public static   IndexFor<T>                                   Parse                                                                 (in System.ReadOnlySpan<char> characters, System.IFormatProvider?           provider)                                                                                          => new       (uint.Parse(characters,                                                           System.Globalization.NumberStyles.Integer, provider));
+      [PatchMethod(AggressiveInlining)] public static   IndexFor<T>                                   Parse                                                                 (string                       text,       System.Globalization.NumberStyles style,                                             System.IFormatProvider? provider)               => new((uint) long.Parse(text,                                                                 style,                                     provider));
+      [PatchMethod(AggressiveInlining)] public static   IndexFor<T>                                   Parse                                                                 (in System.ReadOnlySpan<byte> bytes,      System.Globalization.NumberStyles style = System.Globalization.NumberStyles.Integer, System.IFormatProvider? provider = null)        => new(       uint.Parse(System.Runtime.InteropServices.MemoryMarshal.Cast<byte, char>(bytes), style,                                     provider));
+      [PatchMethod(AggressiveInlining)] public static   IndexFor<T>                                   Parse                                                                 (in System.ReadOnlySpan<char> characters, System.Globalization.NumberStyles style = System.Globalization.NumberStyles.Integer, System.IFormatProvider? provider = null)        => new       (uint.Parse(characters,                                                           style,                                     provider));
+      [PatchMethod(AggressiveInlining)] public static   byte                                          PopCount                                                              (in IndexFor           <T>    index)                                                                                                                                           { byte count = 0; for (uint value = index.value; 0u != value; value >>>= 1) { if (0 != (value & 1)) ++count; } return count; }
+      [PatchMethod(AggressiveInlining)] public static   IndexFor<T>                                   RotateLeft                                                            (in IndexFor           <T>    index, uint count)                                                                                                                               => (index.value <<  (int) count) | (index.value >>> (int) (32u - count));
+      [PatchMethod(AggressiveInlining)] public static   IndexFor<T>                                   RotateRight                                                           (in IndexFor           <T>    index, uint count)                                                                                                                               => (index.value >>> (int) count) | (index.value <<  (int) (32u - count));
+      [PatchMethod(AggressiveInlining)] public static   int                                           Sign                                                                  (in IndexFor           <T>    index)                                                                                                                                           => 0u == index.value ? 0 : 1;
+      [PatchMethod(AggressiveInlining)] public override string                                        ToString                                                              ()                                                                                                                                                                             => this.value.ToString();
+      [PatchMethod(AggressiveInlining)] public          string                                        ToString                                                              (string?                      format)                                                                                                                                          => this.value.ToString(format);
+      [PatchMethod(AggressiveInlining)] public          string                                        ToString                                                              (System.IFormatProvider?      provider)                                                                                                                                        => this.value.ToString(provider);
+      [PatchMethod(AggressiveInlining)] public          string                                        ToString                                                              (string?                      format, System.IFormatProvider? provider)                                                                                                        => this.value.ToString(format, provider);
+      [PatchMethod(AggressiveInlining)] public static   byte                                          TrailingZeroCount                                                     (in IndexFor   <T>            index)                                                                                                                                           { byte n = 31; uint x = index.value, y; if (0u == x) return 32; y = x << 16; if (0u != y) { n -= 16; x = y; } y = x << 8; if (0u != y) { n -= 8; x = y; } y = x << 4; if (0u != y) { n -= 4; x = y; } y = x << 2; if (0u != y) { n -= 2; x = y; } return (byte) (n - ((x << 1) >>> 31)); }
+      [PatchMethod(AggressiveInlining)] public          bool                                          TryFormat                                                             (in System.Span<byte>         bytes,       out uint                          count, in System.ReadOnlySpan<char> format = default, System.IFormatProvider? provider = default) { bool formatted = this.value.TryFormat(System.Runtime.InteropServices.MemoryMarshal.Cast<byte, char>(bytes), out int subcount, format, provider);                               count  = (uint) subcount;       return formatted; }
+      [PatchMethod(AggressiveInlining)] public          bool                                          TryFormat                                                             (in System.Span<char>         characters,  out uint                          count, in System.ReadOnlySpan<char> format = default, System.IFormatProvider? provider = default) { bool formatted = this.value.TryFormat(characters,                                                           out int subcount, format, provider);                               count  = (uint) subcount;       return formatted; }
+      [PatchMethod(AggressiveInlining)] public static   bool                                          TryParse                                                              (string?                      text,        out IndexFor<T>                   result)                                                                                           { bool parsed    = long.TryParse(text,                                                                 System.Globalization.NumberStyles.Integer, null,     out long subresult); result = new((uint) subresult); return parsed; }
+      [PatchMethod(AggressiveInlining)] public static   bool                                          TryParse                                                              (in System.ReadOnlySpan<byte> bytes,       out IndexFor<T>                   result)                                                                                           { bool parsed    = uint.TryParse(System.Runtime.InteropServices.MemoryMarshal.Cast<byte, char>(bytes), System.Globalization.NumberStyles.Integer, null,     out uint subresult); result = new(subresult);        return parsed; }
+      [PatchMethod(AggressiveInlining)] public static   bool                                          TryParse                                                              (in System.ReadOnlySpan<char> characters,  out IndexFor<T>                   result)                                                                                           { bool parsed    = uint.TryParse(characters,                                                           System.Globalization.NumberStyles.Integer, null,     out uint subresult); result = new(subresult);        return parsed; }
+      [PatchMethod(AggressiveInlining)] public static   bool                                          TryParse                                                              (string?                      text,        System.IFormatProvider?           provider, out IndexFor<T>         result)                                                         { bool parsed    = uint.TryParse(text,                                                                 System.Globalization.NumberStyles.Integer, provider, out uint subresult); result = new(subresult);        return parsed; }
+      [PatchMethod(AggressiveInlining)] public static   bool                                          TryParse                                                              (in System.ReadOnlySpan<byte> bytes,       System.IFormatProvider?           provider, out IndexFor<T>         result)                                                         { bool parsed    = uint.TryParse(System.Runtime.InteropServices.MemoryMarshal.Cast<byte, char>(bytes), System.Globalization.NumberStyles.Integer, provider, out uint subresult); result = new(subresult);        return parsed; }
+      [PatchMethod(AggressiveInlining)] public static   bool                                          TryParse                                                              (in System.ReadOnlySpan<char> characters,  System.IFormatProvider?           provider, out IndexFor<T>         result)                                                         { bool parsed    = uint.TryParse(characters,                                                           System.Globalization.NumberStyles.Integer, provider, out uint subresult); result = new(subresult);        return parsed; }
+      [PatchMethod(AggressiveInlining)] public static   bool                                          TryParse                                                              (string?                      text,        System.Globalization.NumberStyles style,    System.IFormatProvider? provider, out IndexFor<T> result)                               { bool parsed    = long.TryParse(text,                                                                 style,                                     provider, out long subresult); result = new((uint) subresult); return parsed; }
+      [PatchMethod(AggressiveInlining)] public static   bool                                          TryParse                                                              (in System.ReadOnlySpan<byte> bytes,       System.Globalization.NumberStyles style,    System.IFormatProvider? provider, out IndexFor<T> result)                               { bool parsed    = uint.TryParse(System.Runtime.InteropServices.MemoryMarshal.Cast<byte, char>(bytes), style,                                     provider, out uint subresult); result = new(subresult);        return parsed; }
+      [PatchMethod(AggressiveInlining)] public static   bool                                          TryParse                                                              (in System.ReadOnlySpan<char> characters,  System.Globalization.NumberStyles style,    System.IFormatProvider? provider, out IndexFor<T> result)                               { bool parsed    = uint.TryParse(characters,                                                           style,                                     provider, out uint subresult); result = new(subresult);        return parsed; }
+      [PatchMethod(AggressiveInlining)] int                                                           PatchOdyssey.Collections.IRefComparable<IndexFor<T>>.CompareTo        (ref IndexFor          <T>    index)                                                                                                                                           => this.value.CompareTo  (index.value);
+      [PatchMethod(AggressiveInlining)] int                                                           PatchOdyssey.Collections.IRefReadOnlyComparable<IndexFor<T>>.CompareTo(in  IndexFor          <T>    index)                                                                                                                                           => this.value.CompareTo  (index.value);
+      [PatchMethod(AggressiveInlining)] bool                                                          PatchOdyssey.Collections.IRefEquatable<IndexFor<T>>.Equals            (ref IndexFor          <T>    index)                                                                                                                                           => this.value.Equals     (index.value);
+      [PatchMethod(AggressiveInlining)] bool                                                          PatchOdyssey.Collections.IRefReadOnlyEquatable<IndexFor<T>>.Equals    (in  IndexFor          <T>    index)                                                                                                                                           => this.value.Equals     (index.value);
+      [PatchMethod(AggressiveInlining)] int                                                           System.IComparable.CompareTo                                          (object?                      index)                                                                                                                                           => this.value.CompareTo  (index);
+      [PatchMethod(AggressiveInlining)] int                                                           System.IComparable<IndexFor<T>>.CompareTo                             (IndexFor<T>                  index)                                                                                                                                           => this.value.CompareTo  (index.value);
+      [PatchMethod(AggressiveInlining)] System.TypeCode                                               System.IConvertible.GetTypeCode                                       ()                                                                                                                                                                             => this.value.GetTypeCode();
+      [PatchMethod(AggressiveInlining)] bool                                                          System.IConvertible.ToBoolean                                         (System.IFormatProvider? provider)                                                                                                                                             => 0u != this.value ? true : false;
+      [PatchMethod(AggressiveInlining)] byte                                                          System.IConvertible.ToByte                                            (System.IFormatProvider? provider)                                                                                                                                             => (byte) this.value;
+      [PatchMethod(AggressiveInlining)] char                                                          System.IConvertible.ToChar                                            (System.IFormatProvider? provider)                                                                                                                                             => (char) this.value;
+      [PatchMethod(AggressiveInlining)] System.DateTime                                               System.IConvertible.ToDateTime                                        (System.IFormatProvider? provider)                                                                                                                                             => new(this.value);
+      [PatchMethod(AggressiveInlining)] decimal                                                       System.IConvertible.ToDecimal                                         (System.IFormatProvider? provider)                                                                                                                                             => (decimal) this.value;
+      [PatchMethod(AggressiveInlining)] double                                                        System.IConvertible.ToDouble                                          (System.IFormatProvider? provider)                                                                                                                                             => (double)  this.value;
+      [PatchMethod(AggressiveInlining)] short                                                         System.IConvertible.ToInt16                                           (System.IFormatProvider? provider)                                                                                                                                             => (short)   this.value;
+      [PatchMethod(AggressiveInlining)] int                                                           System.IConvertible.ToInt32                                           (System.IFormatProvider? provider)                                                                                                                                             => (int)     this.value;
+      [PatchMethod(AggressiveInlining)] long                                                          System.IConvertible.ToInt64                                           (System.IFormatProvider? provider)                                                                                                                                             => (long)    this.value;
+      [PatchMethod(AggressiveInlining)] sbyte                                                         System.IConvertible.ToSByte                                           (System.IFormatProvider? provider)                                                                                                                                             => (sbyte)   this.value;
+      [PatchMethod(AggressiveInlining)] float                                                         System.IConvertible.ToSingle                                          (System.IFormatProvider? provider)                                                                                                                                             => (float)   this.value;
+      [PatchMethod(AggressiveInlining)] string                                                        System.IConvertible.ToString                                          (System.IFormatProvider? provider)                                                                                                                                             => this.ToString();
+      [PatchMethod(AggressiveInlining)] object                                                        System.IConvertible.ToType                                            (System.Type             type, System.IFormatProvider? provider)                                                                                                               => System.Convert.ChangeType(this.value, type, provider);
+      [PatchMethod(AggressiveInlining)] ushort                                                        System.IConvertible.ToUInt16                                          (System.IFormatProvider? provider)                                                                                                                                             => (ushort) this.value;
+      [PatchMethod(AggressiveInlining)] uint                                                          System.IConvertible.ToUInt32                                          (System.IFormatProvider? provider)                                                                                                                                             => (uint)   this.value;
+      [PatchMethod(AggressiveInlining)] ulong                                                         System.IConvertible.ToUInt64                                          (System.IFormatProvider? provider)                                                                                                                                             => (ulong)  this.value;
+      [PatchMethod(AggressiveInlining)] bool                                                          System.IEquatable<IndexFor<T>>.Equals                                 (IndexFor<T>             index)                                                                                                                                                => this.value.Equals(index.value);
 
-      [PatchMethod(AggressiveInlining)] public static Index operator +  (in Index index)                   => new((uint) +index.value);
-      [PatchMethod(AggressiveInlining)] public static Index operator -  (in Index index)                   => new((uint) -index.value);
-      [PatchMethod(AggressiveInlining)] public static bool  operator !  (in Index index)                   => 0u == index.value;
-      [PatchMethod(AggressiveInlining)] public static Index operator ~  (in Index index)                   => new((uint) ~index.value);
-      [PatchMethod(AggressiveInlining)] public static Index operator ++ (in Index index)                   => new(index.value + 1u);
-      [PatchMethod(AggressiveInlining)] public static Index operator -- (in Index index)                   => new(index.value - 1u);
-      [PatchMethod(AggressiveInlining)] public static Index operator +  (in Index indexA, in Index indexB) => new        (indexA.value +         indexB.value);
-      [PatchMethod(AggressiveInlining)] public static Index operator -  (in Index indexA, in Index indexB) => new        (indexA.value -         indexB.value);
-      [PatchMethod(AggressiveInlining)] public static Index operator *  (in Index indexA, in Index indexB) => new        (indexA.value *         indexB.value);
-      [PatchMethod(AggressiveInlining)] public static Index operator /  (in Index indexA, in Index indexB) => new        (indexA.value /         indexB.value);
-      [PatchMethod(AggressiveInlining)] public static Index operator %  (in Index indexA, in Index indexB) => new        (indexA.value %         indexB.value);
-      [PatchMethod(AggressiveInlining)] public static Index operator &  (in Index indexA, in Index indexB) => new((uint) (indexA.value &   (int) indexB.value));
-      [PatchMethod(AggressiveInlining)] public static Index operator |  (in Index indexA, in Index indexB) => new        (indexA.value |         indexB.value);
-      [PatchMethod(AggressiveInlining)] public static Index operator ^  (in Index indexA, in Index indexB) => new((uint) (indexA.value ^   (int) indexB.value));
-      [PatchMethod(AggressiveInlining)] public static Index operator << (in Index indexA, in Index indexB) => new        (indexA.value <<  (int) indexB.value);
-      [PatchMethod(AggressiveInlining)] public static Index operator >> (in Index indexA, in Index indexB) => new        (indexA.value >>  (int) indexB.value);
-      [PatchMethod(AggressiveInlining)] public static Index operator >>>(in Index indexA, in Index indexB) => new        (indexA.value >>> (int) indexB.value);
-      [PatchMethod(AggressiveInlining)] public static bool  operator == (in Index indexA, in Index indexB) =>             indexA.value ==        indexB.value;
-      [PatchMethod(AggressiveInlining)] public static bool  operator != (in Index indexA, in Index indexB) =>             indexA.value !=        indexB.value;
-      [PatchMethod(AggressiveInlining)] public static bool  operator <  (in Index indexA, in Index indexB) =>             indexA.value <         indexB.value;
-      [PatchMethod(AggressiveInlining)] public static bool  operator >  (in Index indexA, in Index indexB) =>             indexA.value >         indexB.value;
-      [PatchMethod(AggressiveInlining)] public static bool  operator <= (in Index indexA, in Index indexB) =>             indexA.value <=        indexB.value;
-      [PatchMethod(AggressiveInlining)] public static bool  operator >= (in Index indexA, in Index indexB) =>             indexA.value >=        indexB.value;
+      [PatchMethod(AggressiveInlining)] public static IndexFor<T> operator +  (in IndexFor<T> index)                         => new((uint) +index.value);
+      [PatchMethod(AggressiveInlining)] public static IndexFor<T> operator -  (in IndexFor<T> index)                         => new((uint) -index.value);
+      [PatchMethod(AggressiveInlining)] public static bool        operator !  (in IndexFor<T> index)                         => 0u == index.value;
+      [PatchMethod(AggressiveInlining)] public static IndexFor<T> operator ~  (in IndexFor<T> index)                         => new((uint) ~index.value);
+      [PatchMethod(AggressiveInlining)] public static IndexFor<T> operator ++ (in IndexFor<T> index)                         => new(index.value + 1u);
+      [PatchMethod(AggressiveInlining)] public static IndexFor<T> operator -- (in IndexFor<T> index)                         => new(index.value - 1u);
+      [PatchMethod(AggressiveInlining)] public static IndexFor<T> operator +  (in IndexFor<T> indexA, in IndexFor<T> indexB) => new        (indexA.value +         indexB.value);
+      [PatchMethod(AggressiveInlining)] public static IndexFor<T> operator -  (in IndexFor<T> indexA, in IndexFor<T> indexB) => new        (indexA.value -         indexB.value);
+      [PatchMethod(AggressiveInlining)] public static IndexFor<T> operator *  (in IndexFor<T> indexA, in IndexFor<T> indexB) => new        (indexA.value *         indexB.value);
+      [PatchMethod(AggressiveInlining)] public static IndexFor<T> operator /  (in IndexFor<T> indexA, in IndexFor<T> indexB) => new        (indexA.value /         indexB.value);
+      [PatchMethod(AggressiveInlining)] public static IndexFor<T> operator %  (in IndexFor<T> indexA, in IndexFor<T> indexB) => new        (indexA.value %         indexB.value);
+      [PatchMethod(AggressiveInlining)] public static IndexFor<T> operator &  (in IndexFor<T> indexA, in IndexFor<T> indexB) => new((uint) (indexA.value &   (int) indexB.value));
+      [PatchMethod(AggressiveInlining)] public static IndexFor<T> operator |  (in IndexFor<T> indexA, in IndexFor<T> indexB) => new        (indexA.value |         indexB.value);
+      [PatchMethod(AggressiveInlining)] public static IndexFor<T> operator ^  (in IndexFor<T> indexA, in IndexFor<T> indexB) => new((uint) (indexA.value ^   (int) indexB.value));
+      [PatchMethod(AggressiveInlining)] public static IndexFor<T> operator << (in IndexFor<T> indexA, in IndexFor<T> indexB) => new        (indexA.value <<  (int) indexB.value);
+      [PatchMethod(AggressiveInlining)] public static IndexFor<T> operator >> (in IndexFor<T> indexA, in IndexFor<T> indexB) => new        (indexA.value >>  (int) indexB.value);
+      [PatchMethod(AggressiveInlining)] public static IndexFor<T> operator >>>(in IndexFor<T> indexA, in IndexFor<T> indexB) => new        (indexA.value >>> (int) indexB.value);
+      [PatchMethod(AggressiveInlining)] public static bool        operator == (in IndexFor<T> indexA, in IndexFor<T> indexB) =>             indexA.value ==        indexB.value;
+      [PatchMethod(AggressiveInlining)] public static bool        operator != (in IndexFor<T> indexA, in IndexFor<T> indexB) =>             indexA.value !=        indexB.value;
+      [PatchMethod(AggressiveInlining)] public static bool        operator <  (in IndexFor<T> indexA, in IndexFor<T> indexB) =>             indexA.value <         indexB.value;
+      [PatchMethod(AggressiveInlining)] public static bool        operator >  (in IndexFor<T> indexA, in IndexFor<T> indexB) =>             indexA.value >         indexB.value;
+      [PatchMethod(AggressiveInlining)] public static bool        operator <= (in IndexFor<T> indexA, in IndexFor<T> indexB) =>             indexA.value <=        indexB.value;
+      [PatchMethod(AggressiveInlining)] public static bool        operator >= (in IndexFor<T> indexA, in IndexFor<T> indexB) =>             indexA.value >=        indexB.value;
 
-      [PatchMethod(AggressiveInlining)] public static implicit operator Index(uint  value) => new(value);
-      [PatchMethod(AggressiveInlining)] public static implicit operator uint (Index index) => index.value;
+      [PatchMethod(AggressiveInlining)] public static implicit operator IndexFor<T>(uint        value) => new(value);
+      [PatchMethod(AggressiveInlining)] public static implicit operator uint       (IndexFor<T> index) => index.value;
     }
 
     public interface IRefComparable<T> : PatchOdyssey.Collections.IRefReadOnlyComparable<T> {
@@ -1022,12 +1022,12 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       }
 
       public struct Enumerator : System.Collections.Generic.IEnumerator<PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>>, System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<TKey, TValue>>, System.Collections.IDictionaryEnumerator /* ⟶ Based on `System.Collections.Generic.Dictionary<TKey, TValue>.Enumerator` */ {
-        private class Index { public uint value = 0u; }
+        private sealed class Index { public uint value; }
 
-        public                 ref PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>   Current => ref Util.Reference<PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>>.Only(this.current);
-        private /* required */ PatchOdyssey.Collections.RefKeyValuePair    <TKey, TValue>[] current;
-        private                readonly RefDictionary                      <TKey, TValue>   dictionary;
-        private /* required */ Enumerator.Index                                             index;
+        public                 ref PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>   Current                                                                                                => ref Util.Reference<PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>>.Only(this.current);
+        private /* required */ PatchOdyssey.Collections.RefKeyValuePair    <TKey, TValue>[] current                                                                                                =  new PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>[] {default};
+        private                readonly RefDictionary                      <TKey, TValue>   dictionary                                                                                             =  null!;
+        private /* required */ Enumerator.Index                                             index                                                                                                  =  new() {value = 0u};
         PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>                              System.Collections.Generic.IEnumerator<PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>>.Current => this.Current;
         System.Collections.Generic.KeyValuePair <TKey, TValue>                              System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<TKey, TValue>>.Current  => this.Current;
         System.Collections.DictionaryEntry                                                  System.Collections.IDictionaryEnumerator.Entry                                                         => new(this.Current.Key, this.Current.Value);
@@ -1038,9 +1038,6 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         /* … */
         [PatchConstructor, PatchMethod(AggressiveInlining)]
         internal Enumerator(RefDictionary<TKey, TValue> dictionary) {
-          this.current = null!; // ⟶ “error CS8618: NoN-nUlLaBlE fIeLd 'current' MuSt CoNtAiN a NoN-nUlL vAlUe WhEn ExItInG cOnStRuCtOr. CoNsIdEr AdDiNg ThE 'required' mOdIfIeR oR dEcLaRiNg ThE fIeLd As NuLlAbLe.”
-          this.index   = null!; //    ^^
-
           this.Reset();
           this.dictionary = dictionary;
         }
@@ -1063,7 +1060,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
           return false;
         }
 
-        [PatchMethod(AggressiveInlining)] public void Reset                                  () { this.current = new PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>[] {default}; this.index = new(); }
+        [PatchMethod(AggressiveInlining)] public void Reset                                  () { this.current = new PatchOdyssey.Collections.RefKeyValuePair<TKey, TValue>[] {default}; this.index.value = 0u; }
         [PatchMethod(AggressiveInlining)] bool        System.Collections.IEnumerator.MoveNext() => this.MoveNext();
         [PatchMethod(AggressiveInlining)] void        System.Collections.IEnumerator.Reset   () => this.Reset   ();
         [PatchMethod(AggressiveInlining)] void        System.IDisposable.Dispose             () => this.Dispose ();
@@ -1350,8 +1347,8 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
           if (this.count == this.keys.Count)
             this.Resize(RefDictionary<TKey, TValue>.CapacityMaximum >>> 0 > this.count && RefDictionary<TKey, TValue>.CapacityMaximum >>> 1 < this.count ? RefDictionary<TKey, TValue>.CapacityMaximum : RefDictionary<TKey, TValue>.GetPrime(this.count << 1));
 
-          freeIndex   = this.count;
-          this.count += 1u;
+          freeIndex = this.count;
+          this.count++;
         }
 
         this.next   [freeIndex] = this.buckets[hashIndex];
@@ -1544,16 +1541,14 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
     [System.Serializable]
     public class RefList<T> : PatchOdyssey.Collections.RefReadOnlyList<T>, PatchOdyssey.Collections.IRefEquatable<RefList<T>>, System.Collections.Generic.IList<T>, System.Collections.ICollection, System.Collections.IList, System.Collections.IStructuralComparable, System.Collections.IStructuralEquatable, System.ICloneable {
       public new struct Enumerator : System.Collections.Generic.IEnumerator<T> {
-        public ref      T                                                      Current => ref this.enumerator.list.GetValue((uint) this.enumerator.index);
+        public ref      T                                                      Current => ref this.enumerator.list.GetValue((uint) this.enumerator.index.value);
         public readonly PatchOdyssey.Collections.RefReadOnlyList<T>.Enumerator enumerator;
         T                                                                      System.Collections.Generic.IEnumerator<T>.Current => this.Current;
         object                                                                 System.Collections.IEnumerator.Current            => this.Current!;
 
         /* … */
         [PatchConstructor, PatchMethod(AggressiveInlining)]
-        public Enumerator(RefList<T> list) {
-          this.enumerator = new(list);
-        }
+        public Enumerator(RefList<T> list) => this.enumerator = new(list);
 
         /* … */
         [PatchMethod(AggressiveInlining)] public void Dispose                                () => this.enumerator.Dispose ();
@@ -2073,9 +2068,11 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
     [System.Serializable]
     public class RefReadOnlyList<T> : PatchOdyssey.Collections.IRefEquatable<RefReadOnlyList<T>>, System.Collections.Generic.IEnumerable<T>, System.Collections.Generic.IReadOnlyList<T>, System.Collections.IStructuralComparable, System.Collections.IStructuralEquatable, System.ICloneable /* ⟶ Based on `System.Collections.Generic.List<T>` and `System.Collections.ObjectModel.ReadOnlyCollection<T>` */ {
       public struct Enumerator : System.Collections.Generic.IEnumerator<T> {
-        public   ref readonly T                  Current => ref this.list.GetValue((uint) this.index);
-        internal              int                index;
-        internal readonly     RefReadOnlyList<T> list;
+        internal sealed class Index { public int value; }
+
+        public   ref readonly T                  Current                                           => ref this.list.GetValue((uint) this.index.value);
+        internal              Enumerator.Index   index                                             =  new() {value = -1};
+        internal readonly     RefReadOnlyList<T> list                                              =  default!;
         T                                        System.Collections.Generic.IEnumerator<T>.Current => this.Current;
         object                                   System.Collections.IEnumerator.Current            => this.Current!;
 
@@ -2088,8 +2085,8 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
 
         /* … */
         [PatchMethod(AggressiveInlining)] public void Dispose                                () { /* Do nothing… */ }
-        [PatchMethod(AggressiveInlining)] public bool MoveNext                               () => this.index < this.list.Count - 1 ? (++this.index, _: true)._ : false;
-        [PatchMethod(AggressiveInlining)] public void Reset                                  () => this.index = -1;
+        [PatchMethod(AggressiveInlining)] public bool MoveNext                               () { if (this.index.value + 1 < this.list.Count) { ++this.index.value; return true; } return false; }
+        [PatchMethod(AggressiveInlining)] public void Reset                                  () => this.index.value = -1;
         [PatchMethod(AggressiveInlining)] bool        System.Collections.IEnumerator.MoveNext() => this.MoveNext();
         [PatchMethod(AggressiveInlining)] void        System.Collections.IEnumerator.Reset   () => this.Reset   ();
         [PatchMethod(AggressiveInlining)] void        System.IDisposable.Dispose             () => this.Dispose ();
@@ -3190,6 +3187,9 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     [PatchMethod(AggressiveInlining)] public static uint CountHierarchyByTag(this UnityEngine.Component  component,  string tag) => component.gameObject.CountHierarchyByTag(tag);
     [PatchMethod(AggressiveInlining)] public static uint CountHierarchyByTag(this UnityEngine.GameObject gameObject, string tag) { return gameObject.CountDescendantsByTag(tag) + (gameObject.tag == tag ? 1u : 0u); }
 
+    [PatchMethod(AggressiveInlining)]
+    public static uint CountInvocationList(this System.Delegate delegated) => (uint) delegated.GetInvocationList().Length;
+
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectEnumerator EnumerateChildren   (this UnityEngine.GameObject gameObject) => new(GameObjectEnumerator.Kind.Children,    gameObject.transform);
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectEnumerator EnumerateDescendants(this UnityEngine.GameObject gameObject) => new(GameObjectEnumerator.Kind.Descendants, gameObject.transform);
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectEnumerator EnumerateHierarchy  (this UnityEngine.GameObject gameObject) => new(GameObjectEnumerator.Kind.Hierarchy,   gameObject.transform);
@@ -3685,11 +3685,12 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     }
 
     public static class Load {
-      internal /* readonly */ struct LoadCachedIndex { public /* readonly */ uint value; }
-      internal /* readonly */ struct LoadFailedIndex { public /* readonly */ uint value; }
+      internal abstract class CachedIndex {}
+      internal abstract class FailedIndex {}
 
       /* … */
       public   const           double                                                                                               Asynchronously = 0.0;
+      internal static          Unity.Collections.NativeArray<float>                                                                 AudioClipData  = new(0, Unity.Collections.Allocator.Persistent, Unity.Collections.NativeArrayOptions.UninitializedMemory);
       public   const           uint                                                                                                 Once           = 0u;
       internal static readonly PatchOdyssey.Collections.RefDictionary<(System.Type, System.Uri), PatchOdyssey.Collections.LoadInfo> Pending        = new(16u);
       public   const           uint                                                                                                 Persistently   = uint.MaxValue;
@@ -3698,13 +3699,13 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       public   const           bool                                                                                                 WithoutCache   = false;
 
       /* … */
-      [PatchMethod(AggressiveInlining)]
+      [PatchMethod(NoInlining)]
       private static void Idle(object? target, in PatchOdyssey.Events.LoadEvent data) {}
 
-      private static T? Uri<T>(System.Uri path, PatchOdyssey.Handler<PatchOdyssey.Events.LoadEvent> callback, double timeout, bool cached, uint retries, System.Func<System.Uri, UnityEngine.Networking.UnityWebRequest> requester, System.Func<UnityEngine.Networking.UnityWebRequest, T> loader, System.Func<T, T> recacher, PatchOdyssey.Handler<PatchOdyssey.Events.LoadEvent> fallback, bool restarted) where T : class? {
+      private static T? Uri<T>(System.Uri path, PatchOdyssey.Handler<PatchOdyssey.Events.LoadEvent> callback, double timeout, bool cached, uint retries, System.Func<System.Uri, UnityEngine.Networking.UnityWebRequest> requester, System.Func<UnityEngine.Networking.UnityWebRequest, T?> loader, System.Func<T, T> recacher, PatchOdyssey.Handler<PatchOdyssey.Events.LoadEvent> fallback, bool restarted) where T : class? {
         ref PatchOdyssey.Collections.LoadInfo                load             = ref Load.Pending.TryAppend((typeof(T), path), new());
         uint                                                 attempts         = restarted ? load.events[0].metadata.data.attempts : 1u;
-        uint                                                 attemptsAllowed  = System.Math.Max(retries, uint.MaxValue - 1u)      + 1u;
+        uint                                                 attemptsAllowed  = System.Math.Min(retries, uint.MaxValue - 1u)      + 1u;
         PatchOdyssey.Collections.Mono<T>                     cachedPayload    = default;
         bool                                                 failed           = false; // ⟶ `UnityEngine.Networking.UnityWebRequest.Result.*Error`, `timeout`, …, e.t.c.
         uint                                                 loadHandlerIndex = restarted ? 0u : default;
@@ -3721,7 +3722,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
         [PatchMethod(AggressiveInlining)]
         static void LoadCached(ref PatchOdyssey.Collections.LoadInfo load, ref PatchOdyssey.Collections.Mono<T> payload, System.Func<T, T> recacher) {
-          PatchOdyssey.Collections.SharedList<Load.LoadCachedIndex> resolved = new();
+          PatchOdyssey.Collections.SharedList<PatchOdyssey.Collections.IndexFor<Load.CachedIndex>> resolved = new();
 
           // …
           for (uint index = resolved.IsEmpty() ? load.events.CountInvocationList() : resolved[resolved.Count - 1u].value; 0u != index--; ) {
@@ -3734,20 +3735,20 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
               loadEvent.data.duration = UnityEngine.Time.realtimeSinceStartupAsDouble - loadEvent.data.duration;
               loadEvent.data.payload  = GetCache(ref load, ref payload, recacher);
 
-              resolved.Add(new() {value = index});
+              resolved.Add(index);
               loadHandler.Invoke();
             }
           }
 
-          foreach (ref readonly Load.LoadCachedIndex index in resolved)
-            load.events.RemoveAt(index.value);
+          foreach (uint index in resolved)
+            load.events.RemoveAt(index);
 
           resolved.Clear();
         }
 
         [PatchMethod(AggressiveInlining)]
-        static void LoadFailed(ref PatchOdyssey.Collections.LoadInfo load) /* ⟶ Invoke currently failed and asynchronous pending handlers, otherwise update remaining pending */ {
-          PatchOdyssey.Collections.SharedList<Load.LoadFailedIndex> resolved = new();
+        static void LoadFailed(ref PatchOdyssey.Collections.LoadInfo load) {
+          PatchOdyssey.Collections.SharedList<PatchOdyssey.Collections.IndexFor<Load.FailedIndex>> resolved = new();
 
           // …
           load.payload = null;
@@ -3763,23 +3764,30 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
               loadEvent.data.duration = UnityEngine.Time.realtimeSinceStartupAsDouble - loadEvent.data.duration;
               load.events[index]      = new(fallback, loadHandler.target, loadHandler.metadata);
 
-              resolved.Add(new() {value = index});
+              resolved.Add(index);
               loadHandler.Invoke();
             } else ++loadEvent.data.attempts;
           }
 
-          foreach (ref readonly Load.LoadFailedIndex index in resolved)
-            load.events.RemoveAt(index.value);
+          foreach (uint index in resolved)
+            load.events.RemoveAt(index);
 
           resolved.Clear();
         }
 
         [PatchMethod(AggressiveInlining)]
-        static T LoadSucceeded(ref PatchOdyssey.Collections.LoadInfo load, UnityEngine.Networking.UnityWebRequest handler, System.Func<UnityEngine.Networking.UnityWebRequest, T> loader) {
-          T payload = loader(handler);
+        static T? LoadSucceeded(ref PatchOdyssey.Collections.LoadInfo load, UnityEngine.Networking.UnityWebRequest handler, System.Func<UnityEngine.Networking.UnityWebRequest, T?> loader) {
+          T? payload = loader(handler);
 
           // …
-          load.cached = load.payload = payload;
+          load.payload = payload;
+
+          if (payload is not null) {
+            if (load.cached is not null && typeof(T) == typeof(UnityEngine.Networking.DownloadHandler))
+              ((UnityEngine.Networking.DownloadHandler) load.cached).Dispose();
+
+            load.cached = payload;
+          }
 
           foreach (ref PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Events.LoadEvent> loadHandler in load.events) {
             ref PatchOdyssey.Events.LoadEvent loadEvent = ref loadHandler.metadata;
@@ -3798,33 +3806,39 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         }
 
         [PatchMethod(Synchronized)]
-        /* static */ void LoadUri(UnityEngine.AsyncOperation _) /* ⟶ Captures `load`, `loader`, and `loadHandler` */ {
-          ref PatchOdyssey.Collections.LoadInfo                                   load        = ref Load.Pending[(typeof(T), path)];
-          ref PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Events.LoadEvent> loadHandler = ref load.events[loadHandlerIndex];
-          UnityEngine.Networking.UnityWebRequestAsyncOperation                    operation   = (UnityEngine.Networking.UnityWebRequestAsyncOperation) _;
+        /* static */ void LoadUri(UnityEngine.AsyncOperation _) /* ⟶ Captures `loader` and `path` */ {
+          UnityEngine.Networking.UnityWebRequestAsyncOperation operation        = (UnityEngine.Networking.UnityWebRequestAsyncOperation) _;
+          ref PatchOdyssey.Collections.LoadInfo                load             = ref Load.Pending[(typeof(T), path)];
+          int                                                  loadHandlerIndex = load.events.FindIndex([PatchMethod(AggressiveInlining)] (loadHandler) => loadHandler.target == operation);
 
           // …
           using (UnityEngine.Networking.UnityWebRequest request = operation.webRequest) // ⟶ `request.uri` could be modified through redirection unless `::redirectLimit = 0`
-          if (UnityEngine.Networking.UnityWebRequest.Result.Success != request.result) {
-            request.disposeDownloadHandlerOnDispose = true;
+          if (loadHandlerIndex != -1) {
+            ref PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Events.LoadEvent> loadHandler = ref load.events[(uint) loadHandlerIndex];
 
-            if (loadHandler.metadata.data.attempts != loadHandler.metadata.data.attemptsAllowed) {
-              operation                                            = requester(path).SendWebRequest();
-              operation.completed                                 += LoadUri;
-              operation.webRequest.disposeDownloadHandlerOnDispose = typeof(T) != typeof(UnityEngine.Networking.DownloadHandler);
-              loadHandler.metadata.data.attempts                  += 1u;
-              load.events[loadHandlerIndex]                        = new(loadHandler.value, operation, loadHandler.metadata);
-            }
+            if (UnityEngine.Networking.UnityWebRequest.Result.Success != request.result) {
+              request.disposeDownloadHandlerOnDispose = true;
 
-            else {
-              LoadFailed(ref load);
-              if (!load.events.IsEmpty()) ReloadUri(ref load, requester, loader, recacher);
-            }
-          } else LoadSucceeded(ref load, request, loader);
+              if (loadHandler.metadata.data.attempts != loadHandler.metadata.data.attemptsAllowed) {
+                operation                                            = requester(path).SendWebRequest();
+                operation.completed                                 += LoadUri;
+                operation.webRequest.disposeDownloadHandlerOnDispose = typeof(T) != typeof(UnityEngine.Networking.DownloadHandler);
+                loadHandler.metadata.data.attempts                  += 1u;
+                load.events[(uint) loadHandlerIndex]                 = new(loadHandler.value, operation, loadHandler.metadata);
+              }
+
+              else {
+                LoadFailed(ref load);
+
+                if (!load.events.IsEmpty())
+                ReloadUri(ref load, requester, loader, recacher);
+              }
+            } else LoadSucceeded(ref load, request, loader);
+          }
         }
 
         [PatchMethod(AggressiveInlining)]
-        static void ReloadUri(ref PatchOdyssey.Collections.LoadInfo load, System.Func<System.Uri, UnityEngine.Networking.UnityWebRequest> requester, System.Func<UnityEngine.Networking.UnityWebRequest, T> loader, System.Func<T, T> recacher) /* ⟶ Use pending asynchronous handler to get payload (ideally does not raise a `System.StackOverflowException`) */ {
+        static void ReloadUri(ref PatchOdyssey.Collections.LoadInfo load, System.Func<System.Uri, UnityEngine.Networking.UnityWebRequest> requester, System.Func<UnityEngine.Networking.UnityWebRequest, T?> loader, System.Func<T, T> recacher) /* ⟶ Use pending asynchronous handler to get payload (ideally does not raise a `System.StackOverflowException`) */ {
           ref PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Events.LoadEvent> loadHandler = ref load.events[0];
           Load.Uri<T>(loadHandler.metadata.data.path, loadHandler.value, Load.Asynchronously, loadHandler.metadata.data.cached, loadHandler.metadata.data.attemptsAllowed - 1u, requester, loader, recacher, loadHandler.metadata.callback, true);
         }
@@ -3835,7 +3849,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
           if (cached) {
             if      (!restarted)             callback(null, new() {callback = callback, data = (attempts, attemptsAllowed, true, 0.0, path, GetCache(ref load, ref cachedPayload, recacher))}); // ⟶ Otherwise already cleared and invoked via `LoadCached(…)`
-            else if (!load.events.IsEmpty()) ReloadUri(ref load, requester, loader, recacher);                                                                                                                               // ⟶ Avoid dead-locking the load queue
+            else if (!load.events.IsEmpty()) ReloadUri(ref load, requester, loader, recacher);                                                                                                    // ⟶ Avoid dead-locking the load queue
 
             return GetCache(ref load, ref cachedPayload, recacher);
           }
@@ -3850,7 +3864,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
             // … ⟶ `Load.Asynchronously` — Handler awaits completion of predecessor
             if (double.IsNaN(timeout) || 0.0 >= timeout) {
               stopwatch.Stop();
-              load.events += new PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Events.LoadEvent>(callback, null, new() {callback = fallback, data = (attempts, attemptsAllowed, cached, UnityEngine.Time.realtimeSinceStartupAsDouble, path, null)});
+              load.events += new PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Events.LoadEvent>(callback, null, new() {callback = fallback, data = (attempts - 1u, attemptsAllowed, cached, UnityEngine.Time.realtimeSinceStartupAsDouble, path, null)});
 
               return null;
             }
@@ -3874,11 +3888,11 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
           if (!requested) {
             loadHandlerIndex = load.events.CountInvocationList();
-            load.events     += new PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Events.LoadEvent>(callback, operation, new() {callback = fallback, data = (attempts, attemptsAllowed, cached, UnityEngine.Time.realtimeSinceStartupAsDouble, path, null)});
-            requested        = true;
+            load.events     += new PatchOdyssey.Collections.HandlerInfo<PatchOdyssey.Events.LoadEvent>(callback, operation, new() {callback = fallback, data = (attempts - 1u, attemptsAllowed, cached, UnityEngine.Time.realtimeSinceStartupAsDouble, path, null)});
           }
 
           load.events[loadHandlerIndex] = new(load.events[loadHandlerIndex].value, operation, load.events[loadHandlerIndex].metadata);
+          requested                     = true;
 
           for (UnityEngine.Networking.UnityWebRequest request = operation.webRequest; !failed && UnityEngine.Networking.UnityWebRequest.Result.Success != request.result; failed = failed || UnityEngine.Networking.UnityWebRequest.Result.ConnectionError == request.result || UnityEngine.Networking.UnityWebRequest.Result.DataProcessingError == request.result || UnityEngine.Networking.UnityWebRequest.Result.ProtocolError == request.result)
           if (UnityEngine.Networking.UnityWebRequest.Result.InProgress == request.result) {
@@ -3893,10 +3907,10 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
           }
 
           using (UnityEngine.Networking.UnityWebRequest request = operation.webRequest) {
-            if (failed) {
-              load.events[loadHandlerIndex].metadata.data.attempts += 1u;
-              request.disposeDownloadHandlerOnDispose              =  true;
+            ++load.events[loadHandlerIndex].metadata.data.attempts;
 
+            if (failed) {
+              request.disposeDownloadHandlerOnDispose = true;
               continue;
             }
 
@@ -3914,88 +3928,102 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         return null;
       }
 
+      [PatchMethod(AggressiveInlining)]
       public static Unity.Collections.NativeArray<byte>.ReadOnly? Uri(System.Uri path, PatchOdyssey.Handler<PatchOdyssey.Events.LoadEvent>? callback = null, double timeout = Load.Asynchronously, bool cached = Load.WithCache, uint retries = Load.Persistently, PatchOdyssey.Handler<PatchOdyssey.Events.LoadEvent>? fallback = null) => Load.Uri<UnityEngine.Networking.DownloadHandler>(
         path,
         callback is null ? Load.Idle : ([PatchMethod(AggressiveInlining)] (object? target, in PatchOdyssey.Events.LoadEvent data) => callback(target, new() {callback = callback, data = (data.data.attempts, data.data.attemptsAllowed, data.data.cached, data.data.duration, data.data.path, ((UnityEngine.Networking.DownloadHandler) data.data.payload!).nativeData), epoch = data.epoch, metadata = data.metadata})),
-        timeout,
-        cached,
-        retries,
+        timeout, cached, retries,
         ([PatchMethod(AggressiveInlining)] static (path)    => UnityEngine.Networking.UnityWebRequest.Get(path)),
         ([PatchMethod(AggressiveInlining)] static (request) => request.downloadHandler),
-        ([PatchMethod(AggressiveInlining)] static (cached)  => cached), // ⟶ `cached.AsCopy()`
-        fallback is null ? Load.Idle : fallback,
+        ([PatchMethod(AggressiveInlining)] static (cached)  => cached),
+        fallback ?? Load.Idle,
         false
       )?.nativeData;
 
-      // public static UnityEngine.AudioClip? LoadUriAsAudioClip(string path, System.Action<UnityEngine.AudioClip?>? callback = null, double? timeout = null, bool cached = Load.WithCache, UnityEngine.AudioType? encoding = null) {
-      //   return Load.Uri(
-      //     typeof(UnityEngine.AudioClip).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as UnityEngine.AudioClip), timeout, cached,
-      //     static predata => {
-      //       #if false // ⟶ Consume less memory resources, please T_T
-      //         UnityEngine.AudioClip                preaudioClip     = predata as UnityEngine.AudioClip;
-      //         Unity.Collections.NativeArray<float> preaudioClipData = new(preaudioClip.channels * preaudioClip.samples, Unity.Collections.Allocator.Temp, Unity.Collections.NativeArrayOptions.UninitializedMemory);
-      //         UnityEngine.AudioClip                audioClip        = UnityEngine.AudioClip.Create("🎵 " + System.IO.Path.GetFileName(path), preaudioClip.samples, preaudioClip.channels, preaudioClip.frequency, false);
+      [PatchMethod(AggressiveInlining)] public static UnityEngine.AudioClip? UriAsAudioClip(System.Uri path, PatchOdyssey.Handler<PatchOdyssey.Events.LoadEvent>? callback = null, double timeout = Load.Asynchronously, bool cached = Load.WithCache, uint retries = Load.Persistently, PatchOdyssey.Handler<PatchOdyssey.Events.LoadEvent>? fallback = null) => Load.UriAsAudioClip(path, UnityEngine.AudioType.MPEG, callback, timeout, cached, retries, fallback);
+      [PatchMethod(AggressiveInlining)]
+      public static UnityEngine.AudioClip? UriAsAudioClip(System.Uri path, UnityEngine.AudioType encoding, PatchOdyssey.Handler<PatchOdyssey.Events.LoadEvent>? callback = null, double timeout = Load.Asynchronously, bool cached = Load.WithCache, uint retries = Load.Persistently, PatchOdyssey.Handler<PatchOdyssey.Events.LoadEvent>? fallback = null) => Load.Uri<UnityEngine.AudioClip>(
+        path, callback ?? Load.Idle, timeout, cached, retries,
+        ([PatchMethod(AggressiveInlining)]        (path)    => UnityEngine.Networking.UnityWebRequestMultimedia.GetAudioClip(path, encoding)),
+        ([PatchMethod(AggressiveInlining)] static (request) => {
+          UnityEngine.AudioClip? audioClip = UnityEngine.Networking.DownloadHandlerAudioClip.GetContent(request); // ⟶ `((UnityEngine.Networking.DownloadHandlerAudioClip) request.downloadHandler).audioClip`
 
-      //         // …
-      //         if (!preaudioClip.GetData(preaudioClipData, 0)) return preaudioClip;
-      //         if (!audioClip   .SetData(preaudioClipData, 0)) return preaudioClip;
+          // …
+          if (null != audioClip)
+          audioClip.name = "🎵 " + System.IO.Path.GetFileName(request.url);
 
-      //         return audioClip;
-      //       #endif
-      //       return predata;
-      //     },
-      //     path           => UnityEngine.Networking.UnityWebRequestMultimedia.GetAudioClip(path, encoding ?? UnityEngine.AudioType.MPEG),
-      //     static request => {
-      //       UnityEngine.AudioClip? audioClip = UnityEngine.Networking.DownloadHandlerAudioClip.GetContent(request);
+          return audioClip;
+        }),
+        ([PatchMethod(AggressiveInlining)] static (cached) => {
+          UnityEngine.AudioClip cachedAudioClip         = (UnityEngine.AudioClip) cached;
+          int                   cachedAudioClipDataSize = cachedAudioClip.channels * cachedAudioClip.samples;
+          UnityEngine.AudioClip audioClip               = cachedAudioClip;
 
-      //       // …
-      //       if (audioClip is not null)
-      //       audioClip.name = request.url is not null ? "🎵 " + System.IO.Path.GetFileName(request.url) : "🎵";
+          // … ⟶ Consume less memory resources, please T_T
+          #if true
+            if (int.MaxValue / cachedAudioClip.channels >= cachedAudioClip.samples) do {
+              if (cachedAudioClipDataSize > Load.AudioClipData.Length) {
+                Load.AudioClipData.Dispose();
+                Load.AudioClipData = new(cachedAudioClipDataSize, Unity.Collections.Allocator.Persistent, Unity.Collections.NativeArrayOptions.UninitializedMemory);
+              }
 
-      //       return audioClip;
-      //     }
-      //   ) as UnityEngine.AudioClip;
-      // }
+              if (!cachedAudioClip.GetData(Load.AudioClipData, 0)) break;
+              audioClip = UnityEngine.AudioClip.Create(cachedAudioClip.name, cachedAudioClip.samples, cachedAudioClip.channels, cachedAudioClip.frequency, false);
 
-      // public static string? LoadUriAsText(string path, System.Action<string?>? callback = null, double? timeout = null, bool cached = Load.WithCache, System.Text.Encoding? encoding = null) {
-      //   return Load.Uri(
-      //     typeof(string).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as string), timeout, cached,
-      //     static predata => predata, // ⟶ `new string((predata as string).ToCharArray())`
-      //     static path    => UnityEngine.Networking.UnityWebRequest.Get(path),
-      //     request        => {
-      //       string? text = encoding is not null ? null : request.downloadHandler.text; // ⟶ UTF-8
+              if (!audioClip.SetData(Load.AudioClipData, 0))
+              return cachedAudioClip;
+            } while (false);
+          #endif
 
-      //       // …
-      //       try { text ??= encoding!.GetString(request.downloadHandler.data); }
-      //       catch (System.Exception exception) when (exception is System.ArgumentException || exception is System.ArgumentNullException || exception is System.Text.DecoderFallbackException) {}
+          return audioClip;
+        }),
+        fallback ?? Load.Idle,
+        false
+      );
 
-      //       return text;
-      //     }
-      //   ) as string;
-      // }
+      [PatchMethod(AggressiveInlining)] public static string? UriAsText(System.Uri path, PatchOdyssey.Handler<PatchOdyssey.Events.LoadEvent>? callback = null, double timeout = Load.Asynchronously, bool cached = Load.WithCache, uint retries = Load.Persistently, PatchOdyssey.Handler<PatchOdyssey.Events.LoadEvent>? fallback = null) => Load.UriAsText(path, System.Text.Encoding.UTF8, callback, timeout, cached, retries, fallback);
+      [PatchMethod(AggressiveInlining)]
+      public static string? UriAsText(System.Uri path, System.Text.Encoding encoding, PatchOdyssey.Handler<PatchOdyssey.Events.LoadEvent>? callback = null, double timeout = Load.Asynchronously, bool cached = Load.WithCache, uint retries = Load.Persistently, PatchOdyssey.Handler<PatchOdyssey.Events.LoadEvent>? fallback = null) => Load.Uri<string>(
+        path, callback ?? Load.Idle, timeout, cached, retries,
+        ([PatchMethod(AggressiveInlining)] static (path) => UnityEngine.Networking.UnityWebRequest.Get(path)),
+        encoding is System.Text.UTF8Encoding ? ([PatchMethod(AggressiveInlining)] static (request) => request.downloadHandler.text) : ([PatchMethod(AggressiveInlining)] (request) => {
+          try { return encoding.GetString(request.downloadHandler.nativeData.AsReadOnlySpan()); }
+          catch (System.Exception exception) when (exception is System.ArgumentException || exception is System.ArgumentNullException || exception is System.Text.DecoderFallbackException) {}
 
-      // public static UnityEngine.Texture2D? LoadUriAsTexture2D(string path, System.Action<UnityEngine.Texture2D?>? callback = null, double? timeout = null, bool cached = Load.WithCache) {
-      //   return Load.Uri(
-      //     typeof(UnityEngine.Texture2D).ToString(), path, callback is null ? static _ => {} : _ => callback(_ as UnityEngine.Texture2D), timeout, cached,
-      //     static predata => {
-      //       #if false // ⟶ Consume less memory resources, please T_T
-      //         UnityEngine.Texture2D pretexture = predata as UnityEngine.Texture2D;
-      //         UnityEngine.Texture2D texture    = new(pretexture.width, pretexture.height, pretexture.format, pretexture.mipmapCount, false);
+          return null;
+        }),
+        ([PatchMethod(AggressiveInlining)] static (cached) => cached),
+        fallback ?? Load.Idle,
+        false
+      );
 
-      //         UnityEngine.Graphics.CopyTexture(pretexture, texture);
-      //         return texture;
-      //       #endif
-      //       return predata;
-      //     },
-      //     static path => UnityEngine.Networking.UnityWebRequest.Get(path),
-      //     request     => {
-      //       UnityEngine.Texture2D texture = new(2, 2, UnityEngine.TextureFormat.RGBA32, -1, false);
+      [PatchMethod(AggressiveInlining)]
+      public static UnityEngine.Texture2D? UriAsTexture2D(System.Uri path, PatchOdyssey.Handler<PatchOdyssey.Events.LoadEvent>? callback = null, double timeout = Load.Asynchronously, bool cached = Load.WithCache, uint retries = Load.Persistently, PatchOdyssey.Handler<PatchOdyssey.Events.LoadEvent>? fallback = null) => Load.Uri<UnityEngine.Texture2D>(
+        path, callback ?? Load.Idle, timeout, cached, retries,
+        ([PatchMethod(AggressiveInlining)] static (path)    => UnityEngine.Networking.UnityWebRequest.Get(path)),
+        ([PatchMethod(AggressiveInlining)] static (request) => {
+          UnityEngine.Texture2D texture = new(2, 2, UnityEngine.TextureFormat.RGBA32, -1, false);
 
-      //       texture.name = "🖼️ " + System.IO.Path.GetFileName(path);
-      //       return UnityEngine.ImageConversion.LoadImage(texture, request.downloadHandler.data, true) ? texture : null;
-      //     }
-      //   ) as UnityEngine.Texture2D;
-      // }
+          texture.name = "🖼️ " + System.IO.Path.GetFileName(request.url);
+          return UnityEngine.ImageConversion.LoadImage(texture, request.downloadHandler.data, true) ? texture : null;
+        }),
+        ([PatchMethod(AggressiveInlining)] static (cached) => {
+          UnityEngine.Texture2D cachedTexture = (UnityEngine.Texture2D) cached;
+          UnityEngine.Texture2D texture       = cachedTexture;
+
+          // … ⟶ Consume less memory resources, please T_T
+          #if true
+            texture      = new(cachedTexture.width, cachedTexture.height, cachedTexture.format, cachedTexture.mipmapCount, false);
+            texture.name = cachedTexture.name;
+
+            UnityEngine.Graphics.CopyTexture(cachedTexture, texture);
+          #endif
+
+          return texture;
+        }),
+        fallback ?? Load.Idle,
+        false
+      );
     }
 
     public static class Reference<T> /* ⟶ Solely for `𝑓 Util.Reference<T>.*At(…)` */ {
@@ -4035,8 +4063,8 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     }
 
     public static class Wait {
-      internal /* readonly */ struct WaitForTimerIndex                             { public /* readonly */ uint value; }
-      internal sealed         class  WaitMonoBehaviour : UnityEngine.MonoBehaviour {}
+      internal readonly struct TimerIndex                                    {}
+      internal sealed   class  WaitMonoBehaviour : UnityEngine.MonoBehaviour {}
 
       /* … */
       internal static readonly PatchOdyssey.Collections.RefSortedCollection<double, PatchOdyssey.Collections.WaitInfo> Pending = new(16u) {{double.NaN, new()}};                                         // ⟶ Used `System.Collections.Generic.SortedDictionary<double, PatchOdyssey.Collections.WaitInfo>` prior
@@ -4047,10 +4075,10 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       [PatchMethod(AggressiveInlining)] public static uint CheckCoroutine() => 0u; // ⟶ Number of coroutines stopped
 
       public static uint CheckTimer() {
-        uint                                                        count     = 0u;
-        PatchOdyssey.Collections.SharedList<Wait.WaitForTimerIndex> resolved  = new();
-        double                                                      timestamp = UnityEngine.Time.realtimeSinceStartupAsDouble;
-        ref readonly PatchOdyssey.Collections.WaitInfo              wait      = ref Wait.Pending[0]; // ⟶ `Wait.Pending.GetValueByRank(double.NaN)`
+        uint                                                                                    count     = 0u;
+        PatchOdyssey.Collections.SharedList<PatchOdyssey.Collections.IndexFor<Wait.TimerIndex>> resolved  = new();
+        double                                                                                  timestamp = UnityEngine.Time.realtimeSinceStartupAsDouble;
+        ref readonly PatchOdyssey.Collections.WaitInfo                                          wait      = ref Wait.Pending[0]; // ⟶ `Wait.Pending.GetValueByRank(double.NaN)`
 
         // … ⟶ Enumeration is messy because the final design could not succinctly account for a timer-based model
         for (uint index = resolved.IsEmpty() ? wait.events.CountInvocationList() : resolved[resolved.Count - 1u].value; 0u != index--; ) {
@@ -4059,15 +4087,15 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
           // …
           if (!(timestamp < waitEvent.data.timestamp)) {
-            if (!waitEvent.data.repeating) resolved.Add(new() {value = index}); // ⟶ Remove `Wait.ForTimerUntil(…)` handlers, or
-            else waitEvent.data.timestamp = timestamp + waitEvent.data.delay;   // ⟶ Update `Wait.ForTimerEvery(…)` handlers
+            if (!waitEvent.data.repeating) resolved.Add(index);               // ⟶ Remove `Wait.ForTimerUntil(…)` handlers, or
+            else waitEvent.data.timestamp = timestamp + waitEvent.data.delay; // ⟶ Update `Wait.ForTimerEvery(…)` handlers
 
             waitHandler.Invoke(); // ⟶ Assumes `CheckTimer()` is not simultaneously invoked here
           }
         }
 
-        foreach (ref readonly Wait.WaitForTimerIndex index in resolved)
-          wait.events.RemoveAt(index.value);
+        foreach (uint index in resolved)
+          wait.events.RemoveAt(index);
 
         resolved.Clear();
 
@@ -4650,23 +4678,10 @@ namespace PatchOdyssey /* ⟶ Cheeky pre-initialization/ setup entry point */ {
 }
 
 internal sealed class PatchBehaviour : UnityEngine.MonoBehaviour {
-  private void Awake      () {
-    UnityEngine.Debug.Log($"Data requesting…");
-    // UnityEngine.Debug.Log($"Data requested: {PatchOdyssey.Util.Load.Pending.Count}");
-    UnityEngine.Debug.Log($"Data requested @ RefList<ValueType>: {new PatchOdyssey.Collections.RefList<(System.Type, System.Uri)>(16u).Count}");
-    UnityEngine.Debug.Log($"Data requested @ RefList<LoadInfo>: {new PatchOdyssey.Collections.RefList<PatchOdyssey.Collections.LoadInfo>(16u).Count}");
-    UnityEngine.Debug.Log($"Data requested @ RefEqualityComparer<ValueType>: {new PatchOdyssey.Collections.RefEqualityComparer<(System.Type, System.Uri)>()}");
-    UnityEngine.Debug.Log($"Data requested @ RefEqualityComparer<LoadInfo>: {new PatchOdyssey.Collections.RefEqualityComparer<PatchOdyssey.Collections.LoadInfo>()}");
-    UnityEngine.Debug.Log($"Data requested @ RefDictionary<string, int>: {new PatchOdyssey.Collections.RefDictionary<string, int>(16u).Count}");
-    UnityEngine.Debug.Log($"Data requested @ RefDictionary<ValueType, LoadInfo>: {new PatchOdyssey.Collections.RefDictionary<(System.Type, System.Uri), PatchOdyssey.Collections.LoadInfo>(16u).Count}");
-
-    // PatchOdyssey.Util.Load.Uri(new(new(PatchOdyssey.Util.GetAssetPath()), "Settings.xml"), (object? target, in PatchOdyssey.Events.LoadEvent data) => {
-    //   UnityEngine.Debug.Log("Data recieved…");
-    // }, PatchOdyssey.Util.Load.Asynchronously, PatchOdyssey.Util.Load.WithCache, PatchOdyssey.Util.Load.Persistently, (object? target, in PatchOdyssey.Events.LoadEvent data) => {
-    //   UnityEngine.Debug.Log("Data error…");
-    // });
-  }
-
+  private void Awake      () {}
   private void FixedUpdate() {}
-  private void OnDestroy  () {}
+
+  private void OnApplicationQuit() {
+    PatchOdyssey.Util.Load.AudioClipData.Dispose(); // ⟶ `Unity.Collections.Allocator.Persistent`
+  }
 }
