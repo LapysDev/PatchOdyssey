@@ -108,7 +108,7 @@ REQUIREMENTS_✅________________________________________________________________
 • Online portfolio — think “once:blank”, “dafluffypotato.com”, and others
 
 IDEAS_💭____________________________________________________________________________________________
-• Character names: “Audu”, “Aure”, “Xinis”, …
+• Character names: “Audu”, “Aure”, “Strydum”, “Xinis”, …
 • Complement the player usually
 • Each section is a unique Scene with a Loading UI menu as their start
 • Enemies have drop-glow, too. NPCs don't
