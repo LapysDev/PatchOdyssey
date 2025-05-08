@@ -96,6 +96,11 @@ May 6th, 2025 – May 7th, 2025
 • …Load completed
 • Reordered Util
 • Vector2Bool, Vector3Bool, Vector4Bool
+• PatchOdyssey.Animation; PatchOdyssey.Collections; PatchOdyssey.Events; PatchOdyssey.Extensions; PatchOdyssey.Game; PatchOdyssey.Traits; PatchOdyssey.UI;
+• PatchOdyssey.Collections.KeyInfo.Translate(…)
+• KeyInfo
+• PointerInfo
+• UI system
 
 📆
 • Lesson learned: C# Mono with invalid IL instructions from creating delegates dynamically
