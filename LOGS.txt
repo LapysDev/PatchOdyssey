@@ -102,6 +102,20 @@ May 6th, 2025 – May 7th, 2025
 • PointerInfo
 • UI system
 
+May 8th, 2025
+• …Keyboard event system
+
+May 12th, 2025
+• `Log` utilities
+• `UI` utilities
+• `Shared` structure utility
+• `SharedMono` structure utility
+• Keys.IsPressed(…) easier to prototype than `Key.OnKeyPressed(…) event`
+• Keys.IsPressed, Keys.IsHeld, Keys.IsReleased
+• DeviceState structure with non-supported `Util.Reference.Compare` and `Util.Reference.Equals`
+• NoInlining for throw
+• operator false/ true
+
 📆
 • Lesson learned: C# Mono with invalid IL instructions from creating delegates dynamically
 • Lesson learned: Learning C# technical details and ECS is a time investment that must be planned for within the timeline of the project
