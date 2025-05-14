@@ -112,9 +112,16 @@ May 12th, 2025
 • `SharedMono` structure utility
 • Keys.IsPressed(…) easier to prototype than `Key.OnKeyPressed(…) event`
 • Keys.IsPressed, Keys.IsHeld, Keys.IsReleased
+• Keys.Modifiers, Keys.Specials
 • DeviceState structure with non-supported `Util.Reference.Compare` and `Util.Reference.Equals`
 • NoInlining for throw
 • operator false/ true
+
+May 13th, 2025
+• Tabbing event system
+• `Util.Path` namespace
+• Util.Vector.Coalesce; Util.Vector.Set; Util.Vector rework
+• …Mouse event system
 
 📆
 • Lesson learned: C# Mono with invalid IL instructions from creating delegates dynamically
