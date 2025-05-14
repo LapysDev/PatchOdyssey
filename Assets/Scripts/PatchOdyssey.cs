@@ -979,6 +979,14 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [PatchMethod(AggressiveInlining), PatchResolution(1)] public static implicit operator uint       (in IndexFor<T> index) => index.value;
     }
 
+    public interface InputInfo : PatchOdyssey.Collections.IRefEquatable<InputInfo> {
+      public   UnityEngine.InputSystem.InputDevice? device { get; internal set; }
+      public   double                               epoch  { get; internal set; }
+      public   long                                 id     { get; internal set; }
+      internal bool                                 polled { get;          set; }
+      public   PatchOdyssey.Collections.DeviceState state  { get; internal set; }
+    }
+
     public interface IRefComparable<T> : PatchOdyssey.Collections.IRefReadOnlyComparable<T> {
       public int CompareTo(ref T value);
     }
@@ -1017,26 +1025,32 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       public abstract object? Value { get; }
     }
 
-    public struct KeyInfo : PatchOdyssey.Collections.IRefEquatable<KeyInfo> {
+    public struct KeyInfo : PatchOdyssey.Collections.InputInfo, PatchOdyssey.Collections.IRefEquatable<KeyInfo> {
       public   (UnityEngine.KeyCode, UnityEngine.InputSystem.Key) codes     =  (UnityEngine.KeyCode.None, UnityEngine.InputSystem.Key.None);
       public   UnityEngine.InputSystem.InputDevice?               device    =  null;
-      internal double                                             epoch     =  UnityEngine.Time.realtimeSinceStartupAsDouble;
+      public   double                                             epoch     =  UnityEngine.Time.realtimeSinceStartupAsDouble;
       public   long                                               id        => -1L;
       internal bool                                               polled    =  false;
       public   bool                                               repeating => Util.Keys.RepeatDelay <= UnityEngine.Time.realtimeSinceStartupAsDouble - this.epoch;
       public   PatchOdyssey.Collections.DeviceState               state     =  PatchOdyssey.Collections.DeviceState.UNKNOWN;
+      UnityEngine.InputSystem.InputDevice?                        PatchOdyssey.Collections.InputInfo.device { get => this.device; set => this.device = value; }
+      double                                                      PatchOdyssey.Collections.InputInfo.epoch  { get => this.epoch;  set => this.epoch  = value; }
+      long                                                        PatchOdyssey.Collections.InputInfo.id     { get => this.id;     set {} }
+      bool                                                        PatchOdyssey.Collections.InputInfo.polled { get => this.polled; set => this.polled = value; }
+      PatchOdyssey.Collections.DeviceState                        PatchOdyssey.Collections.InputInfo.state  { get => this.state;  set => this.state  = value; }
 
       /* … */
       [PatchConstructor, PatchMethod(AggressiveInlining)]
       public KeyInfo() {}
 
       /* … */
-      [PatchMethod(AggressiveInlining)] public          bool    Equals     (in KeyInfo key) => key.codes == this.codes;
-      [PatchMethod(AggressiveInlining)] public override bool    Equals     (object?    key) => key is KeyInfo subkey && this.Equals(subkey);
-      [PatchMethod(AggressiveInlining)] public override int     GetHashCode()               => System.HashCode.Combine(this.codes.Item1, this.codes.Item2);
-      [PatchMethod(AggressiveInlining)] public          bool    IsModifier ()               => this.codes.Item2.IsModifierKey () || this.codes.Item1 switch { UnityEngine.KeyCode.LeftAlt or UnityEngine.KeyCode.LeftApple or UnityEngine.KeyCode.LeftCommand or UnityEngine.KeyCode.LeftControl or UnityEngine.KeyCode.LeftMeta or UnityEngine.KeyCode.LeftShift or UnityEngine.KeyCode.LeftWindows or UnityEngine.KeyCode.RightAlt or UnityEngine.KeyCode.RightApple or UnityEngine.KeyCode.RightCommand or UnityEngine.KeyCode.RightControl or UnityEngine.KeyCode.RightMeta or UnityEngine.KeyCode.RightShift or UnityEngine.KeyCode.RightWindows => true, _ => false };
-      [PatchMethod(AggressiveInlining)] public          bool    IsTextual  ()               => this.codes.Item2.IsTextInputKey() || ((this.codes.Item1 >= UnityEngine.KeyCode.A && this.codes.Item1 <= UnityEngine.KeyCode.Z) || (this.codes.Item1 >= UnityEngine.KeyCode.Alpha0 && this.codes.Item1 <= UnityEngine.KeyCode.Alpha9) || (this.codes.Item1 >= UnityEngine.KeyCode.Keypad0 && this.codes.Item1 <= UnityEngine.KeyCode.Keypad9) || this.codes.Item1 switch { UnityEngine.KeyCode.BackQuote or UnityEngine.KeyCode.Backslash or UnityEngine.KeyCode.Comma or UnityEngine.KeyCode.Equals or UnityEngine.KeyCode.LeftBracket or UnityEngine.KeyCode.Minus or UnityEngine.KeyCode.Period or UnityEngine.KeyCode.RightBracket or UnityEngine.KeyCode.Semicolon or UnityEngine.KeyCode.Slash => true, _ => false });
-      [PatchMethod(AggressiveInlining)] public override string? ToString   ()               => $"({(PatchOdyssey.Collections.DeviceState.BEGIN == this.state ? "↓" : PatchOdyssey.Collections.DeviceState.CURRENT == this.state ? "―" : PatchOdyssey.Collections.DeviceState.END == this.state ? "↑" : "…")}) [{this.codes.Item1}/{this.codes.Item2}]";
+      [PatchMethod(AggressiveInlining)] public          bool    Equals     (in KeyInfo                         key)   => key.codes == this.codes;
+      [PatchMethod(AggressiveInlining)] public          bool    Equals     (PatchOdyssey.Collections.InputInfo input) => input is KeyInfo key && this.Equals(key);
+      [PatchMethod(AggressiveInlining)] public override bool    Equals     (object?                            value) => value is KeyInfo key && this.Equals(key);
+      [PatchMethod(AggressiveInlining)] public override int     GetHashCode()                                         => System.HashCode.Combine(this.codes.Item1, this.codes.Item2);
+      [PatchMethod(AggressiveInlining)] public          bool    IsModifier ()                                         => this.codes.Item2.IsModifierKey () || this.codes.Item1 switch { UnityEngine.KeyCode.LeftAlt or UnityEngine.KeyCode.LeftApple or UnityEngine.KeyCode.LeftCommand or UnityEngine.KeyCode.LeftControl or UnityEngine.KeyCode.LeftMeta or UnityEngine.KeyCode.LeftShift or UnityEngine.KeyCode.LeftWindows or UnityEngine.KeyCode.RightAlt or UnityEngine.KeyCode.RightApple or UnityEngine.KeyCode.RightCommand or UnityEngine.KeyCode.RightControl or UnityEngine.KeyCode.RightMeta or UnityEngine.KeyCode.RightShift or UnityEngine.KeyCode.RightWindows => true, _ => false };
+      [PatchMethod(AggressiveInlining)] public          bool    IsTextual  ()                                         => this.codes.Item2.IsTextInputKey() || ((this.codes.Item1 >= UnityEngine.KeyCode.A && this.codes.Item1 <= UnityEngine.KeyCode.Z) || (this.codes.Item1 >= UnityEngine.KeyCode.Alpha0 && this.codes.Item1 <= UnityEngine.KeyCode.Alpha9) || (this.codes.Item1 >= UnityEngine.KeyCode.Keypad0 && this.codes.Item1 <= UnityEngine.KeyCode.Keypad9) || this.codes.Item1 switch { UnityEngine.KeyCode.BackQuote or UnityEngine.KeyCode.Backslash or UnityEngine.KeyCode.Comma or UnityEngine.KeyCode.Equals or UnityEngine.KeyCode.LeftBracket or UnityEngine.KeyCode.Minus or UnityEngine.KeyCode.Period or UnityEngine.KeyCode.RightBracket or UnityEngine.KeyCode.Semicolon or UnityEngine.KeyCode.Slash => true, _ => false });
+      [PatchMethod(AggressiveInlining)] public override string? ToString   ()                                         => $"({(PatchOdyssey.Collections.DeviceState.BEGIN == this.state ? "↓" : PatchOdyssey.Collections.DeviceState.CURRENT == this.state ? "―" : PatchOdyssey.Collections.DeviceState.END == this.state ? "↑" : "…")}) ⌨️ [{this.codes.Item1}/{this.codes.Item2}]";
 
       [PatchMethod(AggressiveInlining)]
       public static UnityEngine.InputSystem.Key Translate(UnityEngine.KeyCode code) {
@@ -1280,9 +1294,12 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         return UnityEngine.KeyCode.None;
       }
 
-      [PatchMethod(AggressiveInlining)] bool PatchOdyssey.Collections.IRefEquatable<KeyInfo>.Equals        (ref KeyInfo key) => this.Equals(in key);
-      [PatchMethod(AggressiveInlining)] bool PatchOdyssey.Collections.IRefReadOnlyEquatable<KeyInfo>.Equals(in  KeyInfo key) => this.Equals(in key);
-      [PatchMethod(AggressiveInlining)] bool System.IEquatable<KeyInfo>.Equals                             (KeyInfo     key) => this.Equals(key);
+      [PatchMethod(AggressiveInlining)] bool PatchOdyssey.Collections.IRefEquatable<KeyInfo>.Equals                                   (ref KeyInfo                            key)   => this.Equals(in key);
+      [PatchMethod(AggressiveInlining)] bool PatchOdyssey.Collections.IRefEquatable<PatchOdyssey.Collections.InputInfo>.Equals        (ref PatchOdyssey.Collections.InputInfo input) => this.Equals(input);
+      [PatchMethod(AggressiveInlining)] bool PatchOdyssey.Collections.IRefReadOnlyEquatable<KeyInfo>.Equals                           (in  KeyInfo                            key)   => this.Equals(in key);
+      [PatchMethod(AggressiveInlining)] bool PatchOdyssey.Collections.IRefReadOnlyEquatable<PatchOdyssey.Collections.InputInfo>.Equals(in  PatchOdyssey.Collections.InputInfo input) => this.Equals(input);
+      [PatchMethod(AggressiveInlining)] bool System.IEquatable<KeyInfo>.Equals                                                        (KeyInfo                                key)   => this.Equals(key);
+      [PatchMethod(AggressiveInlining)] bool System.IEquatable<PatchOdyssey.Collections.InputInfo>.Equals                             (PatchOdyssey.Collections.InputInfo     input) => this.Equals(input);
     }
 
     internal struct LoadInfo : PatchOdyssey.Collections.IRefEquatable<LoadInfo> {
@@ -1343,29 +1360,42 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [PatchMethod(AggressiveInlining)] public static bool    operator false(in Mono<T>                     mono)                                        => !mono .HasValue;
       [PatchMethod(AggressiveInlining)] public static bool    operator true (in Mono<T>                     mono)                                        =>  mono .HasValue;
 
-      [PatchMethod(AggressiveInlining)] public static explicit operator T      (in Mono<T> mono)  => mono.Value;
+      [PatchMethod(AggressiveInlining)] public static explicit operator T      (in Mono<T> mono)  => mono.GetValueOrDefault();
       [PatchMethod(AggressiveInlining)] public static implicit operator Mono<T>(in T       value) => new(value);
     }
 
-    public struct PointerInfo : PatchOdyssey.Collections.IRefEquatable<PointerInfo> {
+    public struct PointerInfo : PatchOdyssey.Collections.InputInfo, PatchOdyssey.Collections.IRefEquatable<PointerInfo> {
       public   UnityEngine.InputSystem.InputDevice? device   =  null;
       public   UnityEngine.Vector2                  delta    => this.position -  this.origin;
       public   bool                                 dragging => this.position == this.origin;
-      internal double                               epoch    =  UnityEngine.Time.realtimeSinceStartupAsDouble;
+      public   double                               epoch    =  UnityEngine.Time.realtimeSinceStartupAsDouble;
       public   UnityEngine.GameObject?              hovered  =  null;
-      public   long                                 id       =  Util.Pointer.MakeId();
+      public   long                                 id       =  Util.Pointers.MakeId();
       public   UnityEngine.Vector2                  origin   =  UnityEngine.Vector2.zero;
       internal bool                                 polled   =  false;
       public   UnityEngine.Vector2                  position =  UnityEngine.Vector2.zero;
+      public   PatchOdyssey.Collections.DeviceState state    =  PatchOdyssey.Collections.DeviceState.UNKNOWN;
+      UnityEngine.InputSystem.InputDevice?          PatchOdyssey.Collections.InputInfo.device { get => this.device; set => this.device = value; }
+      double                                        PatchOdyssey.Collections.InputInfo.epoch  { get => this.epoch;  set => this.epoch  = value; }
+      long                                          PatchOdyssey.Collections.InputInfo.id     { get => this.id;     set => this.id     = value; }
+      bool                                          PatchOdyssey.Collections.InputInfo.polled { get => this.polled; set => this.polled = value; }
+      PatchOdyssey.Collections.DeviceState          PatchOdyssey.Collections.InputInfo.state  { get => this.state;  set => this.state  = value; }
 
       /* … */
       [PatchConstructor, PatchMethod(AggressiveInlining)]
       public PointerInfo() {}
 
-      [PatchMethod(AggressiveInlining)] public bool Equals                                                            (in  PointerInfo pointer) => pointer.origin == this.origin && pointer.position == this.position && object.ReferenceEquals(pointer.hovered, this.hovered);
-      [PatchMethod(AggressiveInlining)] bool        PatchOdyssey.Collections.IRefEquatable<PointerInfo>.Equals        (ref PointerInfo pointer) => this.Equals(in pointer);
-      [PatchMethod(AggressiveInlining)] bool        PatchOdyssey.Collections.IRefReadOnlyEquatable<PointerInfo>.Equals(in  PointerInfo pointer) => this.Equals(in pointer);
-      [PatchMethod(AggressiveInlining)] bool        System.IEquatable<PointerInfo>.Equals                             (PointerInfo     pointer) => this.Equals(pointer);
+      [PatchMethod(AggressiveInlining)] public bool             Equals                                                                                   (in PointerInfo                     pointer)     => pointer.origin == this.origin && pointer.position == this.position && object.ReferenceEquals(pointer.hovered, this.hovered);
+      [PatchMethod(AggressiveInlining)] public bool             Equals                                                                                   (PatchOdyssey.Collections.InputInfo input)       => input is PointerInfo pointer && this.Equals(pointer);
+      [PatchMethod(AggressiveInlining)] public override bool    Equals                                                                                   (object?                            value)       => value is PointerInfo pointer && this.Equals(pointer);
+      [PatchMethod(AggressiveInlining)] public override int     GetHashCode                                                                              ()                                               => System.HashCode.Combine(this.id, this.origin.x, this.origin.y, this.position.x, this.position.y);
+      [PatchMethod(AggressiveInlining)] public override string? ToString                                                                                 ()                                               => $"({(PatchOdyssey.Collections.DeviceState.BEGIN == this.state ? "↓" : PatchOdyssey.Collections.DeviceState.CURRENT == this.state ? "―" : PatchOdyssey.Collections.DeviceState.END == this.state ? "↑" : "…")}) {(Util.Pointers.IsId(this.id) ? "…" : Util.Pointers.IsMouseId(this.id) ? "🖱️" : Util.Pointers.IsPenId(this.id) ? "🖊️" : Util.Pointers.IsEnhancedTouchId(this.id) ? "🧤" : Util.Pointers.IsTouchId(this.id) ? "👆" : "…")} [{this.origin.x.ToString("0.##")} → {this.position.x.ToString("0.##")}, {this.origin.y.ToString("0.##")} → {this.position.y.ToString("0.##")}]";
+      [PatchMethod(AggressiveInlining)] bool                    PatchOdyssey.Collections.IRefEquatable<PointerInfo>.Equals                               (ref PointerInfo                        pointer) => this.Equals(in pointer);
+      [PatchMethod(AggressiveInlining)] bool                    PatchOdyssey.Collections.IRefEquatable<PatchOdyssey.Collections.InputInfo>.Equals        (ref PatchOdyssey.Collections.InputInfo input)   => this.Equals(input);
+      [PatchMethod(AggressiveInlining)] bool                    PatchOdyssey.Collections.IRefReadOnlyEquatable<PointerInfo>.Equals                       (in  PointerInfo                        pointer) => this.Equals(in pointer);
+      [PatchMethod(AggressiveInlining)] bool                    PatchOdyssey.Collections.IRefReadOnlyEquatable<PatchOdyssey.Collections.InputInfo>.Equals(in  PatchOdyssey.Collections.InputInfo input)   => this.Equals(input);
+      [PatchMethod(AggressiveInlining)] bool                    System.IEquatable<PointerInfo>.Equals                                                    (PointerInfo                            pointer) => this.Equals(pointer);
+      [PatchMethod(AggressiveInlining)] bool                    System.IEquatable<PatchOdyssey.Collections.InputInfo>.Equals                             (PatchOdyssey.Collections.InputInfo     input)   => this.Equals(input);
     }
 
     public /* sealed */ class RefComparer<T> : PatchOdyssey.Collections.RefReadOnlyComparer<T>, PatchOdyssey.Collections.IRefComparer<T> {
@@ -3229,8 +3259,8 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [PatchMethod(AggressiveInlining)] public static bool          operator false(in SharedMono                     <T> sharedMono)                                                     => SharedMono<T>.Mono ? false : true;
       [PatchMethod(AggressiveInlining)] public static bool          operator true (in SharedMono                     <T> sharedMono)                                                     => SharedMono<T>.Mono ? true  : false;
 
-      [PatchMethod(AggressiveInlining)] public static explicit operator T                               (in SharedMono<T> shared) => SharedMono<T>.Mono.Value;
-      [PatchMethod(AggressiveInlining)] public static implicit operator PatchOdyssey.Collections.Mono<T>(in SharedMono<T> shared) => SharedMono<T>.Mono;
+      [PatchMethod(AggressiveInlining)] public static explicit operator T                               (in SharedMono<T> shared) => (T) SharedMono<T>.Mono;
+      [PatchMethod(AggressiveInlining)] public static implicit operator PatchOdyssey.Collections.Mono<T>(in SharedMono<T> shared) =>     SharedMono<T>.Mono;
       [PatchMethod(AggressiveInlining)] public static implicit operator SharedMono<T>                   (in T             value)  => new SharedMono<T>() + value;
     }
 
@@ -5041,18 +5071,18 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       }
 
       [PatchMethod(AggressiveInlining)]
-      public static void Print(object? value) {
+      public static void Print<T>(in T value) {
         if (value is not null)
         UnityEngine.Debug.Log(value);
       }
 
-      public static void Print(params object?[] values) /* ⟶ Modifies possible `values` array */ {
+      public static void Print<T>(params T[] values) /* ⟶ Modifies possible `values` array */ {
         uint length = (uint) values.Length;
 
         // …
         for (uint index = length; 0u != index--; ) {
-          if (Util.Reference<object?>.At(values, index) is null) // ⟶ Remove this
-          Util.Array<object?>.Copy(values, index + 1u, values, index, --length - index);
+          if (Util.Reference<T>.At(values, index) is null) // ⟶ Remove from `values`
+          Util.Array<T>.Copy(values, index + 1u, values, index, --length - index);
         }
 
         if (0u != length) {
@@ -5098,24 +5128,24 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       )))();
 
       /* … */
-      [PatchMethod(AggressiveInlining)] public static bool IsEnhancedTouchId(long id) => int.MaxValue <= id;
-      [PatchMethod(AggressiveInlining)] public static bool IsId             (long id) => int.MinValue == id;
-      [PatchMethod(AggressiveInlining)] public static bool IsMouseId        (long id) => int.MinValue <  id && id < 0L;
-      [PatchMethod(AggressiveInlining)] public static bool IsPenId          (long id) => int.MinValue >  id;
-      [PatchMethod(AggressiveInlining)] public static bool IsPointerId      (long id) => true;
-      [PatchMethod(AggressiveInlining)] public static bool IsTouchId        (long id) => id >= 0L;
+      [PatchMethod(AggressiveInlining)] public static bool IsEnhancedTouchId(long id) =>         uint.MaxValue <= id;
+      [PatchMethod(AggressiveInlining)] public static bool IsId             (long id) =>         uint.MaxValue == id;
+      [PatchMethod(AggressiveInlining)] public static bool IsMouseId        (long id) => -(long) uint.MaxValue <  id && id <  0L;
+      [PatchMethod(AggressiveInlining)] public static bool IsPenId          (long id) => -(long) uint.MaxValue >  id;
+      [PatchMethod(AggressiveInlining)] public static bool IsTouchId        (long id) =>         uint.MaxValue >  id && id >= 0L;
+      [PatchMethod(AggressiveInlining)] public static bool IsPointerId      (long id) =>         true;
 
-      [PatchMethod(AggressiveInlining)] public static long MakeEnhancedTouchId(uint id) =>  (long) int.MaxValue + (long) id;
-      [PatchMethod(AggressiveInlining)] public static long MakeId             ()        =>  (long) int.MinValue;
-      [PatchMethod(AggressiveInlining)] public static long MakeMouseId        (uint id) => -(long) id;
-      [PatchMethod(AggressiveInlining)] public static long MakePenId          (uint id) =>  (long) int.MinValue - (long) id - 1L;
+      [PatchMethod(AggressiveInlining)] public static long MakeEnhancedTouchId(uint id) =>  (long) uint.MaxValue + (long) id;
+      [PatchMethod(AggressiveInlining)] public static long MakeId             ()        =>  (long) uint.MaxValue;
+      [PatchMethod(AggressiveInlining)] public static long MakeMouseId        (uint id) => -(long) id - 1L;
+      [PatchMethod(AggressiveInlining)] public static long MakePenId          (uint id) => -(long) uint.MaxValue - (long) id - 1L;
       [PatchMethod(AggressiveInlining)] public static long MakePointerId      (uint id) =>  (long) id;
       [PatchMethod(AggressiveInlining)] public static long MakeTouchId        (uint id) => +(long) id;
 
-      [PatchMethod(AggressiveInlining)] public static uint UnmakeEnhancedTouchId(long id) => (uint) -(int.MaxValue - id);
-      [PatchMethod(AggressiveInlining)] public static uint UnmakeId             ()        => (uint)  int.MinValue;
-      [PatchMethod(AggressiveInlining)] public static uint UnmakeMouseId        (long id) => (uint) -id;
-      [PatchMethod(AggressiveInlining)] public static uint UnmakePenId          (long id) => (uint) +(int.MinValue - id - 1L);
+      [PatchMethod(AggressiveInlining)] public static uint UnmakeEnhancedTouchId(long id) => (uint) -((long) uint.MaxValue - (long) id);
+      [PatchMethod(AggressiveInlining)] public static uint UnmakeId             ()        => (uint)  uint.MaxValue;
+      [PatchMethod(AggressiveInlining)] public static uint UnmakeMouseId        (long id) => (uint) -id + 1u;
+      [PatchMethod(AggressiveInlining)] public static uint UnmakePenId          (long id) => (uint)  ((long) uint.MaxValue + (long) id + 1L);
       [PatchMethod(AggressiveInlining)] public static uint UnmakePointerId      (long id) => (uint)  id;
       [PatchMethod(AggressiveInlining)] public static uint UnmakeTouchId        (long id) => (uint) +id;
     }
@@ -5133,16 +5163,16 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       private readonly struct Sentinel {}
 
       /* … */
-      private  static readonly PatchOdyssey.ArrayIndexer                 <T>                                                                   ArrayAtValue              =  (PatchOdyssey.ArrayIndexer                 <T>) (Traits.IsValueType<T>() ? ((PatchOdyssey.ArrayIndexer                 <Reference<T>.Sentinel>) Reference<Reference<T>.Sentinel>.UnmanagedArrayAt)    .Method.GetGenericMethodDefinition().MakeGenericMethod(typeof(T)).CreateDelegate(typeof(PatchOdyssey.ArrayIndexer                 <T>)) : (PatchOdyssey.ArrayIndexer                 <T>) Reference<T>.ManagedArrayAt    <T>); // ⟶ Damn it Unity, `ref System.Runtime.CompilerServices.Unsafe.Add(ref value, offset)` was perfectly fine
-      public   static readonly PatchOdyssey.RefReadOnlyComparison        <T>                                                                   CompareValue              =  (PatchOdyssey.RefReadOnlyComparison        <T>) (Traits.IsValueType<T>() ? ((PatchOdyssey.RefReadOnlyComparison        <Reference<T>.Sentinel>) Reference<Reference<T>.Sentinel>.UnmanagedCompare)    .Method.GetGenericMethodDefinition().MakeGenericMethod(typeof(T)).CreateDelegate(typeof(PatchOdyssey.RefReadOnlyComparison        <T>)) : (PatchOdyssey.RefReadOnlyComparison        <T>) Reference<T>.ManagedCompare    <T>); //
-      public   static readonly PatchOdyssey.RefReadOnlyEqualityComparison<T>                                                                   EqualsValue               =  (PatchOdyssey.RefReadOnlyEqualityComparison<T>) (Traits.IsValueType<T>() ? ((PatchOdyssey.RefReadOnlyEqualityComparison<Reference<T>.Sentinel>) Reference<Reference<T>.Sentinel>.UnmanagedEquals)     .Method.GetGenericMethodDefinition().MakeGenericMethod(typeof(T)).CreateDelegate(typeof(PatchOdyssey.RefReadOnlyEqualityComparison<T>)) : (PatchOdyssey.RefReadOnlyEqualityComparison<T>) Reference<T>.ManagedEquals     <T>); // ⟶ Damn it Unity, `ref System.Runtime.CompilerServices.Unsafe.AreSame(ref valueA, ref valueB)` was perfectly fine
-      private  static readonly PatchOdyssey.RefReadOnlyAddresser         <T>                                                                   LoadAddressValue          =  (PatchOdyssey.RefReadOnlyAddresser         <T>) (Traits.IsValueType<T>() ? ((PatchOdyssey.RefReadOnlyAddresser         <Reference<T>.Sentinel>) Reference<Reference<T>.Sentinel>.UnmanagedLoadAddress).Method.GetGenericMethodDefinition().MakeGenericMethod(typeof(T)).CreateDelegate(typeof(PatchOdyssey.RefReadOnlyAddresser         <T>)) : (PatchOdyssey.RefReadOnlyAddresser         <T>) Reference<T>.ManagedLoadAddress<T>); // ⟶ Damn it Unity, pointers to managed types are fine given suitable expertise and care
-      private  static readonly System.Collections.Generic.List           <(System.Reflection.FieldInfo, PatchOdyssey.RefReadOnlyAddresser<T>)> LoadFieldAddressValues    =  new(1);                                                                                                                                                                                                                                                                                                                                                                                                                              //
-      internal const  uint                                                                                                                     ManagedByteSize           =  8u;                                                                                                                                                                                                                                                                                                                                                                                                                                  // ⟶ Presumed byte size of managed/ reference types as structured within class types (i.e. `sizeof(void*)`) — relative liberal guess to avoid object splicing
-      public   static ref T                                                                                                                    Null                      => ref System.Runtime.InteropServices.MemoryMarshal.GetReference(new System.ReadOnlySpan<T>(new T[] {default!}));                                                                                                                                                                                                                                                                                                                       // ⟶ Do not get reference to `System.ReadOnlySpan<T>.Empty`
-      private  static readonly PatchOdyssey.ReadOnlySpanIndexer <T>                                                                            ReadOnlySpanAtValue       =  (PatchOdyssey.ReadOnlySpanIndexer          <T>) (Traits.IsValueType<T>() ? ((PatchOdyssey.ReadOnlySpanIndexer<Reference<T>.Sentinel>) Reference<Reference<T>.Sentinel>.UnmanagedReadOnlySpanAt).Method.GetGenericMethodDefinition().MakeGenericMethod(typeof(T)).CreateDelegate(typeof(PatchOdyssey.ReadOnlySpanIndexer<T>)) : (PatchOdyssey.ReadOnlySpanIndexer<T>) Reference<T>.ManagedReadOnlySpanAt<T>);                         //
-      private  static readonly PatchOdyssey.SpanIndexer         <T>                                                                            SpanAtValue               =  (PatchOdyssey.SpanIndexer                  <T>) (Traits.IsValueType<T>() ? ((PatchOdyssey.SpanIndexer        <Reference<T>.Sentinel>) Reference<Reference<T>.Sentinel>.UnmanagedSpanAt)        .Method.GetGenericMethodDefinition().MakeGenericMethod(typeof(T)).CreateDelegate(typeof(PatchOdyssey.SpanIndexer        <T>)) : (PatchOdyssey.SpanIndexer        <T>) Reference<T>.ManagedSpanAt        <T>);                         //
-      private  static readonly PatchOdyssey.RefReadOnlyAddresser<T>                                                                            UnmanagedLoadAddressValue =  ((System.Func<PatchOdyssey.RefReadOnlyAddresser<T>>) (static () => { unsafe {
+      private         static readonly PatchOdyssey.ArrayIndexer                 <T>                                                                   ArrayAtValue              =  (PatchOdyssey.ArrayIndexer                 <T>) (Traits.IsValueType<T>() ? ((PatchOdyssey.ArrayIndexer                 <Reference<T>.Sentinel>) Reference<Reference<T>.Sentinel>.UnmanagedArrayAt)    .Method.GetGenericMethodDefinition().MakeGenericMethod(typeof(T)).CreateDelegate(typeof(PatchOdyssey.ArrayIndexer                 <T>)) : (PatchOdyssey.ArrayIndexer                 <T>) Reference<T>.ManagedArrayAt<T>);  // ⟶ Damn it Unity, `ref System.Runtime.CompilerServices.Unsafe.Add(ref value, offset)` was perfectly fine
+      public          static readonly PatchOdyssey.RefReadOnlyComparison        <T>                                                                   CompareValue              =  (PatchOdyssey.RefReadOnlyComparison        <T>) (Traits.IsValueType<T>() ? ((PatchOdyssey.RefReadOnlyComparison        <Reference<T>.Sentinel>) Reference<Reference<T>.Sentinel>.UnmanagedCompare)    .Method.GetGenericMethodDefinition().MakeGenericMethod(typeof(T)).CreateDelegate(typeof(PatchOdyssey.RefReadOnlyComparison        <T>)) : (PatchOdyssey.RefReadOnlyComparison        <T>) Reference<T>.ManagedCompare);     //
+      public          static readonly PatchOdyssey.RefReadOnlyEqualityComparison<T>                                                                   EqualsValue               =  (PatchOdyssey.RefReadOnlyEqualityComparison<T>) (Traits.IsValueType<T>() ? ((PatchOdyssey.RefReadOnlyEqualityComparison<Reference<T>.Sentinel>) Reference<Reference<T>.Sentinel>.UnmanagedEquals)     .Method.GetGenericMethodDefinition().MakeGenericMethod(typeof(T)).CreateDelegate(typeof(PatchOdyssey.RefReadOnlyEqualityComparison<T>)) : (PatchOdyssey.RefReadOnlyEqualityComparison<T>) Reference<T>.ManagedEquals<T>);   // ⟶ Damn it Unity, `ref System.Runtime.CompilerServices.Unsafe.AreSame(ref valueA, ref valueB)` was perfectly fine
+      private  unsafe static readonly PatchOdyssey.RefReadOnlyAddresser         <T>                                                                   LoadAddressValue          =  (PatchOdyssey.RefReadOnlyAddresser         <T>) (Traits.IsValueType<T>() ? ((PatchOdyssey.RefReadOnlyAddresser         <T>)                     Reference<T>                    .UnmanagedLoadAddress)                                                                                                                                        : (PatchOdyssey.RefReadOnlyAddresser         <T>) Reference<T>.ManagedLoadAddress); // ⟶ Damn it Unity, pointers to managed types are fine given suitable expertise and care
+      private         static readonly System.Collections.Generic.List           <(System.Reflection.FieldInfo, PatchOdyssey.RefReadOnlyAddresser<T>)> LoadFieldAddressValues    =  new(1);                                                                                                                                                                                                                                                                                                                                                                                                                           //
+      internal        const           uint                                                                                                            ManagedByteSize           =  8u;                                                                                                                                                                                                                                                                                                                                                                                                                               // ⟶ Presumed byte size of managed/ reference types as structured within class types (i.e. `sizeof(void*)`) — relative liberal guess to avoid object splicing
+      public          static          ref T                                                                                                           Null                      => ref System.Runtime.InteropServices.MemoryMarshal.GetReference(new System.ReadOnlySpan<T>(new T[] {default!}));                                                                                                                                                                                                                                                                                                                    // ⟶ Do not get reference to `System.ReadOnlySpan<T>.Empty`
+      private         static readonly PatchOdyssey.ReadOnlySpanIndexer <T>                                                                            ReadOnlySpanAtValue       =  (PatchOdyssey.ReadOnlySpanIndexer          <T>) (Traits.IsValueType<T>() ? ((PatchOdyssey.ReadOnlySpanIndexer<Reference<T>.Sentinel>) Reference<Reference<T>.Sentinel>.UnmanagedReadOnlySpanAt).Method.GetGenericMethodDefinition().MakeGenericMethod(typeof(T)).CreateDelegate(typeof(PatchOdyssey.ReadOnlySpanIndexer<T>)) : (PatchOdyssey.ReadOnlySpanIndexer<T>) Reference<T>.ManagedReadOnlySpanAt<T>);                      //
+      private         static readonly PatchOdyssey.SpanIndexer         <T>                                                                            SpanAtValue               =  (PatchOdyssey.SpanIndexer                  <T>) (Traits.IsValueType<T>() ? ((PatchOdyssey.SpanIndexer        <Reference<T>.Sentinel>) Reference<Reference<T>.Sentinel>.UnmanagedSpanAt)        .Method.GetGenericMethodDefinition().MakeGenericMethod(typeof(T)).CreateDelegate(typeof(PatchOdyssey.SpanIndexer        <T>)) : (PatchOdyssey.SpanIndexer        <T>) Reference<T>.ManagedSpanAt        <T>);                      //
+      private         static readonly PatchOdyssey.RefReadOnlyAddresser<T>                                                                            UnmanagedLoadAddressValue =  ((System.Func<PatchOdyssey.RefReadOnlyAddresser<T>>) (static () => { unsafe {
         System.Reflection.Emit.DynamicMethod method            = new("LoadAddress", typeof(void*), new[] {typeof(T).MakeByRefType()}, typeof(Reference<T>).Module, true);
         System.Reflection.Emit.ILGenerator   generator         = method.GetILGenerator();
         System.Reflection.Emit.LocalBuilder  methodPinnedLocal = generator.DeclareLocal(typeof(void*), true);
@@ -5161,24 +5191,24 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       } }))();
 
       /* … */
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static void*          AddressOf(in T                      value)                                      => Reference<T>.LoadAddressValue(in value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static void*          AddressOf(in T                      value,  System.Reflection.FieldInfo field)  { if (field is not null) { PatchOdyssey.RefReadOnlyAddresser<T> LoadFieldAddresser = Reference<T>.GetUnmanagedLoadFieldAddresser(field); if (value is not null) return LoadFieldAddresser(in value); else { PatchOdyssey.Collections.SharedMono<T> subvalue = new(); return new System.IntPtr((byte*) LoadFieldAddresser(in subvalue.Value) - (byte*) Reference<T>.AddressOf(in subvalue.Value)).ToPointer(); } } return System.IntPtr.Zero.ToPointer(); }
-      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static ref          T At       (T[]                       array,  uint index)                         => ref Reference<T>.ArrayAtValue       (array,   index);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref readonly T At       (in System.ReadOnlySpan<T> span,   int  index)                         => ref Reference<T>.ReadOnlySpanAtValue(in span, index);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          T At       (in System.Span        <T> span,   int  index)                         => ref Reference<T>.SpanAtValue        (in span, index);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static int            Compare  (in T                      valueA, in T                        valueB) => Reference<T>.CompareValue(in valueA, in valueB);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static bool           Equals   (in T                      valueA, in T                        valueB) => Reference<T>.EqualsValue (in valueA, in valueB);
-      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static ref          T First    (T[]                       array)                                      => ref Reference<T>.Only(array);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref readonly T First    (in System.ReadOnlySpan<T> span)                                       => ref Reference<T>.Only(in span);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          T First    (in System.Span        <T> span)                                       => ref Reference<T>.Only(in span);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public unsafe static void*          AddressOf(in T                      value)                                      => Reference<T>.LoadAddressValue(in value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public unsafe static void*          AddressOf(in T                      value,  System.Reflection.FieldInfo field)  { if (field is not null) { PatchOdyssey.RefReadOnlyAddresser<T> LoadFieldAddresser = Reference<T>.GetUnmanagedLoadFieldAddresser(field); if (value is not null) return LoadFieldAddresser(in value); else { PatchOdyssey.Collections.SharedMono<T> subvalue = new(); return new System.IntPtr((byte*) LoadFieldAddresser(in subvalue.Value) - (byte*) Reference<T>.AddressOf(in subvalue.Value)).ToPointer(); } } return System.IntPtr.Zero.ToPointer(); }
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public        static ref          T At       (T[]                       array,  uint index)                         => ref Reference<T>.ArrayAtValue       (array,   index);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public        static ref readonly T At       (in System.ReadOnlySpan<T> span,   int  index)                         => ref Reference<T>.ReadOnlySpanAtValue(in span, index);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public        static ref          T At       (in System.Span        <T> span,   int  index)                         => ref Reference<T>.SpanAtValue        (in span, index);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public        static int            Compare  (in T                      valueA, in T                        valueB) => Reference<T>.CompareValue(in valueA, in valueB);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public        static bool           Equals   (in T                      valueA, in T                        valueB) => Reference<T>.EqualsValue (in valueA, in valueB);
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public        static ref          T First    (T[]                       array)                                      => ref Reference<T>.Only(array);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public        static ref readonly T First    (in System.ReadOnlySpan<T> span)                                       => ref Reference<T>.Only(in span);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public        static ref          T First    (in System.Span        <T> span)                                       => ref Reference<T>.Only(in span);
 
       [PatchMethod(AggressiveInlining), PatchResolution(0)]
       public unsafe static PatchOdyssey.RefReadOnlyAddresser<T> GetUnmanagedLoadFieldAddresser(System.Reflection.FieldInfo field) {
-        PatchOdyssey.RefReadOnlyAddresser<T> LoadFieldAddresser;
+        PatchOdyssey.RefReadOnlyAddresser<T>? LoadFieldAddresser = null;
 
         // …
         foreach ((System.Reflection.FieldInfo subfield, PatchOdyssey.RefReadOnlyAddresser<T> LoadFieldAddress) in Reference<T>.LoadFieldAddressValues)
-        if (field.Attributes == subfield.Attributes && field.DeclaringType == subfield.DeclaringType && field.FieldHandle == subfield.FieldHandle && field.FieldType == subfield.FieldType && field.IsAssembly == subfield.IsAssembly && field.IsCollectible == subfield.IsCollectible && field.IsFamily == subfield.IsFamily && field.IsFamilyAndAssembly == subfield.IsFamilyAndAssembly && field.IsFamilyOrAssembly == subfield.IsFamilyOrAssembly && field.IsInitOnly == subfield.IsInitOnly && field.IsLiteral == subfield.IsLiteral && field.IsPinvokeImpl == subfield.IsPinvokeImpl && field.IsPrivate == subfield.IsPrivate && field.IsPublic == subfield.IsPublic && field.IsSecurityCritical == subfield.IsSecurityCritical && field.IsSecuritySafeCritical == subfield.IsSecuritySafeCritical && field.IsSecurityTransparent == subfield.IsSecurityTransparent && field.IsSpecialName == subfield.IsSpecialName && field.IsStatic == subfield.IsStatic && field.MetadataToken == subfield.MetadataToken && field.Name == subfield.Name) {
+        if (field.Attributes == subfield.Attributes && field.DeclaringType == subfield.DeclaringType && field.FieldHandle == subfield.FieldHandle && field.FieldType == subfield.FieldType && field.IsAssembly == subfield.IsAssembly && field.IsFamily == subfield.IsFamily && field.IsFamilyAndAssembly == subfield.IsFamilyAndAssembly && field.IsFamilyOrAssembly == subfield.IsFamilyOrAssembly && field.IsInitOnly == subfield.IsInitOnly && field.IsLiteral == subfield.IsLiteral && field.IsPinvokeImpl == subfield.IsPinvokeImpl && field.IsPrivate == subfield.IsPrivate && field.IsPublic == subfield.IsPublic && field.IsSecurityCritical == subfield.IsSecurityCritical && field.IsSecuritySafeCritical == subfield.IsSecuritySafeCritical && field.IsSecurityTransparent == subfield.IsSecurityTransparent && field.IsSpecialName == subfield.IsSpecialName && field.IsStatic == subfield.IsStatic && field.MetadataToken == subfield.MetadataToken && field.Name == subfield.Name) {
           LoadFieldAddresser = LoadFieldAddress;
           break;
         }
@@ -5207,10 +5237,10 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          T Last(in System.Span        <T> span)  => ref Reference<T>.At(in span, !span.IsEmpty            ? span .Length - 1 : 0);
 
       [PatchMethod(AggressiveInlining), PatchResolution(0)] private        static ref U          ManagedArrayAt       <U>(U[]                       array,  uint index)  => ref array[index];
-      [PatchMethod(NoInlining),         PatchResolution(0)] private unsafe static int            ManagedCompare       <U>(in U                      valueA, in U valueB) { void** addresses = stackalloc[] {Reference<T>.ManagedLoadAddress(in valueA), Reference<T>.ManagedLoadAddress(in valueB)}; return addresses[0] < addresses[1] ? -1 : addresses[0] > addresses[1] ? +1 : 0; }
+      [PatchMethod(NoInlining),         PatchResolution(0)] private unsafe static int            ManagedCompare          (in T                      valueA, in T valueB) { void** addresses = stackalloc[] {Reference<T>.ManagedLoadAddress(in valueA), Reference<T>.ManagedLoadAddress(in valueB)}; return addresses[0] < addresses[1] ? -1 : addresses[0] > addresses[1] ? +1 : 0; }
       [PatchMethod(AggressiveInlining), PatchResolution(0)] private        static bool           ManagedEquals        <U>(in U                      valueA, in U valueB) => object.ReferenceEquals(valueA, valueB);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] private        static ref readonly U ManagedFrom          <U>(in U                      value)               => ref value;
-      [PatchMethod(NoInlining),         PatchResolution(0)] private unsafe static void*          ManagedLoadAddress   <U>(in U                      value) where U : T   { if (value is not null) { try { System.Runtime.InteropServices.GCHandle handle = System.Runtime.InteropServices.GCHandle.Alloc(value, System.Runtime.InteropServices.GCHandleType.Pinned); void* address = handle.AddrOfPinnedObject().ToPointer(); handle.Free(); return address; } catch (System.ArgumentException) /* ⟶ `value` contains non-primitive (non-blittable) field(s) */ {} return Reference<T>.UnmanagedLoadAddress(in value); } return System.IntPtr.Zero.ToPointer(); } // ⟶ Possibly stale (invalid) address evaluated by undocumented keyword: `try { System.TypedReference reference = __makeref(/* ref */ value); return (*(System.IntPtr**) &reference) -> ToPointer(); } catch (System.BadImageFormatException) {}`
+      [PatchMethod(NoInlining),         PatchResolution(0)] private unsafe static void*          ManagedLoadAddress      (in T                      value)               { if (value is not null) { try { System.Runtime.InteropServices.GCHandle handle = System.Runtime.InteropServices.GCHandle.Alloc(value, System.Runtime.InteropServices.GCHandleType.Pinned); void* address = handle.AddrOfPinnedObject().ToPointer(); handle.Free(); return address; } catch (System.ArgumentException) /* ⟶ `value` contains non-primitive (non-blittable) field(s) */ {} return Reference<T>.UnmanagedLoadAddress(in value); } return System.IntPtr.Zero.ToPointer(); } // ⟶ Possibly stale (invalid) address evaluated by undocumented keyword: `try { System.TypedReference reference = __makeref(/* ref */ value); return (*(System.IntPtr**) &reference) -> ToPointer(); } catch (System.BadImageFormatException) {}`
       [PatchMethod(AggressiveInlining), PatchResolution(0)] private        static ref readonly U ManagedReadOnlySpanAt<U>(in System.ReadOnlySpan<U> span,   int  index)  => ref span[index];
       [PatchMethod(AggressiveInlining), PatchResolution(0)] private        static ref          U ManagedSpanAt        <U>(in System.Span        <U> span,   int  index)  => ref span[index];
 
@@ -5222,7 +5252,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       [PatchMethod(AggressiveInlining), PatchResolution(0)] private unsafe static int            UnmanagedCompare       <U>(in U                      valueA, in U valueB) where U : unmanaged { fixed (void* addressA = &valueA) fixed (void* addressB = &valueB) return      addressA < addressB ? -1 : addressA > addressB ? +1 : 0; }
       [PatchMethod(AggressiveInlining), PatchResolution(0)] private unsafe static bool           UnmanagedEquals        <U>(in U                      valueA, in U valueB) where U : unmanaged { fixed (void* addressA = &valueA) fixed (void* addressB = &valueB) return      addressA == addressB; }
       [PatchMethod(AggressiveInlining), PatchResolution(0)] private unsafe static ref U          UnmanagedFrom          <U>(in U                      value)               where U : unmanaged { fixed (U*    address  = &value)                                   return ref *address; }
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] private unsafe static void*          UnmanagedLoadAddress   <U>(in U                      value)               where U : T         => value is not null ? Reference<T>.UnmanagedLoadAddressValue(in value) : System.IntPtr.Zero.ToPointer();
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] private unsafe static void*          UnmanagedLoadAddress      (in T                      value)                                   => value is not null ? Reference<T>.UnmanagedLoadAddressValue(in value) : System.IntPtr.Zero.ToPointer();
       [PatchMethod(AggressiveInlining), PatchResolution(0)] private unsafe static ref readonly U UnmanagedReadOnlySpanAt<U>(in System.ReadOnlySpan<U> span,   int  index)  where U : unmanaged { fixed (U* address = span) return ref *(address + index); }
       [PatchMethod(AggressiveInlining), PatchResolution(0)] private unsafe static ref          U UnmanagedSpanAt        <U>(in System.Span        <U> span,   int  index)  where U : unmanaged { fixed (U* address = span) return ref *(address + index); }
     }
@@ -5247,34 +5277,48 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       internal static void Blur() {
         PatchOdyssey.Util.UI.Blurred = true;
 
-        UI.BlurKeys();
-        UI.BlurTabs();
-
-        // Pause the game
+        UI.BlurKeys    ();
+        UI.BlurPointers();
+        UI.BlurTabs    ();
       }
 
-      internal static void BlurKeys() {
-        // … ⟶ Progress all acknowledged keys to their `.End` state
-        foreach (PatchOdyssey.Collections.RefList<PatchOdyssey.Collections.KeyInfo> state in new[] {PatchOdyssey.Util.Keys.Begin, PatchOdyssey.Util.Keys.Current})
+      private static void Blur<T>(in PatchOdyssey.Collections.RefList<T> state, in PatchOdyssey.Collections.RefList<T> endState, PatchOdyssey.RefReadOnlyEqualityComparison<T> comparison) where T : PatchOdyssey.Collections.InputInfo {
+        // … ⟶ Progress all acknowledged inputs to their `.End` state
         for (uint index = state.Count; 0u != index--; ) {
-          ref PatchOdyssey.Collections.KeyInfo key = ref state[index];
+          ref T input = ref state[index];
 
           // …
-          key.state = PatchOdyssey.Collections.DeviceState.END;
+          input.state = PatchOdyssey.Collections.DeviceState.END;
 
-          foreach (ref readonly PatchOdyssey.Collections.KeyInfo subkey in PatchOdyssey.Util.Keys.End)
-          if (key.codes == subkey.codes) {
+          foreach (ref readonly T endInput in endState)
+          if (comparison(in input, in endInput)) {
             state.RemoveAt(index);
             break;
           }
         }
 
-        PatchOdyssey.Util.Keys.End.AddRange(PatchOdyssey.Util.Keys.Begin);   PatchOdyssey.Util.Keys.Begin  .Clear();
-        PatchOdyssey.Util.Keys.End.AddRange(PatchOdyssey.Util.Keys.Current); PatchOdyssey.Util.Keys.Current.Clear();
+        endState.AddRange(state);
+        state   .Clear   ();
+      }
+
+      public static void BlurKeys() {
+        [PatchMethod(AggressiveInlining)]
+        static bool Equals(in PatchOdyssey.Collections.KeyInfo key, in PatchOdyssey.Collections.KeyInfo endKey) => endKey.codes == key.codes;
+
+        UI.Blur(in PatchOdyssey.Util.Keys.Begin,   in PatchOdyssey.Util.Keys.End, Equals);
+        UI.Blur(in PatchOdyssey.Util.Keys.Current, in PatchOdyssey.Util.Keys.End, Equals);
+      }
+
+      public static void BlurPointers() {
+        [PatchMethod(AggressiveInlining)]
+        static bool Equals(in PatchOdyssey.Collections.PointerInfo pointer, in PatchOdyssey.Collections.PointerInfo endPointer) => endPointer.device == pointer.device && endPointer.id == pointer.id;
+
+        UI.Blur(in PatchOdyssey.Util.Pointers.Begin,   in PatchOdyssey.Util.Pointers.End, Equals);
+        UI.Blur(in PatchOdyssey.Util.Pointers.Current, in PatchOdyssey.Util.Pointers.End, Equals);
       }
 
       [PatchMethod(AggressiveInlining)]
-      internal static void BlurTabs() {
+      public static void BlurTabs() {
         UI.TabDelayElapsed = 0.0f;
         UI.TabIndex        = -1;
         UI.TabList.Clear();
@@ -5295,14 +5339,37 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         UI.Prompted = Util.Keys.IsReleased(stackalloc[] {UnityEngine.KeyCode.KeypadEnter, UnityEngine.KeyCode.Return});
       }
 
+      [PatchMethod(AggressiveInlining)] internal static void LateUpdatePointers(double timestamp) {}
+      [PatchMethod(AggressiveInlining)] internal static void LateUpdateTabs    (double timestamp) {}
+
       [PatchMethod(AggressiveInlining)]
-      internal static void LateUpdatePointers(double timestamp) {}
+      private static void Progress<T>(in PatchOdyssey.Collections.RefList<T> sourceState, PatchOdyssey.Collections.RefList<T>? destinationState) where T : PatchOdyssey.Collections.InputInfo {
+        for (uint index = sourceState.Count; 0u != index--; ) {
+          ref T input = ref sourceState[index];
+
+          // …
+          if (!input.polled) {
+            input.state++;
+            destinationState?.Add     (in input);
+            sourceState      .RemoveAt(index);
+
+            continue;
+          }
+
+          input.polled = false;
+        }
+      }
 
       [PatchMethod(AggressiveInlining)]
       internal static void Update(double timestamp) {
         UI.UpdateKeys    (timestamp);
         UI.UpdatePointers(timestamp);
         UI.UpdateTabs    (timestamp);
+
+        Util.Log.Clear();
+        UnityEngine.Debug.Log(string.Join(", ", Util.Pointers.Begin));
+        UnityEngine.Debug.Log(string.Join(", ", Util.Pointers.Current));
+        UnityEngine.Debug.Log(string.Join(", ", Util.Pointers.End));
       }
 
       internal unsafe static void UpdateKeys(double timestamp) {
@@ -5334,7 +5401,26 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         }
 
         /* … */
-        (PatchOdyssey.Collections.DeviceState Escape, PatchOdyssey.Collections.DeviceState LeftAlt, PatchOdyssey.Collections.DeviceState LeftControl, PatchOdyssey.Collections.DeviceState LeftMeta, PatchOdyssey.Collections.DeviceState LeftMetaApple, PatchOdyssey.Collections.DeviceState LeftMetaCommand, PatchOdyssey.Collections.DeviceState LeftMetaWindows, PatchOdyssey.Collections.DeviceState LeftShift, PatchOdyssey.Collections.DeviceState RightAlt, PatchOdyssey.Collections.DeviceState RightControl, PatchOdyssey.Collections.DeviceState RightMeta, PatchOdyssey.Collections.DeviceState RightMetaApple, PatchOdyssey.Collections.DeviceState RightMetaCommand, PatchOdyssey.Collections.DeviceState RightMetaWindows, PatchOdyssey.Collections.DeviceState RightShift, PatchOdyssey.Collections.DeviceState Tab) polled = (PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID);
+        (
+          PatchOdyssey.Collections.DeviceState Escape,
+          PatchOdyssey.Collections.DeviceState LeftAlt,
+          PatchOdyssey.Collections.DeviceState LeftControl,
+          PatchOdyssey.Collections.DeviceState LeftMeta,
+          PatchOdyssey.Collections.DeviceState LeftMetaApple,
+          PatchOdyssey.Collections.DeviceState LeftMetaCommand,
+          PatchOdyssey.Collections.DeviceState LeftMetaWindows,
+          PatchOdyssey.Collections.DeviceState LeftShift,
+          PatchOdyssey.Collections.DeviceState NumberpadReturn,
+          PatchOdyssey.Collections.DeviceState Return,
+          PatchOdyssey.Collections.DeviceState RightAlt,
+          PatchOdyssey.Collections.DeviceState RightControl,
+          PatchOdyssey.Collections.DeviceState RightMeta,
+          PatchOdyssey.Collections.DeviceState RightMetaApple,
+          PatchOdyssey.Collections.DeviceState RightMetaCommand,
+          PatchOdyssey.Collections.DeviceState RightMetaWindows,
+          PatchOdyssey.Collections.DeviceState RightShift,
+          PatchOdyssey.Collections.DeviceState Tab
+        ) polled = (PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID);
 
         /* … */
         if (!UI.Blurred) {
@@ -5351,6 +5437,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
             PollKeys(key, timestamp, false, in states, null);
 
             if (UnityEngine.KeyCode.Escape       == key) polled.Escape           = state;
+            if (UnityEngine.KeyCode.KeypadEnter  == key) polled.NumberpadReturn  = state;
             if (UnityEngine.KeyCode.LeftApple    == key) polled.LeftMetaApple    = state;
             if (UnityEngine.KeyCode.LeftAlt      == key) polled.LeftAlt          = state;
             if (UnityEngine.KeyCode.LeftCommand  == key) polled.LeftMetaCommand  = state;
@@ -5358,6 +5445,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
             if (UnityEngine.KeyCode.LeftMeta     == key) polled.LeftMeta         = state;
             if (UnityEngine.KeyCode.LeftShift    == key) polled.LeftShift        = state;
             if (UnityEngine.KeyCode.LeftWindows  == key) polled.LeftMetaWindows  = state;
+            if (UnityEngine.KeyCode.Return       == key) polled.Return           = state;
             if (UnityEngine.KeyCode.RightApple   == key) polled.RightMetaApple   = state;
             if (UnityEngine.KeyCode.RightAlt     == key) polled.RightAlt         = state;
             if (UnityEngine.KeyCode.RightCommand == key) polled.RightMetaCommand = state;
@@ -5378,8 +5466,9 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
             ref readonly PatchOdyssey.Collections.DeviceState state  = ref GetDeviceState(in states);
 
             // …
-            PollKeys(key, timestamp, false, in states, UI.Keyboard);
+            PollKeys(key, timestamp, false, in states, (UnityEngine.InputSystem.Keyboard) UI.Keyboard);
 
+            if (UnityEngine.InputSystem.Key.Enter        == key) polled.Return           = state;
             if (UnityEngine.InputSystem.Key.Escape       == key) polled.Escape           = state;
             if (UnityEngine.InputSystem.Key.LeftApple    == key) polled.LeftMetaApple    = state;
             if (UnityEngine.InputSystem.Key.LeftAlt      == key) polled.LeftAlt          = state;
@@ -5388,6 +5477,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
             if (UnityEngine.InputSystem.Key.LeftMeta     == key) polled.LeftMeta         = state;
             if (UnityEngine.InputSystem.Key.LeftShift    == key) polled.LeftShift        = state;
             if (UnityEngine.InputSystem.Key.LeftWindows  == key) polled.LeftMetaWindows  = state;
+            if (UnityEngine.InputSystem.Key.NumpadEnter  == key) polled.NumberpadReturn  = state;
             if (UnityEngine.InputSystem.Key.RightApple   == key) polled.RightMetaApple   = state;
             if (UnityEngine.InputSystem.Key.RightAlt     == key) polled.RightAlt         = state;
             if (UnityEngine.InputSystem.Key.RightCommand == key) polled.RightMetaCommand = state;
@@ -5400,52 +5490,32 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         }
 
         // … ⟶ Update prior keys
-        foreach ((
-          PatchOdyssey.Collections.RefList<PatchOdyssey.Collections.KeyInfo>  source,
-          PatchOdyssey.Collections.RefList<PatchOdyssey.Collections.KeyInfo>? destination
-        ) state in new[] {(Util.Keys.End, null), (Util.Keys.Current, Util.Keys.End), (Util.Keys.Begin, Util.Keys.Current)})
-        for (uint index = state.source.Count; 0u != index--; ) {
-          ref PatchOdyssey.Collections.KeyInfo key = ref state.source[index];
+        UI.Progress(in Util.Keys.End,     null);
+        UI.Progress(in Util.Keys.Current, Util.Keys.End);
+        UI.Progress(in Util.Keys.Begin,   Util.Keys.Current);
 
-          // …
-          Util.Keys.Modifiers.LeftAlt          = !polled.LeftAlt          ? Util.Keys.Modifiers.LeftAlt          + 1u : polled.LeftAlt;
-          Util.Keys.Modifiers.LeftControl      = !polled.LeftControl      ? Util.Keys.Modifiers.LeftControl      + 1u : polled.LeftControl;
-          Util.Keys.Modifiers.LeftMeta         = !polled.LeftMeta         ? Util.Keys.Modifiers.LeftMeta         + 1u : polled.LeftMeta;
-          Util.Keys.Modifiers.LeftMetaApple    = !polled.LeftMetaApple    ? Util.Keys.Modifiers.LeftMetaApple    + 1u : polled.LeftMetaApple;
-          Util.Keys.Modifiers.LeftMetaCommand  = !polled.LeftMetaCommand  ? Util.Keys.Modifiers.LeftMetaCommand  + 1u : polled.LeftMetaCommand;
-          Util.Keys.Modifiers.LeftMetaWindows  = !polled.LeftMetaWindows  ? Util.Keys.Modifiers.LeftMetaWindows  + 1u : polled.LeftMetaWindows;
-          Util.Keys.Modifiers.LeftShift        = !polled.LeftShift        ? Util.Keys.Modifiers.LeftShift        + 1u : polled.LeftShift;
-          Util.Keys.Modifiers.RightAlt         = !polled.RightAlt         ? Util.Keys.Modifiers.RightAlt         + 1u : polled.RightAlt;
-          Util.Keys.Modifiers.RightControl     = !polled.RightControl     ? Util.Keys.Modifiers.RightControl     + 1u : polled.RightControl;
-          Util.Keys.Modifiers.RightMeta        = !polled.RightMeta        ? Util.Keys.Modifiers.RightMeta        + 1u : polled.RightMeta;
-          Util.Keys.Modifiers.RightMetaApple   = !polled.RightMetaApple   ? Util.Keys.Modifiers.RightMetaApple   + 1u : polled.RightMetaApple;
-          Util.Keys.Modifiers.RightMetaCommand = !polled.RightMetaCommand ? Util.Keys.Modifiers.RightMetaCommand + 1u : polled.RightMetaCommand;
-          Util.Keys.Modifiers.RightMetaWindows = !polled.RightMetaWindows ? Util.Keys.Modifiers.RightMetaWindows + 1u : polled.RightMetaWindows;
-          Util.Keys.Modifiers.RightShift       = !polled.RightShift       ? Util.Keys.Modifiers.RightShift       + 1u : polled.RightShift;
-          Util.Keys.Specials .Escape           = !polled.Escape           ? Util.Keys.Specials .Escape           + 1u : polled.Escape;
-          Util.Keys.Specials .Tab              = !polled.Tab              ? Util.Keys.Specials .Tab              + 1u : polled.Tab;
-
-          if (!key.polled) {
-            key.state++;
-            state.destination?.Add     (in key);
-            state.source      .RemoveAt(index);
-
-            continue;
-          }
-
-          key.polled = false;
-        }
-
-        // …
-        UI.Prompted = UI.Prompted || Util.Keys.IsReleased(stackalloc[] {UnityEngine.KeyCode.KeypadEnter, UnityEngine.KeyCode.Return});
+        UI.Prompted                          = PatchOdyssey.Collections.DeviceState.END == polled.NumberpadReturn || PatchOdyssey.Collections.DeviceState.END == polled.Return;
+        Util.Keys.Modifiers.LeftAlt          = !polled.LeftAlt          ? Util.Keys.Modifiers.LeftAlt          + 1u : polled.LeftAlt;
+        Util.Keys.Modifiers.LeftControl      = !polled.LeftControl      ? Util.Keys.Modifiers.LeftControl      + 1u : polled.LeftControl;
+        Util.Keys.Modifiers.LeftMeta         = !polled.LeftMeta         ? Util.Keys.Modifiers.LeftMeta         + 1u : polled.LeftMeta;
+        Util.Keys.Modifiers.LeftMetaApple    = !polled.LeftMetaApple    ? Util.Keys.Modifiers.LeftMetaApple    + 1u : polled.LeftMetaApple;
+        Util.Keys.Modifiers.LeftMetaCommand  = !polled.LeftMetaCommand  ? Util.Keys.Modifiers.LeftMetaCommand  + 1u : polled.LeftMetaCommand;
+        Util.Keys.Modifiers.LeftMetaWindows  = !polled.LeftMetaWindows  ? Util.Keys.Modifiers.LeftMetaWindows  + 1u : polled.LeftMetaWindows;
+        Util.Keys.Modifiers.LeftShift        = !polled.LeftShift        ? Util.Keys.Modifiers.LeftShift        + 1u : polled.LeftShift;
+        Util.Keys.Modifiers.RightAlt         = !polled.RightAlt         ? Util.Keys.Modifiers.RightAlt         + 1u : polled.RightAlt;
+        Util.Keys.Modifiers.RightControl     = !polled.RightControl     ? Util.Keys.Modifiers.RightControl     + 1u : polled.RightControl;
+        Util.Keys.Modifiers.RightMeta        = !polled.RightMeta        ? Util.Keys.Modifiers.RightMeta        + 1u : polled.RightMeta;
+        Util.Keys.Modifiers.RightMetaApple   = !polled.RightMetaApple   ? Util.Keys.Modifiers.RightMetaApple   + 1u : polled.RightMetaApple;
+        Util.Keys.Modifiers.RightMetaCommand = !polled.RightMetaCommand ? Util.Keys.Modifiers.RightMetaCommand + 1u : polled.RightMetaCommand;
+        Util.Keys.Modifiers.RightMetaWindows = !polled.RightMetaWindows ? Util.Keys.Modifiers.RightMetaWindows + 1u : polled.RightMetaWindows;
+        Util.Keys.Modifiers.RightShift       = !polled.RightShift       ? Util.Keys.Modifiers.RightShift       + 1u : polled.RightShift;
+        Util.Keys.Specials .Escape           = !polled.Escape           ? Util.Keys.Specials .Escape           + 1u : polled.Escape;
+        Util.Keys.Specials .Tab              = !polled.Tab              ? Util.Keys.Specials .Tab              + 1u : polled.Tab;
       }
 
-      internal static void UpdateScroll(double timestamp) {}
       internal static void UpdatePointers(double timestamp) {
-        this.pointers["active:begin"].Clear();
-
         [PatchMethod(AggressiveInlining)]
-        static void PollPointers(int id, double epoch, in UnityEngine.Vector2 position, in UnityEngine.Vector2 origin, bool invalidate, in System.ReadOnlySpan<bool> states, UnityEngine.InputSystem.InputDevice? device) {
+        static void PollPointers(long id, double epoch, in UnityEngine.Vector2 position, in UnityEngine.Vector2 origin, bool invalidate, in System.ReadOnlySpan<bool> states, UnityEngine.InputSystem.InputDevice? device) {
           for (uint index = PatchOdyssey.Collections.DeviceState.END; PatchOdyssey.Collections.DeviceState.BEGIN != index; )
           if (PatchOdyssey.Util.Reference<bool>.At(states, (int) --index)) {
             PatchOdyssey.Collections.RefList<PatchOdyssey.Collections.PointerInfo> state    = Util.Pointers.States[(int) index];
@@ -5493,42 +5563,42 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
           // … ⟶ Acknowledge `UnityEngine.Input.GetMouse*(…)` pointer (e.g. mouse, pen, touch, e.t.c.) binds
           for (sbyte button = Util.Pointers.MouseButtonMiddle; Util.Pointers.MouseButtonLeft != button--; )
-          PollPointers(Util.Pointers.MakeMouseId(button), timestamp, in mousePosition, in mousePosition, false, stackalloc[] {UnityEngine.Input.GetMouseButtonDown(button), UnityEngine.Input.GetMouseButton(button), UnityEngine.Input.GetMouseButtonUp(button)}, null);
+          PollPointers(Util.Pointers.MakeMouseId((uint) button), timestamp, in mousePosition, in mousePosition, false, stackalloc[] {UnityEngine.Input.GetMouseButtonDown(button), UnityEngine.Input.GetMouseButton(button), UnityEngine.Input.GetMouseButtonUp(button)}, null);
 
           // … ⟶ Acknowledge `UnityEngine.Touch` touch binds
           for (int index = UnityEngine.Input.touchCount; 0 != index--; ) {
             UnityEngine.Touch touch = UnityEngine.Input.GetTouch(index);
-            PollPointers(Util.Pointers.MakeTouchId(touch.fingerId), timestamp /* ⟶ Not `UnityEngine.Touch::deltaTime` */, in touch.position, in touch.rawPosition, false, stackalloc[] {UnityEngine.TouchPhase.Began == touch.phase, UnityEngine.TouchPhase.Moved == touch.phase || UnityEngine.TouchPhase.Stationary == touch.phase, UnityEngine.TouchPhase.Canceled == touch.phase || UnityEngine.TouchPhase.Ended == touch.phase}, null);
+            PollPointers(Util.Pointers.MakeTouchId((uint) touch.fingerId), timestamp /* ⟶ Not `UnityEngine.Touch::deltaTime` */, touch.position, touch.rawPosition, false, stackalloc[] {UnityEngine.TouchPhase.Began == touch.phase, UnityEngine.TouchPhase.Moved == touch.phase || UnityEngine.TouchPhase.Stationary == touch.phase, UnityEngine.TouchPhase.Canceled == touch.phase || UnityEngine.TouchPhase.Ended == touch.phase}, null);
           }
 
           // … ⟶ Acknowledge `UnityEngine.InputSystem.*` mouse binds
           if (UI.Mouse) {
-            int                 id       = UI.Mouse.Value.pointerId.ReadValue();
-            UnityEngine.Vector2 position = UI.Mouse.Value.position .ReadValue();
-            UnityEngine.Vector2 scroll   = UI.Mouse.Value.scroll   .ReadValue();
+            uint                id       = (uint) UI.Mouse.Value.deviceId; // ⟶ Unsure about `::pointerId.ReadValue()`
+            UnityEngine.Vector2 position = UI.Mouse.Value.position.ReadValue();
+            UnityEngine.Vector2 scroll   = UI.Mouse.Value.scroll  .ReadValue();
 
             // …
             UI.ScrollValue = scroll;
 
-            PollPointers(Util.Pointers.MakeTouchId(id + Util.Pointers.MouseButtonLeft)    /* ⟶ `UI.Mouse.Value.leftButton   .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.leftButton   .wasPressedThisFrame, UI.Mouse.Value.leftButton   .isPressed, UI.Mouse.Value.leftButton   .wasReleasedThisFrame}, UI.Mouse);
-            PollPointers(Util.Pointers.MakeTouchId(id + Util.Pointers.MouseButtonMiddle)  /* ⟶ `UI.Mouse.Value.middleButton .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.middleButton .wasPressedThisFrame, UI.Mouse.Value.middleButton .isPressed, UI.Mouse.Value.middleButton .wasReleasedThisFrame}, UI.Mouse);
-            PollPointers(Util.Pointers.MakeTouchId(id + Util.Pointers.MouseButtonRight)   /* ⟶ `UI.Mouse.Value.rightButton  .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.rightButton  .wasPressedThisFrame, UI.Mouse.Value.rightButton  .isPressed, UI.Mouse.Value.rightButton  .wasReleasedThisFrame}, UI.Mouse);
-            PollPointers(Util.Pointers.MakeTouchId(id + Util.Pointers.MouseButtonForward) /* ⟶ `UI.Mouse.Value.forwardButton.path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.forwardButton.wasPressedThisFrame, UI.Mouse.Value.forwardButton.isPressed, UI.Mouse.Value.forwardButton.wasReleasedThisFrame}, UI.Mouse);
-            PollPointers(Util.Pointers.MakeTouchId(id + Util.Pointers.MouseButtonBack)    /* ⟶ `UI.Mouse.Value.backButton   .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.backButton   .wasPressedThisFrame, UI.Mouse.Value.backButton   .isPressed, UI.Mouse.Value.backButton   .wasReleasedThisFrame}, UI.Mouse);
+            PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonLeft)    /* ⟶ `UI.Mouse.Value.leftButton   .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.leftButton   .wasPressedThisFrame, UI.Mouse.Value.leftButton   .isPressed, UI.Mouse.Value.leftButton   .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
+            PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonMiddle)  /* ⟶ `UI.Mouse.Value.middleButton .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.middleButton .wasPressedThisFrame, UI.Mouse.Value.middleButton .isPressed, UI.Mouse.Value.middleButton .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
+            PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonRight)   /* ⟶ `UI.Mouse.Value.rightButton  .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.rightButton  .wasPressedThisFrame, UI.Mouse.Value.rightButton  .isPressed, UI.Mouse.Value.rightButton  .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
+            PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonForward) /* ⟶ `UI.Mouse.Value.forwardButton.path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.forwardButton.wasPressedThisFrame, UI.Mouse.Value.forwardButton.isPressed, UI.Mouse.Value.forwardButton.wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
+            PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonBack)    /* ⟶ `UI.Mouse.Value.backButton   .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.backButton   .wasPressedThisFrame, UI.Mouse.Value.backButton   .isPressed, UI.Mouse.Value.backButton   .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
           }
 
           // … ⟶ Acknowledge `UnityEngine.InputSystem.*` pen binds
           if (UI.Pen) {
-            int                 id       = UI.Pen.Value.pointerId.ReadValue();
-            UnityEngine.Vector2 position = UI.Pen.Value.position .ReadValue();
+            uint                id       = (uint) UI.Pen.Value.deviceId; // ⟶ Unsure about `::pointerId.ReadValue()`
+            UnityEngine.Vector2 position = UI.Pen.Value.position.ReadValue();
 
             // …
-            PollPointers(Util.Pointers.MakePenId(id + Util.Pointers.PenButtonTip)        /* ⟶ `UI.Pen.Value.tip                                       .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value.tip                                       .wasPressedThisFrame, UI.Pen.Value.tip                                       .isPressed, UI.Pen.Value.tip                                       .wasReleasedThisFrame}, UI.Pen);
-            PollPointers(Util.Pointers.MakePenId(id + Util.Pointers.PenButtonEraser)     /* ⟶ `UI.Pen.Value.eraser                                    .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value.eraser                                    .wasPressedThisFrame, UI.Pen.Value.eraser                                    .isPressed, UI.Pen.Value.eraser                                    .wasReleasedThisFrame}, UI.Pen);
-            PollPointers(Util.Pointers.MakePenId(id + Util.Pointers.PenButtonBarrel + 0) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].wasReleasedThisFrame}, UI.Pen);
-            PollPointers(Util.Pointers.MakePenId(id + Util.Pointers.PenButtonBarrel + 1) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].wasReleasedThisFrame}, UI.Pen);
-            PollPointers(Util.Pointers.MakePenId(id + Util.Pointers.PenButtonBarrel + 2) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].wasReleasedThisFrame}, UI.Pen);
-            PollPointers(Util.Pointers.MakePenId(id + Util.Pointers.PenButtonBarrel + 3) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].wasReleasedThisFrame}, UI.Pen);
+            PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonTip)        /* ⟶ `UI.Pen.Value.tip                                       .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value.tip                                       .wasPressedThisFrame, UI.Pen.Value.tip                                       .isPressed, UI.Pen.Value.tip                                       .wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
+            PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonEraser)     /* ⟶ `UI.Pen.Value.eraser                                    .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value.eraser                                    .wasPressedThisFrame, UI.Pen.Value.eraser                                    .isPressed, UI.Pen.Value.eraser                                    .wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
+            PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 0) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
+            PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 1) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
+            PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 2) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
+            PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 3) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
           }
 
           // … ⟶ Acknowledge `UnityEngine.InputSystem.*` touch binds
@@ -5537,46 +5607,43 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
             // …
             if (!touches.IsEmpty()) {
-              UnityEngine.InputSystem.Controls.TouchControl primaryTouch       = UI.Touchscreen.Value.primaryTouch;
-              UnityEngine.InputSystem.TouchPhase            primaryTouchPhase  = primaryTouch.phase.ReadValue();
-              System.ReadOnlySpan<bool>                     primaryTouchStates = stackalloc[] {touch.wasPressedThisFrame || UnityEngine.InputSystem.TouchPhase.Began == primaryTouchPhase, touch.isPressed || UnityEngine.InputSystem.TouchPhase.Moved == primaryTouchPhase || UnityEngine.InputSystem.TouchPhase.Stationary == primaryTouchPhase, touch.wasReleasedThisFrame || UnityEngine.InputSystem.TouchPhase.Canceled == primaryTouchPhase || UnityEngine.InputSystem.TouchPhase.Ended == primaryTouchPhase};
+              UnityEngine.InputSystem.Controls.TouchControl      primaryTouch      = UI.Touchscreen.Value.primaryTouch;
+              UnityEngine.InputSystem.TouchPhase                 primaryTouchPhase = primaryTouch.phase.ReadValue();
+              UnityEngine.InputSystem.Controls.TouchPressControl primaryTouchPress = primaryTouch.press;
 
               // …
               foreach (UnityEngine.InputSystem.Controls.TouchControl touch in touches) {
-                UnityEngine.InputSystem.TouchPhase phase  = touch.phase.ReadValue();
-                System.ReadOnlySpan<bool>          states = stackalloc[] {touch.wasPressedThisFrame || UnityEngine.InputSystem.TouchPhase.Began == phase, touch.isPressed || UnityEngine.InputSystem.TouchPhase.Moved == phase || UnityEngine.InputSystem.TouchPhase.Stationary == phase, touch.wasReleasedThisFrame || UnityEngine.InputSystem.TouchPhase.Canceled == phase || UnityEngine.InputSystem.TouchPhase.Ended == phase};
+                UnityEngine.InputSystem.TouchPhase                 phase = touch.phase.ReadValue();
+                UnityEngine.InputSystem.Controls.TouchPressControl press = touch.press;
 
-                // …
-                if      (Util.Reference<bool>.First(states)) Util.Reference<bool>.At(states, 1) = Util.Reference<bool>.At(states, 2) = false;
-                else if (Util.Reference<bool>.Last (states)) Util.Reference<bool>.At(states, 1)                                      = false;
-
-                PollPointers(Util.Pointers.MakeTouchId(touch.touchId.ReadValue()) /* ⟶ `touch.path` */, timestamp, touch.position.ReadValue(), touch.startPosition.ReadValue(), UnityEngine.InputSystem.TouchPhase.None == phase, in states, UI.Touchscreen);
+                PollPointers(Util.Pointers.MakeTouchId((uint) touch.touchId.ReadValue()) /* ⟶ `touch.path` */, timestamp, touch.position.ReadValue(), touch.startPosition.ReadValue(), UnityEngine.InputSystem.TouchPhase.None == phase, stackalloc[] {press.wasPressedThisFrame || UnityEngine.InputSystem.TouchPhase.Began == phase, press.isPressed || UnityEngine.InputSystem.TouchPhase.Moved == phase || UnityEngine.InputSystem.TouchPhase.Stationary == phase, press.wasReleasedThisFrame || UnityEngine.InputSystem.TouchPhase.Canceled == phase || UnityEngine.InputSystem.TouchPhase.Ended == phase}, (UnityEngine.InputSystem.Touchscreen) UI.Touchscreen);
               }
 
-              // …
-              if      (Util.Reference<bool>.First(primaryTouchStates)) Util.Reference<bool>.At(primaryTouchStates, 1) = Util.Reference<bool>.At(primaryTouchStates, 2) = false;
-              else if (Util.Reference<bool>.Last (primaryTouchStates)) Util.Reference<bool>.At(primaryTouchStates, 1)                                                  = false;
-
-              PollPointers(Util.Pointers.MakeTouchId(primaryTouch.touchId.ReadValue()) /* ⟶ `primaryTouch.path` */, timestamp, primaryTouch.position.ReadValue(), primaryTouch.startPosition.ReadValue(), UnityEngine.InputSystem.TouchPhase.None == primaryTouchPhase, in primaryTouchStates, UI.Touchscreen);
+              PollPointers(Util.Pointers.MakeTouchId((uint) primaryTouch.touchId.ReadValue()) /* ⟶ `primaryTouch.path` */, timestamp, primaryTouch.position.ReadValue(), primaryTouch.startPosition.ReadValue(), UnityEngine.InputSystem.TouchPhase.None == primaryTouchPhase, stackalloc[] {primaryTouchPress.wasPressedThisFrame || UnityEngine.InputSystem.TouchPhase.Began == primaryTouchPhase, primaryTouchPress.isPressed || UnityEngine.InputSystem.TouchPhase.Moved == primaryTouchPhase || UnityEngine.InputSystem.TouchPhase.Stationary == primaryTouchPhase, primaryTouchPress.wasReleasedThisFrame || UnityEngine.InputSystem.TouchPhase.Canceled == primaryTouchPhase || UnityEngine.InputSystem.TouchPhase.Ended == primaryTouchPhase}, (UnityEngine.InputSystem.Touchscreen) UI.Touchscreen);
             }
           }
 
           if (UnityEngine.InputSystem.EnhancedTouch.EnhancedTouchSupport.enabled)
           foreach (UnityEngine.InputSystem.EnhancedTouch.Touch touch in UnityEngine.InputSystem.EnhancedTouch.Touch.activeTouches) {
             UnityEngine.InputSystem.TouchPhase phase = touch.phase;
-            PollPointers(Util.Pointers.MakeEnhancedTouchId(touch.touchId), touch.startTime, touch.screenPosition, touch.startScreenPosition, !touch.valid || UnityEngine.InputSystem.TouchPhase.None == phase, stackalloc[] {UnityEngine.InputSystem.TouchPhase.Began == phase, UnityEngine.InputSystem.TouchPhase.Moved == phase || UnityEngine.InputSystem.TouchPhase.Stationary == phase, UnityEngine.InputSystem.TouchPhase.Canceled == phase || UnityEngine.InputSystem.TouchPhase.Ended == phase}, UI.Touchscreen);
+            PollPointers(Util.Pointers.MakeEnhancedTouchId((uint) touch.touchId), touch.startTime, touch.screenPosition, touch.startScreenPosition, !touch.valid || UnityEngine.InputSystem.TouchPhase.None == phase, stackalloc[] {UnityEngine.InputSystem.TouchPhase.Began == phase, UnityEngine.InputSystem.TouchPhase.Moved == phase || UnityEngine.InputSystem.TouchPhase.Stationary == phase, UnityEngine.InputSystem.TouchPhase.Canceled == phase || UnityEngine.InputSystem.TouchPhase.Ended == phase}, (UnityEngine.InputSystem.Touchscreen) UI.Touchscreen);
           }
 
           // … ⟶ Acknowledge `UnityEngine.InputSystem.*` pointer binds
           if (UI.Pointer) {
-            UnityEngine.InputSystem.Pointer
-            UI.Pointer
+            UnityEngine.Vector2 position = UI.Pointer.Value.position.ReadValue();
+            PollPointers(Util.Pointers.MakePointerId((uint) UI.Pointer.Value.deviceId) /* ⟶ Unsure about `::pointerId.ReadValue()` */, timestamp, in position, in position, false, stackalloc[] {UI.Pointer.Value.press.wasPressedThisFrame, UI.Pointer.Value.press.isPressed, UI.Pointer.Value.press.wasReleasedThisFrame}, (UnityEngine.InputSystem.Pointer) UI.Pointer);
           }
 
           // … ⟶ Acknowledge cursor movement at least
           if (Util.Pointers.Begin.IsEmpty() && Util.Pointers.Current.IsEmpty() && Util.Pointers.End.IsEmpty())
-          Util.Pointers.Current.Insert(0u, new() {device = null, epoch = timestamp, id = Util.Pointers.MakeId(), origin = mousePosition, polled = true, position = mousePosition, state = PatchOdyssey.Collections.DeviceState.CURRENT});
+          Util.Pointers.Begin.Insert(0u, new() {device = null, epoch = timestamp, id = Util.Pointers.MakeId(), origin = mousePosition, polled = true, position = mousePosition, state = PatchOdyssey.Collections.DeviceState.BEGIN});
         }
+
+        // … ⟶ Update prior pointers
+        UI.Progress(in Util.Pointers.End,     null);
+        UI.Progress(in Util.Pointers.Current, Util.Pointers.End);
+        UI.Progress(in Util.Pointers.Begin,   Util.Pointers.Current);
       }
 
       internal static void UpdateTabs(double timestamp) {
@@ -5877,7 +5944,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetAxis       (ref UnityEngine.Vector3    vector, uint                                    index, float value)        { if (index < 3u) vector[(int) index] = value; else throw new System.IndexOutOfRangeException("Invalid `Vector3` index!");    return ref vector; }
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetAxis       (ref UnityEngine.Vector3Int vector, uint                                    index, int   value)        { if (index < 3u) vector[(int) index] = value; else throw new System.IndexOutOfRangeException("Invalid `Vector3Int` index!"); return ref vector; }
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector4    SetAxis       (ref UnityEngine.Vector4    vector, uint                                    index, float value)        { if (index < 4u) vector[(int) index] = value; else throw new System.IndexOutOfRangeException("Invalid `Vector4` index!");    return ref vector; }
-      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static ref          UnityEngine.Vector2    SetAxis       (ref UnityEngine.Vector2    vector, in PatchOdyssey.Collections.Vector2Bool axes,  float value)        { vector.x = axes.x ? value : vector.x; vector.y = axes.y ? value : vector.y; return ref vector; }
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static ref          UnityEngine.Vector2    SetAxis       (ref UnityEngine.Vector2    vector, PatchOdyssey.Collections.Vector2Bool    axes,  float value)        { vector.x = axes.x ? value : vector.x; vector.y = axes.y ? value : vector.y; return ref vector; }
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2    SetAxis       (ref UnityEngine.Vector2    vector, in PatchOdyssey.Collections.Vector3Bool axes,  float value)        => ref Vector.SetAxis(ref vector, (PatchOdyssey.Collections.Vector2Bool) axes, value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2    SetAxis       (ref UnityEngine.Vector2    vector, in PatchOdyssey.Collections.Vector4Bool axes,  float value)        => ref Vector.SetAxis(ref vector, (PatchOdyssey.Collections.Vector2Bool) axes, value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2    SetAxis       (ref UnityEngine.Vector2    vector, in UnityEngine.Vector2                  axes,  float value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector2Bool(0.0f != axes.x, 0.0f != axes.y), value);
@@ -5885,7 +5952,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2    SetAxis       (ref UnityEngine.Vector2    vector, in UnityEngine.Vector3                  axes,  float value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector2Bool(0.0f != axes.x, 0.0f != axes.y), value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2    SetAxis       (ref UnityEngine.Vector2    vector, in UnityEngine.Vector3Int               axes,  float value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector2Bool(0    != axes.x, 0    != axes.y), value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2    SetAxis       (ref UnityEngine.Vector2    vector, in UnityEngine.Vector4                  axes,  float value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector2Bool(0.0f != axes.x, 0.0f != axes.y), value);
-      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static ref          UnityEngine.Vector2Int SetAxis       (ref UnityEngine.Vector2Int vector, in PatchOdyssey.Collections.Vector2Bool axes,  int   value)        { vector.x = axes.x ? value : vector.x; vector.y = axes.y ? value : vector.y; return ref vector; }
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static ref          UnityEngine.Vector2Int SetAxis       (ref UnityEngine.Vector2Int vector, PatchOdyssey.Collections.Vector2Bool    axes,  int   value)        { vector.x = axes.x ? value : vector.x; vector.y = axes.y ? value : vector.y; return ref vector; }
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2Int SetAxis       (ref UnityEngine.Vector2Int vector, in PatchOdyssey.Collections.Vector3Bool axes,  int   value)        => ref Vector.SetAxis(ref vector, (PatchOdyssey.Collections.Vector2Bool) axes, value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2Int SetAxis       (ref UnityEngine.Vector2Int vector, in PatchOdyssey.Collections.Vector4Bool axes,  int   value)        => ref Vector.SetAxis(ref vector, (PatchOdyssey.Collections.Vector2Bool) axes, value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2Int SetAxis       (ref UnityEngine.Vector2Int vector, in UnityEngine.Vector2                  axes,  int   value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector2Bool(0.0f != axes.x, 0.0f != axes.y), value);
@@ -5894,7 +5961,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2Int SetAxis       (ref UnityEngine.Vector2Int vector, in UnityEngine.Vector3Int               axes,  int   value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector2Bool(0    != axes.x, 0    != axes.y), value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2Int SetAxis       (ref UnityEngine.Vector2Int vector, in UnityEngine.Vector4                  axes,  int   value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector2Bool(0.0f != axes.x, 0.0f != axes.y), value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetAxis       (ref UnityEngine.Vector3    vector, in PatchOdyssey.Collections.Vector2Bool axes,  float value)        => ref Vector.SetAxis(ref vector, (PatchOdyssey.Collections.Vector3Bool) axes, value);
-      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static ref          UnityEngine.Vector3    SetAxis       (ref UnityEngine.Vector3    vector, in PatchOdyssey.Collections.Vector3Bool axes,  float value)        { vector.x = axes.x ? value : vector.x; vector.y = axes.y ? value : vector.y; vector.z = axes.z ? value : vector.z; return ref vector; }
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static ref          UnityEngine.Vector3    SetAxis       (ref UnityEngine.Vector3    vector, PatchOdyssey.Collections.Vector3Bool    axes,  float value)        { vector.x = axes.x ? value : vector.x; vector.y = axes.y ? value : vector.y; vector.z = axes.z ? value : vector.z; return ref vector; }
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetAxis       (ref UnityEngine.Vector3    vector, in PatchOdyssey.Collections.Vector4Bool axes,  float value)        => ref Vector.SetAxis(ref vector, (PatchOdyssey.Collections.Vector3Bool) axes, value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetAxis       (ref UnityEngine.Vector3    vector, in UnityEngine.Vector2                  axes,  float value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector3Bool(0.0f != axes.x, 0.0f != axes.y, true),           value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetAxis       (ref UnityEngine.Vector3    vector, in UnityEngine.Vector2Int               axes,  float value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector3Bool(0    != axes.x, 0    != axes.y, true),           value);
@@ -5902,7 +5969,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetAxis       (ref UnityEngine.Vector3    vector, in UnityEngine.Vector3Int               axes,  float value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector3Bool(0    != axes.x, 0    != axes.y, 0    != axes.z), value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetAxis       (ref UnityEngine.Vector3    vector, in UnityEngine.Vector4                  axes,  float value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector3Bool(0.0f != axes.x, 0.0f != axes.y, 0.0f != axes.z), value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetAxis       (ref UnityEngine.Vector3Int vector, in PatchOdyssey.Collections.Vector2Bool axes,  int   value)        => ref Vector.SetAxis(ref vector, (PatchOdyssey.Collections.Vector3Bool) axes, value);
-      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static ref          UnityEngine.Vector3Int SetAxis       (ref UnityEngine.Vector3Int vector, in PatchOdyssey.Collections.Vector3Bool axes,  int   value)        { vector.x = axes.x ? value : vector.x; vector.y = axes.y ? value : vector.y; vector.z = axes.z ? value : vector.z; return ref vector; }
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static ref          UnityEngine.Vector3Int SetAxis       (ref UnityEngine.Vector3Int vector, PatchOdyssey.Collections.Vector3Bool    axes,  int   value)        { vector.x = axes.x ? value : vector.x; vector.y = axes.y ? value : vector.y; vector.z = axes.z ? value : vector.z; return ref vector; }
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetAxis       (ref UnityEngine.Vector3Int vector, in PatchOdyssey.Collections.Vector4Bool axes,  int   value)        => ref Vector.SetAxis(ref vector, (PatchOdyssey.Collections.Vector3Bool) axes, value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetAxis       (ref UnityEngine.Vector3Int vector, in UnityEngine.Vector2                  axes,  int   value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector3Bool(0.0f != axes.x, 0.0f != axes.y, true),           value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetAxis       (ref UnityEngine.Vector3Int vector, in UnityEngine.Vector2Int               axes,  int   value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector3Bool(0    != axes.x, 0    != axes.y, true),           value);
@@ -5911,32 +5978,32 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetAxis       (ref UnityEngine.Vector3Int vector, in UnityEngine.Vector4                  axes,  int   value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector3Bool(0.0f != axes.x, 0.0f != axes.y, 0.0f != axes.z), value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector4    SetAxis       (ref UnityEngine.Vector4    vector, in PatchOdyssey.Collections.Vector2Bool axes,  float value)        => ref Vector.SetAxis(ref vector, (PatchOdyssey.Collections.Vector4Bool) axes, value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector4    SetAxis       (ref UnityEngine.Vector4    vector, in PatchOdyssey.Collections.Vector3Bool axes,  float value)        => ref Vector.SetAxis(ref vector, (PatchOdyssey.Collections.Vector4Bool) axes, value);
-      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static ref          UnityEngine.Vector4    SetAxis       (ref UnityEngine.Vector4    vector, in PatchOdyssey.Collections.Vector4Bool axes,  float value)        { vector.x = axes.x ? value : vector.x; vector.y = axes.y ? value : vector.y; vector.z = axes.z ? value : vector.z; vector.w = axes.w ? value : vector.w; return ref vector; }
+      [PatchMethod(AggressiveInlining), PatchResolution(1)] public static ref          UnityEngine.Vector4    SetAxis       (ref UnityEngine.Vector4    vector, PatchOdyssey.Collections.Vector4Bool    axes,  float value)        { vector.x = axes.x ? value : vector.x; vector.y = axes.y ? value : vector.y; vector.z = axes.z ? value : vector.z; vector.w = axes.w ? value : vector.w; return ref vector; }
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector4    SetAxis       (ref UnityEngine.Vector4    vector, in UnityEngine.Vector2                  axes,  float value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector4Bool(0.0f != axes.x, 0.0f != axes.y, true,           true),           value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector4    SetAxis       (ref UnityEngine.Vector4    vector, in UnityEngine.Vector2Int               axes,  float value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector4Bool(0    != axes.x, 0    != axes.y, true,           true),           value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector4    SetAxis       (ref UnityEngine.Vector4    vector, in UnityEngine.Vector3                  axes,  float value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector4Bool(0.0f != axes.x, 0.0f != axes.y, 0.0f != axes.z, true),           value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector4    SetAxis       (ref UnityEngine.Vector4    vector, in UnityEngine.Vector3Int               axes,  float value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector4Bool(0    != axes.x, 0    != axes.y, 0    != axes.z, true),           value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector4    SetAxis       (ref UnityEngine.Vector4    vector, in UnityEngine.Vector4                  axes,  float value)        => ref Vector.SetAxis(ref vector, new PatchOdyssey.Collections.Vector4Bool(0.0f != axes.x, 0.0f != axes.y, 0.0f != axes.z, 0.0f != axes.w), value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetBackAxis   (ref UnityEngine.Vector3    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector3Bool.back,                         value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetBackAxis   (ref UnityEngine.Vector3Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector3Bool.back,                         value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2    SetDownAxis   (ref UnityEngine.Vector2    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector2Bool.down,                         value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2Int SetDownAxis   (ref UnityEngine.Vector2Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector2Bool.down,                         value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetDownAxis   (ref UnityEngine.Vector3    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector3Bool.down,                         value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetDownAxis   (ref UnityEngine.Vector3Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector3Bool.down,                         value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetForwardAxis(ref UnityEngine.Vector3    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector3Bool.forward,                      value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetForwardAxis(ref UnityEngine.Vector3Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector3Bool.forward,                      value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2    SetLeftAxis   (ref UnityEngine.Vector2    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector2Bool.left,                         value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2Int SetLeftAxis   (ref UnityEngine.Vector2Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector2Bool.left,                         value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetLeftAxis   (ref UnityEngine.Vector3    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector3Bool.left,                         value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetLeftAxis   (ref UnityEngine.Vector3Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector3Bool.left,                         value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2    SetRightAxis  (ref UnityEngine.Vector2    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector2Bool.right,                        value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2Int SetRightAxis  (ref UnityEngine.Vector2Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector2Bool.right,                        value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetRightAxis  (ref UnityEngine.Vector3    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector3Bool.right,                        value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetRightAxis  (ref UnityEngine.Vector3Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector3Bool.right,                        value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2    SetUpAxis     (ref UnityEngine.Vector2    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector2Bool.up,                           value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2Int SetUpAxis     (ref UnityEngine.Vector2Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector2Bool.up,                           value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetUpAxis     (ref UnityEngine.Vector3    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector3Bool.up,                           value);
-      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetUpAxis     (ref UnityEngine.Vector3Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, in PatchOdyssey.Collections.Vector3Bool.up,                           value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetBackAxis   (ref UnityEngine.Vector3    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector3Bool.back,                            value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetBackAxis   (ref UnityEngine.Vector3Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector3Bool.back,                            value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2    SetDownAxis   (ref UnityEngine.Vector2    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector2Bool.down,                            value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2Int SetDownAxis   (ref UnityEngine.Vector2Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector2Bool.down,                            value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetDownAxis   (ref UnityEngine.Vector3    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector3Bool.down,                            value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetDownAxis   (ref UnityEngine.Vector3Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector3Bool.down,                            value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetForwardAxis(ref UnityEngine.Vector3    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector3Bool.forward,                         value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetForwardAxis(ref UnityEngine.Vector3Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector3Bool.forward,                         value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2    SetLeftAxis   (ref UnityEngine.Vector2    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector2Bool.left,                            value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2Int SetLeftAxis   (ref UnityEngine.Vector2Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector2Bool.left,                            value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetLeftAxis   (ref UnityEngine.Vector3    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector3Bool.left,                            value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetLeftAxis   (ref UnityEngine.Vector3Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector3Bool.left,                            value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2    SetRightAxis  (ref UnityEngine.Vector2    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector2Bool.right,                           value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2Int SetRightAxis  (ref UnityEngine.Vector2Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector2Bool.right,                           value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetRightAxis  (ref UnityEngine.Vector3    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector3Bool.right,                           value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetRightAxis  (ref UnityEngine.Vector3Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector3Bool.right,                           value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2    SetUpAxis     (ref UnityEngine.Vector2    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector2Bool.up,                              value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2Int SetUpAxis     (ref UnityEngine.Vector2Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector2Bool.up,                              value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetUpAxis     (ref UnityEngine.Vector3    vector,                                                float value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector3Bool.up,                              value);
+      [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetUpAxis     (ref UnityEngine.Vector3Int vector,                                                int   value)        => ref Vector.SetAxis       (ref vector, PatchOdyssey.Collections.Vector3Bool.up,                              value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3    SetDepthAxis  (ref UnityEngine.Vector3    vector,                                                float value)        => ref Vector.SetForwardAxis(ref vector,                                                                       value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector3Int SetDepthAxis  (ref UnityEngine.Vector3Int vector,                                                int   value)        => ref Vector.SetForwardAxis(ref vector,                                                                       value);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] public static ref          UnityEngine.Vector2    SetHeightAxis (ref UnityEngine.Vector2    vector,                                                float value)        => ref Vector.SetUpAxis     (ref vector,                                                                       value);
@@ -6144,7 +6211,6 @@ namespace PatchOdyssey {
 internal sealed class PatchBehaviour : UnityEngine.MonoBehaviour {
   private void Awake() {
     UnityEngine.InputSystem.EnhancedTouch.EnhancedTouchSupport.Enable();
-    // PatchOdyssey.Util.Wait.ForTimerEvery(5.0, (object? target, in PatchOdyssey.Events.WaitEvent data) => {});
   }
 
   private void LateUpdate() {
