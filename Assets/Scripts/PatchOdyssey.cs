@@ -1342,31 +1342,34 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [PatchMethod(AggressiveInlining)] readonly bool System.IEquatable<PatchOdyssey.Collections.InputInfo>.Equals                             (PatchOdyssey.Collections.InputInfo     input) => this.Equals(input);
     }
 
-    public struct LazyMono<T> : /* System.DynamicObject, */ PatchOdyssey.Collections.IMono, PatchOdyssey.Collections.IRefEquatable<LazyMono<T>> /* ⟶ Based on `System.Lazy<T>`; See `https://web.archive.org/web/20241119171227/https://learn.microsoft.com/en-us/dotnet/api/system.lazy-1?view=net-9.0` */ {
-      private sealed class ValueMember { public T value = default!; }
+    public readonly struct LazyMono<T> : /* System.DynamicObject, */ PatchOdyssey.Collections.IMono, PatchOdyssey.Collections.IRefEquatable<LazyMono<T>> /* ⟶ Based on `System.Lazy<T>`; See `https://web.archive.org/web/20241119171227/https://learn.microsoft.com/en-us/dotnet/api/system.lazy-1?view=net-9.0` */ {
+      private sealed class Lazy {
+        public bool hasValue = false;
+        public T    value    = default!;
+      }
 
-      public           bool                    HasValue                                = false;
-      private readonly System.Func<T>          initializer                             = [PatchMethod(AggressiveInlining)] static () => default!;
-      public  readonly ref T                   Value                                   { get { this.Ensure(); return ref this.value.value; } }
-      private readonly LazyMono<T>.ValueMember value                                   =  new();
-      readonly bool                            PatchOdyssey.Collections.IMono.HasValue => this.HasValue;
-      readonly object?                         PatchOdyssey.Collections.IMono.Value    => this.HasValue ? this.Value : null;
+      public  readonly ref readonly bool HasValue                                { get { this.Ensure(); return ref this.lazy.hasValue; } }
+      public  readonly System.Func<T>    Init { get; internal init; }            = [PatchMethod(AggressiveInlining)] static () => default!;
+      private readonly LazyMono<T>.Lazy  lazy                                    = new();
+      public  readonly ref T             Value                                   { get { this.Ensure(); return ref this.lazy.value; } }
+      readonly bool                      PatchOdyssey.Collections.IMono.HasValue => this.HasValue;
+      readonly object?                   PatchOdyssey.Collections.IMono.Value    => this.HasValue ? this.Value : null;
 
       /* … */
-      [PatchMethod(AggressiveInlining)] public  LazyMono(System.Func<T> initializer) => this.initializer = initializer;
-      [PatchMethod(AggressiveInlining)] private LazyMono(in T           value)       { this.HasValue = true; this.Value = value; }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public  LazyMono(System.Func<T> initializer) => this.Init = initializer;
+      [PatchConstructor, PatchMethod(AggressiveInlining)] private LazyMono(in T           value)       { this.lazy.hasValue = true; this.lazy.value = value; }
 
       /* … */
-      [PatchMethod(AggressiveInlining)] private          readonly void    Ensure                                                                                 ()                                             { if (!this.HasValue) { T value = this.initializer(); if (null != value) this.value.value = value; } }
-      [PatchMethod(AggressiveInlining)] public           readonly bool    Equals                                                                                 (in T                                value)    {  this.Ensure();                    return this.HasValue ? PatchOdyssey.Collections.RefReadOnlyEqualityComparer<T>.Default.Equals(in this.value.value!, in value) : null == value; }
-      [PatchMethod(AggressiveInlining)] public           readonly bool    Equals                                                                                 (in LazyMono<T>                      lazyMono) {  this.Ensure(); lazyMono.Ensure(); return this.HasValue ? lazyMono.HasValue && PatchOdyssey.Collections.RefReadOnlyEqualityComparer<T>.Default.Equals(in this.value.value!, in lazyMono.value.value!) : !lazyMono.HasValue; }
-      [PatchMethod(AggressiveInlining)] public           readonly bool    Equals                                                                                 (PatchOdyssey.Collections.IMono      mono)     {  this.Ensure();                    return this.HasValue ? mono    .HasValue && this.value.value!.Equals(mono.Value!)                                                                                  : !mono    .HasValue; }
-      [PatchMethod(AggressiveInlining)] public           readonly bool    Equals                                                                                 (in PatchOdyssey.Collections.Mono<T> mono)     {  this.Ensure();                    return this.HasValue ? mono    .HasValue && PatchOdyssey.Collections.RefReadOnlyEqualityComparer<T>.Default.Equals(in this.value.value!, in mono.Value!)           : !mono    .HasValue; }
-      [PatchMethod(AggressiveInlining)] public  override readonly bool    Equals                                                                                 (object?                             value)    {  this.Ensure();                    return null == value || value is null ? !this.HasValue : value switch { T subvalue => this.Equals(subvalue), LazyMono<T> lazyMono => this.Equals(lazyMono), PatchOdyssey.Collections.Mono<T> mono => this.Equals(mono), PatchOdyssey.Collections.IMono mono => this.Equals(mono), _ => this.HasValue && this.value.value!.Equals(value) }; }
-      [PatchMethod(AggressiveInlining)] public  override readonly int     GetHashCode                                                                            ()                                             {  this.Ensure();                    return this.HasValue ? this.value.value!.GetHashCode() : base.GetHashCode(); }
+      [PatchMethod(AggressiveInlining)] private          readonly void    Ensure                                                                                 ()                                             { if (!this.lazy.hasValue) { T value = this.Init(); if (null != value) { this.lazy.hasValue = true; this.lazy.value = value; } } }
+      [PatchMethod(AggressiveInlining)] public           readonly bool    Equals                                                                                 (in T                                value)    {  this.Ensure();                    return this.lazy.hasValue ? PatchOdyssey.Collections.RefReadOnlyEqualityComparer<T>.Default.Equals(in this.lazy.value!, in value) : null == value; }
+      [PatchMethod(AggressiveInlining)] public           readonly bool    Equals                                                                                 (in LazyMono<T>                      lazyMono) {  this.Ensure(); lazyMono.Ensure(); return this.lazy.hasValue ? lazyMono.lazy.hasValue && PatchOdyssey.Collections.RefReadOnlyEqualityComparer<T>.Default.Equals(in this.lazy.value!, in lazyMono.lazy.value!) : !lazyMono.lazy.hasValue; }
+      [PatchMethod(AggressiveInlining)] public           readonly bool    Equals                                                                                 (PatchOdyssey.Collections.IMono      mono)     {  this.Ensure();                    return this.lazy.hasValue ? mono         .HasValue && this.lazy.value!.Equals(mono.Value!)                                                                                  : !mono        .HasValue; }
+      [PatchMethod(AggressiveInlining)] public           readonly bool    Equals                                                                                 (in PatchOdyssey.Collections.Mono<T> mono)     {  this.Ensure();                    return this.lazy.hasValue ? mono         .HasValue && PatchOdyssey.Collections.RefReadOnlyEqualityComparer<T>.Default.Equals(in this.lazy.value!, in mono.Value!)           : !mono        .HasValue; }
+      [PatchMethod(AggressiveInlining)] public  override readonly bool    Equals                                                                                 (object?                             value)    {  this.Ensure();                    return null == value || value is null ? !this.lazy.hasValue : value switch { T subvalue => this.Equals(subvalue), LazyMono<T> lazyMono => this.Equals(lazyMono), PatchOdyssey.Collections.Mono<T> mono => this.Equals(mono), PatchOdyssey.Collections.IMono mono => this.Equals(mono), _ => this.lazy.hasValue && this.lazy.value!.Equals(value) }; }
+      [PatchMethod(AggressiveInlining)] public  override readonly int     GetHashCode                                                                            ()                                             {  this.Ensure();                    return this.lazy.hasValue ? this.lazy.value!.GetHashCode() : base.GetHashCode(); }
       [PatchMethod(AggressiveInlining)] public           readonly T       GetValueOrDefault                                                                      ()                                             => this.GetValueOrDefault(default!);
-      [PatchMethod(AggressiveInlining)] public           readonly T       GetValueOrDefault                                                                      (in T fallback)                                {  this.Ensure(); return this.HasValue ? this.value.value             : fallback; }
-      [PatchMethod(AggressiveInlining)] public  override readonly string? ToString                                                                               ()                                             {  this.Ensure(); return this.HasValue ? this.value.value!.ToString() : string.Empty; }
+      [PatchMethod(AggressiveInlining)] public           readonly T       GetValueOrDefault                                                                      (in T fallback)                                {  this.Ensure(); return this.lazy.hasValue ? this.lazy.value             : fallback; }
+      [PatchMethod(AggressiveInlining)] public  override readonly string? ToString                                                                               ()                                             {  this.Ensure(); return this.lazy.hasValue ? this.lazy.value!.ToString() : string.Empty; }
       [PatchMethod(AggressiveInlining)] readonly bool                     PatchOdyssey.Collections.IRefEquatable<LazyMono<T>>.Equals                             (ref LazyMono<T>                    lazyMono)  => this.Equals(in lazyMono);
       [PatchMethod(AggressiveInlining)] readonly bool                     PatchOdyssey.Collections.IRefEquatable<PatchOdyssey.Collections.IMono>.Equals          (ref PatchOdyssey.Collections.IMono mono)      => this.Equals(mono);
       [PatchMethod(AggressiveInlining)] readonly bool                     PatchOdyssey.Collections.IRefReadOnlyEquatable<LazyMono<T>>.Equals                     (in  LazyMono<T>                    lazyMono)  => this.Equals(in lazyMono);
@@ -1374,11 +1377,11 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [PatchMethod(AggressiveInlining)] readonly bool                     System.IEquatable<LazyMono<T>>.Equals                                                  (LazyMono<T>                        lazyMono)  => this.Equals(lazyMono);
       [PatchMethod(AggressiveInlining)] readonly bool                     System.IEquatable<PatchOdyssey.Collections.IMono>.Equals                               (PatchOdyssey.Collections.IMono     mono)      => this.Equals(mono);
 
-      [PatchMethod(AggressiveInlining)] public static bool        operator false(in LazyMono<T>                      lazyMono)                                                 => !lazyMono.HasValue;
-      [PatchMethod(AggressiveInlining)] public static bool        operator true (in LazyMono<T>                      lazyMono)                                                 =>  lazyMono.HasValue;
-      [PatchMethod(AggressiveInlining)] public static bool        operator !    (in LazyMono<T>                      lazyMono)                                                 => !lazyMono.HasValue;
-      [PatchMethod(AggressiveInlining)] public static LazyMono<T> operator +    (in LazyMono<T>                      lazyMono,  in T                                value)     =>  lazyMono.HasValue || null == value ? lazyMono : new(value);
-      [PatchMethod(AggressiveInlining)] public static bool        operator ==   (in T                                value,     in LazyMono<T>                      lazyMono)  { lazyMono.Ensure(); return lazyMono.HasValue ? value is not null && PatchOdyssey.Collections.RefReadOnlyEqualityComparer<T>.Default.Equals(in value, in lazyMono.value.value!) : null == value; }
+      [PatchMethod(AggressiveInlining)] public static bool        operator false(in LazyMono<T>                      lazyMono)                                                 {  lazyMono.Ensure(); return !lazyMono.lazy.hasValue; }
+      [PatchMethod(AggressiveInlining)] public static bool        operator true (in LazyMono<T>                      lazyMono)                                                 {  lazyMono.Ensure(); return  lazyMono.lazy.hasValue; }
+      [PatchMethod(AggressiveInlining)] public static bool        operator !    (in LazyMono<T>                      lazyMono)                                                 {  lazyMono.Ensure(); return !lazyMono.lazy.hasValue; }
+      [PatchMethod(AggressiveInlining)] public static LazyMono<T> operator +    (in LazyMono<T>                      lazyMono,  in T                                value)     => lazyMono.lazy.hasValue || null == value ? lazyMono : new(value);
+      [PatchMethod(AggressiveInlining)] public static bool        operator ==   (in T                                value,     in LazyMono<T>                      lazyMono)  {  lazyMono.Ensure(); return lazyMono.lazy.hasValue ? value is not null && PatchOdyssey.Collections.RefReadOnlyEqualityComparer<T>.Default.Equals(in value, in lazyMono.lazy.value!) : null == value; }
       [PatchMethod(AggressiveInlining)] public static bool        operator ==   (PatchOdyssey.Collections.IMono      mono,      in LazyMono<T>                      lazyMono)  =>  mono     .Equals(lazyMono.Value);
       [PatchMethod(AggressiveInlining)] public static bool        operator ==   (in PatchOdyssey.Collections.Mono<T> mono,      in LazyMono<T>                      lazyMono)  =>  mono     .Equals(lazyMono.Value);
       [PatchMethod(AggressiveInlining)] public static bool        operator ==   (in LazyMono                     <T> lazyMono,  in T                                value)     =>  lazyMono .Equals(in value);
@@ -1699,7 +1702,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
 
       [UnityEngine.HideInInspector, UnityEngine.SerializeField] private  PatchOdyssey.Collections.RefList<int>               buckets                                                                                                  =  new();
       public                                                             uint                                                Capacity                                                                                                 => this.count;
-      public                                                             PatchOdyssey.Collections.IRefEqualityComparer<TKey> Comparer { get; private init; }                                                                          =  PatchOdyssey.Collections.RefEqualityComparer<TKey>.Default;
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] public   PatchOdyssey.Collections.IRefEqualityComparer<TKey> Comparer { get; private init; }                                                                          =  PatchOdyssey.Collections.RefEqualityComparer<TKey>.Default;
       public                                                             uint                                                Count                                                                                                    => this.count - this.free.count;
       [UnityEngine.HideInInspector, UnityEngine.SerializeField] private  uint                                                count                                                                                                    =  0u;
       [UnityEngine.HideInInspector, UnityEngine.SerializeField] private  (uint count, int list)                              free                                                                                                     =  (0u, -1);
@@ -2002,9 +2005,9 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       /* … */
       public                                                            new uint Capacity                                             { get => this.capacity; set => this.EnsureCapacity(value); }
       [UnityEngine.HideInInspector, UnityEngine.SerializeField] private     uint capacity                                             =  0u;
-      int                                                                        System.Collections.Generic.ICollection<T>.Count      => ((int) this.Count);
+      int                                                                        System.Collections.Generic.ICollection<T>.Count      => ((int) base.Count);
       bool                                                                       System.Collections.Generic.ICollection<T>.IsReadOnly => false;
-      int                                                                        System.Collections.ICollection.Count                 => ((int) this.Count);
+      int                                                                        System.Collections.ICollection.Count                 => ((int) base.Count);
       bool                                                                       System.Collections.ICollection.IsSynchronized        => false;
       object                                                                     System.Collections.ICollection.SyncRoot              => this;
       bool                                                                       System.Collections.IList.IsFixedSize                 => false;
@@ -2015,12 +2018,12 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(uint                                        capacity)   : base(capacity = RefList<T>.GetCapacity(capacity)) => this.capacity = capacity;
       [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(PatchOdyssey.Collections.RefReadOnlyList<T> list)       : this(list.Items, 0u, list.Count)                  {}
       [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(RefList                                 <T> list)       : this(list.Items, 0u, list.Count)                  {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(System.Collections.Generic.ICollection<T>   collection) : base()                                            { if (!collection.IsEmpty()) collection.CopyTo(base.Items = new T[this.capacity = RefList<T>.GetCapacity(base.Count = (uint) collection.Count)], 0); }
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(System.Collections.Generic.IEnumerable<T>   enumerable) : base()                                            { if (!enumerable.IsEmpty()) { base.Items = new T[this.capacity = RefList<T>.GetCapacity(base.Count = Util.Enumerable.Count(enumerable))]; base.CopyFrom(enumerable.GetEnumerator()); } }
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(in System.Memory                      <T>   memory)     : this(memory.Span)                                 {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(in System.ReadOnlyMemory              <T>   memory)     : this(memory.Span)                                 {}
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(in System.ReadOnlySpan                <T>   span)       : base()                                            { if (!span.IsEmpty()) span.CopyTo(new System.Span<T>(base.Items = new T[this.capacity = RefList<T>.GetCapacity(base.Count = (uint) span.Length)])); }
-      [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(in System.Span                        <T>   span)       : this((System.ReadOnlySpan<T>) span)               {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(System.Collections.Generic.ICollection  <T> collection) : base()                                            { if (!collection.IsEmpty()) collection.CopyTo(base.Items = new T[this.capacity = RefList<T>.GetCapacity(base.Count = (uint) collection.Count)], 0); }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(System.Collections.Generic.IEnumerable  <T> enumerable) : base()                                            { if (!enumerable.IsEmpty()) { base.Items = new T[this.capacity = RefList<T>.GetCapacity(base.Count = Util.Enumerable.Count(enumerable))]; base.CopyFrom(enumerable.GetEnumerator()); } }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(in System.Memory                        <T> memory)     : this(memory.Span)                                 {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(in System.ReadOnlyMemory                <T> memory)     : this(memory.Span)                                 {}
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(in System.ReadOnlySpan                  <T> span)       : base()                                            { if (!span.IsEmpty()) span.CopyTo(new System.Span<T>(base.Items = new T[this.capacity = RefList<T>.GetCapacity(base.Count = (uint) span.Length)])); }
+      [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(in System.Span                          <T> span)       : this((System.ReadOnlySpan<T>) span)               {}
       [PatchConstructor, PatchMethod(AggressiveInlining)] public    RefList(in Util.Array<T>.Copyable                   copyable)   : base()                                            { if (!copyable.IsEmpty()) copyable.CopyTo(base.Items = new T[this.capacity = RefList<T>.GetCapacity(base.Count = copyable.Count)], 0); }
       [PatchConstructor, PatchMethod(AggressiveInlining)] protected RefList(T[]                                         array, uint index, uint length)                                 => Util.Array<T>.Copy(array, index, this.Items = PatchOdyssey.Collections.RefReadOnlyList<T>.CreateInstance(this.capacity = RefList<T>.GetCapacity(base.Count = length)), 0u, length);
 
@@ -2529,7 +2532,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
     }
 
     [System.Serializable]
-    public class RefReadOnlyList<T> : PatchOdyssey.Collections.IRefEquatable<RefReadOnlyList<T>>, System.Collections.Generic.IEnumerable<T>, System.Collections.Generic.IReadOnlyList<T>, System.Collections.IStructuralComparable, System.Collections.IStructuralEquatable, System.ICloneable /* ⟶ Based on `System.Collections.Generic.List<T>` and `System.Collections.ObjectModel.ReadOnlyCollection<T>`; See `https://web.archive.org/web/20241126212444/https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1?view=net-9.0` and `https://web.archive.org/web/20241117194530/https://learn.microsoft.com/en-us/dotnet/api/system.collections.objectmodel.readonlycollection-1?view=net-9.0` */ {
+    public class RefReadOnlyList<T> : PatchOdyssey.Collections.IRefEquatable<RefReadOnlyList<T>>, System.Collections.Generic.IEnumerable<T>, System.Collections.Generic.IReadOnlyList<T>, System.Collections.IStructuralComparable, System.Collections.IStructuralEquatable, System.ICloneable, UnityEngine.ISerializationCallbackReceiver /* ⟶ Based on `System.Collections.Generic.List<T>` and `System.Collections.ObjectModel.ReadOnlyCollection<T>`; See `https://web.archive.org/web/20241126212444/https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1?view=net-9.0` and `https://web.archive.org/web/20241117194530/https://learn.microsoft.com/en-us/dotnet/api/system.collections.objectmodel.readonlycollection-1?view=net-9.0` */ {
       public readonly struct Enumerator : System.Collections.Generic.IEnumerator<T> {
         internal sealed class Index { public int value; }
 
@@ -2555,12 +2558,18 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         [PatchMethod(AggressiveInlining)] readonly void        System.IDisposable.Dispose             () => this.Dispose ();
       }
 
+      [System.Serializable]
+      private sealed class Serializable {
+        [UnityEngine.SerializeField] public T value = default!;
+      }
+
       /* … */
       public                                                                             uint               Capacity                                                => this.Count;
       [UnityEngine.HideInInspector, UnityEngine.SerializeField] public                   uint               Count { get; internal set; }                            =  0u;
       [UnityEngine.HideInInspector, UnityEngine.SerializeField] internal                 T[]                Items                                                   =  System.Array.Empty<T>();
-      internal                                                                           ref T              Null                                                    => ref this.nullElement;
+      internal                                                                           ref T              Null                                                    => ref this.nullElement; // ⟶ `Util.Reference<T>.Null` didn’t work for some reason
       private                                                                            T                  nullElement                                             =  default!;
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] public                   string             serializedData                                          =  string.Empty;
       public                                                             static readonly RefReadOnlyList<T> Empty                                                   =  new();
       int                                                                                                   System.Collections.Generic.IReadOnlyCollection<T>.Count => ((int) this.Count);
 
@@ -2647,6 +2656,23 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [PatchMethod(AggressiveInlining), PatchResolution(0)] int                                             System.Collections.IStructuralEquatable.GetHashCode                      (System.Collections.IEqualityComparer comparer)                                                                                                                     => comparer.GetHashCode(this);
       [PatchMethod(AggressiveInlining), PatchResolution(0)] object                                          System.ICloneable.Clone                                                  ()                                                                                                                                                                  => this    .Clone      ();
       [PatchMethod(AggressiveInlining), PatchResolution(0)] bool                                            System.IEquatable<RefReadOnlyList<T>>.Equals                             (RefReadOnlyList<T> list)                                                                                                                                           => this    .Equals     (list);
+
+      void UnityEngine.ISerializationCallbackReceiver.OnAfterDeserialize() {
+        this.Items = this.serializedData.Split('\x01', System.StringSplitOptions.None).ConvertAll(element => UnityEngine.JsonUtility.FromJson<RefList<T>.Serializable>(element).value);
+        this.Count = (uint) this.Items.Length;
+      }
+
+      void UnityEngine.ISerializationCallbackReceiver.OnBeforeSerialize() {
+        this.serializedData = string.Empty;
+
+        if (0u != this.Count)
+        for (uint index = 0u; ; this.serializedData += '\x01') {
+          this.serializedData += UnityEngine.JsonUtility.ToJson(new RefList<T>.Serializable() {value = this.Items[index]});
+
+          if (++index == this.Count)
+          break;
+        }
+      }
 
       /* … */
       public ref readonly T     this                                            [uint         index] => ref this.GetValue(index);
@@ -2938,6 +2964,87 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
 
       [PatchMethod(AggressiveInlining)]
       public static implicit operator T(in Shared<T> shared) => shared.Value;
+    }
+
+    public struct SharedLazyMono<T> : /* System.DynamicObject, */ PatchOdyssey.Collections.IMono, PatchOdyssey.Collections.IRefEquatable<SharedLazyMono<T>>, PatchOdyssey.Collections.IShared {
+      public         readonly ref readonly bool                               HasValue                                => ref SharedLazyMono<T>.LazyMono.HasValue;
+      public         readonly System.Func<T>                                  Init { get; internal init; }            =      SharedLazyMono<T>.Initializer;
+      private static          System.Func<T>                                  Initializer                             =      [PatchMethod(AggressiveInlining)] static () => default!;
+      private static readonly System.Collections.Generic.List<System.Func<T>> Initializers                            =      new(1);
+      private static          PatchOdyssey.Collections.LazyMono<T>            LazyMono                                =      new([PatchMethod(AggressiveInlining)] static () => { foreach (System.Func<T> initializer in SharedLazyMono<T>.Initializers) { T value = initializer(); if (null != value) return value; } return default!; });
+      public         readonly ref T                                           Value                                   => ref SharedLazyMono<T>.LazyMono.Value;
+      readonly bool                                                           PatchOdyssey.Collections.IMono.HasValue =>     this                      .HasValue;
+      readonly object?                                                        PatchOdyssey.Collections.IMono.Value    =>     this                      .Value;
+      readonly object?                                                        PatchOdyssey.Collections.IShared.Value  =>     this                      .Value;
+
+      /* … */
+      [PatchConstructor, PatchMethod(AggressiveInlining)]
+      public SharedLazyMono(System.Func<T> initializer) {
+        SharedLazyMono<T>.Initializer = !SharedLazyMono<T>.Initializers.IsEmpty() ? (System.Func<T>) System.Delegate.Combine(SharedLazyMono<T>.Initializer, initializer) : initializer;
+        SharedLazyMono<T>.Initializers.Add(initializer);
+      }
+
+      /* … */
+      [PatchMethod(AggressiveInlining)] public          readonly bool    Equals                                                                                 (in T                                      value)          => SharedLazyMono<T>.LazyMono.Equals(in value);
+      [PatchMethod(AggressiveInlining)] public          readonly bool    Equals                                                                                 (in PatchOdyssey.Collections.IMono         mono)           => SharedLazyMono<T>.LazyMono.Equals(mono  .Value);
+      [PatchMethod(AggressiveInlining)] public          readonly bool    Equals                                                                                 (in PatchOdyssey.Collections.IShared       shared)         => SharedLazyMono<T>.LazyMono.Equals(shared.Value);
+      [PatchMethod(AggressiveInlining)] public          readonly bool    Equals                                                                                 (in PatchOdyssey.Collections.LazyMono  <T> lazyMono)       => SharedLazyMono<T>.LazyMono.Equals(in lazyMono);
+      [PatchMethod(AggressiveInlining)] public          readonly bool    Equals                                                                                 (in PatchOdyssey.Collections.Mono      <T> mono)           => SharedLazyMono<T>.LazyMono.Equals(in mono);
+      [PatchMethod(AggressiveInlining)] public          readonly bool    Equals                                                                                 (in PatchOdyssey.Collections.Shared    <T> shared)         => SharedLazyMono<T>.LazyMono.Equals(in shared.Value);
+      [PatchMethod(AggressiveInlining)] public          readonly bool    Equals                                                                                 (in PatchOdyssey.Collections.SharedMono<T> sharedMono)     => SharedLazyMono<T>.LazyMono.Equals(in PatchOdyssey.Collections.SharedMono<T>.Mono);
+      [PatchMethod(AggressiveInlining)] public          readonly bool    Equals                                                                                 (in SharedLazyMono                     <T> sharedLazyMono) => true;
+      [PatchMethod(AggressiveInlining)] public override readonly bool    Equals                                                                                 (object?                                   value)          => value is SharedLazyMono<T> || value switch { PatchOdyssey.Collections.Shared<T> shared => this.Equals(shared), PatchOdyssey.Collections.SharedMono<T> sharedMono => this.Equals(sharedMono), PatchOdyssey.Collections.IShared shared => this.Equals(shared), _ => SharedLazyMono<T>.LazyMono.Equals(value) };
+      [PatchMethod(AggressiveInlining)] public override readonly int     GetHashCode                                                                            ()                                                         => SharedLazyMono<T>.LazyMono.GetHashCode      ();
+      [PatchMethod(AggressiveInlining)] public          readonly T       GetValueOrDefault                                                                      ()                                                         => SharedLazyMono<T>.LazyMono.GetValueOrDefault();
+      [PatchMethod(AggressiveInlining)] public          readonly T       GetValueOrDefault                                                                      (in T fallback)                                            => SharedLazyMono<T>.LazyMono.GetValueOrDefault(in fallback);
+      [PatchMethod(AggressiveInlining)] public override readonly string? ToString                                                                               ()                                                         => SharedLazyMono<T>.LazyMono.ToString         ();
+      [PatchMethod(AggressiveInlining)] readonly bool                    PatchOdyssey.Collections.IRefEquatable<PatchOdyssey.Collections.IMono>.Equals          (ref PatchOdyssey.Collections.IMono   mono)                => this.Equals(mono);
+      [PatchMethod(AggressiveInlining)] readonly bool                    PatchOdyssey.Collections.IRefEquatable<PatchOdyssey.Collections.IShared>.Equals        (ref PatchOdyssey.Collections.IShared shared)              => this.Equals(shared);
+      [PatchMethod(AggressiveInlining)] readonly bool                    PatchOdyssey.Collections.IRefEquatable<SharedLazyMono<T>>.Equals                       (ref SharedLazyMono<T>                sharedLazyMono)      => this.Equals(in sharedLazyMono);
+      [PatchMethod(AggressiveInlining)] readonly bool                    PatchOdyssey.Collections.IRefReadOnlyEquatable<PatchOdyssey.Collections.IMono>.Equals  (in  PatchOdyssey.Collections.IMono   mono)                => this.Equals(mono);
+      [PatchMethod(AggressiveInlining)] readonly bool                    PatchOdyssey.Collections.IRefReadOnlyEquatable<PatchOdyssey.Collections.IShared>.Equals(in  PatchOdyssey.Collections.IShared shared)              => this.Equals(shared);
+      [PatchMethod(AggressiveInlining)] readonly bool                    PatchOdyssey.Collections.IRefReadOnlyEquatable<SharedLazyMono<T>>.Equals               (in  SharedLazyMono<T>                sharedLazyMono)      => this.Equals(in sharedLazyMono);
+      [PatchMethod(AggressiveInlining)] readonly bool                    System.IEquatable<PatchOdyssey.Collections.IMono>.Equals                               (PatchOdyssey.Collections.IMono       mono)                => this.Equals(mono);
+      [PatchMethod(AggressiveInlining)] readonly bool                    System.IEquatable<PatchOdyssey.Collections.IShared>.Equals                             (PatchOdyssey.Collections.IShared     shared)              => this.Equals(shared);
+      [PatchMethod(AggressiveInlining)] readonly bool                    System.IEquatable<SharedLazyMono<T>>.Equals                                            (SharedLazyMono<T>                    sharedLazyMono)      => this.Equals(sharedLazyMono);
+
+      [PatchMethod(AggressiveInlining)] public static bool              operator false(in SharedLazyMono<T>                      sharedLazyMono)                                                             =>  SharedLazyMono<T>.LazyMono ? false : true;
+      [PatchMethod(AggressiveInlining)] public static bool              operator true (in SharedLazyMono<T>                      sharedLazyMono)                                                             =>  SharedLazyMono<T>.LazyMono ? true  : false;
+      [PatchMethod(AggressiveInlining)] public static bool              operator !    (in SharedLazyMono<T>                      sharedLazyMono)                                                             => !SharedLazyMono<T>.LazyMono;
+      [PatchMethod(AggressiveInlining)] public static SharedLazyMono<T> operator +    (in SharedLazyMono<T>                      sharedLazyMono,  in T                                      value)           { SharedLazyMono<T>.LazyMono += value; return sharedLazyMono; }
+      [PatchMethod(AggressiveInlining)] public static bool              operator ==   (in T                                      value,           in SharedLazyMono<T>                      sharedLazyMono)  => value == SharedLazyMono<T>.LazyMono;
+      [PatchMethod(AggressiveInlining)] public static bool              operator ==   (PatchOdyssey.Collections.IMono            mono,            in SharedLazyMono<T>                      sharedLazyMono)  => mono  == SharedLazyMono<T>.LazyMono;
+      [PatchMethod(AggressiveInlining)] public static bool              operator ==   (PatchOdyssey.Collections.IShared          shared,          in SharedLazyMono<T>                      sharedLazyMono)  => SharedLazyMono<T>.LazyMono.HasValue && (shared.Value?.Equals(SharedLazyMono<T>.LazyMono.Value) ?? false);
+      [PatchMethod(AggressiveInlining)] public static bool              operator ==   (in PatchOdyssey.Collections.Mono      <T> mono,            in SharedLazyMono<T>                      sharedLazyMono)  => mono         == SharedLazyMono<T>.LazyMono;
+      [PatchMethod(AggressiveInlining)] public static bool              operator ==   (in PatchOdyssey.Collections.LazyMono  <T> lazyMono,        in SharedLazyMono<T>                      sharedLazyMono)  => lazyMono     == SharedLazyMono<T>.LazyMono;
+      [PatchMethod(AggressiveInlining)] public static bool              operator ==   (in PatchOdyssey.Collections.Shared    <T> shared,          in SharedLazyMono<T>                      sharedLazyMono)  => shared.Value == SharedLazyMono<T>.LazyMono;
+      [PatchMethod(AggressiveInlining)] public static bool              operator ==   (in PatchOdyssey.Collections.SharedMono<T> sharedMono,      in SharedLazyMono<T>                      sharedLazyMono)  => sharedMono   == SharedLazyMono<T>.LazyMono.Value;
+      [PatchMethod(AggressiveInlining)] public static bool              operator ==   (in SharedLazyMono                     <T> sharedLazyMono,  in T                                      value)           => SharedLazyMono<T>.LazyMono == value;
+      [PatchMethod(AggressiveInlining)] public static bool              operator ==   (in SharedLazyMono                     <T> sharedLazyMono,  PatchOdyssey.Collections.IMono            mono)            => SharedLazyMono<T>.LazyMono == mono;
+      [PatchMethod(AggressiveInlining)] public static bool              operator ==   (in SharedLazyMono                     <T> sharedLazyMono,  PatchOdyssey.Collections.IShared          shared)          => SharedLazyMono<T>.LazyMono.Equals(shared.Value);
+      [PatchMethod(AggressiveInlining)] public static bool              operator ==   (in SharedLazyMono                     <T> sharedLazyMono,  in PatchOdyssey.Collections.Mono      <T> mono)            => SharedLazyMono<T>.LazyMono == mono;
+      [PatchMethod(AggressiveInlining)] public static bool              operator ==   (in SharedLazyMono                     <T> sharedLazyMono,  in PatchOdyssey.Collections.Shared    <T> shared)          => SharedLazyMono<T>.LazyMono == shared.Value;
+      [PatchMethod(AggressiveInlining)] public static bool              operator ==   (in SharedLazyMono                     <T> sharedLazyMono,  in PatchOdyssey.Collections.SharedMono<T> sharedMono)      => SharedLazyMono<T>.LazyMono == PatchOdyssey.Collections.SharedMono<T>.Mono;
+      [PatchMethod(AggressiveInlining)] public static bool              operator ==   (in SharedLazyMono                     <T> sharedLazyMonoA, in SharedLazyMono                     <T> sharedLazyMonoB) => true;
+      [PatchMethod(AggressiveInlining)] public static bool              operator !=   (in T                                      value,           in SharedLazyMono<T>                      sharedLazyMono)  => value != SharedLazyMono<T>.LazyMono;
+      [PatchMethod(AggressiveInlining)] public static bool              operator !=   (PatchOdyssey.Collections.IMono            mono,            in SharedLazyMono<T>                      sharedLazyMono)  => mono  != SharedLazyMono<T>.LazyMono;
+      [PatchMethod(AggressiveInlining)] public static bool              operator !=   (PatchOdyssey.Collections.IShared          shared,          in SharedLazyMono<T>                      sharedLazyMono)  => !(shared == sharedLazyMono);
+      [PatchMethod(AggressiveInlining)] public static bool              operator !=   (in PatchOdyssey.Collections.Mono      <T> mono,            in SharedLazyMono<T>                      sharedLazyMono)  => mono         != SharedLazyMono<T>.LazyMono;
+      [PatchMethod(AggressiveInlining)] public static bool              operator !=   (in PatchOdyssey.Collections.LazyMono  <T> lazyMono,        in SharedLazyMono<T>                      sharedLazyMono)  => lazyMono     != SharedLazyMono<T>.LazyMono;
+      [PatchMethod(AggressiveInlining)] public static bool              operator !=   (in PatchOdyssey.Collections.Shared    <T> shared,          in SharedLazyMono<T>                      sharedLazyMono)  => shared.Value != SharedLazyMono<T>.LazyMono;
+      [PatchMethod(AggressiveInlining)] public static bool              operator !=   (in PatchOdyssey.Collections.SharedMono<T> sharedMono,      in SharedLazyMono<T>                      sharedLazyMono)  => sharedMono   != SharedLazyMono<T>.LazyMono.Value;
+      [PatchMethod(AggressiveInlining)] public static bool              operator !=   (in SharedLazyMono                     <T> sharedLazyMono,  in T                                      value)           => SharedLazyMono<T>.LazyMono != value;
+      [PatchMethod(AggressiveInlining)] public static bool              operator !=   (in SharedLazyMono                     <T> sharedLazyMono,  PatchOdyssey.Collections.IMono            mono)            => SharedLazyMono<T>.LazyMono != mono;
+      [PatchMethod(AggressiveInlining)] public static bool              operator !=   (in SharedLazyMono                     <T> sharedLazyMono,  PatchOdyssey.Collections.IShared          shared)          => !(sharedLazyMono == shared);
+      [PatchMethod(AggressiveInlining)] public static bool              operator !=   (in SharedLazyMono                     <T> sharedLazyMono,  in PatchOdyssey.Collections.Mono      <T> mono)            => SharedLazyMono<T>.LazyMono != mono;
+      [PatchMethod(AggressiveInlining)] public static bool              operator !=   (in SharedLazyMono                     <T> sharedLazyMono,  in PatchOdyssey.Collections.Shared    <T> shared)          => SharedLazyMono<T>.LazyMono != shared.Value;
+      [PatchMethod(AggressiveInlining)] public static bool              operator !=   (in SharedLazyMono                     <T> sharedLazyMono,  in PatchOdyssey.Collections.SharedMono<T> sharedMono)      => SharedLazyMono<T>.LazyMono != PatchOdyssey.Collections.SharedMono<T>.Mono;
+      [PatchMethod(AggressiveInlining)] public static bool              operator !=   (in SharedLazyMono                     <T> sharedLazyMonoA, in SharedLazyMono                     <T> sharedLazyMonoB) => false;
+
+      [PatchMethod(AggressiveInlining)] public static explicit operator T                                   (in SharedLazyMono<T> sharedLazyMono) => (T)                                SharedLazyMono<T>.LazyMono;
+      [PatchMethod(AggressiveInlining)] public static implicit operator PatchOdyssey.Collections.Mono    <T>(in SharedLazyMono<T> sharedLazyMono) => (PatchOdyssey.Collections.Mono<T>) SharedLazyMono<T>.LazyMono;
+      [PatchMethod(AggressiveInlining)] public static implicit operator PatchOdyssey.Collections.LazyMono<T>(in SharedLazyMono<T> sharedLazyMono) =>                                    SharedLazyMono<T>.LazyMono;
+      [PatchMethod(AggressiveInlining)] public static implicit operator SharedLazyMono<T>                   (in T                 value)          => new SharedLazyMono<T>() + value;
     }
 
     public class SharedList<T> : PatchOdyssey.Collections.IRefEquatable<SharedList<T>>, System.Collections.Generic.IList<T>, System.Collections.IList, System.Collections.IStructuralComparable, System.Collections.IStructuralEquatable, System.ICloneable {
@@ -3232,34 +3339,34 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       }
 
     public readonly struct SharedMono<T> : /* System.DynamicObject, */ PatchOdyssey.Collections.IMono, PatchOdyssey.Collections.IRefEquatable<SharedMono<T>>, PatchOdyssey.Collections.IShared {
-      public  readonly bool                             HasValue                                =>     SharedMono<T>.Mono.HasValue;
-      private static   PatchOdyssey.Collections.Mono<T> Mono                                    =      new();
-      public  readonly ref T                            Value                                   => ref SharedMono<T>.Mono.Value;
-      readonly bool                                     PatchOdyssey.Collections.IMono.HasValue =>     this              .HasValue;
-      readonly object?                                  PatchOdyssey.Collections.IMono.Value    =>     this              .Value;
-      readonly object?                                  PatchOdyssey.Collections.IShared.Value  =>     this              .Value;
+      public   readonly ref readonly bool                HasValue                                => ref SharedMono<T>.Mono.HasValue;
+      internal static   PatchOdyssey.Collections.Mono<T> Mono                                    =      new();
+      public   readonly ref T                            Value                                   => ref SharedMono<T>.Mono.Value;
+      readonly bool                                      PatchOdyssey.Collections.IMono.HasValue =>     this              .HasValue;
+      readonly object?                                   PatchOdyssey.Collections.IMono.Value    =>     this              .Value;
+      readonly object?                                   PatchOdyssey.Collections.IShared.Value  =>     this              .Value;
 
       /* … */
-      [PatchMethod(AggressiveInlining)] public          bool       Equals                                                                                 (in T                                  value)      => SharedMono<T>.Mono.Equals(in value);
-      [PatchMethod(AggressiveInlining)] public          bool       Equals                                                                                 (in PatchOdyssey.Collections.IMono     mono)       => SharedMono<T>.Mono.Equals(mono  .Value);
-      [PatchMethod(AggressiveInlining)] public          bool       Equals                                                                                 (in PatchOdyssey.Collections.IShared   shared)     => SharedMono<T>.Mono.Equals(shared.Value);
-      [PatchMethod(AggressiveInlining)] public          bool       Equals                                                                                 (in PatchOdyssey.Collections.Mono  <T> mono)       => SharedMono<T>.Mono.Equals(in mono);
-      [PatchMethod(AggressiveInlining)] public          bool       Equals                                                                                 (in PatchOdyssey.Collections.Shared<T> shared)     => SharedMono<T>.Mono.Equals(in shared.Value);
-      [PatchMethod(AggressiveInlining)] public          bool       Equals                                                                                 (in SharedMono                     <T> sharedMono) => true;
-      [PatchMethod(AggressiveInlining)] public override bool       Equals                                                                                 (object?                               value)      => value is SharedMono<T> || SharedMono<T>.Mono.Equals(value);
-      [PatchMethod(AggressiveInlining)] public override int        GetHashCode                                                                            ()                                                 => SharedMono<T>.Mono.GetHashCode      ();
-      [PatchMethod(AggressiveInlining)] public          readonly T GetValueOrDefault                                                                      ()                                                 => SharedMono<T>.Mono.GetValueOrDefault();
-      [PatchMethod(AggressiveInlining)] public          readonly T GetValueOrDefault                                                                      (in T fallback)                                    => SharedMono<T>.Mono.GetValueOrDefault(in fallback);
-      [PatchMethod(AggressiveInlining)] public override string?    ToString                                                                               ()                                                 => SharedMono<T>.Mono.ToString         ();
-      [PatchMethod(AggressiveInlining)] readonly bool              PatchOdyssey.Collections.IRefEquatable<PatchOdyssey.Collections.IMono>.Equals          (ref PatchOdyssey.Collections.IMono   mono)        => this.Equals(mono);
-      [PatchMethod(AggressiveInlining)] readonly bool              PatchOdyssey.Collections.IRefEquatable<PatchOdyssey.Collections.IShared>.Equals        (ref PatchOdyssey.Collections.IShared shared)      => this.Equals(shared);
-      [PatchMethod(AggressiveInlining)] readonly bool              PatchOdyssey.Collections.IRefEquatable<SharedMono<T>>.Equals                           (ref SharedMono<T>                    sharedMono)  => this.Equals(in sharedMono);
-      [PatchMethod(AggressiveInlining)] readonly bool              PatchOdyssey.Collections.IRefReadOnlyEquatable<PatchOdyssey.Collections.IMono>.Equals  (in  PatchOdyssey.Collections.IMono   mono)        => this.Equals(mono);
-      [PatchMethod(AggressiveInlining)] readonly bool              PatchOdyssey.Collections.IRefReadOnlyEquatable<PatchOdyssey.Collections.IShared>.Equals(in  PatchOdyssey.Collections.IShared shared)      => this.Equals(shared);
-      [PatchMethod(AggressiveInlining)] readonly bool              PatchOdyssey.Collections.IRefReadOnlyEquatable<SharedMono<T>>.Equals                   (in  SharedMono<T>                    sharedMono)  => this.Equals(in sharedMono);
-      [PatchMethod(AggressiveInlining)] readonly bool              System.IEquatable<PatchOdyssey.Collections.IMono>.Equals                               (PatchOdyssey.Collections.IMono       mono)        => this.Equals(mono);
-      [PatchMethod(AggressiveInlining)] readonly bool              System.IEquatable<PatchOdyssey.Collections.IShared>.Equals                             (PatchOdyssey.Collections.IShared     shared)      => this.Equals(shared);
-      [PatchMethod(AggressiveInlining)] readonly bool              System.IEquatable<SharedMono<T>>.Equals                                                (SharedMono<T>                        sharedMono)  => this.Equals(sharedMono);
+      [PatchMethod(AggressiveInlining)] public          readonly bool    Equals                                                                                 (in T                                  value)      => SharedMono<T>.Mono.Equals(in value);
+      [PatchMethod(AggressiveInlining)] public          readonly bool    Equals                                                                                 (in PatchOdyssey.Collections.IMono     mono)       => SharedMono<T>.Mono.Equals(mono  .Value);
+      [PatchMethod(AggressiveInlining)] public          readonly bool    Equals                                                                                 (in PatchOdyssey.Collections.IShared   shared)     => SharedMono<T>.Mono.Equals(shared.Value);
+      [PatchMethod(AggressiveInlining)] public          readonly bool    Equals                                                                                 (in PatchOdyssey.Collections.Mono  <T> mono)       => SharedMono<T>.Mono.Equals(in mono);
+      [PatchMethod(AggressiveInlining)] public          readonly bool    Equals                                                                                 (in PatchOdyssey.Collections.Shared<T> shared)     => SharedMono<T>.Mono.Equals(in shared.Value);
+      [PatchMethod(AggressiveInlining)] public          readonly bool    Equals                                                                                 (in SharedMono                     <T> sharedMono) => true;
+      [PatchMethod(AggressiveInlining)] public override readonly bool    Equals                                                                                 (object?                               value)      => value is SharedMono<T> || value switch { PatchOdyssey.Collections.Shared<T> shared => this.Equals(shared), PatchOdyssey.Collections.IShared shared => this.Equals(shared), _ => SharedMono<T>.Mono.Equals(value) };
+      [PatchMethod(AggressiveInlining)] public override readonly int     GetHashCode                                                                            ()                                                 => SharedMono<T>.Mono.GetHashCode      ();
+      [PatchMethod(AggressiveInlining)] public          readonly T       GetValueOrDefault                                                                      ()                                                 => SharedMono<T>.Mono.GetValueOrDefault();
+      [PatchMethod(AggressiveInlining)] public          readonly T       GetValueOrDefault                                                                      (in T fallback)                                    => SharedMono<T>.Mono.GetValueOrDefault(in fallback);
+      [PatchMethod(AggressiveInlining)] public override readonly string? ToString                                                                               ()                                                 => SharedMono<T>.Mono.ToString         ();
+      [PatchMethod(AggressiveInlining)] readonly bool                    PatchOdyssey.Collections.IRefEquatable<PatchOdyssey.Collections.IMono>.Equals          (ref PatchOdyssey.Collections.IMono   mono)        => this.Equals(mono);
+      [PatchMethod(AggressiveInlining)] readonly bool                    PatchOdyssey.Collections.IRefEquatable<PatchOdyssey.Collections.IShared>.Equals        (ref PatchOdyssey.Collections.IShared shared)      => this.Equals(shared);
+      [PatchMethod(AggressiveInlining)] readonly bool                    PatchOdyssey.Collections.IRefEquatable<SharedMono<T>>.Equals                           (ref SharedMono<T>                    sharedMono)  => this.Equals(in sharedMono);
+      [PatchMethod(AggressiveInlining)] readonly bool                    PatchOdyssey.Collections.IRefReadOnlyEquatable<PatchOdyssey.Collections.IMono>.Equals  (in  PatchOdyssey.Collections.IMono   mono)        => this.Equals(mono);
+      [PatchMethod(AggressiveInlining)] readonly bool                    PatchOdyssey.Collections.IRefReadOnlyEquatable<PatchOdyssey.Collections.IShared>.Equals(in  PatchOdyssey.Collections.IShared shared)      => this.Equals(shared);
+      [PatchMethod(AggressiveInlining)] readonly bool                    PatchOdyssey.Collections.IRefReadOnlyEquatable<SharedMono<T>>.Equals                   (in  SharedMono<T>                    sharedMono)  => this.Equals(in sharedMono);
+      [PatchMethod(AggressiveInlining)] readonly bool                    System.IEquatable<PatchOdyssey.Collections.IMono>.Equals                               (PatchOdyssey.Collections.IMono       mono)        => this.Equals(mono);
+      [PatchMethod(AggressiveInlining)] readonly bool                    System.IEquatable<PatchOdyssey.Collections.IShared>.Equals                             (PatchOdyssey.Collections.IShared     shared)      => this.Equals(shared);
+      [PatchMethod(AggressiveInlining)] readonly bool                    System.IEquatable<SharedMono<T>>.Equals                                                (SharedMono<T>                        sharedMono)  => this.Equals(sharedMono);
 
       [PatchMethod(AggressiveInlining)] public static bool          operator false(in SharedMono<T>                      sharedMono)                                                     =>  SharedMono<T>.Mono ? false : true;
       [PatchMethod(AggressiveInlining)] public static bool          operator true (in SharedMono<T>                      sharedMono)                                                     =>  SharedMono<T>.Mono ? true  : false;
@@ -3288,9 +3395,9 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [PatchMethod(AggressiveInlining)] public static bool          operator !=   (in SharedMono                     <T> sharedMono,  in PatchOdyssey.Collections.Shared<T> shared)      => SharedMono<T>.Mono != shared.Value;
       [PatchMethod(AggressiveInlining)] public static bool          operator !=   (in SharedMono                     <T> sharedMonoA, in SharedMono                     <T> sharedMonoB) => false;
 
-      [PatchMethod(AggressiveInlining)] public static explicit operator T                               (in SharedMono<T> shared) => (T) SharedMono<T>.Mono;
-      [PatchMethod(AggressiveInlining)] public static implicit operator PatchOdyssey.Collections.Mono<T>(in SharedMono<T> shared) =>     SharedMono<T>.Mono;
-      [PatchMethod(AggressiveInlining)] public static implicit operator SharedMono<T>                   (in T             value)  => new SharedMono<T>() + value;
+      [PatchMethod(AggressiveInlining)] public static explicit operator T                               (in SharedMono<T> sharedMono) => (T) SharedMono<T>.Mono;
+      [PatchMethod(AggressiveInlining)] public static implicit operator PatchOdyssey.Collections.Mono<T>(in SharedMono<T> sharedMono) =>     SharedMono<T>.Mono;
+      [PatchMethod(AggressiveInlining)] public static implicit operator SharedMono<T>                   (in T             value)      => new SharedMono<T>() + value;
     }
 
     public struct Vector2Bool : PatchOdyssey.Collections.IRefEquatable<Vector2Bool> {
@@ -3464,9 +3571,6 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
     }
 
     internal /* readonly */ struct WaitInfo : PatchOdyssey.Collections.IRefEquatable<WaitInfo> /* ⟶ Considered `UnityEngine.MonoBehaviour::Invoke[Repeating](nameof(𝑓) or ((System.Delegate) 𝑓).Method.Name, delay[, interval])` */ {
-      private sealed class Waiter : UnityEngine.MonoBehaviour {}
-
-      /* … */
       internal readonly       UnityEngine.Coroutine?                                               coroutine = null;
       internal /* readonly */ PatchOdyssey.Collections.EventHandler<PatchOdyssey.Events.WaitEvent> events    = new(); // ⟶ Information actually stored within its `::WaitEvent`s
 
@@ -3538,7 +3642,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
 
           if (!immutable) {
             if (UnityEngine.GUI.Button(positions.add, new UnityEngine.GUIContent("+", "Add field"), UnityEditor.EditorStyles.miniButton))
-            dictionary.TryAdd(typeof(TKey) != typeof(string) ? System.Activator.CreateInstance<TKey>() : (TKey) (string.Empty as object), Traits.IsValueType<TValue>() ? System.Activator.CreateInstance<TValue>() : (TValue) (null as object)!);
+            dictionary.TryAdd(typeof(TKey) != typeof(string) ? System.Activator.CreateInstance<TKey>() : (TKey) (string.Empty as object), typeof(TValue) == typeof(string) ? (TValue) (string.Empty as object) : Traits.IsValueType<TValue>() ? System.Activator.CreateInstance<TValue>() : (TValue) (null as object)!);
 
             if (UnityEngine.GUI.Button(positions.clear, new UnityEngine.GUIContent("×", "Clear dictionary"), UnityEditor.EditorStyles.miniButtonRight))
             dictionary.Clear();
@@ -3551,7 +3655,13 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
 
           if (this.foldout) {
             if (dictionary.IsEmpty()) {
+              UnityEngine.Color color = UnityEngine.GUI.color;
+
+              // …
+              UnityEngine.GUI.color = new(UnityEngine.GUI.color.r, UnityEngine.GUI.color.g, UnityEngine.GUI.color.b, UnityEngine.GUI.color.a * 0.5f);
               UnityEngine.GUI.Label(new(position.x, position.y + position.height, position.width, position.height), "Dictionary is empty");
+              UnityEngine.GUI.color = color;
+
               return;
             }
 
@@ -3643,7 +3753,11 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         /* … */
         [PatchMethod(AggressiveInlining)]
         private System.Collections.Generic.IEnumerable<T> Ensure(ref UnityEditor.SerializedProperty property) {
-          System.Collections.Generic.IEnumerable<T> enumerable = this.fieldInfo.GetValue(property.serializedObject.targetObject) switch { System.Collections.Generic.IList<T> list => list, System.Collections.Generic.IReadOnlyList<T> list => list, _ => PatchOdyssey.Collections.RefReadOnlyList<T>.Empty };
+          System.Collections.Generic.IEnumerable<T> enumerable = this.fieldInfo.GetValue(property.serializedObject.targetObject) switch {
+            System.Collections.Generic.IList<T> list => list,
+            System.Collections.Generic.IReadOnlyList<T> list => list,
+            _ => PatchOdyssey.Collections.RefReadOnlyList<T>.Empty
+          };
 
           this.fieldInfo.SetValue(property.serializedObject.targetObject, enumerable);
           return enumerable;
@@ -3672,7 +3786,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
 
           if (!immutable) {
             if (UnityEngine.GUI.Button(positions.add, new UnityEngine.GUIContent("+", "Add item"), UnityEditor.EditorStyles.miniButton))
-            list!.Add(Traits.IsValueType<T>() ? System.Activator.CreateInstance<T>() : (T) (null as object)!);
+            list!.Add(typeof(T) == typeof(string) ? (T) (string.Empty as object) : Traits.IsValueType<T>() ? System.Activator.CreateInstance<T>() : (T) (null as object)!);
 
             if (UnityEngine.GUI.Button(positions.clear, new UnityEngine.GUIContent("×", "Clear list"), UnityEditor.EditorStyles.miniButtonRight))
             list!.Clear();
@@ -3685,7 +3799,13 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
 
           if (this.foldout) {
             if (enumerable.IsEmpty()) {
+              UnityEngine.Color color = UnityEngine.GUI.color;
+
+              // …
+              UnityEngine.GUI.color = new(UnityEngine.GUI.color.r, UnityEngine.GUI.color.g, UnityEngine.GUI.color.b, UnityEngine.GUI.color.a * 0.5f);
               UnityEngine.GUI.Label(new(position.x, position.y + position.height, position.width, position.height), "List is empty");
+              UnityEngine.GUI.color = color;
+
               return;
             }
 
@@ -5216,13 +5336,13 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         UnityEngine.Debug.Log(value);
       }
 
-      public static void Print<T>(params T[] values) /* ⟶ Modifies possible `values` array */ {
+      public static void Print(params object?[] values) /* ⟶ Modifies possible `values` array */ {
         uint length = (uint) values.Length;
 
         // …
         for (uint index = length; 0u != index--; ) {
-          if (Util.Reference<T>.At(values, index) is null) // ⟶ Remove from `values`
-          Util.Array<T>.Copy(values, index + 1u, values, index, --length - index);
+          if (Util.Reference<object?>.At(values, index) is null) // ⟶ Remove from `values`
+          Util.Array<object?>.Copy(values, index + 1u, values, index, --length - index);
         }
 
         if (0u != length) {
@@ -5402,19 +5522,19 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     }
 
     public static class UI {
-      internal static              bool                                                                     Blurred                         =  false;
-      private  static              PatchOdyssey.Collections.SharedMono<UnityEngine.InputSystem.Keyboard>    Keyboard                        =  new(); // ⟶ `PatchOdyssey.Collections.DeviceState.END > Util.Keys.Modifiers.Control && Util.Keys.IsActive(PatchOdyssey.Collections.DeviceState.BEGIN, UnityEngine.KeyCode.C)`
-      private  static              PatchOdyssey.Collections.SharedMono<UnityEngine.InputSystem.Mouse>       Mouse                           =  new();
-      private  static              PatchOdyssey.Collections.SharedMono<UnityEngine.InputSystem.Pen>         Pen                             =  new();
-      private  static              PatchOdyssey.Collections.SharedMono<UnityEngine.InputSystem.Pointer>     Pointer                         =  new();
-      public   static              bool                                                                     Prompted { get; internal set; } =  false;
-      public   static ref readonly UnityEngine.Vector2                                                      Scroll                          => ref UI.ScrollValue;
-      private  static              UnityEngine.Vector2                                                      ScrollValue                     =  UnityEngine.Vector2.zero;
-      private  static              float                                                                    TabDelayElapsed                 =  0.0f;
-      private  static              int                                                                      TabIndex                        =  -1;
-      private  static              bool                                                                     TabIsActive                     => UI.TabIndex != -1;
-      private  static readonly     System.Collections.Generic.List<UnityEngine.GameObject>                  TabList                         =  new();
-      private  static              PatchOdyssey.Collections.SharedMono<UnityEngine.InputSystem.Touchscreen> Touchscreen                     =  new();
+      internal static              bool                                                                         Blurred                         =  false;
+      private  static              PatchOdyssey.Collections.SharedLazyMono<UnityEngine.InputSystem.Keyboard>    Keyboard                        =  new(() => UnityEngine.InputSystem.Keyboard.current); // ⟶ `PatchOdyssey.Collections.DeviceState.END > Util.Keys.Modifiers.Control && Util.Keys.IsActive(PatchOdyssey.Collections.DeviceState.BEGIN, UnityEngine.KeyCode.C)`
+      private  static              PatchOdyssey.Collections.SharedLazyMono<UnityEngine.InputSystem.Mouse>       Mouse                           =  new(() => UnityEngine.InputSystem.Mouse   .current);
+      private  static              PatchOdyssey.Collections.SharedLazyMono<UnityEngine.InputSystem.Pen>         Pen                             =  new(() => UnityEngine.InputSystem.Pen     .current);
+      private  static              PatchOdyssey.Collections.SharedLazyMono<UnityEngine.InputSystem.Pointer>     Pointer                         =  new(() => UnityEngine.InputSystem.Pointer .current);
+      public   static              bool                                                                         Prompted { get; internal set; } =  false;
+      public   static ref readonly UnityEngine.Vector2                                                          Scroll                          => ref UI.ScrollValue;
+      private  static              UnityEngine.Vector2                                                          ScrollValue                     =  UnityEngine.Vector2.zero;
+      private  static              float                                                                        TabDelayElapsed                 =  0.0f;
+      private  static              int                                                                          TabIndex                        =  -1;
+      private  static              bool                                                                         TabIsActive                     => UI.TabIndex != -1;
+      private  static readonly     System.Collections.Generic.List<UnityEngine.GameObject>                      TabList                         =  new();
+      private  static              PatchOdyssey.Collections.SharedLazyMono<UnityEngine.InputSystem.Touchscreen> Touchscreen                     =  new(() => UnityEngine.InputSystem.Touchscreen.current);
 
       /* … */
       [PatchMethod(AggressiveInlining)]
@@ -5525,15 +5645,20 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
             // …
             while (0 != subindex--)
             if (
-              key is UnityEngine.KeyCode         keyA ? keyA == state[(uint) subindex].codes.Item1 :
-              key is UnityEngine.InputSystem.Key keyB ? keyB == state[(uint) subindex].codes.Item2 :
+              key is UnityEngine.KeyCode         key1 ? key1 == state[(uint) subindex].codes.Item1 :
+              key is UnityEngine.InputSystem.Key key2 ? key2 == state[(uint) subindex].codes.Item2 :
               false
-            ) { state[(uint) subindex].polled = true; break; }
+            ) {
+              if (invalidate) state.RemoveAt((uint) index);
+              else state[(uint) subindex].polled = true;
 
-            if (subindex == -1)
+              break;
+            }
+
+            if (!invalidate && subindex == -1)
             state.Add(new() {codes = (
-              key is UnityEngine.KeyCode         keyA ? (keyA, PatchOdyssey.Collections.KeyInfo.Translate(keyA)) :
-              key is UnityEngine.InputSystem.Key keyB ? (PatchOdyssey.Collections.KeyInfo.Translate(keyB), keyB) :
+              key is UnityEngine.KeyCode         key1 ? (key1, PatchOdyssey.Collections.KeyInfo.Translate(key1)) :
+              key is UnityEngine.InputSystem.Key key2 ? (PatchOdyssey.Collections.KeyInfo.Translate(key2), key2) :
               (UnityEngine.KeyCode.None, UnityEngine.InputSystem.Key.None)
             ), device = device, epoch = epoch, polled = true, state = PatchOdyssey.Collections.DeviceState.GetDeviceState(index)});
           }
@@ -5563,8 +5688,6 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
         /* … */
         if (!UI.Blurred) {
-          UnityEngine.InputSystem.Keyboard? currentKeyboard = UnityEngine.InputSystem.Keyboard.current;
-
           // … ⟶ Acknowledge `UnityEngine.Input.GetKey*(…)` key binds
           fixed (UnityEngine.KeyCode* address = Util.Keys.All.Item1.Items)
           for (UnityEngine.KeyCode* iterator = address + Util.Keys.All.Item1.Count; address != iterator; ) {
@@ -5596,10 +5719,8 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
           }
 
           // … ⟶ Acknowledge `UnityEngine.InputSystem.*` key binds
-          if (currentKeyboard is not null)
-          UI.Keyboard = currentKeyboard;
-
-          foreach (UnityEngine.InputSystem.Controls.KeyControl keyControl in UI.Keyboard.Value?.allKeys ?? new UnityEngine.InputSystem.Utilities.ReadOnlyArray<UnityEngine.InputSystem.Controls.KeyControl>(System.Array.Empty<UnityEngine.InputSystem.Controls.KeyControl>())) {
+          foreach (UnityEngine.InputSystem.Controls.KeyControl keyControl in UI.Keyboard.Value?.allKeys ?? new UnityEngine.InputSystem.Utilities.ReadOnlyArray<UnityEngine.InputSystem.Controls.KeyControl>(System.Array.Empty<UnityEngine.InputSystem.Controls.KeyControl>()))
+          if (keyControl is not null) {
             UnityEngine.InputSystem.Key                       key    = keyControl.keyCode;
             System.ReadOnlySpan<bool>                         states = stackalloc[] {keyControl.wasPressedThisFrame, keyControl.isPressed, keyControl.wasReleasedThisFrame};
             ref readonly PatchOdyssey.Collections.DeviceState state  = ref GetDeviceState(in states);
@@ -5666,33 +5787,20 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
               // …
               if (device == pointer.device && id == pointer.id) {
-                pointer.polled   = true;
-                pointer.position = position;
+                if (invalidate) state.RemoveAt((uint) subindex);
+                else { pointer.polled = true; pointer.position = position; }
 
                 break;
               }
             }
 
-            if (subindex == -1)
+            if (!invalidate && subindex == -1)
             state.Add(new() {device = device, epoch = epoch, id = id, origin = origin, polled = true, position = position, state = PatchOdyssey.Collections.DeviceState.GetDeviceState(index)});
           }
         }
 
         if (!UI.Blurred) {
-          UnityEngine.InputSystem.Mouse?       currentMouse       = UnityEngine.InputSystem.Mouse      .current;
-          UnityEngine.InputSystem.Pen?         currentPen         = UnityEngine.InputSystem.Pen        .current;
-          UnityEngine.InputSystem.Pointer?     currentPointer     = UnityEngine.InputSystem.Pointer    .current;
-          UnityEngine.InputSystem.Touchscreen? currentTouchscreen = UnityEngine.InputSystem.Touchscreen.current;
-          UnityEngine.Vector2                  mousePosition;
-
-          // …
-          UI.Mouse       = currentMouse   is not null ? currentMouse   : UI.Mouse;
-          UI.Pen         = currentPen     is not null ? currentPen     : UI.Pen;
-          UI.Pointer     = currentPointer is not null ? currentPointer : UI.Pointer;
-          UI.ScrollValue = UnityEngine.Vector2.zero;
-          UI.Touchscreen = currentTouchscreen is not null ? currentTouchscreen : UI.Touchscreen;
-
-          mousePosition = (
+          UnityEngine.Vector2 pointerPosition = (
             UI.Mouse                                                           ? UI.Mouse      .Value.position.ReadValue() :
             UI.Pen                                                             ? UI.Pen        .Value.position.ReadValue() :
             UI.Touchscreen.HasValue && !UI.Touchscreen.Value.touches.IsEmpty() ? UI.Touchscreen.Value.position.ReadValue() : // ⟶ `UI.Touchscreen.Value.primaryTouch.position.ReadValue()`
@@ -5700,9 +5808,12 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
             (UnityEngine.Vector2) UnityEngine.Input.mousePosition
           );
 
+          // …
+          UI.ScrollValue = UnityEngine.Vector2.zero;
+
           // … ⟶ Acknowledge `UnityEngine.Input.GetMouse*(…)` pointer (e.g. mouse, pen, touch, e.t.c.) binds
           for (sbyte button = Util.Pointers.MouseButtonMiddle; Util.Pointers.MouseButtonLeft != button--; )
-          PollPointers(Util.Pointers.MakeMouseId((uint) button), timestamp, in mousePosition, in mousePosition, false, stackalloc[] {UnityEngine.Input.GetMouseButtonDown(button), UnityEngine.Input.GetMouseButton(button), UnityEngine.Input.GetMouseButtonUp(button)}, null);
+          PollPointers(Util.Pointers.MakeMouseId((uint) button), timestamp, in pointerPosition, in pointerPosition, false, stackalloc[] {UnityEngine.Input.GetMouseButtonDown(button), UnityEngine.Input.GetMouseButton(button), UnityEngine.Input.GetMouseButtonUp(button)}, null);
 
           // … ⟶ Acknowledge `UnityEngine.Touch` touch binds
           for (int index = UnityEngine.Input.touchCount; 0 != index--; ) {
@@ -5719,11 +5830,11 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
             // …
             UI.ScrollValue = scroll;
 
-            PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonLeft)    /* ⟶ `UI.Mouse.Value.leftButton   .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.leftButton   .wasPressedThisFrame, UI.Mouse.Value.leftButton   .isPressed, UI.Mouse.Value.leftButton   .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
-            PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonMiddle)  /* ⟶ `UI.Mouse.Value.middleButton .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.middleButton .wasPressedThisFrame, UI.Mouse.Value.middleButton .isPressed, UI.Mouse.Value.middleButton .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
-            PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonRight)   /* ⟶ `UI.Mouse.Value.rightButton  .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.rightButton  .wasPressedThisFrame, UI.Mouse.Value.rightButton  .isPressed, UI.Mouse.Value.rightButton  .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
-            PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonForward) /* ⟶ `UI.Mouse.Value.forwardButton.path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.forwardButton.wasPressedThisFrame, UI.Mouse.Value.forwardButton.isPressed, UI.Mouse.Value.forwardButton.wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
-            PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonBack)    /* ⟶ `UI.Mouse.Value.backButton   .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.backButton   .wasPressedThisFrame, UI.Mouse.Value.backButton   .isPressed, UI.Mouse.Value.backButton   .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
+            if (UI.Mouse.Value.leftButton    is not null) PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonLeft)    /* ⟶ `UI.Mouse.Value.leftButton   .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.leftButton   .wasPressedThisFrame, UI.Mouse.Value.leftButton   .isPressed, UI.Mouse.Value.leftButton   .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
+            if (UI.Mouse.Value.middleButton  is not null) PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonMiddle)  /* ⟶ `UI.Mouse.Value.middleButton .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.middleButton .wasPressedThisFrame, UI.Mouse.Value.middleButton .isPressed, UI.Mouse.Value.middleButton .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
+            if (UI.Mouse.Value.rightButton   is not null) PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonRight)   /* ⟶ `UI.Mouse.Value.rightButton  .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.rightButton  .wasPressedThisFrame, UI.Mouse.Value.rightButton  .isPressed, UI.Mouse.Value.rightButton  .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
+            if (UI.Mouse.Value.forwardButton is not null) PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonForward) /* ⟶ `UI.Mouse.Value.forwardButton.path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.forwardButton.wasPressedThisFrame, UI.Mouse.Value.forwardButton.isPressed, UI.Mouse.Value.forwardButton.wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
+            if (UI.Mouse.Value.backButton    is not null) PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonBack)    /* ⟶ `UI.Mouse.Value.backButton   .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.backButton   .wasPressedThisFrame, UI.Mouse.Value.backButton   .isPressed, UI.Mouse.Value.backButton   .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
           }
 
           // … ⟶ Acknowledge `UnityEngine.InputSystem.*` pen binds
@@ -5732,12 +5843,12 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
             UnityEngine.Vector2 position = UI.Pen.Value.position.ReadValue();
 
             // …
-            PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonTip)        /* ⟶ `UI.Pen.Value.tip                                       .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value.tip                                       .wasPressedThisFrame, UI.Pen.Value.tip                                       .isPressed, UI.Pen.Value.tip                                       .wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
-            PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonEraser)     /* ⟶ `UI.Pen.Value.eraser                                    .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value.eraser                                    .wasPressedThisFrame, UI.Pen.Value.eraser                                    .isPressed, UI.Pen.Value.eraser                                    .wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
-            PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 0) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
-            PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 1) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
-            PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 2) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
-            PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 3) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
+            if (UI.Pen.Value.tip                                        is not null) PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonTip)        /* ⟶ `UI.Pen.Value.tip                                       .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value.tip                                       .wasPressedThisFrame, UI.Pen.Value.tip                                       .isPressed, UI.Pen.Value.tip                                       .wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
+            if (UI.Pen.Value.eraser                                     is not null) PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonEraser)     /* ⟶ `UI.Pen.Value.eraser                                    .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value.eraser                                    .wasPressedThisFrame, UI.Pen.Value.eraser                                    .isPressed, UI.Pen.Value.eraser                                    .wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
+            if (UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1] is not null) PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 0) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
+            if (UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2] is not null) PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 1) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
+            if (UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3] is not null) PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 2) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
+            if (UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4] is not null) PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 3) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
           }
 
           // … ⟶ Acknowledge `UnityEngine.InputSystem.*` touch binds
@@ -5747,17 +5858,20 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
             // …
             if (!touches.IsEmpty()) {
               UnityEngine.InputSystem.Controls.TouchControl      primaryTouch      = UI.Touchscreen.Value.primaryTouch;
-              UnityEngine.InputSystem.TouchPhase                 primaryTouchPhase = primaryTouch.phase.ReadValue();
-              UnityEngine.InputSystem.Controls.TouchPressControl primaryTouchPress = primaryTouch.press;
+              UnityEngine.InputSystem.TouchPhase                 primaryTouchPhase = primaryTouch?.phase.ReadValue() ?? UnityEngine.InputSystem.TouchPhase.None;
+              UnityEngine.InputSystem.Controls.TouchPressControl primaryTouchPress = primaryTouch?.press!;
 
               // …
-              foreach (UnityEngine.InputSystem.Controls.TouchControl touch in touches) {
+              foreach (UnityEngine.InputSystem.Controls.TouchControl touch in touches)
+              if (touch is not null) {
                 UnityEngine.InputSystem.TouchPhase                 phase = touch.phase.ReadValue();
                 UnityEngine.InputSystem.Controls.TouchPressControl press = touch.press;
 
+                if (press is not null)
                 PollPointers(Util.Pointers.MakeTouchId((uint) touch.touchId.ReadValue()) /* ⟶ `touch.path` */, timestamp, touch.position.ReadValue(), touch.startPosition.ReadValue(), UnityEngine.InputSystem.TouchPhase.None == phase, stackalloc[] {press.wasPressedThisFrame || UnityEngine.InputSystem.TouchPhase.Began == phase, press.isPressed || UnityEngine.InputSystem.TouchPhase.Moved == phase || UnityEngine.InputSystem.TouchPhase.Stationary == phase, press.wasReleasedThisFrame || UnityEngine.InputSystem.TouchPhase.Canceled == phase || UnityEngine.InputSystem.TouchPhase.Ended == phase}, (UnityEngine.InputSystem.Touchscreen) UI.Touchscreen);
               }
 
+              if (primaryTouch is not null && primaryTouchPress is not null)
               PollPointers(Util.Pointers.MakeTouchId((uint) primaryTouch.touchId.ReadValue()) /* ⟶ `primaryTouch.path` */, timestamp, primaryTouch.position.ReadValue(), primaryTouch.startPosition.ReadValue(), UnityEngine.InputSystem.TouchPhase.None == primaryTouchPhase, stackalloc[] {primaryTouchPress.wasPressedThisFrame || UnityEngine.InputSystem.TouchPhase.Began == primaryTouchPhase, primaryTouchPress.isPressed || UnityEngine.InputSystem.TouchPhase.Moved == primaryTouchPhase || UnityEngine.InputSystem.TouchPhase.Stationary == primaryTouchPhase, primaryTouchPress.wasReleasedThisFrame || UnityEngine.InputSystem.TouchPhase.Canceled == primaryTouchPhase || UnityEngine.InputSystem.TouchPhase.Ended == primaryTouchPhase}, (UnityEngine.InputSystem.Touchscreen) UI.Touchscreen);
             }
           }
@@ -5776,7 +5890,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
           // … ⟶ Acknowledge cursor movement at least
           if (Util.Pointers.BeginState.IsEmpty() && Util.Pointers.CurrentState.IsEmpty() && Util.Pointers.EndState.IsEmpty())
-          Util.Pointers.BeginState.Add(new() {device = null, epoch = timestamp, id = Util.Pointers.MakeId(), origin = mousePosition, polled = true, position = mousePosition, state = PatchOdyssey.Collections.DeviceState.BEGIN});
+          Util.Pointers.BeginState.Add(new() {device = null, epoch = timestamp, id = Util.Pointers.MakeId(), origin = pointerPosition, polled = true, position = pointerPosition, state = PatchOdyssey.Collections.DeviceState.BEGIN});
         }
 
         // … ⟶ Update prior pointers
@@ -6202,7 +6316,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
       /* … */
       internal static readonly PatchOdyssey.Collections.RefSortedCollection<double, PatchOdyssey.Collections.WaitInfo> Pending = new(16u) {{double.NaN, new()}};                                     // ⟶ Used `System.Collections.Generic.SortedDictionary<double, PatchOdyssey.Collections.WaitInfo>` prior
-      internal static readonly Wait.MonoBehaviour                                                                      Waiter  = new UnityEngine.GameObject("…").AddComponent<Wait.MonoBehaviour>(); // ⟶ Use coroutines for asynchronicity
+      internal static readonly Wait.MonoBehaviour                                                                      Waiter  = new UnityEngine.GameObject("⏱️").AddComponent<Wait.MonoBehaviour>(); // ⟶ Use coroutines for asynchronicity
 
       /* … */
       [PatchMethod(AggressiveInlining)] public static uint Check         () => Wait.CheckCoroutine();

@@ -123,9 +123,13 @@ May 13th, 2025
 • Util.Vector.Coalesce; Util.Vector.Set; Util.Vector rework
 • …Mouse event system
 
+May 14th, 2025 – May 15th, 2025
+• Edible `RefList` in Inspector. Had to learn how `UnityEngine.JsonUtility` worked
+• `LazyMono` and `SharedLazyMono` for deferred initialization
+
 📆
-• Lesson learned: C# Mono with invalid IL instructions from creating delegates dynamically
 • Lesson learned: Learning C# technical details and ECS is a time investment that must be planned for within the timeline of the project
+• Lesson learned: Low-level C# is more difficult to debug with Unity’s console
 • Lesson learned: Premature optimization can be a tricky challenge to deal with i.e. “Keep It Simple, Stupid”
 
 ROADMAP_🗺️__________________________________________________________________________________________

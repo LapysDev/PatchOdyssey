@@ -6,8 +6,10 @@ using PatchOdyssey;
 [UnityEngine.RequireComponent(typeof(UnityEngine.UI.GraphicRaycaster))]
 [UnityEngine.RequireComponent(typeof(UnityEngine.RectTransform))]
 public class UI : UnityEngine.MonoBehaviour {
-  private LazyMono<UnityEngine.EventSystems.EventSystem> eventSystem;
-  private LazyMono<UnityEngine.UI.GraphicRaycaster>      graphicsRaycaster;
+  public  StringDictionary                               components        = new();
+  private LazyMono<UnityEngine.EventSystems.EventSystem> eventSystem       = new();
+  private LazyMono<UnityEngine.UI.GraphicRaycaster>      graphicsRaycaster = new();
+  public  StringList                                     texts16           = new();
 
   /* … */
   private void Awake() {
@@ -16,10 +18,11 @@ public class UI : UnityEngine.MonoBehaviour {
   }
 
   private void Update() {
-    UnityEngine.Debug.Log(Util.Pointers.Any);
-    // System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult> uiRaycasts = new();
+    foreach (PointerInfo pointer in Util.Pointers.Any) {
+      System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult> raycasts = new();
 
-    // …
-    // this.graphicsRaycaster.Value.Raycast(new((UnityEngine.EventSystems.EventSystem) this.eventSystem) {position = information.value}, uiRaycasts);
+      // …
+      this.graphicsRaycaster.Value.Raycast(new((UnityEngine.EventSystems.EventSystem) this.eventSystem) {position = pointer.position}, raycasts);
+    }
   }
 }
