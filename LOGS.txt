@@ -124,19 +124,29 @@ May 13th, 2025
 • …Mouse event system
 
 May 14th, 2025 – May 15th, 2025
-• Edible `RefList` in Inspector. Had to learn how `UnityEngine.JsonUtility` worked
+• Edible `RefList` in Inspector. Had to learn how `UnityEngine.JsonUtility` worked — delimit each `T[]` by serialized because `T[]` isn’t serializable; and use `UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene())`
 • `LazyMono` and `SharedLazyMono` for deferred initialization
+
+May 16th, 2025
+• …
 
 📆
 • Lesson learned: Learning C# technical details and ECS is a time investment that must be planned for within the timeline of the project
-• Lesson learned: Low-level C# is more difficult to debug with Unity’s console
+• Lesson learned: Low-level C# is more difficult to debug with Unity’s console, or work with considering Unity scarcely supports `MemoryMarshal` and `Unsafe`
 • Lesson learned: Premature optimization can be a tricky challenge to deal with i.e. “Keep It Simple, Stupid”
+• C# polyfilling exists because Unity uses an older .NET runtime
 
 ROADMAP_🗺️__________________________________________________________________________________________
 • … — Keep Mesh as child GameObject of scripted parent GameObjects
 • Core utilities — PatchOdyssey.cs
 • User Interface — UI.cs
 • UI sequencing — Game.cs
+
+chunks are ECS'd. ALL of them. They pop up from the biome grassland when the player gets close
+The player doesn't glow themselves, they have a drop-glow beneath them
+bullets and particles are ECS'd, one monster spawns minions that are ECS'd?
+another monster spawns collidable crystals from the ground 
+monsters, tamers, UI, and text boxes are just GameObjects
 
 REQUIREMENTS_✅_____________________________________________________________________________________
 • Development log
