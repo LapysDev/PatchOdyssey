@@ -6,8 +6,25 @@ using PatchOdyssey;
 [UnityEngine.RequireComponent(typeof(UnityEngine.UI.GraphicRaycaster))]
 [UnityEngine.RequireComponent(typeof(UnityEngine.RectTransform))]
 public class UI : UnityEngine.MonoBehaviour {
-  // public  GameObjectReadOnlyDictionary                   components        = new(new GameObjectDictionary(16u) {});
-  public  GameObjectDictionary                           components        = new(16u);
+  [System.Serializable]
+  public class Components {
+    public UnityEngine.GameObject? background                                    = null;
+    public UnityEngine.GameObject? combat                                        = null;
+    public UnityEngine.GameObject? dialogue                                      = null;
+    public UnityEngine.GameObject? inventory                                     = null;
+    public UnityEngine.GameObject? menu                                          = null;
+    public UnityEngine.GameObject? pause                                         = null;
+    public UnityEngine.GameObject? splash                                        = null;
+    public (UnityEngine.GameObject? HUD, UnityEngine.GameObject? world) tooltips = (null, null);
+  }
+
+  #if UNITY_EDITOR
+    // [UnityEditor.CustomPropertyDrawer(typeof(UI.Components))]
+    // public class UIComponentsDrawer : UnityEditor.PropertyDrawer {}
+  #endif
+
+  /* … */
+  public  UI.Components                                  components        = new();
   private LazyMono<UnityEngine.EventSystems.EventSystem> eventSystem       = new();
   private LazyMono<UnityEngine.UI.GraphicRaycaster>      graphicsRaycaster = new();
 
@@ -18,9 +35,6 @@ public class UI : UnityEngine.MonoBehaviour {
   }
 
   private void Update() {
-    RefReadOnlyDictionary<string, UnityEngine.GameObject> dictionaryA = new(new RefDictionary<string, UnityEngine.GameObject>(16u) {});
-    GameObjectReadOnlyDictionary                          dictionaryB = new(new GameObjectDictionary(16u) {});
-
     foreach (PointerInfo pointer in Util.Pointers.Any) {
       System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult> raycasts = new();
 

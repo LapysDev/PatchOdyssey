@@ -128,7 +128,12 @@ May 14th, 2025 – May 15th, 2025
 • `LazyMono` and `SharedLazyMono` for deferred initialization
 
 May 16th, 2025
-• …
+• Fixed `RefReadOnlyDictionary` wrapping for `RefDictionary` (again, bad design)
+• `UI::components` finally begun — background, combat, credits, dialogue, inventory, menu, pause, splash, tooltips (HUD), tooltips (scene)
+
+May 19th, 2025
+• Metted `PatchOdyssey.Animation` classes into `PatchOdyssey.Collections`
+• Serialization with `UnityEngine.GameObject` didn’t work (must be main thread, not supported by default, can’t enumerate before scene load, …), fell back to manual drawing solution
 
 📆
 • Lesson learned: Learning C# technical details and ECS is a time investment that must be planned for within the timeline of the project
