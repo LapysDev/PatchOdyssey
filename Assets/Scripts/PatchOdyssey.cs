@@ -2218,14 +2218,14 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       }
 
       /* … */
-      [UnityEngine.HideInInspector]                             public                   uint               Capacity                                                => this.Count;
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] public                   uint               Count { get; internal set; }                            =  0u;
-      [UnityEngine.HideInInspector]                             public                   bool               IsPending                                               => RefReadOnlyList<T>.Pending.Contains(this);
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] internal                 T[]                Items                                                   =  System.Array.Empty<T>();
-      [UnityEngine.HideInInspector]                             internal                 ref T              Null                                                    => ref this.nullElement; // ⟶ `Util.Reference<T>.Null` didn’t work for some reason
-      [UnityEngine.HideInInspector]                             private                  T                  nullElement                                             =  default!;
-      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private                  string             serializationData                                       =  string.Empty;
-      int                                                                                                   System.Collections.Generic.IReadOnlyCollection<T>.Count => ((int) this.Count);
+      [UnityEngine.HideInInspector]                             public   uint   Capacity                                                => this.Count;
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] public   uint   Count { get; internal set; }                            =  0u;
+      [UnityEngine.HideInInspector]                             public   bool   IsPending                                               => RefReadOnlyList<T>.Pending.Contains(this);
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] internal T[]    Items                                                   =  System.Array.Empty<T>();
+      [UnityEngine.HideInInspector]                             internal ref T  Null                                                    => ref this.nullElement; // ⟶ `Util.Reference<T>.Null` didn’t work for some reason
+      [UnityEngine.HideInInspector]                             private  T      nullElement                                             =  default!;
+      [UnityEngine.HideInInspector, UnityEngine.SerializeField] private  string serializedData                                          =  string.Empty;
+      int                                                                       System.Collections.Generic.IReadOnlyCollection<T>.Count => ((int) this.Count);
 
       public   static readonly RefReadOnlyList<T>                                  Empty   = new();
       internal static readonly System.Collections.Generic.List<RefReadOnlyList<T>> Pending = new();
@@ -2322,12 +2322,10 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
           RefList<T>.Pending.Add(this);
         }
 
-        if (this.IsPending) {
-          this.Items = RefReadOnlyList<T>.CreateInstance(this.Count);
-          return;
-        }
+        if (this.IsPending)
+        return;
 
-        this.Items = this.serializationData.Split('\x01', System.StringSplitOptions.None).ConvertAll(static datum => {
+        this.Items = this.serializedData.Split('\x01', System.StringSplitOptions.None).ConvertAll(static datum => {
           RefList<T>.Serializable serializable = new();
 
           // …
@@ -2336,22 +2334,27 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
               UnityEngine.JsonUtility.FromJsonOverwrite(datum, serializable);
 
             else {
-              string[]                                                     data      = datum.Split('\x02', System.StringSplitOptions.None);
-              UnityEngine.SceneManagement.Scene                            scene     = UnityEngine.SceneManagement.SceneManager.GetSceneByPath(Util.Reference<string>.First(data));
-              PatchOdyssey.RefReadOnlyConverter<UnityEngine.GameObject, T> ToElement = Util.GetConverter<UnityEngine.GameObject, T>();
+              string[]                          data  = datum.Split('\x02', System.StringSplitOptions.None);
+              UnityEngine.SceneManagement.Scene scene = default;
 
               // …
+              #if UNITY_EDITOR // ⟶ “UnItYeXcEpTiOn: GeTsCeNeByPaTh iS NoT AlLoWeD To bE CaLlEd dUrInG SeRiAlIzAtIoN, cAlL It fRoM AwAkE Or sTaRt iNsTeAd. CaLlEd fRoM MoNoBeHaViOuR 'uI' oN GaMe oBjEcT 'uI'. SeE "sCrIpT SeRiAlIzAtIoN" pAgE In tHe uNiTy mAnUaL FoR FuRtHeR DeTaIlS.”
+                scene = UnityEditor.SceneManagement.EditorSceneManager.GetSceneByPath(Util.Reference<string>.First(data));
+              #else
+                scene = UnityEngine.SceneManagement.SceneManager.GetSceneByPath(Util.Reference<string>.First(data));
+              #endif
+
               if (scene.IsValid()) {
                 UnityEngine.GameObject? gameObject = null;
                 bool                    rooted     = true;
 
                 // …
-                foreach (string hierarchy in Util.Reference<string>.Last(data).Split('\x03', System.StringSplitOptions.None)) {
-                  data = hierarchy.Split('\x04', System.StringSplitOptions.None);
+                foreach (string hierarchy in Util.Reference<string>.Last(data).Split('\x04', System.StringSplitOptions.None)) {
+                  data = hierarchy.Split('\x05', System.StringSplitOptions.None);
 
                   for ((System.Collections.IEnumerator enumerator, string name, uint siblingIndex) = (!rooted ? gameObject!.transform.GetEnumerator() : scene.GetRootGameObjects().ConvertAll([PatchMethod(AggressiveInlining)] static (gameObject) => gameObject.transform).GetEnumerator(), Util.Reference<string>.First(data), uint.Parse(Util.Reference<string>.Last(data))); enumerator.MoveNext(); )
-                  if (0u == siblingIndex--) {
-                    gameObject = name == ((UnityEngine.Transform) enumerator.Current).name ? ((UnityEngine.Transform) enumerator.Current).gameObject : null;
+                  if (name == ((UnityEngine.Transform) enumerator.Current).name) /* ⟶ `siblingIndex` useless for now since `UnityEngine.GameObject` tree could be updated; which means this may find duplicates */ {
+                    gameObject = ((UnityEngine.Transform) enumerator.Current).gameObject;
                     break;
                   }
 
@@ -2362,7 +2365,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
                 }
 
                 if (null != gameObject)
-                serializable.value = ToElement(gameObject);
+                serializable.value = (T) (object) gameObject;
               }
             }
           }
@@ -2374,16 +2377,16 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       }
 
       internal void Serialize() {
-        string serializationData = this.serializationData;
+        string serializedData = this.serializedData;
 
         // …
         if (this.IsPending)
         return;
 
-        this.serializationData = string.Empty;
+        this.serializedData = string.Empty;
 
         if (0u != this.Count)
-        for (uint index = 0u; ; this.serializationData += '\x01') {
+        for (uint index = 0u; ; this.serializedData += '\x01') {
           ref readonly T element = ref this.Items[index];
 
           // …
@@ -2405,14 +2408,14 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
                   break; // ⟶ `siblingIndex = …;`
                 }
 
-                data      = hierarchy!.name + '\x04' + siblingIndex.ToString() + (!string.IsNullOrEmpty(data) ? '\x03' + data : string.Empty);
+                data      = hierarchy!.name + '\x05' + siblingIndex.ToString() + (!string.IsNullOrEmpty(data) ? '\x04' + data : string.Empty);
                 hierarchy = hierarchyParent;
               }
 
               data = gameObject.scene.path + '\x02' + data;
             }
 
-            this.serializationData += data;
+            this.serializedData += data;
           }
 
           if (++index == this.Count)
@@ -2420,8 +2423,8 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         }
 
         #if UNITY_EDITOR
-          if (!UnityEditor.EditorApplication.isPlaying && serializationData != this.serializationData)
-          UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+          if (serializedData != this.serializedData)
+          Util.Game.AskToSave();
         #endif
       }
 
@@ -3761,11 +3764,15 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
           }
 
           if (!immutable) {
-            if (UnityEngine.GUI.Button(positions.add, new UnityEngine.GUIContent("+", "Add field"), UnityEditor.EditorStyles.miniButton))
-            dictionary.TryAdd(typeof(TKey) != typeof(string) ? System.Activator.CreateInstance<TKey>() : (TKey) (string.Empty as object), typeof(TValue) == typeof(string) ? (TValue) (string.Empty as object) : Traits.IsValueType<TValue>() ? System.Activator.CreateInstance<TValue>() : (TValue) (null as object)!);
+            if (UnityEngine.GUI.Button(positions.add, new UnityEngine.GUIContent("+", "Add field"), UnityEditor.EditorStyles.miniButton)) {
+              dictionary.TryAdd(typeof(TKey) != typeof(string) ? System.Activator.CreateInstance<TKey>() : (TKey) (string.Empty as object), typeof(TValue) == typeof(string) ? (TValue) (string.Empty as object) : Traits.IsValueType<TValue>() ? System.Activator.CreateInstance<TValue>() : (TValue) (null as object)!);
+              Util.Game.AskToSave();
+            }
 
-            if (UnityEngine.GUI.Button(positions.clear, new UnityEngine.GUIContent("×", "Clear dictionary"), UnityEditor.EditorStyles.miniButtonRight))
-            dictionary.Clear();
+            if (UnityEngine.GUI.Button(positions.clear, new UnityEngine.GUIContent("×", "Clear dictionary"), UnityEditor.EditorStyles.miniButtonRight)) {
+              dictionary.Clear();
+              Util.Game.AskToSave();
+            }
           }
 
           UnityEditor.EditorGUI.BeginChangeCheck();
@@ -3789,7 +3796,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
             if (element.Key is not null) {
               (TKey key, TValue value)                                                            = (element.Key, element.Value);
               (UnityEngine.Rect key, UnityEngine.Rect value, UnityEngine.Rect clear) subpositions = (
-                key  : new(position.x                                              + (immutable ? size : 0.0f), position.y += position.height, Util.PercOf(position.width - size, 40.0f), position.height),
+                key  : new(position.x + Util.PercOf(position.width - size,   5.0f) + (immutable ? size : 0.0f), position.y += position.height, Util.PercOf(position.width - size, 35.0f), position.height),
                 value: new(position.x + Util.PercOf(position.width - size,  40.0f) + (immutable ? size : 0.0f), position.y,                    Util.PercOf(position.width - size, 60.0f), position.height),
                 clear: new(position.x + Util.PercOf(position.width - size, 100.0f),                             position.y,                    size,                                      position.height)
               );
@@ -3801,7 +3808,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
               if (UnityEditor.EditorGUI.EndChangeCheck()) {
                 dictionary.Remove(element.Key);
                 dictionary.Add   (key, value);
-
+                Util.Game.AskToSave();
                 break;
               }
 
@@ -3809,12 +3816,14 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
                 value = (TValue) RefDictionaryDrawer<TKey, TValue>.ValueGUIField!(subpositions.value, value!);
               if (UnityEditor.EditorGUI.EndChangeCheck()) {
                 dictionary[key] = value;
+                Util.Game.AskToSave();
                 break;
               }
 
               if (!immutable)
               if (UnityEngine.GUI.Button(subpositions.clear, new UnityEngine.GUIContent("-", "Clear item"), UnityEditor.EditorStyles.miniButtonRight)) {
                 dictionary.Remove(key);
+                Util.Game.AskToSave();
                 break;
               }
             }
@@ -3874,9 +3883,9 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         [PatchMethod(AggressiveInlining)]
         private System.Collections.Generic.IEnumerable<T> Ensure(ref UnityEditor.SerializedProperty property) {
           System.Collections.Generic.IEnumerable<T> enumerable = this.fieldInfo.GetValue(property.serializedObject.targetObject) switch {
-            System.Collections.Generic.IList<T> list => list,
+            System.Collections.Generic.IList        <T> list => list,
             System.Collections.Generic.IReadOnlyList<T> list => list,
-            _ => PatchOdyssey.Collections.RefReadOnlyList<T>.Empty
+            _                                                => PatchOdyssey.Collections.RefReadOnlyList<T>.Empty
           };
 
           this.fieldInfo.SetValue(property.serializedObject.targetObject, enumerable);
@@ -3905,11 +3914,15 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
           }
 
           if (!immutable) {
-            if (UnityEngine.GUI.Button(positions.add, new UnityEngine.GUIContent("+", "Add item"), UnityEditor.EditorStyles.miniButton))
-            list!.Add(typeof(T) == typeof(string) ? (T) (string.Empty as object) : Traits.IsValueType<T>() ? System.Activator.CreateInstance<T>() : (T) (null as object)!);
+            if (UnityEngine.GUI.Button(positions.add, new UnityEngine.GUIContent("+", "Add item"), UnityEditor.EditorStyles.miniButton)) {
+              list!.Add(typeof(T) == typeof(string) ? (T) (string.Empty as object) : Traits.IsValueType<T>() ? System.Activator.CreateInstance<T>() : (T) (null as object)!);
+              Util.Game.AskToSave();
+            }
 
-            if (UnityEngine.GUI.Button(positions.clear, new UnityEngine.GUIContent("×", "Clear list"), UnityEditor.EditorStyles.miniButtonRight))
-            list!.Clear();
+            if (UnityEngine.GUI.Button(positions.clear, new UnityEngine.GUIContent("×", "Clear list"), UnityEditor.EditorStyles.miniButtonRight)) {
+              list!.Clear();
+              Util.Game.AskToSave();
+            }
           }
 
           UnityEditor.EditorGUI.BeginChangeCheck();
@@ -3933,8 +3946,8 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
             for (int index = 0; enumerator.MoveNext(); ++index) {
               T element = enumerator.Current;
               (UnityEngine.Rect element, UnityEngine.Rect clear) subpositions = (
-                element: new(position.x + (immutable ? size : 0.0f), position.y += position.height, position.width - size, position.height),
-                clear  : new(position.x + (position.width - size),   position.y,                    size,                  position.height)
+                element: new(position.x + Util.PercOf(position.width - size,   5.0f) + (immutable ? size : 0.0f), position.y += position.height, Util.PercOf(position.width - size, 95.0f), position.height),
+                clear  : new(position.x + Util.PercOf(position.width - size, 100.0f),                             position.y,                    size,                                      position.height)
               );
 
               // …
@@ -3946,12 +3959,14 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
                   default:                                                  list![index] = element;                  break;
                 }
 
+                Util.Game.AskToSave();
                 break;
               }
 
               if (!immutable)
               if (UnityEngine.GUI.Button(subpositions.clear, new UnityEngine.GUIContent("-", "Clear item"), UnityEditor.EditorStyles.miniButtonRight)) {
                 list!.RemoveAt(index);
+                Util.Game.AskToSave();
                 break;
               }
             }
@@ -4988,6 +5003,17 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       internal static UnityEngine.GameObject? Object = null;
 
       /* … */
+      [PatchMethod(AggressiveInlining)] public static bool AskToSave() => Game.AskToSave(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+      [PatchMethod(AggressiveInlining)] public static bool AskToSave(in UnityEngine.SceneManagement.Scene scene) {
+        // … ⟶ Undo’s not bothered with for the time begin
+        #if UNITY_EDITOR
+          if (!UnityEditor.EditorApplication.isPlaying)
+          return UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
+        #endif
+
+        return false;
+      }
+
       [PatchMethod(AggressiveInlining)]
       public static void Quit() {
         UnityEngine.Application.Quit();
@@ -4997,8 +5023,8 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         #endif
       }
 
-      [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
-      private static void Start() => Game.Object = new UnityEngine.GameObject("…", typeof(PatchBehaviour));
+      [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.AfterSceneLoad)]
+      private static void Start() => new UnityEngine.GameObject("…", typeof(PatchBehaviour));
     }
 
     public static class Keys {
@@ -6623,11 +6649,14 @@ internal sealed class PatchBehaviour : UnityEngine.MonoBehaviour {
   }
 
   private void OnApplicationQuit() => PatchOdyssey.Util.Load.AudioClipData.Dispose(/* ⟶ `Unity.Collections.Allocator.Persistent` */);
+  private void OnDestroy        () => PatchOdyssey.Util.Game.Object = null;
 
   private void OnEnable() {
     PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.GameObject>[] pending = PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.GameObject>.Pending.ToArray();
 
     // …
+    PatchOdyssey.Util.Game.Object = this.gameObject;
+
     PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.GameObject>.Pending.Clear();
     for (uint index = (uint) pending.Length; 0u != index--; ) pending[index].Deserialize();
   }
