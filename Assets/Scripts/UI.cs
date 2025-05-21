@@ -76,8 +76,7 @@ public class UI : UnityEngine.MonoBehaviour {
   #endif
 
   /* … */
-  public  GameObjectList objects33 = new() {null!};
-  public  UI.Components                                  components        = new();
+  public  GameObjectReadOnlyDictionary                   components        = new(new GameObjectDictionary(10u) {{"background", null!}, {"combat", null!}, {"credits", null!}, {"dialogue", null!}, {"inventory", null!}, {"menu", null!}, {"pause", null!}, {"splash", null!}, {"tooltips:HUD", null!}, {"tooltips:world", null!}});
   private LazyMono<UnityEngine.EventSystems.EventSystem> eventSystem       = new();
   private LazyMono<UnityEngine.UI.GraphicRaycaster>      graphicsRaycaster = new();
 
