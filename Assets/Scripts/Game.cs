@@ -1,7 +1,15 @@
-// using PatchOdyssey;
+using PatchOdyssey;
 
-// /* … */
-// public class Game : UnityEngine.MonoBehaviour {
+/* … */
+[PatchExecutionOrder(PatchBehaviour.DefaultExecutionOrder + 1)]
+public class Game : UnityEngine.MonoBehaviour {
+  public static readonly string[] GeneralHints = new[] {
+    "Don’t forget to take breaks every now and again…",
+    "Having fun is mandatory, the monsters demand it",
+    "Hydration check? Stay hydrated and drink some water!",
+    "The more monsters tamed makes your team more powerful",
+    "WASD keys to move around"
+  };
 //   [PatchOdyssey.ReadOnlyInInspector]  public                bool                 isLoaded          = false;
 //   [PatchOdyssey.ReadOnlyInInspector]  public                bool                 isPlaying         = false;
 //   [PatchOdyssey.ReadOnlyInInspector]  public static         Game?                main              = null;
@@ -153,4 +161,4 @@
 
 //     Util.Unwait();
 //   }
-// }
+}

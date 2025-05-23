@@ -138,6 +138,10 @@ May 19th, 2025
 May 20th, 2025 – May 22nd, 2025
 • Serialization with `UnityEngine.GameObject` works now
 • Fixed minor bug with `UISequence` animator i.e. `(b - a) * progress` to `((b - a) * progress) + a`
+• Explicit `Util.Lerp(…)` function
+
+May 23rd, 2025
+• …
 
 📆
 • Lesson learned: Learning C# technical details and ECS is a time investment that must be planned for within the timeline of the project
