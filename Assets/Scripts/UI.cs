@@ -1,97 +1,105 @@
 using PatchOdyssey;
 
 /* … */
+[PatchExecutionOrder(PatchBehaviour.DefaultExecutionOrder + 1)]
 [UnityEngine.RequireComponent(typeof(UnityEngine.Canvas))]
+[UnityEngine.RequireComponent(typeof(UnityEngine.CanvasRenderer))]
 [UnityEngine.RequireComponent(typeof(UnityEngine.EventSystems.EventSystem))]
 [UnityEngine.RequireComponent(typeof(UnityEngine.UI.GraphicRaycaster))]
 [UnityEngine.RequireComponent(typeof(UnityEngine.RectTransform))]
 public class UI : UnityEngine.MonoBehaviour {
-  public delegate ref UnityEngine.GameObject? RefComponentAccessor();
+  public static          UI     Main                      = default!;
+  public static readonly double SplashLoadDurationMinimum = 5.0 + (Util.Random() * 3.0);
 
-  /* … */
-  [System.Serializable]
-  public sealed class Components {
-    [UnityEngine.SerializeField] public UnityEngine.GameObject?                                      background = null;
-    [UnityEngine.SerializeField] public UnityEngine.GameObject?                                      combat     = null;
-    [UnityEngine.SerializeField] public UnityEngine.GameObject?                                      dialogue   = null;
-    [UnityEngine.SerializeField] public UnityEngine.GameObject?                                      inventory  = null;
-    [UnityEngine.SerializeField] public UnityEngine.GameObject?                                      menu       = null;
-    [UnityEngine.SerializeField] public UnityEngine.GameObject?                                      pause      = null;
-    [UnityEngine.SerializeField] public UnityEngine.GameObject?                                      splash     = null;
-    [UnityEngine.SerializeField] public (UnityEngine.GameObject? HUD, UnityEngine.GameObject? world) tooltips   = (null, null);
-
-    /* … */
-    internal System.Collections.ObjectModel.ReadOnlyDictionary<string, UI.RefComponentAccessor> AsDictionary() => new System.Collections.Generic.Dictionary<string, UI.RefComponentAccessor>() {
-      {"Background",     () => ref this.background},
-      {"Combat",         () => ref this.combat},
-      {"Dialogue",       () => ref this.dialogue},
-      {"Inventory",      () => ref this.inventory},
-      {"Menu",           () => ref this.menu},
-      {"Pause",          () => ref this.pause},
-      {"Splash",         () => ref this.splash},
-      {"Tooltips:HUD",   () => ref this.tooltips.HUD},
-      {"Tooltips:World", () => ref this.tooltips.world}
-    }.AsReadOnly();
-  }
-
-  #if UNITY_EDITOR
-    [UnityEditor.CustomPropertyDrawer(typeof(UI.Components))]
-    public class ComponentsDrawer : UnityEditor.PropertyDrawer {
-      private UI.Components Ensure(ref UnityEditor.SerializedProperty property) {
-        UI.Components components = this.fieldInfo.GetValue(property.serializedObject.targetObject) as UI.Components ?? new UI.Components();
-
-        this.fieldInfo.SetValue(property.serializedObject.targetObject, components);
-        return components;
-      }
-
-      public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) => base.GetPropertyHeight(property, label) * 10.0f;
-
-      public override void OnGUI(UnityEngine.Rect position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
-        position.height = base.GetPropertyHeight(property, label);
-        UnityEditor.EditorGUI.LabelField(position, label);
-
-        foreach (System.Collections.Generic.KeyValuePair<string, UI.RefComponentAccessor> _ in this.Ensure(ref property).AsDictionary()) {
-          UnityEngine.Color                              color     = UnityEngine.GUI.color;
-          UnityEngine.GameObject                         component = null!;
-          (UnityEngine.Rect key, UnityEngine.Rect value) positions = (
-            key  : new(position.x + Util.PercOf(position.width,  5.0f), position.y += position.height, Util.PercOf(position.width, 35.0f), position.height),
-            value: new(position.x + Util.PercOf(position.width, 40.0f), position.y,                    Util.PercOf(position.width, 60.0f), position.height)
-          );
-
-          // …
-          UnityEngine.GUI.color = new(UnityEngine.GUI.color.r, UnityEngine.GUI.color.g, UnityEngine.GUI.color.b, UnityEngine.GUI.color.a * 0.5f);
-          UnityEngine.GUI.Label(positions.key, _.Key);
-          UnityEngine.GUI.color = color;
-
-          UnityEditor.EditorGUI.BeginChangeCheck();
-          component = (UnityEngine.GameObject) UnityEditor.EditorGUI.ObjectField(positions.value, _.Value(), typeof(UnityEngine.GameObject), true);
-
-          if (UnityEditor.EditorGUI.EndChangeCheck()) {
-            _.Value() = component;
-            Util.Game.AskToSave();
-          }
-        }
-      }
-    }
-  #endif
-
-  /* … */
-  public  GameObjectReadOnlyDictionary                   components        = new(new GameObjectDictionary(10u) {{"background", null!}, {"combat", null!}, {"credits", null!}, {"dialogue", null!}, {"inventory", null!}, {"menu", null!}, {"pause", null!}, {"splash", null!}, {"tooltips:HUD", null!}, {"tooltips:world", null!}});
-  private LazyMono<UnityEngine.EventSystems.EventSystem> eventSystem       = new();
-  private LazyMono<UnityEngine.UI.GraphicRaycaster>      graphicsRaycaster = new();
+  private     UnityEngine.Canvas                   canvas                          = default!;
+  private     UnityEngine.CanvasRenderer           canvasRenderer                  = default!;
+  public      GameObjectReadOnlyDictionary         components                      = new(new GameObjectDictionary(10u) {{"background", null!}, {"combat", null!}, {"credits", null!}, {"dialogue", null!}, {"inventory", null!}, {"menu", null!}, {"pause", null!}, {"splash", null!}, {"tooltips:HUD", null!}, {"tooltips:world", null!}});
+  private     UnityEngine.EventSystems.EventSystem eventSystem                     = default!;
+  private     UnityEngine.UI.GraphicRaycaster      graphicsRaycaster               = default!;
+  public      bool                                 skipSplashLoad                  = false;
+  private     UISequence                           splashLoadAnimation             = default!;
+  public      double                               splashLoadDuration              = UI.SplashLoadDurationMinimum;
+  public  new UnityEngine.RectTransform            transform { get; private set; } = default!;
 
   /* … */
   private void Awake() {
-    this.eventSystem       = new(this.GetComponent<UnityEngine.EventSystems.EventSystem>);
-    this.graphicsRaycaster = new(this.GetComponent<UnityEngine.UI.GraphicRaycaster>);
+    UISequence splashLoadAnimation = new(this.skipSplashLoad ? 0.0 : this.splashLoadDuration,
+      // new() {{"top", 1.0}, {"transparency", 1.0}},
+      // new() {{"top", 1.0}, {"transparency", 1.0}}
+
+      new() {{"top", 1.0}, {"transparency", 1.0}},
+      new() {{"top", 1.0}, {"transparency", 0.0}}
+    ) {
+      // {Util.Perc(15.0), new() {{"top", 0.0}, {"transparency", 0.0}}},
+      // {Util.Perc(50.0), new() {{"top", 0.0}}},
+      // {Util.Perc(67.5), new() {{"transparency", 0.0}}}
+    };
+
+    // …
+    UI.Main ??= this;
+
+    this.canvas                             = this.GetComponent<UnityEngine.Canvas>();
+    this.canvas.pixelPerfect                = true;
+    this.canvasRenderer                     = this.GetComponent<UnityEngine.CanvasRenderer>();
+    this.canvasRenderer.cullTransparentMesh = false;
+    this.components["background"]         ??= UnityEngine.GameObject.Find("UI/Background");
+    this.components["combat"]             ??= UnityEngine.GameObject.Find("UI/Combat");
+    this.components["credits"]            ??= UnityEngine.GameObject.Find("UI/Credits");
+    this.components["dialogue"]           ??= UnityEngine.GameObject.Find("UI/Dialogue");
+    this.components["inventory"]          ??= UnityEngine.GameObject.Find("UI/Inventory");
+    this.components["menu"]               ??= UnityEngine.GameObject.Find("UI/Menu");
+    this.components["pause"]              ??= UnityEngine.GameObject.Find("UI/Pause");
+    this.components["splash"]             ??= UnityEngine.GameObject.Find("UI/Splash");
+    this.components["tooltips:HUD"]       ??= UnityEngine.GameObject.Find("UI/Tooltips/HUD");
+    this.components["tooltips:world"]     ??= UnityEngine.GameObject.Find("UI/Tooltips/World") ?? UnityEngine.GameObject.Find("UI/Tooltips/Scene") ?? UnityEngine.GameObject.Find("UI/Tooltip");
+    this.eventSystem                        = this.GetComponent<UnityEngine.EventSystems.EventSystem>();
+    this.graphicsRaycaster                  = this.GetComponent<UnityEngine.UI.GraphicRaycaster>     ();
+    this.splashLoadAnimation                = splashLoadAnimation;
+    this.transform                          = this.GetComponent<UnityEngine.RectTransform>();
+
+    // …
+    foreach (UnityEngine.UI.MaskableGraphic maskableGraphic in this.FindHierarchyByComponent<UnityEngine.UI.MaskableGraphic>())
+    maskableGraphic.maskable = false;
+  }
+
+  private void Start() {
+    UnityEngine.GameObject splash = this.components["splash"];
+
+    // … ⟶ Square the dimensions of the “splash” component
+    if (null != splash) {
+      UnityEngine.RectTransform splashTransform = (UnityEngine.RectTransform) splash.transform;
+
+      // … ⟶ Anchor “splash” component to center-bottom of the `UI`
+      splashTransform.anchorMax = splashTransform.anchorMin = splashTransform.pivot = new(0.5f, 0.0f);
+      splashTransform.SetSize(UnityEngine.Vector2.one * System.Math.Max(splashTransform.rect.height, splashTransform.rect.width));
+
+      // … ⟶ Allow “splash” component (elements) to render transparently
+      foreach (UnityEngine.CanvasRenderer splashRenderer in splash.FindHierarchyByComponent<UnityEngine.CanvasRenderer>())
+      splashRenderer.cullTransparentMesh = false;
+    }
   }
 
   private void Update() {
+    UnityEngine.GameObject splash = this.components["splash"];
+
+    // … ⟶ Animate “splash” component
+    if (null != splash) {
+      float                     splashLoadAnimationOpacity = 1.0f - Util.Cast<float>(this.splashLoadAnimation["transparency"]);
+      double                    splashLoadAnimationTop     = Util.Cast<double>(this.splashLoadAnimation["top"]);
+      UnityEngine.RectTransform splashTransform            = (UnityEngine.RectTransform) splash.transform;
+
+      // …
+      // position’s all fucked up somehow... HMMM I wonder fucking how?!
+      foreach (UnityEngine.UI.RawImage splashImage in splash.FindHierarchyByComponent<UnityEngine.UI.RawImage>()) splashImage.color = new(splashImage.color.r, splashImage.color.g, splashImage.color.b, splashLoadAnimationOpacity);
+      foreach (TMPro.TextMeshProUGUI   splashText  in splash.FindHierarchyByComponent<TMPro.TextMeshProUGUI>  ()) splashText .alpha = splashLoadAnimationOpacity;
+    }
+
+    // …
     foreach (PointerInfo pointer in Util.Pointers.Any) {
       System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult> raycasts = new();
 
       // …
-      this.graphicsRaycaster.Value.Raycast(new((UnityEngine.EventSystems.EventSystem) this.eventSystem) {position = pointer.position}, raycasts);
+      this.graphicsRaycaster.Raycast(new(this.eventSystem) {position = pointer.position}, raycasts);
     }
   }
 }
