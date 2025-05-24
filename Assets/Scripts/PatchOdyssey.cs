@@ -4342,164 +4342,155 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<UnityEngine.GameObject> GetHierarchy   (this UnityEngine.GameObject gameObject)                                 => null != gameObject ? gameObject.FindHierarchy              ([PatchMethod(AggressiveInlining)] static (child) => true) : null!;
     [PatchMethod(AggressiveInlining)] public static PatchOdyssey.Collections.GameObjectSharedList<T>                      GetHierarchy<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => null != gameObject ? gameObject.FindHierarchy<T>           ([PatchMethod(AggressiveInlining)] static (child) => true) : null!;
 
-    [PatchMethod(AggressiveInlining)] public static UnityEngine.GameObject GetParent(this UnityEngine.Component  component)  => component.gameObject.GetParent();
-    [PatchMethod(AggressiveInlining)] public static UnityEngine.GameObject GetParent(this UnityEngine.GameObject gameObject) { return gameObject.transform.parent.gameObject; }
+    [PatchMethod(AggressiveInlining)] public static UnityEngine.GameObject GetParent(this UnityEngine.Component  component)  => null != component  ? component.gameObject.GetParent()       : null!;
+    [PatchMethod(AggressiveInlining)] public static UnityEngine.GameObject GetParent(this UnityEngine.GameObject gameObject) => null != gameObject ? gameObject.transform.parent.gameObject : null!;
 
-    [PatchMethod(AggressiveInlining)] public static UnityEngine.Vector2 GetSize (this UnityEngine.RectTransform transform) => transform.rect.size;
-    [PatchMethod(AggressiveInlining)] public static float               GetWidth(this UnityEngine.RectTransform transform) => transform.rect.width;
+    [PatchMethod(AggressiveInlining)] public static UnityEngine.Vector2 GetSize (this UnityEngine.RectTransform transform) => null != transform ? transform.rect.size  : (UnityEngine.Vector2) (null as UnityEngine.Vector2?)!;
+    [PatchMethod(AggressiveInlining)] public static float               GetWidth(this UnityEngine.RectTransform transform) => null != transform ? transform.rect.width : (float)               (null as float?)!;
 
-    [PatchMethod(AggressiveInlining)] public static UnityEngine.Texture? GetTexture(this UnityEngine.Component  component)  => component .GetComponent<UnityEngine.UI.Graphic>()?.GetTexture();
-    [PatchMethod(AggressiveInlining)] public static UnityEngine.Texture? GetTexture(this UnityEngine.GameObject gameObject) => gameObject.GetComponent<UnityEngine.UI.Graphic>()?.GetTexture();
-    [PatchMethod(AggressiveInlining)] public static UnityEngine.Texture  GetTexture(this UnityEngine.UI.Graphic graphic)    => graphic.mainTexture;
+    [PatchMethod(AggressiveInlining)] public static UnityEngine.Texture? GetTexture(this UnityEngine.Component  component)  => null != component  ? component .GetComponent<UnityEngine.UI.Graphic>()?.GetTexture() : null!;
+    [PatchMethod(AggressiveInlining)] public static UnityEngine.Texture? GetTexture(this UnityEngine.GameObject gameObject) => null != gameObject ? gameObject.GetComponent<UnityEngine.UI.Graphic>()?.GetTexture() : null!;
+    [PatchMethod(AggressiveInlining)] public static UnityEngine.Texture  GetTexture(this UnityEngine.UI.Graphic graphic)    => null != graphic    ? graphic.mainTexture : null!;
 
-    [PatchMethod(AggressiveInlining)] public static bool HasChild(this UnityEngine.Component  component,  UnityEngine.Component  child)  => component.gameObject.HasChild(child);
-    [PatchMethod(AggressiveInlining)] public static bool HasChild(this UnityEngine.Component  component,  UnityEngine.GameObject child)  => component.gameObject.HasChild(child);
-    [PatchMethod(AggressiveInlining)] public static bool HasChild(this UnityEngine.GameObject gameObject, UnityEngine.Component  child)  => gameObject          .HasChild(child.gameObject);
-    [PatchMethod(AggressiveInlining)] public static bool HasChild(this UnityEngine.GameObject gameObject, UnityEngine.GameObject target) { foreach (UnityEngine.GameObject child in gameObject.EnumerateChildren()) { if (child == target) return true; } return false; }
+    [PatchMethod(AggressiveInlining)] public static bool HasChild(this UnityEngine.Component  component,  UnityEngine.Component  child)  =>    null != component  ? component.gameObject.HasChild(child)                                                                                                 : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool HasChild(this UnityEngine.Component  component,  UnityEngine.GameObject child)  =>    null != component  ? component.gameObject.HasChild(child)                                                                                                 : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool HasChild(this UnityEngine.GameObject gameObject, UnityEngine.Component  child)  =>    null != gameObject ? gameObject          .HasChild(child.gameObject)                                                                                      : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool HasChild(this UnityEngine.GameObject gameObject, UnityEngine.GameObject target) { if (null != gameObject) { foreach (UnityEngine.GameObject child in gameObject.EnumerateChildren()) { if (child == target) return true; } return false; } return (bool) (null as bool?)!; }
 
-    [PatchMethod(AggressiveInlining)] public static bool HasComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => gameObject.HasComponent(typeof(T));
-    [PatchMethod(AggressiveInlining)] public static bool HasComponent   (this UnityEngine.GameObject gameObject, System.Type type)               { return null != gameObject.GetComponent(type); }
+    [PatchMethod(AggressiveInlining)] public static bool HasComponent<T>(this UnityEngine.GameObject gameObject) where T : UnityEngine.Component => null != gameObject ?         gameObject.HasComponent(typeof(T)) : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool HasComponent   (this UnityEngine.GameObject gameObject, System.Type type)               => null != gameObject ? null != gameObject.GetComponent(type)      : (bool) (null as bool?)!;
 
-    [PatchMethod(AggressiveInlining)] public static bool HasDescendant(this UnityEngine.Component  component,  UnityEngine.Component  child)  => component.gameObject.HasDescendant(child);
-    [PatchMethod(AggressiveInlining)] public static bool HasDescendant(this UnityEngine.Component  component,  UnityEngine.GameObject child)  => component.gameObject.HasDescendant(child);
-    [PatchMethod(AggressiveInlining)] public static bool HasDescendant(this UnityEngine.GameObject gameObject, UnityEngine.Component  child)  => gameObject          .HasDescendant(child.gameObject);
-    [PatchMethod(AggressiveInlining)] public static bool HasDescendant(this UnityEngine.GameObject gameObject, UnityEngine.GameObject target) { foreach (UnityEngine.GameObject child in gameObject.EnumerateDescendants()) { if (child == target) return true; } return false; }
+    [PatchMethod(AggressiveInlining)] public static bool HasDescendant(this UnityEngine.Component  component,  UnityEngine.Component  child)  => null != component  ? component.gameObject.HasDescendant(child)            : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool HasDescendant(this UnityEngine.Component  component,  UnityEngine.GameObject child)  => null != component  ? component.gameObject.HasDescendant(child)            : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool HasDescendant(this UnityEngine.GameObject gameObject, UnityEngine.Component  child)  => null != gameObject ? gameObject          .HasDescendant(child.gameObject) : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool HasDescendant(this UnityEngine.GameObject gameObject, UnityEngine.GameObject target) { if (null != gameObject) { foreach (UnityEngine.GameObject child in gameObject.EnumerateDescendants()) { if (child == target) return true; } return false; } return (bool) (null as bool?)!; }
 
-    [PatchMethod(AggressiveInlining)] public static int IndexOf   (this System.Array array, object? value)                       => System.Array.IndexOf   (array, value);
-    [PatchMethod(AggressiveInlining)] public static int IndexOf   (this System.Array array, object? value, int index)            => System.Array.IndexOf   (array, value, index);
-    [PatchMethod(AggressiveInlining)] public static int IndexOf   (this System.Array array, object? value, int index, int count) => System.Array.IndexOf   (array, value, index, count);
-    [PatchMethod(AggressiveInlining)] public static int IndexOf<T>(this T[]          array, T       value)                       => System.Array.IndexOf<T>(array, value);
-    [PatchMethod(AggressiveInlining)] public static int IndexOf<T>(this T[]          array, T       value, int index)            => System.Array.IndexOf<T>(array, value, index);
-    [PatchMethod(AggressiveInlining)] public static int IndexOf<T>(this T[]          array, T       value, int index, int count) => System.Array.IndexOf<T>(array, value, index, count);
+    [PatchMethod(AggressiveInlining)] public static int IndexOf   (this System.Array array, object? value)                       => array is not null ? System.Array.IndexOf   (array, value)               : (int) (null as int?)!;
+    [PatchMethod(AggressiveInlining)] public static int IndexOf   (this System.Array array, object? value, int index)            => array is not null ? System.Array.IndexOf   (array, value, index)        : (int) (null as int?)!;
+    [PatchMethod(AggressiveInlining)] public static int IndexOf   (this System.Array array, object? value, int index, int count) => array is not null ? System.Array.IndexOf   (array, value, index, count) : (int) (null as int?)!;
+    [PatchMethod(AggressiveInlining)] public static int IndexOf<T>(this T[]          array, T       value)                       => array is not null ? System.Array.IndexOf<T>(array, value)               : (int) (null as int?)!;
+    [PatchMethod(AggressiveInlining)] public static int IndexOf<T>(this T[]          array, T       value, int index)            => array is not null ? System.Array.IndexOf<T>(array, value, index)        : (int) (null as int?)!;
+    [PatchMethod(AggressiveInlining)] public static int IndexOf<T>(this T[]          array, T       value, int index, int count) => array is not null ? System.Array.IndexOf<T>(array, value, index, count) : (int) (null as int?)!;
 
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    string                                                                    value)            => 0 == value           .Length;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    T[]                                                                       array)            => 0 == array           .Length;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (in this UnityEngine.InputSystem.Utilities.ReadOnlyArray<T>                        array)            => 0 == array           .Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Array                                                              array)            => 0 == array           .Length;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (in this System.ArraySegment<T>                                                    arraySegment)     => 0 == arraySegment    .Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.ArrayList                                              arrayList)        => 0 == arrayList       .Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.BitArray                                               bits)             => 0 == bits            .Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Queue                                                  queue)            => 0 == queue           .Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<TKey, TValue>(this    System.Collections.Generic.Dictionary      <TKey, TValue>                 dictionary)       => 0 == dictionary      .Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.Generic.HashSet         <T>                            hashset)          => 0 == hashset         .Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.Generic.ICollection     <T>                            collection)       => 0 == collection      .Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.Generic.LinkedList      <T>                            list)             => 0 == list            .Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.Generic.List            <T>                            list)             => 0 == list            .Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.Generic.Queue           <T>                            queue)            => 0 == queue           .Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<TKey, TValue>(this    System.Collections.Generic.SortedDictionary<TKey, TValue>                 sortedDictionary) => 0 == sortedDictionary.Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<TKey, TValue>(this    System.Collections.Generic.SortedList      <TKey, TValue>                 sortedList)       => 0 == sortedList      .Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.Generic.SortedSet       <T>                            sortedSet)        => 0 == sortedSet       .Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.Generic.Stack           <T>                            stack)            => 0 == stack           .Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Hashtable                                              hashtable)        => 0 == hashtable       .Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.ICollection                                            collection)       => 0 == collection      .Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.IEnumerable                                            enumerable)       => Util.Enumerable.IsEmpty(enumerable);
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.ObjectModel.Collection                  <T>            collection)       => 0  == collection.Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.ObjectModel.ObservableCollection        <T>            collection)       => 0  == collection.Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.ObjectModel.ReadOnlyCollection          <T>            collection)       => 0  == collection.Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<TKey, TValue>(this    System.Collections.ObjectModel.ReadOnlyDictionary          <TKey, TValue> dictionary)       => 0  == dictionary.Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.ObjectModel.ReadOnlyObservableCollection<T>            collection)       => 0  == collection.Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.SortedList                                             sortedList)       => 0  == sortedList.Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Specialized.HybridDictionary                           dictionary)       => 0  == dictionary.Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Specialized.ListDictionary                             dictionary)       => 0  == dictionary.Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Specialized.NameValueCollection                        collection)       => 0  == collection.Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Specialized.OrderedDictionary                          dictionary)       => 0  == dictionary.Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Specialized.StringCollection                           collection)       => 0  == collection.Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Specialized.StringDictionary                           dictionary)       => 0  == dictionary.Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Stack                                                  stack)            => 0  == stack     .Count;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.IO.MemoryStream                                                    stream)           => 0L == stream    .Length;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (in this System.Memory        <T>                                                  memory)           => 0  == memory    .Length;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (in this System.ReadOnlyMemory<T>                                                  memory)           => 0  == memory    .Length;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (in this System.ReadOnlySpan  <T>                                                  span)             => 0  == span      .Length;
-    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (in this System.Span          <T>                                                  span)             => 0  == span      .Length;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    string                                                                    value)            => value is not null ? 0 == value.Length : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    T[]                                                                       array)            => array is not null ? 0 == array.Length : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (in this UnityEngine.InputSystem.Utilities.ReadOnlyArray<T>                        array)            => 0 == array.Count;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    UnityEngine.InputSystem.Utilities.ReadOnlyArray<T>?                       array)            => array            is not null ? ((UnityEngine.InputSystem.Utilities.ReadOnlyArray<T>) array).IsEmpty() : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Array                                                              array)            => array            is not null ? 0 == array.Length                                                      : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (in this System.ArraySegment<T>                                                    arraySegment)     => 0 == arraySegment.Count;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.ArraySegment<T>?                                                   arraySegment)     => arraySegment     is not null ? ((System.ArraySegment<T>) arraySegment).IsEmpty() : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.ArrayList                                              arrayList)        => arrayList        is not null ? 0 == arrayList       .Count                       : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.BitArray                                               bits)             => bits             is not null ? 0 == bits            .Count                       : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Queue                                                  queue)            => queue            is not null ? 0 == queue           .Count                       : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<TKey, TValue>(this    System.Collections.Generic.Dictionary      <TKey, TValue>                 dictionary)       => dictionary       is not null ? 0 == dictionary      .Count                       : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.Generic.HashSet         <T>                            hashset)          => hashset          is not null ? 0 == hashset         .Count                       : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.Generic.ICollection     <T>                            collection)       => collection       is not null ? 0 == collection      .Count                       : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.Generic.LinkedList      <T>                            list)             => list             is not null ? 0 == list            .Count                       : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.Generic.List            <T>                            list)             => list             is not null ? 0 == list            .Count                       : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.Generic.Queue           <T>                            queue)            => queue            is not null ? 0 == queue           .Count                       : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<TKey, TValue>(this    System.Collections.Generic.SortedDictionary<TKey, TValue>                 sortedDictionary) => sortedDictionary is not null ? 0 == sortedDictionary.Count                       : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<TKey, TValue>(this    System.Collections.Generic.SortedList      <TKey, TValue>                 sortedList)       => sortedList       is not null ? 0 == sortedList      .Count                       : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.Generic.SortedSet       <T>                            sortedSet)        => sortedSet        is not null ? 0 == sortedSet       .Count                       : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.Generic.Stack           <T>                            stack)            => stack            is not null ? 0 == stack           .Count                       : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Hashtable                                              hashtable)        => hashtable        is not null ? 0 == hashtable       .Count                       : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.ICollection                                            collection)       => collection       is not null ? 0 == collection      .Count                       : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.IEnumerable                                            enumerable)       => enumerable       is not null ? Util.Enumerable.IsEmpty(enumerable)               : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.ObjectModel.Collection                  <T>            collection)       => collection       is not null ? 0  == collection.Count                            : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.ObjectModel.ObservableCollection        <T>            collection)       => collection       is not null ? 0  == collection.Count                            : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.ObjectModel.ReadOnlyCollection          <T>            collection)       => collection       is not null ? 0  == collection.Count                            : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<TKey, TValue>(this    System.Collections.ObjectModel.ReadOnlyDictionary          <TKey, TValue> dictionary)       => dictionary       is not null ? 0  == dictionary.Count                            : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Collections.ObjectModel.ReadOnlyObservableCollection<T>            collection)       => collection       is not null ? 0  == collection.Count                            : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.SortedList                                             sortedList)       => sortedList       is not null ? 0  == sortedList.Count                            : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Specialized.HybridDictionary                           dictionary)       => dictionary       is not null ? 0  == dictionary.Count                            : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Specialized.ListDictionary                             dictionary)       => dictionary       is not null ? 0  == dictionary.Count                            : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Specialized.NameValueCollection                        collection)       => collection       is not null ? 0  == collection.Count                            : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Specialized.OrderedDictionary                          dictionary)       => dictionary       is not null ? 0  == dictionary.Count                            : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Specialized.StringCollection                           collection)       => collection       is not null ? 0  == collection.Count                            : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Specialized.StringDictionary                           dictionary)       => dictionary       is not null ? 0  == dictionary.Count                            : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.Collections.Stack                                                  stack)            => stack            is not null ? 0  == stack     .Count                            : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty              (this    System.IO.MemoryStream                                                    stream)           => stream           is not null ? 0L == stream    .Length                           : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (in this System.Memory        <T>                                                  memory)           => 0 == memory.Length;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.Memory        <T>?                                                 memory)           => memory is not null ? ((System.Memory<T>) memory).IsEmpty() : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (in this System.ReadOnlyMemory<T>                                                  memory)           => 0 == memory.Length;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (this    System.ReadOnlyMemory<T>?                                                 memory)           => memory is not null ? ((System.ReadOnlyMemory<T>) memory).IsEmpty() : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (in this System.ReadOnlySpan  <T>                                                  span)             => 0 == span.Length;
+    [PatchMethod(AggressiveInlining)] public static bool IsEmpty<T>           (in this System.Span          <T>                                                  span)             => 0 == span.Length;
     #if NET9_0 || NET9_0_OR_GREATER
       [PatchMethod(AggressiveInlining)]
-      public static bool IsEmpty<T>(this System.Collections.ObjectModel.ReadOnlySet<T> set) => 0 == set.Count;
+      public static bool IsEmpty<T>(this System.Collections.ObjectModel.ReadOnlySet<T> set) => set is not null ? 0 == set.Count : (bool) (null as bool?)!;
     #endif
 
-    [PatchMethod(AggressiveInlining)] public static int LastIndexOf   (this System.Array array, object? value)                       => System.Array.LastIndexOf   (array, value);
-    [PatchMethod(AggressiveInlining)] public static int LastIndexOf   (this System.Array array, object? value, int index)            => System.Array.LastIndexOf   (array, value, index);
-    [PatchMethod(AggressiveInlining)] public static int LastIndexOf   (this System.Array array, object? value, int index, int count) => System.Array.LastIndexOf   (array, value, index, count);
-    [PatchMethod(AggressiveInlining)] public static int LastIndexOf<T>(this T[]          array, T       value)                       => System.Array.LastIndexOf<T>(array, value);
-    [PatchMethod(AggressiveInlining)] public static int LastIndexOf<T>(this T[]          array, T       value, int index)            => System.Array.LastIndexOf<T>(array, value, index);
-    [PatchMethod(AggressiveInlining)] public static int LastIndexOf<T>(this T[]          array, T       value, int index, int count) => System.Array.LastIndexOf<T>(array, value, index, count);
+    [PatchMethod(AggressiveInlining)] public static int LastIndexOf   (this System.Array array, object? value)                       => array is not null ? System.Array.LastIndexOf   (array, value)               : (int) (null as int?)!;
+    [PatchMethod(AggressiveInlining)] public static int LastIndexOf   (this System.Array array, object? value, int index)            => array is not null ? System.Array.LastIndexOf   (array, value, index)        : (int) (null as int?)!;
+    [PatchMethod(AggressiveInlining)] public static int LastIndexOf   (this System.Array array, object? value, int index, int count) => array is not null ? System.Array.LastIndexOf   (array, value, index, count) : (int) (null as int?)!;
+    [PatchMethod(AggressiveInlining)] public static int LastIndexOf<T>(this T[]          array, T       value)                       => array is not null ? System.Array.LastIndexOf<T>(array, value)               : (int) (null as int?)!;
+    [PatchMethod(AggressiveInlining)] public static int LastIndexOf<T>(this T[]          array, T       value, int index)            => array is not null ? System.Array.LastIndexOf<T>(array, value, index)        : (int) (null as int?)!;
+    [PatchMethod(AggressiveInlining)] public static int LastIndexOf<T>(this T[]          array, T       value, int index, int count) => array is not null ? System.Array.LastIndexOf<T>(array, value, index, count) : (int) (null as int?)!;
 
-    [PatchMethod(AggressiveInlining)] public static ref readonly object? Prepend   (this System.Collections.ArrayList             arrayList, in object? value) { arrayList.Insert  (0, value); return ref value; }
-    [PatchMethod(AggressiveInlining)] public static ref readonly T       Prepend<T>(this System.Collections.ArrayList             arrayList, in T       value) { arrayList.Insert  (0, value); return ref value; }
-    [PatchMethod(AggressiveInlining)] public static ref readonly T       Prepend<T>(this System.Collections.Generic.LinkedList<T> list,      in T       value) { list     .AddFirst(value);    return ref value; }
-    [PatchMethod(AggressiveInlining)] public static ref readonly T       Prepend<T>(this System.Collections.Generic.List      <T> list,      in T       value) { list     .Insert  (0, value); return ref value; }
+    [PatchMethod(AggressiveInlining)] public static ref readonly object? Prepend   (this System.Collections.ArrayList             arrayList, in object? value) { if (arrayList is not null) { arrayList.Insert  (0, value); return ref value; } return ref Util.Reference<object?>.Null; }
+    [PatchMethod(AggressiveInlining)] public static ref readonly T       Prepend<T>(this System.Collections.ArrayList             arrayList, in T       value) { if (arrayList is not null) { arrayList.Insert  (0, value); return ref value; } return ref Util.Reference<T>      .Null; }
+    [PatchMethod(AggressiveInlining)] public static ref readonly T       Prepend<T>(this System.Collections.Generic.LinkedList<T> list,      in T       value) { if (list      is not null) { list     .AddFirst(value);    return ref value; } return ref Util.Reference<T>      .Null; }
+    [PatchMethod(AggressiveInlining)] public static ref readonly T       Prepend<T>(this System.Collections.Generic.List      <T> list,      in T       value) { if (list      is not null) { list     .Insert  (0, value); return ref value; } return ref Util.Reference<T>      .Null; }
 
     [PatchMethod(AggressiveInlining)]
     public static void Reset(this UnityEngine.Transform transform) {
-      transform.localRotation = UnityEngine.Quaternion.identity;
-      transform.localScale    = UnityEngine.Vector3   .one;
-      transform.position      = UnityEngine.Vector3   .zero;
-    }
-
-    [PatchMethod(AggressiveInlining)] public static void Reverse   (this System.Array array)                        => System.Array.Reverse(array);
-    [PatchMethod(AggressiveInlining)] public static void Reverse   (this System.Array array, int index, int length) => System.Array.Reverse(array, index, length);
-    [PatchMethod(AggressiveInlining)] public static void Reverse<T>(this T[]          array)                        => array.Reverse<T>(0, array.Length);
-    [PatchMethod(AggressiveInlining)] public static void Reverse<T>(this T[]          array, int index, int length) => array.Reverse   (index, length);
-
-    [PatchMethod(AggressiveInlining)] public static void SetAlpha(this UnityEngine.Component  component,  float alpha) => component .GetComponent<UnityEngine.UI.Graphic>()?.SetAlpha(alpha);
-    [PatchMethod(AggressiveInlining)] public static void SetAlpha(this UnityEngine.GameObject gameObject, float alpha) => gameObject.GetComponent<UnityEngine.UI.Graphic>()?.SetAlpha(alpha);
-    [PatchMethod(AggressiveInlining)] public static void SetAlpha(this UnityEngine.UI.Graphic graphic,    float alpha) => graphic.color = new(graphic.color.r, graphic.color.g, graphic.color.b, alpha);
-    [PatchMethod(AggressiveInlining)] public static void SetAlpha(this TMPro.TextMeshProUGUI  text,       float alpha) => text   .alpha = alpha;
-
-    [PatchMethod(AggressiveInlining)] public static void SetColor(this UnityEngine.Component  component,  in UnityEngine.Color color) => component .GetComponent<UnityEngine.UI.Graphic>()?.SetColor(in color);
-    [PatchMethod(AggressiveInlining)] public static void SetColor(this UnityEngine.GameObject gameObject, in UnityEngine.Color color) => gameObject.GetComponent<UnityEngine.UI.Graphic>()?.SetColor(in color);
-    [PatchMethod(AggressiveInlining)] public static void SetColor(this UnityEngine.UI.Graphic graphic,    in UnityEngine.Color color) => graphic.color = color;
-
-    [PatchMethod(AggressiveInlining)] public static void SetHeight(this UnityEngine.RectTransform transform, float               height) { UnityEngine.RectTransform? parentTransform = transform.parent?.transform as UnityEngine.RectTransform; transform.sizeDelta = new(transform.sizeDelta.x, height - (parentTransform is not null ? parentTransform.rect.height * (transform.anchorMax.y - transform.anchorMin.y) : 0.0f)); }
-    [PatchMethod(AggressiveInlining)] public static void SetSize  (this UnityEngine.RectTransform transform, UnityEngine.Vector2 size)   { UnityEngine.RectTransform? parentTransform = transform.parent?.transform as UnityEngine.RectTransform; transform.sizeDelta = size - (parentTransform is not null ? UnityEngine.Vector2.Scale(parentTransform.rect.size, transform.anchorMax - transform.anchorMin) : UnityEngine.Vector2.zero); }
-    [PatchMethod(AggressiveInlining)] public static void SetWidth (this UnityEngine.RectTransform transform, float               width)  { UnityEngine.RectTransform? parentTransform = transform.parent?.transform as UnityEngine.RectTransform; transform.sizeDelta = new(width - (parentTransform is not null ? parentTransform.rect.width * (transform.anchorMax.x - transform.anchorMin.x) : 0.0f), transform.sizeDelta.y); }
-
-    [PatchMethod(AggressiveInlining)] public static void SetTexture(this UnityEngine.Component   component,  UnityEngine.Texture   texture) { component .GetComponent<UnityEngine.UI.RawImage>()?.SetTexture(texture); if (texture is UnityEngine.Texture2D texture2D) component .GetComponent<UnityEngine.UI.Image>()?.SetTexture(texture2D); } // ⟶ Ignore `UnityEngine.Cubemap`, `UnityEngine.CubemapArray`, `UnityEngine.RenderTexture`, `UnityEngine.Texture2DArray`, and `UnityEngine.Texture3D` for now
-    [PatchMethod(AggressiveInlining)] public static void SetTexture(this UnityEngine.GameObject  gameObject, UnityEngine.Texture   texture) { gameObject.GetComponent<UnityEngine.UI.RawImage>()?.SetTexture(texture); if (texture is UnityEngine.Texture2D texture2D) gameObject.GetComponent<UnityEngine.UI.Image>()?.SetTexture(texture2D); } //    ^^
-    [PatchMethod(AggressiveInlining)] public static void SetTexture(this UnityEngine.UI.Image    image,      UnityEngine.Texture2D texture) { UnityEngine.Sprite sprite = image.sprite; image.sprite = UnityEngine.Sprite.Create(texture, new(0.0f, 0.0f, texture.width, texture.height), new(0.5f, 0.5f)); if (sprite.texture != texture) UnityEngine.Object.Destroy(sprite); }
-    [PatchMethod(AggressiveInlining)] public static void SetTexture(this UnityEngine.UI.RawImage image,      UnityEngine.Texture   texture) => image.texture = texture;
-
-    [PatchMethod(AggressiveInlining)] public static void Sort   (this System.Array array)                                                                                                                => System.Array.Sort   (array);
-    [PatchMethod(AggressiveInlining)] public static void Sort   (this System.Array array, System.Collections.IComparer? comparer)                                                                        => System.Array.Sort   (array, comparer);
-    [PatchMethod(AggressiveInlining)] public static void Sort   (this System.Array array, int                           index, int length)                                                               => System.Array.Sort   (array, index, length);
-    [PatchMethod(AggressiveInlining)] public static void Sort   (this System.Array array, int                           index, int length, System.Collections.IComparer? comparer)                       => System.Array.Sort   (array, index, length, comparer);
-    [PatchMethod(AggressiveInlining)] public static void Sort<T>(this T[]          array)                                                                                                                => System.Array.Sort<T>(array);
-    [PatchMethod(AggressiveInlining)] public static void Sort<T>(this T[]          array, System.Comparison<T>                     comparison)                                                           => System.Array.Sort<T>(array, comparison);
-    [PatchMethod(AggressiveInlining)] public static void Sort<T>(this T[]          array, System.Collections.Generic.IComparer<T>? comparer)                                                             => System.Array.Sort<T>(array, comparer);
-    [PatchMethod(AggressiveInlining)] public static void Sort<T>(this T[]          array, int                                      index, int length)                                                    => System.Array.Sort<T>(array, index, length);
-    [PatchMethod(AggressiveInlining)] public static void Sort<T>(this T[]          array, int                                      index, int length, System.Collections.Generic.IComparer<T>? comparer) => System.Array.Sort<T>(array, index, length, comparer);
-
-    [PatchMethod(AggressiveInlining)] public static void TrimExcess<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary) => dictionary.TrimExcess(dictionary.Count);
-    [PatchMethod(AggressiveInlining)] public static void TrimExcess<T>           (this System.Collections.Generic.IList      <T>            list)       => list      .TrimExcess(list      .Count);
-
-    [PatchMethod(AggressiveInlining)]
-    public static void TrimExcess<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, int capacity) {
-      switch (dictionary) {
-        case PatchOdyssey.Collections.RefDictionary<TKey, TValue> subdictionary: subdictionary.TrimExcess((uint) capacity); break;
-        case System.Collections.Generic.Dictionary <TKey, TValue> subdictionary: subdictionary.TrimExcess(capacity);        break;
+      if (null != transform) {
+        transform.localRotation = UnityEngine.Quaternion.identity;
+        transform.localScale    = UnityEngine.Vector3   .one;
+        transform.position      = UnityEngine.Vector3   .zero;
       }
     }
 
-    [PatchMethod(AggressiveInlining)]
-    public static void TrimExcess<T>(this System.Collections.Generic.IList<T> list, int capacity) {
-      switch (list) {
-        case PatchOdyssey.Collections.RefList   <T> sublist: sublist.TrimExcess((uint) capacity); break;
-        case PatchOdyssey.Collections.SharedList<T> sublist: sublist.TrimExcess((uint) capacity); break;
-        case System.Collections.Generic.List    <T> sublist: sublist.Capacity = capacity;         break;
-      }
-    }
+    [PatchMethod(AggressiveInlining)] public static void Reverse   (this System.Array array)                        { if (array is not null) System.Array.Reverse(array); }
+    [PatchMethod(AggressiveInlining)] public static void Reverse   (this System.Array array, int index, int length) { if (array is not null) System.Array.Reverse(array, index, length); }
+    [PatchMethod(AggressiveInlining)] public static void Reverse<T>(this T[]          array)                        { if (array is not null) array.Reverse<T>(0, array.Length); }
+    [PatchMethod(AggressiveInlining)] public static void Reverse<T>(this T[]          array, int index, int length) { if (array is not null) array.Reverse   (index, length); }
+
+    [PatchMethod(AggressiveInlining)] public static void SetAlpha(this UnityEngine.Component  component,  float alpha) { if (null != component)  component .GetComponent<UnityEngine.UI.Graphic>()?.SetAlpha(alpha); }
+    [PatchMethod(AggressiveInlining)] public static void SetAlpha(this UnityEngine.GameObject gameObject, float alpha) { if (null != gameObject) gameObject.GetComponent<UnityEngine.UI.Graphic>()?.SetAlpha(alpha); }
+    [PatchMethod(AggressiveInlining)] public static void SetAlpha(this UnityEngine.UI.Graphic graphic,    float alpha) { if (null != graphic)    graphic.color = new(graphic.color.r, graphic.color.g, graphic.color.b, alpha); }
+    [PatchMethod(AggressiveInlining)] public static void SetAlpha(this TMPro.TextMeshProUGUI  text,       float alpha) { if (null != text)       text   .alpha = alpha; }
+
+    [PatchMethod(AggressiveInlining)] public static void SetColor(this UnityEngine.Component  component,  in UnityEngine.Color color) { if (null != component)  component .GetComponent<UnityEngine.UI.Graphic>()?.SetColor(in color); }
+    [PatchMethod(AggressiveInlining)] public static void SetColor(this UnityEngine.GameObject gameObject, in UnityEngine.Color color) { if (null != gameObject) gameObject.GetComponent<UnityEngine.UI.Graphic>()?.SetColor(in color); }
+    [PatchMethod(AggressiveInlining)] public static void SetColor(this UnityEngine.UI.Graphic graphic,    in UnityEngine.Color color) { if (null != graphic)    graphic.color = color; }
+
+    [PatchMethod(AggressiveInlining)] public static void SetHeight(this UnityEngine.RectTransform transform, float               height) { if (null != transform) { UnityEngine.RectTransform? parentTransform = transform.parent?.transform as UnityEngine.RectTransform; transform.sizeDelta = new(transform.sizeDelta.x, height - (parentTransform is not null ? parentTransform.rect.height * (transform.anchorMax.y - transform.anchorMin.y) : 0.0f)); } }
+    [PatchMethod(AggressiveInlining)] public static void SetSize  (this UnityEngine.RectTransform transform, UnityEngine.Vector2 size)   { if (null != transform) { UnityEngine.RectTransform? parentTransform = transform.parent?.transform as UnityEngine.RectTransform; transform.sizeDelta = size - (parentTransform is not null ? UnityEngine.Vector2.Scale(parentTransform.rect.size, transform.anchorMax - transform.anchorMin) : UnityEngine.Vector2.zero); } }
+    [PatchMethod(AggressiveInlining)] public static void SetWidth (this UnityEngine.RectTransform transform, float               width)  { if (null != transform) { UnityEngine.RectTransform? parentTransform = transform.parent?.transform as UnityEngine.RectTransform; transform.sizeDelta = new(width - (parentTransform is not null ? parentTransform.rect.width * (transform.anchorMax.x - transform.anchorMin.x) : 0.0f), transform.sizeDelta.y); } }
+
+    [PatchMethod(AggressiveInlining)] public static void SetTexture(this UnityEngine.Component   component,  UnityEngine.Texture   texture) { if (null != component ) { component .GetComponent<UnityEngine.UI.RawImage>()?.SetTexture(texture); if (texture is UnityEngine.Texture2D texture2D) component .GetComponent<UnityEngine.UI.Image>()?.SetTexture(texture2D); } } // ⟶ Ignore `UnityEngine.Cubemap`, `UnityEngine.CubemapArray`, `UnityEngine.RenderTexture`, `UnityEngine.Texture2DArray`, and `UnityEngine.Texture3D` for now
+    [PatchMethod(AggressiveInlining)] public static void SetTexture(this UnityEngine.GameObject  gameObject, UnityEngine.Texture   texture) { if (null != gameObject) { gameObject.GetComponent<UnityEngine.UI.RawImage>()?.SetTexture(texture); if (texture is UnityEngine.Texture2D texture2D) gameObject.GetComponent<UnityEngine.UI.Image>()?.SetTexture(texture2D); } } //    ^^
+    [PatchMethod(AggressiveInlining)] public static void SetTexture(this UnityEngine.UI.Image    image,      UnityEngine.Texture2D texture) { if (null != image) { UnityEngine.Sprite sprite = image.sprite; image.sprite = UnityEngine.Sprite.Create(texture, new(0.0f, 0.0f, texture.width, texture.height), new(0.5f, 0.5f)); if (sprite.texture != texture) UnityEngine.Object.Destroy(sprite); } }
+    [PatchMethod(AggressiveInlining)] public static void SetTexture(this UnityEngine.UI.RawImage image,      UnityEngine.Texture   texture) { if (null != image) image.texture = texture; }
+
+    [PatchMethod(AggressiveInlining)] public static void Sort   (this System.Array array)                                                                                                                { if (array is not null) System.Array.Sort   (array); }
+    [PatchMethod(AggressiveInlining)] public static void Sort   (this System.Array array, System.Collections.IComparer? comparer)                                                                        { if (array is not null) System.Array.Sort   (array, comparer); }
+    [PatchMethod(AggressiveInlining)] public static void Sort   (this System.Array array, int                           index, int length)                                                               { if (array is not null) System.Array.Sort   (array, index, length); }
+    [PatchMethod(AggressiveInlining)] public static void Sort   (this System.Array array, int                           index, int length, System.Collections.IComparer? comparer)                       { if (array is not null) System.Array.Sort   (array, index, length, comparer); }
+    [PatchMethod(AggressiveInlining)] public static void Sort<T>(this T[]          array)                                                                                                                { if (array is not null) System.Array.Sort<T>(array); }
+    [PatchMethod(AggressiveInlining)] public static void Sort<T>(this T[]          array, System.Comparison<T>                     comparison)                                                           { if (array is not null) System.Array.Sort<T>(array, comparison); }
+    [PatchMethod(AggressiveInlining)] public static void Sort<T>(this T[]          array, System.Collections.Generic.IComparer<T>? comparer)                                                             { if (array is not null) System.Array.Sort<T>(array, comparer); }
+    [PatchMethod(AggressiveInlining)] public static void Sort<T>(this T[]          array, int                                      index, int length)                                                    { if (array is not null) System.Array.Sort<T>(array, index, length); }
+    [PatchMethod(AggressiveInlining)] public static void Sort<T>(this T[]          array, int                                      index, int length, System.Collections.Generic.IComparer<T>? comparer) { if (array is not null) System.Array.Sort<T>(array, index, length, comparer); }
+
+    [PatchMethod(AggressiveInlining)] public static void TrimExcess<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary)               { if (dictionary is not null) dictionary.TrimExcess(dictionary.Count); }
+    [PatchMethod(AggressiveInlining)] public static void TrimExcess<T>           (this System.Collections.Generic.IList      <T>            list)                     { if (list       is not null) list      .TrimExcess(list      .Count); }
+    [PatchMethod(AggressiveInlining)] public static void TrimExcess<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, int capacity) { if (dictionary is not null) switch (dictionary) { case PatchOdyssey.Collections.RefDictionary<TKey, TValue> subdictionary: subdictionary.TrimExcess((uint) capacity); break; case System.Collections.Generic.Dictionary<TKey, TValue> subdictionary: subdictionary.TrimExcess(capacity);        break; } }
+    [PatchMethod(AggressiveInlining)] public static void TrimExcess<T>           (this System.Collections.Generic.IList      <T>            list,       int capacity) { if (list       is not null) switch (list)       { case PatchOdyssey.Collections.RefList      <T>            sublist:       sublist      .TrimExcess((uint) capacity); break; case PatchOdyssey.Collections.SharedList  <T>            sublist:       sublist      .TrimExcess((uint) capacity); break; case System.Collections.Generic.List<T> sublist: sublist.Capacity = capacity; break; } }
 
     [PatchMethod(AggressiveInlining)]
     public static bool TrueForAll<T>(this T[] array, System.Predicate<T> predicate) {
-      return System.Array.TrueForAll<T>(array, predicate);
+      return array is not null ? System.Array.TrueForAll<T>(array, predicate) : (bool) (null as bool?)!;
     }
 
-    [PatchMethod(AggressiveInlining)] public static bool TryAdd   <T>(this System.Collections.Generic.IList<T> list, in T element) { if (!list.Contains(element)) { list.Add(element); return true; } return false; }
-    [PatchMethod(AggressiveInlining)] public static T    TryAppend<T>(this System.Collections.Generic.IList<T> list, in T element) { int index = list.IndexOf(element); if (index == -1) { list.Add(element); return element; } return list[index]; }
+    [PatchMethod(AggressiveInlining)] public static bool TryAdd   <T>(this System.Collections.Generic.IList<T> list, in T element) { if (list is not null) { if (!list.Contains(element)) { list.Add(element); return true; } return false; } return (bool) (null as bool?)!; }
+    [PatchMethod(AggressiveInlining)] public static T    TryAppend<T>(this System.Collections.Generic.IList<T> list, in T element) { if (list is not null) { int index = list.IndexOf(element); if (index == -1) { list.Add(element); return element; } return list[index]; } return (T) (object) null!; }
 
-    [PatchMethod(AggressiveInlining)] public static bool   TryAdd   <TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, System.Collections.Generic.KeyValuePair<TKey, TValue> element)              =>  dictionary.TryAdd     (element.Key, element.Value);
-    [PatchMethod(AggressiveInlining)] public static bool   TryAdd   <TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, in TKey                                               key, in TValue value) => !dictionary.ContainsKey(key) && ((dictionary[key] = value), _: true)._;
-    [PatchMethod(AggressiveInlining)] public static TValue TryAppend<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, System.Collections.Generic.KeyValuePair<TKey, TValue> element)              =>  dictionary.TryAppend  (element.Key, element.Value);
-    [PatchMethod(AggressiveInlining)] public static TValue TryAppend<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, in TKey                                               key, in TValue value) => !dictionary.TryGetValue(key, out TValue prevalue) ? dictionary[key] = value : prevalue;
+    [PatchMethod(AggressiveInlining)] public static bool   TryAdd   <TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, System.Collections.Generic.KeyValuePair<TKey, TValue> element)              => dictionary is not null ?  dictionary.TryAdd     (element.Key, element.Value)                                    : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static bool   TryAdd   <TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, in TKey                                               key, in TValue value) => dictionary is not null ? !dictionary.ContainsKey(key) && ((dictionary[key] = value), _: true)._                 : (bool) (null as bool?)!;
+    [PatchMethod(AggressiveInlining)] public static TValue TryAppend<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, System.Collections.Generic.KeyValuePair<TKey, TValue> element)              => dictionary is not null ?  dictionary.TryAppend  (element.Key, element.Value)                                    : (TValue) (object) null!;
+    [PatchMethod(AggressiveInlining)] public static TValue TryAppend<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, in TKey                                               key, in TValue value) => dictionary is not null ? !dictionary.TryGetValue(key, out TValue prevalue) ? dictionary[key] = value : prevalue : (TValue) (object) null!;
 
     #if !(NETCOREAPP2_1 || NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1 || NETSTANDARD2_1_OR_GREATER)
       [PatchMethod(AggressiveInlining)] public static void TrimExcess<TKey, TValue>(this System.Collections.Generic.Dictionary<TKey, TValue> dictionary)               { /* ⟶ Do nothing… */ }
