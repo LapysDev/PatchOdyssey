@@ -143,6 +143,7 @@ May 20th, 2025 – May 22nd, 2025
 May 23rd, 2025
 • Menu animated
 • Splash screen animated
+• Updated extension methods to support nullish coalescence
 
 📆
 • Lesson learned: Learning C# technical details and ECS is a time investment that must be planned for within the timeline of the project

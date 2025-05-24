@@ -108,7 +108,7 @@ public sealed class UI : UnityEngine.MonoBehaviour {
 
   private void Update() {
     UnityEngine.GameObject menu            = this.components["menu"];
-    uint                   menuButtonCount = null != menu ? (uint) menu.CountDescendantsByComponent<UnityEngine.UI.Button>()! : (uint) this.menuButtons.Length;
+    uint                   menuButtonCount = null != menu ? menu.CountDescendantsByComponent<UnityEngine.UI.Button>() : (uint) this.menuButtons.Length;
     UnityEngine.GameObject splash          = this.components["splash"];
 
     // …
