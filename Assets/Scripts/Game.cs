@@ -2,7 +2,16 @@ using PatchOdyssey;
 
 /* … */
 [PatchExecutionOrder(PatchBehaviour.DefaultExecutionOrder + 1)]
-public class Game : UnityEngine.MonoBehaviour {
+public sealed class Game : UnityEngine.MonoBehaviour {
+  public enum State : byte {
+    Credits,
+    Menu,
+    Settings,
+    Tutorial
+  }
+
+  /* … */
+  public static Game.State        CurrentState = Game.State.Menu;
   public static readonly string[] GeneralHints = new[] {
     "Don’t forget to take breaks every now and again…",
     "Having fun is mandatory, the monsters demand it",
@@ -10,33 +19,47 @@ public class Game : UnityEngine.MonoBehaviour {
     "The more monsters tamed makes your team more powerful",
     "WASD keys to move around"
   };
+  public static bool       Paused        { get; private set; } = false;
+  public static Game.State PreviousState { get; private set; } = Game.State.Menu;
+
+  /* … */
+  public static void LoadState(in Game.State state) {
+    if (Game.CurrentState == state)
+    return;
+
+    // … ⟶ Transition the current Game state to the new Game state
+    switch (Game.PreviousState = Game.CurrentState) {
+      case Game.State.Credits: switch (state) {
+        case Game.State.Menu: UI.Main.LoadComponent("menu"); break;
+      } break;
+
+      case Game.State.Menu: switch (state) {
+        case Game.State.Credits : UI.Main.LoadComponent("credits");  break;
+        case Game.State.Settings: UI.Main.LoadComponent("settings"); break;
+        case Game.State.Tutorial: break;
+      } break;
+
+      case Game.State.Settings: switch (state) {
+        case Game.State.Menu: UI.Main.LoadComponent("menu"); break;
+      } break;
+
+      case Game.State.Tutorial: break;
+    }
+
+    // … ⟶ Handle the new Game state regardless of transition
+    switch (Game.CurrentState = state) {
+      case Game.State.Credits : break;
+      case Game.State.Menu    : break;
+      case Game.State.Settings: break;
+      case Game.State.Tutorial: break;
+    }
+  }
 //   [PatchOdyssey.ReadOnlyInInspector]  public                bool                 isLoaded          = false;
 //   [PatchOdyssey.ReadOnlyInInspector]  public                bool                 isPlaying         = false;
 //   [PatchOdyssey.ReadOnlyInInspector]  public static         Game?                main              = null;
 //   [PatchOdyssey.ReadWriteInInspector] public                Player?              player            = null;
 //   [PatchOdyssey.ReadWriteInInspector] public                GameObjectDictionary prototypeData     = new();                                                                           // TODO (Lapys)
 //   [PatchOdyssey.ReadOnlyInInspector]  public /* readonly */ BooleanDictionary    prototypeMetadata = new() {{"clearing:begin", false}, {"clearing:end", false}, {"mounting", false}}; // TODO (Lapys)
-
-//   /* … */
-//   private void Awake() {
-//     Game.main ??= this;
-//   }
-
-//   public void Exit() {
-//     UnityEngine.Application.Quit();
-//     #if UNITY_EDITOR
-//       UnityEditor.EditorApplication.isPlaying = false;
-//       UnityEditor.EditorApplication.ExitPlaymode();
-//     #endif
-//   }
-
-//   private void Load() {
-//     if (!this.isLoaded) {
-//       UnityEngine.Debug.Log("[Game::Load()]");
-//     }
-
-//     this.isLoaded = true;
-//   }
 
 //   private Chunk LoadChunk(Chunk chunk) {
 //     /* TODO (Lapys) */
@@ -65,7 +88,7 @@ public class Game : UnityEngine.MonoBehaviour {
 //       UI.main?.UnloadBackground   ();
 
 //       UnityEngine.Debug.Log("[Game::Play()]");
-//       this.Load();
+//       this.LoadComponent();
 
 //       /* TODO (Lapys) */
 //       /*  [0]: Blog update: Asset Loading, Code Style, File Structure, GitHub, Settings Serialization */
