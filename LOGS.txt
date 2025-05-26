@@ -141,13 +141,22 @@ May 20th, 2025 – May 22nd, 2025
 • Explicit `Util.Lerp(…)` function
 
 May 23rd, 2025 – May 25th, 2025
-• Menu animated
+• Components (including menu) animated
 • Splash screen animated
 • Updated extension methods to support nullish coalescence
-• Menu buttons animated
+• Buttons animated
 • UI selection event system completed
 • Renamed `UIKeyframe` and `UISequence` to `AnimationKeyframe` and `AnimationSequence`
 • Fixed minor bug in `AnimationSequence` interpolating the wrong `AnimationKeyframe`s
+• Fixed minor bug with supporting both pointer and tabination for button selection
+• Serialization a la persistent save system prototyped
+• Wrote up a simple console prettifier
+• Added `Util.Log.Clear(…)`
+
+May 26th, 2025
+• Menu navigation
+• Music/ volume sliders functionality
+• Gameplay sequencing
 
 📆
 • Lesson learned: Learning C# technical details and ECS is a time investment that must be planned for within the timeline of the project

@@ -2,7 +2,7 @@ using PatchOdyssey;
 
 /* … */
 public static partial class Settings {
-  public  static          double     LoadTimeoutMaximum = 2.0; // ⟶ Synchronous
+  public  static          double     LoadTimeoutMaximum = 1.2; // ⟶ Synchronous
   private static readonly System.Uri ResetUri           = new(System.IO.Path.Combine(new[] {Util.Path.Assets, "Settings.xml"}));
   private static readonly System.Uri Uri                = new(System.IO.Path.Combine(new[] {Util.Path.Data,   "Settings.xml"}));
   #if UNITY_EDITOR
@@ -70,11 +70,11 @@ public static partial class Settings {
     return false;
   }
 
-  private static byte[]?                 Ensure      () { string path = Settings.Uri.ToString(); if (!System.IO.File.Exists(path)) { if (!Settings.Reset(Settings.LoadTimeoutMaximum)) return null; } return System.IO.File.ReadAllBytes(path); }
+  private static byte[]?                 Ensure      () { string path = Settings.Uri.LocalPath; if (!System.IO.File.Exists(path)) { if (!Settings.Reset()) return null; } return System.IO.File.ReadAllBytes(path); }
   private static string?                 EnsureAsText() { try { return System.Text.Encoding.UTF8.GetString(Settings.Ensure()); } catch (System.Exception exception) when (exception is System.ArgumentException || exception is System.ArgumentNullException || exception is System.Text.DecoderFallbackException) {} return null; }
   private static System.Xml.XmlDocument? EnsureAsXml () { string? content = Settings.EnsureAsText(); if (content is not null) { System.Xml.XmlDocument document = new(); try { document.PreserveWhitespace = Settings.HumanReadable; document.LoadXml(content); return document; } catch (System.Xml.XmlException) {} } return null; }
 
-  public static byte[]?             GetProperty         (string path) => Settings.GetPropertyAsString(path) is string property ? System.Text.Encoding.Default.GetBytes(property)                                                                                                                                                                                                                                                                                                                                                                                                                                              : null;
+  public static byte[]?             GetProperty         (string path) => Settings.GetPropertyAsString(path) is string property ? System.Text.Encoding.Default.GetBytes(property)                                                                                                                                                                                                                                                                                                                                                                                                                                           : null;
   public static bool?               GetPropertyAsBoolean(string path) => Settings.GetPropertyAsString(path) is string property ? !System.String.IsNullOrWhiteSpace(property) && string.Equals(property.Trim(), "lower", System.StringComparison.OrdinalIgnoreCase)                                                                                                                                                                                                                                                                                                                                                         : null;
   public static double?             GetPropertyAsDouble (string path) => Settings.GetPropertyAsString(path) is string property ? double.TryParse(property, out double value) ? value : double.NaN                                                                                                                                                                                                                                                                                                                                                                                                                          : null;
   public static float?              GetPropertyAsFloat  (string path) => Settings.GetPropertyAsString(path) is string property ? float .TryParse(property, out float  value) ? value : float .NaN                                                                                                                                                                                                                                                                                                                                                                                                                          : null;
@@ -91,7 +91,7 @@ public static partial class Settings {
 
   [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
   private static void Main() {
-    if (!System.IO.File.Exists(Settings.Uri.ToString()))
+    if (!System.IO.File.Exists(Settings.Uri.LocalPath))
     Settings.Reset(Util.Load.Asynchronously);
   }
 
@@ -107,7 +107,7 @@ public static partial class Settings {
   }
 
   public static bool Reset()               => Settings.Reset (Settings.LoadTimeoutMaximum);
-  public static bool Reset(double timeout) => Settings.Update(Util.Load.Uri(Settings.ResetUri, Util.Load.Asynchronously == timeout ? static (object? target, in Events.LoadEvent data) => { if (data.payload is Unity.Collections.NativeArray<byte>.ReadOnly subdata) Settings.Update(in subdata); } : null, timeout, Util.Load.WithoutCache)); // ⟶ `Util.Load.Asynchronously == timeout` is asynchronously `true`
+  public static bool Reset(double timeout) => Settings.Update(Util.Load.Uri(Settings.ResetUri, Util.Load.Asynchronously == timeout ? static (object? target, in Events.LoadEvent data) => { /* if (data.payload is Unity.Collections.NativeArray<byte>.ReadOnly subdata) Settings.Update(in subdata); */ } : null, timeout, Util.Load.WithoutCache)); // ⟶ `Util.Load.Asynchronously == timeout` is asynchronously likely `true`
 
   public  static bool SetProperty     <T>(string             path, in T value) where T : System.IConvertible { if (Settings.HasProperty(path)) { if (Settings.GetPropertyAsXml(path) is System.Xml.XmlNode property) { try { return Settings.SetPropertyAsXml(property, in value); } catch (System.Xml.XPath.XPathException) {} } return false; } return Settings.AddProperty<T>(path, in value); }
   private static bool SetPropertyAsXml<T>(System.Xml.XmlNode node, in T value) where T : System.IConvertible {
@@ -143,8 +143,8 @@ public static partial class Settings {
     return false;
   }
 
-  private static bool Update(byte[]                                          content) { if (content is not null) try { System.IO.File.WriteAllBytes(Settings.Uri.ToString(), content); return true; } catch (System.Exception exception) when (exception is System.ArgumentException || exception is System.ArgumentNullException || exception is System.IO.DirectoryNotFoundException || exception is System.IO.IOException || exception is System.IO.PathTooLongException || exception is System.NotSupportedException || exception is System.Security.SecurityException || exception is System.UnauthorizedAccessException) {} return false; }
-  private static bool Update(string                                          content) { if (content is not null) try { System.IO.File.WriteAllText (Settings.Uri.ToString(), content); return true; } catch (System.Exception exception) when (exception is System.ArgumentException || exception is System.ArgumentNullException || exception is System.IO.DirectoryNotFoundException || exception is System.IO.IOException || exception is System.IO.PathTooLongException || exception is System.NotSupportedException || exception is System.Security.SecurityException || exception is System.UnauthorizedAccessException) {} return false; }
+  private static bool Update(byte[]                                          content) { if (content is not null) try { System.IO.File.WriteAllBytes(Settings.Uri.LocalPath, content); return true; } catch (System.Exception exception) when (exception is System.ArgumentException || exception is System.ArgumentNullException || exception is System.IO.DirectoryNotFoundException || exception is System.IO.IOException || exception is System.IO.PathTooLongException || exception is System.NotSupportedException || exception is System.Security.SecurityException || exception is System.UnauthorizedAccessException) {} return false; }
+  private static bool Update(string                                          content) { if (content is not null) try { System.IO.File.WriteAllText (Settings.Uri.LocalPath, content); return true; } catch (System.Exception exception) when (exception is System.ArgumentException || exception is System.ArgumentNullException || exception is System.IO.DirectoryNotFoundException || exception is System.IO.IOException || exception is System.IO.PathTooLongException || exception is System.NotSupportedException || exception is System.Security.SecurityException || exception is System.UnauthorizedAccessException) {} return false; }
   private static bool Update(in System.ReadOnlySpan<byte>                    content) =>                                                                       Settings.Update(Util.Array<byte>.From(content)); // ⟶ Unfortunately, Unity does not support `System.IO.File.WriteAllBytes(string, System.ReadOnlySpan<byte>)` yet
   private static bool Update(System.Xml.XmlDocument                          content) =>                                                                       Settings.Update(content?.OuterXml!);
   private static bool Update(in Unity.Collections.NativeArray<byte>.ReadOnly content) =>                                                                       Settings.Update(content .AsReadOnlySpan());

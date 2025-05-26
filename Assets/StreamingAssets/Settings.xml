@@ -10,7 +10,7 @@
   </Monsters>
 
   <Options>
-    <Sound>100</Sound>
-    <Volume>67.5</Volume>
+    <Music>67.5</Music>
+    <Sound>100.0</Sound>
   </Options>
 </Settings>
