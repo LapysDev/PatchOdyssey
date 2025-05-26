@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding= "UTF-8"?>
 <Settings>
+  <Area>Tutorial</Area>
+
   <Monsters>
     <Monster>
       <!-- <Kind>Borka</Kind> -->
@@ -8,7 +10,7 @@
   </Monsters>
 
   <Options>
-    <Sound>50</Sound>
-    <Volume>30</Volume>
+    <Sound>100</Sound>
+    <Volume>67.5</Volume>
   </Options>
 </Settings>

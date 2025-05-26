@@ -1446,14 +1446,20 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
     }
 
     public struct PointerInfo : PatchOdyssey.Collections.InputInfo, PatchOdyssey.Collections.IRefEquatable<PointerInfo> {
-      public   readonly UnityEngine.Vector2                  delta                           => this.position - this.origin;
-      public            UnityEngine.InputSystem.InputDevice? device { get; internal set; }   =  null;
-      public            double                               epoch  { get; internal set; }   =  UnityEngine.Time.realtimeSinceStartupAsDouble;
-      public            long                                 id     { get; internal set; }   =  Util.Pointers.MakeId();
-      public            UnityEngine.Vector2                  origin { get; internal set; }   =  UnityEngine.Vector2.zero;
-      internal          bool                                 polled                          =  false;
-      public            UnityEngine.Vector2                  position { get; internal set; } =  UnityEngine.Vector2.zero;
-      public            PatchOdyssey.Collections.DeviceState state    { get; internal set; } =  PatchOdyssey.Collections.DeviceState.UNKNOWN;
+      public   readonly UnityEngine.Vector2                  delta                                   => this.position - this.origin;
+      public            UnityEngine.InputSystem.InputDevice? device   { get; internal set; }         =  null;
+      public            double                               epoch    { get; internal set; }         =  UnityEngine.Time.realtimeSinceStartupAsDouble;
+      public            long                                 id       { get; internal set; }         =  Util.Pointers.MakeId();
+      public            bool                                 inverted { get; internal set; }         =  false;
+      public            UnityEngine.Vector2                  origin   { get; internal set; }         =  UnityEngine.Vector2.zero;
+      internal          bool                                 polled                                  =  false;
+      public            UnityEngine.Vector2                  position         { get; internal set; } =  UnityEngine.Vector2.zero;
+      public            UnityEngine.Vector2                  positionPrevious { get; internal set; } =  UnityEngine.Vector2.zero; // ⟶ Unique `::position` previous `UnityEngine.MonoBehaviour::Update()` frame
+      public            UnityEngine.Vector2                  positionRecent   { get; internal set; } =  UnityEngine.Vector2.zero; // ⟶ Either `::position` or `::positionPrevious`
+      public            float                                pressure         { get; internal set; } =  0.0f;
+      public            UnityEngine.Vector2                  radius           { get; internal set; } =  UnityEngine.Vector2.zero;
+      public            uint                                 sequenced        { get; internal set; } =  0u;
+      public            PatchOdyssey.Collections.DeviceState state            { get; internal set; } =  PatchOdyssey.Collections.DeviceState.UNKNOWN;
       UnityEngine.InputSystem.InputDevice?                   PatchOdyssey.Collections.InputInfo.device { get => this.device; set => this.device = value; }
       double                                                 PatchOdyssey.Collections.InputInfo.epoch  { get => this.epoch;  set => this.epoch  = value; }
       long                                                   PatchOdyssey.Collections.InputInfo.id     { get => this.id;     set => this.id     = value; }
@@ -1470,6 +1476,7 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [PatchMethod(AggressiveInlining)] public override readonly int     GetHashCode                                                                              ()                                               => System.HashCode.Combine(this.id, this.origin.x, this.origin.y, this.position.x, this.position.y);
       [PatchMethod(AggressiveInlining)] public          readonly bool    IsClicking                                                                               ()                                               => this.IsPointing() && PatchOdyssey.Collections.DeviceState.END == this.state;
       [PatchMethod(AggressiveInlining)] public          readonly bool    IsDragging                                                                               ()                                               => this.position == this.origin;
+      [PatchMethod(AggressiveInlining)] public          readonly bool    IsMoving                                                                                 ()                                               => this.position != this.positionRecent;
       [PatchMethod(AggressiveInlining)] public          readonly bool    IsPointing                                                                               ()                                               => this.id != Util.Pointers.MakeId();
       [PatchMethod(AggressiveInlining)] public override readonly string? ToString                                                                                 ()                                               => $"({(PatchOdyssey.Collections.DeviceState.BEGIN == this.state ? "↓" : PatchOdyssey.Collections.DeviceState.CURRENT == this.state ? "―" : PatchOdyssey.Collections.DeviceState.END == this.state ? "↑" : "…")}) {(Util.Pointers.IsId(this.id) ? "…" : Util.Pointers.IsMouseId(this.id) ? "🖱️" : Util.Pointers.IsPenId(this.id) ? "🖊️" : Util.Pointers.IsEnhancedTouchId(this.id) ? "🧤" : Util.Pointers.IsTouchId(this.id) ? "👆" : "…")} [{this.origin.x.ToString("0.##")} → {this.position.x.ToString("0.##")}, {this.origin.y.ToString("0.##")} → {this.position.y.ToString("0.##")}]";
       [PatchMethod(AggressiveInlining)] readonly bool                    PatchOdyssey.Collections.IRefEquatable<PointerInfo>.Equals                               (ref PointerInfo                        pointer) => this.Equals(in pointer);
@@ -3626,17 +3633,16 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
         public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) => UnityEditor.EditorGUI.GetPropertyHeight(property, label, true);
 
         [PatchMethod(AggressiveInlining)]
-        public override void  OnGUI(UnityEngine.Rect position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
+        public override void OnGUI(UnityEngine.Rect position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
           // bool isJobReadOnly = property.serializedObject.targetObject.GetType().GetField(property.name)?.IsDefined(typeof(Unity.Collections.ReadOnlyAttribute), true) ?? false;
+
           // …
-          #if false
-            UnityEngine.GUI.enabled = false;
+          UnityEngine.GUI.enabled = false;
+
+          using (new UnityEditor.EditorGUI.DisabledScope(true)) // ⟶ Should have been sufficient on its own
             UnityEditor.EditorGUI.PropertyField(position, property, label, true);
-            UnityEngine.GUI.enabled = true;
-          #else
-            using (new UnityEditor.EditorGUI.DisabledScope(true))
-            UnityEditor.EditorGUI.PropertyField(position, property, label, true);
-          #endif
+
+          UnityEngine.GUI.enabled = true;
         }
       }
 
@@ -5106,17 +5112,20 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       }
 
       /* … */
-      internal static readonly PatchOdyssey.Collections.RefList        <PatchOdyssey.Collections.KeyInfo>                                                             BeginState                      = new(16u);
-      public   static readonly PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.KeyInfo>                                                             Begin                           = (PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.KeyInfo>) Keys.BeginState;
-      internal static readonly PatchOdyssey.Collections.RefList        <PatchOdyssey.Collections.KeyInfo>                                                             CurrentState                    = new(16u);
-      public   static readonly PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.KeyInfo>                                                             Current                         = (PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.KeyInfo>) Keys.CurrentState;
-      internal static readonly PatchOdyssey.Collections.RefList        <PatchOdyssey.Collections.KeyInfo>                                                             EndState                        = new(16u);
-      public   static readonly PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.KeyInfo>                                                             End                             = (PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.KeyInfo>) Keys.EndState;
-      public   static          bool                                                                                                                                   Prompted { get; internal set; } = false;
-      public   static          double                                                                                                                                 RepeatDelay                     = 1.0; // ⟶ in Seconds; UI keyboard repeat delay
-      public   static readonly System.Collections.ObjectModel.ReadOnlyCollection<PatchOdyssey.Collections.RefList<PatchOdyssey.Collections.KeyInfo>>                  States                          = new[] {Keys.BeginState, Keys.CurrentState, Keys.EndState}.AsReadOnly();
-      public   static readonly PatchOdyssey.Collections.InputStateCollection    <PatchOdyssey.Collections.KeyInfo>                                                    Any                             = new(Keys.States);
-      internal static readonly (PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.KeyCode>, PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.InputSystem.Key>) All                             = (new(stackalloc[] {UnityEngine.KeyCode.A, UnityEngine.KeyCode.Alpha0, UnityEngine.KeyCode.Alpha1, UnityEngine.KeyCode.Alpha2, UnityEngine.KeyCode.Alpha3, UnityEngine.KeyCode.Alpha4, UnityEngine.KeyCode.Alpha5, UnityEngine.KeyCode.Alpha6, UnityEngine.KeyCode.Alpha7, UnityEngine.KeyCode.Alpha8, UnityEngine.KeyCode.Alpha9, UnityEngine.KeyCode.AltGr, UnityEngine.KeyCode.Ampersand, UnityEngine.KeyCode.Asterisk, UnityEngine.KeyCode.At, UnityEngine.KeyCode.B, UnityEngine.KeyCode.BackQuote, UnityEngine.KeyCode.Backslash, UnityEngine.KeyCode.Backspace, UnityEngine.KeyCode.Break, UnityEngine.KeyCode.C, UnityEngine.KeyCode.CapsLock, UnityEngine.KeyCode.Caret, UnityEngine.KeyCode.Clear, UnityEngine.KeyCode.Colon, UnityEngine.KeyCode.Comma, UnityEngine.KeyCode.D, UnityEngine.KeyCode.Delete, UnityEngine.KeyCode.Dollar, UnityEngine.KeyCode.DoubleQuote, UnityEngine.KeyCode.DownArrow, UnityEngine.KeyCode.E, UnityEngine.KeyCode.End, UnityEngine.KeyCode.Equals, UnityEngine.KeyCode.Escape, UnityEngine.KeyCode.Exclaim, UnityEngine.KeyCode.F, UnityEngine.KeyCode.F1, UnityEngine.KeyCode.F10, UnityEngine.KeyCode.F11, UnityEngine.KeyCode.F12, UnityEngine.KeyCode.F13, UnityEngine.KeyCode.F14, UnityEngine.KeyCode.F15, UnityEngine.KeyCode.F2, UnityEngine.KeyCode.F3, UnityEngine.KeyCode.F4, UnityEngine.KeyCode.F5, UnityEngine.KeyCode.F6, UnityEngine.KeyCode.F7, UnityEngine.KeyCode.F8, UnityEngine.KeyCode.F9, UnityEngine.KeyCode.G, UnityEngine.KeyCode.Greater, UnityEngine.KeyCode.H, UnityEngine.KeyCode.Hash, UnityEngine.KeyCode.Help, UnityEngine.KeyCode.Home, UnityEngine.KeyCode.I, UnityEngine.KeyCode.Insert, UnityEngine.KeyCode.J, UnityEngine.KeyCode.K, UnityEngine.KeyCode.Keypad0, UnityEngine.KeyCode.Keypad1, UnityEngine.KeyCode.Keypad2, UnityEngine.KeyCode.Keypad3, UnityEngine.KeyCode.Keypad4, UnityEngine.KeyCode.Keypad5, UnityEngine.KeyCode.Keypad6, UnityEngine.KeyCode.Keypad7, UnityEngine.KeyCode.Keypad8, UnityEngine.KeyCode.Keypad9, UnityEngine.KeyCode.KeypadDivide, UnityEngine.KeyCode.KeypadEnter, UnityEngine.KeyCode.KeypadEquals, UnityEngine.KeyCode.KeypadMinus, UnityEngine.KeyCode.KeypadMultiply, UnityEngine.KeyCode.KeypadPeriod, UnityEngine.KeyCode.KeypadPlus, UnityEngine.KeyCode.L, UnityEngine.KeyCode.LeftAlt, UnityEngine.KeyCode.LeftApple, UnityEngine.KeyCode.LeftArrow, UnityEngine.KeyCode.LeftBracket, UnityEngine.KeyCode.LeftCommand, UnityEngine.KeyCode.LeftControl, UnityEngine.KeyCode.LeftCurlyBracket, UnityEngine.KeyCode.LeftMeta, UnityEngine.KeyCode.LeftParen, UnityEngine.KeyCode.LeftShift, UnityEngine.KeyCode.LeftWindows, UnityEngine.KeyCode.Less, UnityEngine.KeyCode.M, UnityEngine.KeyCode.Menu, UnityEngine.KeyCode.Minus, UnityEngine.KeyCode.N, UnityEngine.KeyCode.Numlock, UnityEngine.KeyCode.O, UnityEngine.KeyCode.P, UnityEngine.KeyCode.PageDown, UnityEngine.KeyCode.PageUp, UnityEngine.KeyCode.Pause, UnityEngine.KeyCode.Percent, UnityEngine.KeyCode.Period, UnityEngine.KeyCode.Pipe, UnityEngine.KeyCode.Plus, UnityEngine.KeyCode.Print, UnityEngine.KeyCode.Q, UnityEngine.KeyCode.Question, UnityEngine.KeyCode.Quote, UnityEngine.KeyCode.R, UnityEngine.KeyCode.Return, UnityEngine.KeyCode.RightAlt, UnityEngine.KeyCode.RightApple, UnityEngine.KeyCode.RightArrow, UnityEngine.KeyCode.RightBracket, UnityEngine.KeyCode.RightCommand, UnityEngine.KeyCode.RightControl, UnityEngine.KeyCode.RightCurlyBracket, UnityEngine.KeyCode.RightMeta, UnityEngine.KeyCode.RightParen, UnityEngine.KeyCode.RightShift, UnityEngine.KeyCode.RightWindows, UnityEngine.KeyCode.S, UnityEngine.KeyCode.ScrollLock, UnityEngine.KeyCode.Semicolon, UnityEngine.KeyCode.Slash, UnityEngine.KeyCode.Space, UnityEngine.KeyCode.SysReq, UnityEngine.KeyCode.T, UnityEngine.KeyCode.Tab, UnityEngine.KeyCode.Tilde, UnityEngine.KeyCode.U, UnityEngine.KeyCode.Underscore, UnityEngine.KeyCode.UpArrow, UnityEngine.KeyCode.V, UnityEngine.KeyCode.W, UnityEngine.KeyCode.X, UnityEngine.KeyCode.Y, UnityEngine.KeyCode.Z}), new(stackalloc[] {UnityEngine.InputSystem.Key.A, UnityEngine.InputSystem.Key.AltGr, UnityEngine.InputSystem.Key.B, UnityEngine.InputSystem.Key.Backquote, UnityEngine.InputSystem.Key.Backslash, UnityEngine.InputSystem.Key.Backspace, UnityEngine.InputSystem.Key.C, UnityEngine.InputSystem.Key.CapsLock, UnityEngine.InputSystem.Key.Comma, UnityEngine.InputSystem.Key.ContextMenu, UnityEngine.InputSystem.Key.D, UnityEngine.InputSystem.Key.Delete, UnityEngine.InputSystem.Key.Digit0, UnityEngine.InputSystem.Key.Digit1, UnityEngine.InputSystem.Key.Digit2, UnityEngine.InputSystem.Key.Digit3, UnityEngine.InputSystem.Key.Digit4, UnityEngine.InputSystem.Key.Digit5, UnityEngine.InputSystem.Key.Digit6, UnityEngine.InputSystem.Key.Digit7, UnityEngine.InputSystem.Key.Digit8, UnityEngine.InputSystem.Key.Digit9, UnityEngine.InputSystem.Key.DownArrow, UnityEngine.InputSystem.Key.E, UnityEngine.InputSystem.Key.End, UnityEngine.InputSystem.Key.Enter, UnityEngine.InputSystem.Key.Equals, UnityEngine.InputSystem.Key.Escape, UnityEngine.InputSystem.Key.F, UnityEngine.InputSystem.Key.F1, UnityEngine.InputSystem.Key.F10, UnityEngine.InputSystem.Key.F11, UnityEngine.InputSystem.Key.F12, UnityEngine.InputSystem.Key.F2, UnityEngine.InputSystem.Key.F3, UnityEngine.InputSystem.Key.F4, UnityEngine.InputSystem.Key.F5, UnityEngine.InputSystem.Key.F6, UnityEngine.InputSystem.Key.F7, UnityEngine.InputSystem.Key.F8, UnityEngine.InputSystem.Key.F9, UnityEngine.InputSystem.Key.G, UnityEngine.InputSystem.Key.H, UnityEngine.InputSystem.Key.Home, UnityEngine.InputSystem.Key.I, UnityEngine.InputSystem.Key.Insert, UnityEngine.InputSystem.Key.J, UnityEngine.InputSystem.Key.K, UnityEngine.InputSystem.Key.L, UnityEngine.InputSystem.Key.LeftAlt, UnityEngine.InputSystem.Key.LeftApple, UnityEngine.InputSystem.Key.LeftArrow, UnityEngine.InputSystem.Key.LeftBracket, UnityEngine.InputSystem.Key.LeftCommand, UnityEngine.InputSystem.Key.LeftCtrl, UnityEngine.InputSystem.Key.LeftMeta, UnityEngine.InputSystem.Key.LeftShift, UnityEngine.InputSystem.Key.LeftWindows, UnityEngine.InputSystem.Key.M, UnityEngine.InputSystem.Key.Minus, UnityEngine.InputSystem.Key.N, UnityEngine.InputSystem.Key.NumLock, UnityEngine.InputSystem.Key.Numpad0, UnityEngine.InputSystem.Key.Numpad1, UnityEngine.InputSystem.Key.Numpad2, UnityEngine.InputSystem.Key.Numpad3, UnityEngine.InputSystem.Key.Numpad4, UnityEngine.InputSystem.Key.Numpad5, UnityEngine.InputSystem.Key.Numpad6, UnityEngine.InputSystem.Key.Numpad7, UnityEngine.InputSystem.Key.Numpad8, UnityEngine.InputSystem.Key.Numpad9, UnityEngine.InputSystem.Key.NumpadDivide, UnityEngine.InputSystem.Key.NumpadEnter, UnityEngine.InputSystem.Key.NumpadEquals, UnityEngine.InputSystem.Key.NumpadMinus, UnityEngine.InputSystem.Key.NumpadMultiply, UnityEngine.InputSystem.Key.NumpadPeriod, UnityEngine.InputSystem.Key.NumpadPlus, UnityEngine.InputSystem.Key.O, UnityEngine.InputSystem.Key.OEM1, UnityEngine.InputSystem.Key.OEM2, UnityEngine.InputSystem.Key.OEM3, UnityEngine.InputSystem.Key.OEM4, UnityEngine.InputSystem.Key.OEM5, UnityEngine.InputSystem.Key.P, UnityEngine.InputSystem.Key.PageDown, UnityEngine.InputSystem.Key.PageUp, UnityEngine.InputSystem.Key.Pause, UnityEngine.InputSystem.Key.Period, UnityEngine.InputSystem.Key.PrintScreen, UnityEngine.InputSystem.Key.Q, UnityEngine.InputSystem.Key.Quote, UnityEngine.InputSystem.Key.R, UnityEngine.InputSystem.Key.RightAlt, UnityEngine.InputSystem.Key.RightApple, UnityEngine.InputSystem.Key.RightArrow, UnityEngine.InputSystem.Key.RightBracket, UnityEngine.InputSystem.Key.RightCommand, UnityEngine.InputSystem.Key.RightCtrl, UnityEngine.InputSystem.Key.RightMeta, UnityEngine.InputSystem.Key.RightShift, UnityEngine.InputSystem.Key.RightWindows, UnityEngine.InputSystem.Key.S, UnityEngine.InputSystem.Key.ScrollLock, UnityEngine.InputSystem.Key.Semicolon, UnityEngine.InputSystem.Key.Slash, UnityEngine.InputSystem.Key.Space, UnityEngine.InputSystem.Key.T, UnityEngine.InputSystem.Key.Tab, UnityEngine.InputSystem.Key.U, UnityEngine.InputSystem.Key.UpArrow, UnityEngine.InputSystem.Key.V, UnityEngine.InputSystem.Key.W, UnityEngine.InputSystem.Key.X, UnityEngine.InputSystem.Key.Y, UnityEngine.InputSystem.Key.Z})); // ⟶ `new(System.Enum.GetValues<…>())`
+      internal static readonly PatchOdyssey.Collections.RefList        <PatchOdyssey.Collections.KeyInfo>                                                             BeginState                        = new(16u);
+      public   static readonly PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.KeyInfo>                                                             Begin                             = (PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.KeyInfo>) Keys.BeginState;
+      internal static readonly PatchOdyssey.Collections.RefList        <PatchOdyssey.Collections.KeyInfo>                                                             CurrentState                      = new(16u);
+      public   static readonly PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.KeyInfo>                                                             Current                           = (PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.KeyInfo>) Keys.CurrentState;
+      internal static readonly PatchOdyssey.Collections.RefList        <PatchOdyssey.Collections.KeyInfo>                                                             EndState                          = new(16u);
+      public   static readonly PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.KeyInfo>                                                             End                               = (PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.KeyInfo>) Keys.EndState;
+      public   static          bool                                                                                                                                   IsAdding   { get; internal set; } = false;
+      public   static          bool                                                                                                                                   IsChanging { get; internal set; } = false;
+      public   static          bool                                                                                                                                   IsPrompted { get; internal set; } = false;
+      public   static          bool                                                                                                                                   IsRemoving { get; internal set; } = false;
+      public   static          double                                                                                                                                 RepeatDelay                       = 1.0; // ⟶ in Seconds; UI keyboard repeat delay
+      public   static readonly System.Collections.ObjectModel.ReadOnlyCollection<PatchOdyssey.Collections.RefList<PatchOdyssey.Collections.KeyInfo>>                  States                            = new[] {Keys.BeginState, Keys.CurrentState, Keys.EndState}.AsReadOnly();
+      public   static readonly PatchOdyssey.Collections.InputStateCollection    <PatchOdyssey.Collections.KeyInfo>                                                    Any                               = new(Keys.States);
+      internal static readonly (PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.KeyCode>, PatchOdyssey.Collections.RefReadOnlyList<UnityEngine.InputSystem.Key>) All                               = (new(stackalloc[] {UnityEngine.KeyCode.A, UnityEngine.KeyCode.Alpha0, UnityEngine.KeyCode.Alpha1, UnityEngine.KeyCode.Alpha2, UnityEngine.KeyCode.Alpha3, UnityEngine.KeyCode.Alpha4, UnityEngine.KeyCode.Alpha5, UnityEngine.KeyCode.Alpha6, UnityEngine.KeyCode.Alpha7, UnityEngine.KeyCode.Alpha8, UnityEngine.KeyCode.Alpha9, UnityEngine.KeyCode.AltGr, UnityEngine.KeyCode.Ampersand, UnityEngine.KeyCode.Asterisk, UnityEngine.KeyCode.At, UnityEngine.KeyCode.B, UnityEngine.KeyCode.BackQuote, UnityEngine.KeyCode.Backslash, UnityEngine.KeyCode.Backspace, UnityEngine.KeyCode.Break, UnityEngine.KeyCode.C, UnityEngine.KeyCode.CapsLock, UnityEngine.KeyCode.Caret, UnityEngine.KeyCode.Clear, UnityEngine.KeyCode.Colon, UnityEngine.KeyCode.Comma, UnityEngine.KeyCode.D, UnityEngine.KeyCode.Delete, UnityEngine.KeyCode.Dollar, UnityEngine.KeyCode.DoubleQuote, UnityEngine.KeyCode.DownArrow, UnityEngine.KeyCode.E, UnityEngine.KeyCode.End, UnityEngine.KeyCode.Equals, UnityEngine.KeyCode.Escape, UnityEngine.KeyCode.Exclaim, UnityEngine.KeyCode.F, UnityEngine.KeyCode.F1, UnityEngine.KeyCode.F10, UnityEngine.KeyCode.F11, UnityEngine.KeyCode.F12, UnityEngine.KeyCode.F13, UnityEngine.KeyCode.F14, UnityEngine.KeyCode.F15, UnityEngine.KeyCode.F2, UnityEngine.KeyCode.F3, UnityEngine.KeyCode.F4, UnityEngine.KeyCode.F5, UnityEngine.KeyCode.F6, UnityEngine.KeyCode.F7, UnityEngine.KeyCode.F8, UnityEngine.KeyCode.F9, UnityEngine.KeyCode.G, UnityEngine.KeyCode.Greater, UnityEngine.KeyCode.H, UnityEngine.KeyCode.Hash, UnityEngine.KeyCode.Help, UnityEngine.KeyCode.Home, UnityEngine.KeyCode.I, UnityEngine.KeyCode.Insert, UnityEngine.KeyCode.J, UnityEngine.KeyCode.K, UnityEngine.KeyCode.Keypad0, UnityEngine.KeyCode.Keypad1, UnityEngine.KeyCode.Keypad2, UnityEngine.KeyCode.Keypad3, UnityEngine.KeyCode.Keypad4, UnityEngine.KeyCode.Keypad5, UnityEngine.KeyCode.Keypad6, UnityEngine.KeyCode.Keypad7, UnityEngine.KeyCode.Keypad8, UnityEngine.KeyCode.Keypad9, UnityEngine.KeyCode.KeypadDivide, UnityEngine.KeyCode.KeypadEnter, UnityEngine.KeyCode.KeypadEquals, UnityEngine.KeyCode.KeypadMinus, UnityEngine.KeyCode.KeypadMultiply, UnityEngine.KeyCode.KeypadPeriod, UnityEngine.KeyCode.KeypadPlus, UnityEngine.KeyCode.L, UnityEngine.KeyCode.LeftAlt, UnityEngine.KeyCode.LeftApple, UnityEngine.KeyCode.LeftArrow, UnityEngine.KeyCode.LeftBracket, UnityEngine.KeyCode.LeftCommand, UnityEngine.KeyCode.LeftControl, UnityEngine.KeyCode.LeftCurlyBracket, UnityEngine.KeyCode.LeftMeta, UnityEngine.KeyCode.LeftParen, UnityEngine.KeyCode.LeftShift, UnityEngine.KeyCode.LeftWindows, UnityEngine.KeyCode.Less, UnityEngine.KeyCode.M, UnityEngine.KeyCode.Menu, UnityEngine.KeyCode.Minus, UnityEngine.KeyCode.N, UnityEngine.KeyCode.Numlock, UnityEngine.KeyCode.O, UnityEngine.KeyCode.P, UnityEngine.KeyCode.PageDown, UnityEngine.KeyCode.PageUp, UnityEngine.KeyCode.Pause, UnityEngine.KeyCode.Percent, UnityEngine.KeyCode.Period, UnityEngine.KeyCode.Pipe, UnityEngine.KeyCode.Plus, UnityEngine.KeyCode.Print, UnityEngine.KeyCode.Q, UnityEngine.KeyCode.Question, UnityEngine.KeyCode.Quote, UnityEngine.KeyCode.R, UnityEngine.KeyCode.Return, UnityEngine.KeyCode.RightAlt, UnityEngine.KeyCode.RightApple, UnityEngine.KeyCode.RightArrow, UnityEngine.KeyCode.RightBracket, UnityEngine.KeyCode.RightCommand, UnityEngine.KeyCode.RightControl, UnityEngine.KeyCode.RightCurlyBracket, UnityEngine.KeyCode.RightMeta, UnityEngine.KeyCode.RightParen, UnityEngine.KeyCode.RightShift, UnityEngine.KeyCode.RightWindows, UnityEngine.KeyCode.S, UnityEngine.KeyCode.ScrollLock, UnityEngine.KeyCode.Semicolon, UnityEngine.KeyCode.Slash, UnityEngine.KeyCode.Space, UnityEngine.KeyCode.SysReq, UnityEngine.KeyCode.T, UnityEngine.KeyCode.Tab, UnityEngine.KeyCode.Tilde, UnityEngine.KeyCode.U, UnityEngine.KeyCode.Underscore, UnityEngine.KeyCode.UpArrow, UnityEngine.KeyCode.V, UnityEngine.KeyCode.W, UnityEngine.KeyCode.X, UnityEngine.KeyCode.Y, UnityEngine.KeyCode.Z}), new(stackalloc[] {UnityEngine.InputSystem.Key.A, UnityEngine.InputSystem.Key.AltGr, UnityEngine.InputSystem.Key.B, UnityEngine.InputSystem.Key.Backquote, UnityEngine.InputSystem.Key.Backslash, UnityEngine.InputSystem.Key.Backspace, UnityEngine.InputSystem.Key.C, UnityEngine.InputSystem.Key.CapsLock, UnityEngine.InputSystem.Key.Comma, UnityEngine.InputSystem.Key.ContextMenu, UnityEngine.InputSystem.Key.D, UnityEngine.InputSystem.Key.Delete, UnityEngine.InputSystem.Key.Digit0, UnityEngine.InputSystem.Key.Digit1, UnityEngine.InputSystem.Key.Digit2, UnityEngine.InputSystem.Key.Digit3, UnityEngine.InputSystem.Key.Digit4, UnityEngine.InputSystem.Key.Digit5, UnityEngine.InputSystem.Key.Digit6, UnityEngine.InputSystem.Key.Digit7, UnityEngine.InputSystem.Key.Digit8, UnityEngine.InputSystem.Key.Digit9, UnityEngine.InputSystem.Key.DownArrow, UnityEngine.InputSystem.Key.E, UnityEngine.InputSystem.Key.End, UnityEngine.InputSystem.Key.Enter, UnityEngine.InputSystem.Key.Equals, UnityEngine.InputSystem.Key.Escape, UnityEngine.InputSystem.Key.F, UnityEngine.InputSystem.Key.F1, UnityEngine.InputSystem.Key.F10, UnityEngine.InputSystem.Key.F11, UnityEngine.InputSystem.Key.F12, UnityEngine.InputSystem.Key.F2, UnityEngine.InputSystem.Key.F3, UnityEngine.InputSystem.Key.F4, UnityEngine.InputSystem.Key.F5, UnityEngine.InputSystem.Key.F6, UnityEngine.InputSystem.Key.F7, UnityEngine.InputSystem.Key.F8, UnityEngine.InputSystem.Key.F9, UnityEngine.InputSystem.Key.G, UnityEngine.InputSystem.Key.H, UnityEngine.InputSystem.Key.Home, UnityEngine.InputSystem.Key.I, UnityEngine.InputSystem.Key.Insert, UnityEngine.InputSystem.Key.J, UnityEngine.InputSystem.Key.K, UnityEngine.InputSystem.Key.L, UnityEngine.InputSystem.Key.LeftAlt, UnityEngine.InputSystem.Key.LeftApple, UnityEngine.InputSystem.Key.LeftArrow, UnityEngine.InputSystem.Key.LeftBracket, UnityEngine.InputSystem.Key.LeftCommand, UnityEngine.InputSystem.Key.LeftCtrl, UnityEngine.InputSystem.Key.LeftMeta, UnityEngine.InputSystem.Key.LeftShift, UnityEngine.InputSystem.Key.LeftWindows, UnityEngine.InputSystem.Key.M, UnityEngine.InputSystem.Key.Minus, UnityEngine.InputSystem.Key.N, UnityEngine.InputSystem.Key.NumLock, UnityEngine.InputSystem.Key.Numpad0, UnityEngine.InputSystem.Key.Numpad1, UnityEngine.InputSystem.Key.Numpad2, UnityEngine.InputSystem.Key.Numpad3, UnityEngine.InputSystem.Key.Numpad4, UnityEngine.InputSystem.Key.Numpad5, UnityEngine.InputSystem.Key.Numpad6, UnityEngine.InputSystem.Key.Numpad7, UnityEngine.InputSystem.Key.Numpad8, UnityEngine.InputSystem.Key.Numpad9, UnityEngine.InputSystem.Key.NumpadDivide, UnityEngine.InputSystem.Key.NumpadEnter, UnityEngine.InputSystem.Key.NumpadEquals, UnityEngine.InputSystem.Key.NumpadMinus, UnityEngine.InputSystem.Key.NumpadMultiply, UnityEngine.InputSystem.Key.NumpadPeriod, UnityEngine.InputSystem.Key.NumpadPlus, UnityEngine.InputSystem.Key.O, UnityEngine.InputSystem.Key.OEM1, UnityEngine.InputSystem.Key.OEM2, UnityEngine.InputSystem.Key.OEM3, UnityEngine.InputSystem.Key.OEM4, UnityEngine.InputSystem.Key.OEM5, UnityEngine.InputSystem.Key.P, UnityEngine.InputSystem.Key.PageDown, UnityEngine.InputSystem.Key.PageUp, UnityEngine.InputSystem.Key.Pause, UnityEngine.InputSystem.Key.Period, UnityEngine.InputSystem.Key.PrintScreen, UnityEngine.InputSystem.Key.Q, UnityEngine.InputSystem.Key.Quote, UnityEngine.InputSystem.Key.R, UnityEngine.InputSystem.Key.RightAlt, UnityEngine.InputSystem.Key.RightApple, UnityEngine.InputSystem.Key.RightArrow, UnityEngine.InputSystem.Key.RightBracket, UnityEngine.InputSystem.Key.RightCommand, UnityEngine.InputSystem.Key.RightCtrl, UnityEngine.InputSystem.Key.RightMeta, UnityEngine.InputSystem.Key.RightShift, UnityEngine.InputSystem.Key.RightWindows, UnityEngine.InputSystem.Key.S, UnityEngine.InputSystem.Key.ScrollLock, UnityEngine.InputSystem.Key.Semicolon, UnityEngine.InputSystem.Key.Slash, UnityEngine.InputSystem.Key.Space, UnityEngine.InputSystem.Key.T, UnityEngine.InputSystem.Key.Tab, UnityEngine.InputSystem.Key.U, UnityEngine.InputSystem.Key.UpArrow, UnityEngine.InputSystem.Key.V, UnityEngine.InputSystem.Key.W, UnityEngine.InputSystem.Key.X, UnityEngine.InputSystem.Key.Y, UnityEngine.InputSystem.Key.Z})); // ⟶ `new(System.Enum.GetValues<…>())`
 
       /* … */
       [PatchMethod(AggressiveInlining)] public        static bool IsActive(in System.ReadOnlySpan<UnityEngine.KeyCode>         keys)                                                            => Keys.IsHeld(keys)                                                       || Keys.IsPressed(keys)                                                       || Keys.IsReleased(keys);
@@ -5595,23 +5604,31 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     }
 
     public static class Pointers {
-      internal static readonly PatchOdyssey.Collections.RefList        <PatchOdyssey.Collections.PointerInfo>                                                                                                                                                        BeginState         = new(24u);
-      public   static readonly PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.PointerInfo>                                                                                                                                                        Begin              = (PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.PointerInfo>) Pointers.BeginState;
-      internal static readonly PatchOdyssey.Collections.RefList        <PatchOdyssey.Collections.PointerInfo>                                                                                                                                                        CurrentState       = new(24u);
-      public   static readonly PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.PointerInfo>                                                                                                                                                        Current            = (PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.PointerInfo>) Pointers.CurrentState;
-      internal static readonly PatchOdyssey.Collections.RefList        <PatchOdyssey.Collections.PointerInfo>                                                                                                                                                        EndState           = new(24u);
-      public   static readonly PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.PointerInfo>                                                                                                                                                        End                = (PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.PointerInfo>) Pointers.EndState;
-      public   const           sbyte                                                                                                                                                                                                                                 MouseButtonBack    = 0x4;
-      public   const           sbyte                                                                                                                                                                                                                                 MouseButtonForward = 0x3;
-      public   const           sbyte                                                                                                                                                                                                                                 MouseButtonLeft    = 0x0;
-      public   const           sbyte                                                                                                                                                                                                                                 MouseButtonMiddle  = 0x2;
-      public   const           sbyte                                                                                                                                                                                                                                 MouseButtonRight   = 0x1;
-      public   const           sbyte                                                                                                                                                                                                                                 PenButtonBarrel    = 0x2;
-      public   const           sbyte                                                                                                                                                                                                                                 PenButtonEraser    = 0x1;
-      public   const           sbyte                                                                                                                                                                                                                                 PenButtonTip       = 0x0;
-      public   static readonly System.Collections.ObjectModel.ReadOnlyCollection<PatchOdyssey.Collections.RefList<PatchOdyssey.Collections.PointerInfo>>                                                                                                             States             = new[] {Pointers.BeginState, Pointers.CurrentState, Pointers.EndState}.AsReadOnly();
-      public   static readonly PatchOdyssey.Collections.InputStateCollection    <PatchOdyssey.Collections.PointerInfo>                                                                                                                                               Any                = new(Pointers.States);
-      private  static readonly (PatchOdyssey.Collections.RefReadOnlyList<sbyte>, PatchOdyssey.Collections.RefReadOnlyList<sbyte> MouseButtons, PatchOdyssey.Collections.RefReadOnlyList<sbyte> PenButtons, PatchOdyssey.Collections.RefReadOnlyList<sbyte> TouchIds) All                = ((System.Func<(PatchOdyssey.Collections.RefReadOnlyList<sbyte>, PatchOdyssey.Collections.RefReadOnlyList<sbyte>, PatchOdyssey.Collections.RefReadOnlyList<sbyte>, PatchOdyssey.Collections.RefReadOnlyList<sbyte>)>) ([PatchMethod(AggressiveInlining)] () => (
+      internal static readonly PatchOdyssey.Collections.RefList        <PatchOdyssey.Collections.PointerInfo>                                                                                                                                                        BeginState                        = new(24u);
+      public   static readonly PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.PointerInfo>                                                                                                                                                        Begin                             = (PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.PointerInfo>) Pointers.BeginState;
+      internal static readonly PatchOdyssey.Collections.RefList        <PatchOdyssey.Collections.PointerInfo>                                                                                                                                                        CurrentState                      = new(24u);
+      public   static readonly PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.PointerInfo>                                                                                                                                                        Current                           = (PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.PointerInfo>) Pointers.CurrentState;
+      internal static readonly PatchOdyssey.Collections.RefList        <PatchOdyssey.Collections.PointerInfo>                                                                                                                                                        EndState                          = new(24u);
+      public   static readonly PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.PointerInfo>                                                                                                                                                        End                               = (PatchOdyssey.Collections.RefReadOnlyList<PatchOdyssey.Collections.PointerInfo>) Pointers.EndState;
+      public   static          bool                                                                                                                                                                                                                                  IsAdding   { get; internal set; } = false;
+      public   static          bool                                                                                                                                                                                                                                  IsChanging { get; internal set; } = false;
+      public   static          bool                                                                                                                                                                                                                                  IsMoving   { get; internal set; } = false;
+      public   static          bool                                                                                                                                                                                                                                  IsRemoving { get; internal set; } = false;
+      public   const           sbyte                                                                                                                                                                                                                                 MouseButtonBack                   = 0x4;
+      public   const           sbyte                                                                                                                                                                                                                                 MouseButtonForward                = 0x3;
+      public   const           sbyte                                                                                                                                                                                                                                 MouseButtonLeft                   = 0x0;
+      public   const           sbyte                                                                                                                                                                                                                                 MouseButtonMiddle                 = 0x2;
+      public   const           sbyte                                                                                                                                                                                                                                 MouseButtonRight                  = 0x1;
+      public   const           sbyte                                                                                                                                                                                                                                 PenButtonBarrel                   = 0x2;
+      public   const           sbyte                                                                                                                                                                                                                                 PenButtonEraser                   = 0x1;
+      public   const           sbyte                                                                                                                                                                                                                                 PenButtonTip                      = 0x0;
+      public   static          ref readonly UnityEngine.Vector2                                                                                                                                                                                                      Scroll                            => ref Pointers.ScrollValue;
+      public   static          UnityEngine.Vector2                                                                                                                                                                                                                   ScrollDelta                       => Pointers.ScrollValue - Pointers.ScrollPreviousValue;
+      internal static          UnityEngine.Vector2                                                                                                                                                                                                                   ScrollPreviousValue               =  UnityEngine.Vector2.zero;
+      internal static          UnityEngine.Vector2                                                                                                                                                                                                                   ScrollValue                       =  UnityEngine.Vector2.zero;
+      public   static readonly System.Collections.ObjectModel.ReadOnlyCollection<PatchOdyssey.Collections.RefList<PatchOdyssey.Collections.PointerInfo>>                                                                                                             States                            = new[] {Pointers.BeginState, Pointers.CurrentState, Pointers.EndState}.AsReadOnly();
+      public   static readonly PatchOdyssey.Collections.InputStateCollection    <PatchOdyssey.Collections.PointerInfo>                                                                                                                                               Any                               = new(Pointers.States);
+      private  static readonly (PatchOdyssey.Collections.RefReadOnlyList<sbyte>, PatchOdyssey.Collections.RefReadOnlyList<sbyte> MouseButtons, PatchOdyssey.Collections.RefReadOnlyList<sbyte> PenButtons, PatchOdyssey.Collections.RefReadOnlyList<sbyte> TouchIds) All                               = ((System.Func<(PatchOdyssey.Collections.RefReadOnlyList<sbyte>, PatchOdyssey.Collections.RefReadOnlyList<sbyte>, PatchOdyssey.Collections.RefReadOnlyList<sbyte>, PatchOdyssey.Collections.RefReadOnlyList<sbyte>)>) ([PatchMethod(AggressiveInlining)] () => (
         PatchOdyssey.Collections.RefReadOnlyList<sbyte>.Empty,
         new PatchOdyssey.Collections.RefReadOnlyList<sbyte>(stackalloc[] {Pointers.MouseButtonLeft, Pointers.MouseButtonRight, Pointers.MouseButtonMiddle, Pointers.MouseButtonForward, Pointers.MouseButtonBack}),
         new PatchOdyssey.Collections.RefReadOnlyList<sbyte>(stackalloc[] {Pointers.PenButtonTip, Pointers.PenButtonEraser /* , Pointers.PenButtonBarrel… */}),
@@ -5626,6 +5643,9 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       [PatchMethod(AggressiveInlining)] public static bool IsTouchId        (long id) =>         uint.MaxValue >  id && id >= 0L;
       [PatchMethod(AggressiveInlining)] public static bool IsPointerId      (long id) =>         true;
 
+      [PatchMethod(AggressiveInlining)]
+      public static bool IsScrolling() => Pointers.ScrollValue != Pointers.ScrollPreviousValue;
+
       [PatchMethod(AggressiveInlining)] public static long MakeEnhancedTouchId(uint id) =>  (long) uint.MaxValue + (long) id;
       [PatchMethod(AggressiveInlining)] public static long MakeId             ()        =>  (long) uint.MaxValue;
       [PatchMethod(AggressiveInlining)] public static long MakeMouseId        (uint id) => -(long) id - 1L;
@@ -5634,11 +5654,59 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       [PatchMethod(AggressiveInlining)] public static long MakeTouchId        (uint id) => +(long) id;
 
       [PatchMethod(AggressiveInlining)]
+      public static UnityEngine.EventSystems.PointerEventData MakePointerEventData(UnityEngine.EventSystems.EventSystem eventSystem, in PatchOdyssey.Collections.PointerInfo pointer, UnityEngine.GameObject? gameObject = null) {
+        bool pointerIs         = Pointers.IsId(pointer.id);
+        bool pointerIsDragging = pointer.IsDragging();
+        bool pointerIsMouse    = Pointers.IsMouseId(pointer.id);
+        bool pointerIsPen      = Pointers.IsPenId  (pointer.id);
+        bool pointerIsTouch    = Pointers.IsTouchId(pointer.id);
+
+        return new(eventSystem) {
+          button = pointerIsMouse ? (int) Pointers.UnmakeMouseId(pointer.id) /* - UI.Mouse.Value.deviceId */ switch {
+            Util.Pointers.MouseButtonLeft   => UnityEngine.EventSystems.PointerEventData.InputButton.Left,
+            Util.Pointers.MouseButtonMiddle => UnityEngine.EventSystems.PointerEventData.InputButton.Middle,
+            Util.Pointers.MouseButtonRight  => UnityEngine.EventSystems.PointerEventData.InputButton.Right,
+            _                               => UnityEngine.EventSystems.PointerEventData.InputButton.Left
+          } : UnityEngine.EventSystems.PointerEventData.InputButton.Left,
+          clickCount = pointerIs ? 1    : (int) pointer.sequenced,
+          clickTime  = pointerIs ? 0.0f : UnityEngine.Time.unscaledTime,
+          delta      = pointer.delta,
+          dragging   = pointer.IsDragging(),
+          penStatus  = pointerIsPen ? (int) (Pointers.UnmakePenId(pointer.id) - Util.UI.Pen.Value.deviceId) switch {
+            >= Util.Pointers.PenButtonBarrel => UnityEngine.PenStatus.Barrel,
+            Util.Pointers.PenButtonEraser    => UnityEngine.PenStatus.Eraser,
+            Util.Pointers.PenButtonTip       => UnityEngine.PenStatus.Contact,
+            _                                => pointer.inverted ? UnityEngine.PenStatus.Inverted : UnityEngine.PenStatus.None
+          } : UnityEngine.PenStatus.None,
+          pointerClick = gameObject!,
+          pointerDrag  = pointerIsDragging ? gameObject! : null!,
+          pointerEnter = gameObject!,
+          pointerId    = pointerIsMouse ? (int) Pointers.UnmakeMouseId(pointer.id) /* - UI.Mouse.Value.deviceId */ switch {
+            Util.Pointers.MouseButtonLeft   => -1,
+            Util.Pointers.MouseButtonMiddle => -3,
+            Util.Pointers.MouseButtonRight  => -2,
+            _                               => -1
+          } : pointerIsTouch ? (int) Pointers.UnmakeTouchId(pointer.id) : -1, // ⟶ Assume left mouse button
+          pointerPress       = gameObject!,
+          position           = pointer.position,
+          pressPosition      = gameObject is not null && pointerIs ? UnityEngine.Vector2.zero : pointer.position,
+          pressure           = pointer.pressure,
+          radius             = pointerIsTouch ? pointer.radius : UnityEngine.Vector2.zero,
+          radiusVariance     = UnityEngine.Vector2.zero,
+          rawPointerPress    = gameObject!,
+          reentered          = false,
+          scrollDelta        = pointerIsMouse ? Pointers.ScrollDelta : UnityEngine.Vector2.zero,
+          tangentialPressure = System.Math.Clamp(pointer.pressure, 0.0f, 1.0f)
+        };
+      }
+
+      [PatchMethod(AggressiveInlining)]
       public static System.Collections.Generic.List<UnityEngine.UI.Graphic> Raycast(UnityEngine.UI.GraphicRaycaster raycaster, UnityEngine.EventSystems.EventSystem eventSystem, in PatchOdyssey.Collections.PointerInfo pointer) {
         System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult> raycasts = new();
 
         // …
-        raycaster.Raycast  (new(eventSystem) {position = pointer.position}, raycasts);
+
+        raycaster.Raycast  (Pointers.MakePointerEventData(eventSystem, in pointer), raycasts);
         raycasts .RemoveAll([PatchMethod(AggressiveInlining)] static (raycast) => !raycast.isValid);
 
         return raycasts.ConvertAll([PatchMethod(AggressiveInlining)] static (raycast) => raycast.gameObject.GetComponent<UnityEngine.UI.Graphic>());
@@ -5761,20 +5829,21 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
     }
 
     public static class UI {
-      internal static          bool                                                                         Blurred                            =  false;
-      private  static          PatchOdyssey.Collections.SharedLazyMono<UnityEngine.InputSystem.Keyboard>    Keyboard                           =  new(() => UnityEngine.InputSystem.Keyboard.current); // ⟶ `PatchOdyssey.Collections.DeviceState.END > Util.Keys.Modifiers.Control && Util.Keys.IsActive(PatchOdyssey.Collections.DeviceState.BEGIN, UnityEngine.KeyCode.C)`
-      private  static          PatchOdyssey.Collections.SharedLazyMono<UnityEngine.InputSystem.Mouse>       Mouse                              =  new(() => UnityEngine.InputSystem.Mouse   .current);
-      private  static          PatchOdyssey.Collections.SharedLazyMono<UnityEngine.InputSystem.Pen>         Pen                                =  new(() => UnityEngine.InputSystem.Pen     .current);
-      private  static          PatchOdyssey.Collections.SharedLazyMono<UnityEngine.InputSystem.Pointer>     Pointer                            =  new(() => UnityEngine.InputSystem.Pointer .current);
-      public   static          ref readonly UnityEngine.Vector2                                             Scroll                             => ref UI.ScrollValue;
-      private  static          UnityEngine.Vector2                                                          ScrollValue                        =  UnityEngine.Vector2.zero;
-      public   static          UnityEngine.GameObject?                                                      Tabbed                             => UI.TabIsActive ? UI.TabList[UI.TabIndex] : null;
-      private  static          float                                                                        TabDelayElapsed                    =  0.0f;
-      public   static          int                                                                          TabIndex { get; private set; }     =  -1;
-      public   static          bool                                                                         TabIsActive                        => UI.TabIndex != -1;
-      public   static          bool                                                                         TabIsBlurred { get; private set; } =  false;
-      public   static readonly System.Collections.Generic.List<UnityEngine.GameObject>                      TabList                            =  new();
-      private  static          PatchOdyssey.Collections.SharedLazyMono<UnityEngine.InputSystem.Touchscreen> Touchscreen                        =  new(() => UnityEngine.InputSystem.Touchscreen.current);
+      internal static          bool                                                                         Blurred                             =  false;
+      internal static          PatchOdyssey.Collections.SharedLazyMono<UnityEngine.InputSystem.Keyboard>    Keyboard                            =  new(() => UnityEngine.InputSystem.Keyboard.current); // ⟶ `PatchOdyssey.Collections.DeviceState.END > Util.Keys.Modifiers.Control && Util.Keys.IsActive(PatchOdyssey.Collections.DeviceState.BEGIN, UnityEngine.KeyCode.C)`
+      internal static          PatchOdyssey.Collections.SharedLazyMono<UnityEngine.InputSystem.Mouse>       Mouse                               =  new(() => UnityEngine.InputSystem.Mouse   .current);
+      internal static          PatchOdyssey.Collections.SharedLazyMono<UnityEngine.InputSystem.Pen>         Pen                                 =  new(() => UnityEngine.InputSystem.Pen     .current);
+      internal static          PatchOdyssey.Collections.SharedLazyMono<UnityEngine.InputSystem.Pointer>     Pointer                             =  new(() => UnityEngine.InputSystem.Pointer .current);
+      public   static          UnityEngine.GameObject?                                                      Tabbed                              => UI.TabIsActive ? UI.TabList[UI.TabIndex] : null;
+      private  static          float                                                                        TabDelayElapsed                     =  0.0f;
+      public   static          int                                                                          TabIndex                            =  -1;
+      public   static          bool                                                                         TabIndexPreserved                   =  false;
+      public   static          bool                                                                         TabIsActive                         => UI.TabIndex != -1;
+      public   static          bool                                                                         TabIsChanging { get; private set; } =  false;
+      public   static          bool                                                                         TabIsBlurred  { get; private set; } =  false;
+      public   static readonly System.Collections.Generic.List<UnityEngine.GameObject>                      TabList                             =  new();
+      public   static          int                                                                          TabPreviousIndex                    =  -1;
+      internal static          PatchOdyssey.Collections.SharedLazyMono<UnityEngine.InputSystem.Touchscreen> Touchscreen                         =  new(() => UnityEngine.InputSystem.Touchscreen.current);
 
       /* … */
       [PatchMethod(AggressiveInlining)]
@@ -5828,11 +5897,13 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         UI.Blur(in PatchOdyssey.Util.Pointers.CurrentState, in PatchOdyssey.Util.Pointers.EndState, PointerEquals);
       }
 
+      [PatchMethod(AggressiveInlining)] public static void BlurTabs() => UI.BlurTabs(false);
       [PatchMethod(AggressiveInlining)]
-      public static void BlurTabs() {
-        UI.TabDelayElapsed = 0.0f;
-        UI.TabIndex        = -1;
-        UI.TabIsBlurred    = true;
+      public static void BlurTabs(bool ignore) {
+        UI.TabDelayElapsed  = 0.0f;
+        UI.TabIndex         = -1;
+        UI.TabIsBlurred     = true;
+        UI.TabPreviousIndex = ignore ? -1 : UI.TabPreviousIndex;
       }
 
       internal static void Focus() {
@@ -5847,7 +5918,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
       [PatchMethod(AggressiveInlining)]
       internal static void LateUpdateKeys(double timestamp) {
-        Util.Keys.Prompted = Util.Keys.IsReleased(stackalloc[] {UnityEngine.KeyCode.KeypadEnter, UnityEngine.KeyCode.Return});
+        Util.Keys.IsPrompted = Util.Keys.IsReleased(stackalloc[] {UnityEngine.KeyCode.KeypadEnter, UnityEngine.KeyCode.Return});
       }
 
       [PatchMethod(AggressiveInlining)] internal static void LateUpdatePointers(double timestamp) {}
@@ -5863,6 +5934,9 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
             input.state++;
             destinationState?.Add     (in input);
             sourceState      .RemoveAt(index);
+
+            if (typeof(T) == typeof(PatchOdyssey.Collections.KeyInfo))     Util.Keys    .IsChanging = !(Util.Keys    .IsRemoving = destinationState is null);
+            if (typeof(T) == typeof(PatchOdyssey.Collections.PointerInfo)) Util.Pointers.IsChanging = !(Util.Pointers.IsRemoving = destinationState is null);
 
             continue;
           }
@@ -5897,18 +5971,20 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
               key is UnityEngine.InputSystem.Key key2 ? key2 == state[(uint) subindex].codes.Item2 :
               false
             ) {
-              if (invalidate) state.RemoveAt((uint) index);
-              else state[(uint) subindex].polled = true;
+              if (!invalidate) state[(uint) subindex].polled = true;
+              else { Util.Keys.IsRemoving = false; state.RemoveAt((uint) index); }
 
               break;
             }
 
-            if (!invalidate && subindex == -1)
-            state.Add(new() {codes = (
-              key is UnityEngine.KeyCode         key1 ? (key1, PatchOdyssey.Collections.KeyInfo.Translate(key1)) :
-              key is UnityEngine.InputSystem.Key key2 ? (PatchOdyssey.Collections.KeyInfo.Translate(key2), key2) :
-              (UnityEngine.KeyCode.None, UnityEngine.InputSystem.Key.None)
-            ), device = device, epoch = epoch, polled = true, state = PatchOdyssey.Collections.DeviceState.GetDeviceState(index)});
+            if (!invalidate && subindex == -1) {
+              Util.Keys.IsAdding = true;
+              state.Add(new() {codes = (
+                key is UnityEngine.KeyCode         key1 ? (key1, PatchOdyssey.Collections.KeyInfo.Translate(key1)) :
+                key is UnityEngine.InputSystem.Key key2 ? (PatchOdyssey.Collections.KeyInfo.Translate(key2), key2) :
+                (UnityEngine.KeyCode.None, UnityEngine.InputSystem.Key.None)
+              ), device = device, epoch = epoch, polled = true, state = PatchOdyssey.Collections.DeviceState.GetDeviceState(index)});
+            }
           }
         }
 
@@ -5935,6 +6011,10 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         ) polled = (PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID, PatchOdyssey.Collections.DeviceState.INVALID);
 
         /* … */
+        Util.Keys.IsAdding   = false;
+        Util.Keys.IsChanging = false;
+        Util.Keys.IsRemoving = false;
+
         if (!UI.Blurred) {
           // … ⟶ Acknowledge `UnityEngine.Input.GetKey*(…)` key binds
           fixed (UnityEngine.KeyCode* address = Util.Keys.All.Item1.Items)
@@ -6002,6 +6082,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         UI.Progress(in Util.Keys.CurrentState, Util.Keys.EndState);
         UI.Progress(in Util.Keys.BeginState,   Util.Keys.CurrentState);
 
+        Util.Keys.IsPrompted                 = PatchOdyssey.Collections.DeviceState.END == polled.NumberpadReturn || PatchOdyssey.Collections.DeviceState.END == polled.Return;
         Util.Keys.Modifiers.LeftAlt          = !polled.LeftAlt          ? Util.Keys.Modifiers.LeftAlt          + 1u : polled.LeftAlt;
         Util.Keys.Modifiers.LeftControl      = !polled.LeftControl      ? Util.Keys.Modifiers.LeftControl      + 1u : polled.LeftControl;
         Util.Keys.Modifiers.LeftMeta         = !polled.LeftMeta         ? Util.Keys.Modifiers.LeftMeta         + 1u : polled.LeftMeta;
@@ -6016,9 +6097,8 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         Util.Keys.Modifiers.RightMetaCommand = !polled.RightMetaCommand ? Util.Keys.Modifiers.RightMetaCommand + 1u : polled.RightMetaCommand;
         Util.Keys.Modifiers.RightMetaWindows = !polled.RightMetaWindows ? Util.Keys.Modifiers.RightMetaWindows + 1u : polled.RightMetaWindows;
         Util.Keys.Modifiers.RightShift       = !polled.RightShift       ? Util.Keys.Modifiers.RightShift       + 1u : polled.RightShift;
-        Util.Keys.Prompted                   = PatchOdyssey.Collections.DeviceState.END == polled.NumberpadReturn || PatchOdyssey.Collections.DeviceState.END == polled.Return;
-        Util.Keys.Specials.Escape            = !polled.Escape           ? Util.Keys.Specials .Escape           + 1u : polled.Escape;
-        Util.Keys.Specials.Tab               = !polled.Tab              ? Util.Keys.Specials .Tab              + 1u : polled.Tab;
+        Util.Keys.Specials .Escape           = !polled.Escape           ? Util.Keys.Specials .Escape           + 1u : polled.Escape;
+        Util.Keys.Specials .Tab              = !polled.Tab              ? Util.Keys.Specials .Tab              + 1u : polled.Tab;
       }
 
       internal static void UpdatePointed(double timestamp) {
@@ -6073,7 +6153,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
       internal static void UpdatePointers(double timestamp) {
         [PatchMethod(AggressiveInlining)]
-        static void PollPointers(long id, double epoch, in UnityEngine.Vector2 position, in UnityEngine.Vector2 origin, bool invalidate, in System.ReadOnlySpan<bool> states, UnityEngine.InputSystem.InputDevice? device) {
+        static void PollPointers(long id, double epoch, uint count, bool inverted, in UnityEngine.Vector2 position, float pressure, in UnityEngine.Vector2 origin, in UnityEngine.Vector2 radius, bool invalidate, in System.ReadOnlySpan<bool> states, UnityEngine.InputSystem.InputDevice? device) {
           for (uint index = PatchOdyssey.Collections.DeviceState.END; PatchOdyssey.Collections.DeviceState.BEGIN != index; )
           if (PatchOdyssey.Util.Reference<bool>.At(states, (int) --index)) {
             PatchOdyssey.Collections.RefList<PatchOdyssey.Collections.PointerInfo> state    = Util.Pointers.States[(int) index];
@@ -6085,17 +6165,36 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
               // …
               if (device == pointer.device && id == pointer.id) {
-                if (invalidate) state.RemoveAt((uint) subindex);
-                else { pointer.polled = true; pointer.position = position; }
+                if (!invalidate) {
+                  if (pointer.position != position) {
+                    Util.Pointers.IsMoving = true;
+                    pointer.positionPrevious = pointer.position;
+                  }
+
+                  pointer.inverted       = inverted;
+                  pointer.positionRecent = pointer.position;
+                  pointer.position       = position;
+                  pointer.polled         = true;
+                  pointer.pressure       = pressure;
+                  pointer.radius         = radius;
+                  pointer.sequenced      = count;
+                } else { Util.Pointers.IsRemoving = true; state.RemoveAt((uint) subindex); }
 
                 break;
               }
             }
 
-            if (!invalidate && subindex == -1)
-            state.Add(new() {device = device, epoch = epoch, id = id, origin = origin, polled = true, position = position, state = PatchOdyssey.Collections.DeviceState.GetDeviceState(index)});
+            if (!invalidate && subindex == -1) {
+              Util.Pointers.IsAdding = true;
+              state.Add(new() {device = device, epoch = epoch, id = id, inverted = inverted, origin = origin, polled = true, position = position, positionPrevious = position, positionRecent = position, pressure = pressure, radius = radius, sequenced = count, state = PatchOdyssey.Collections.DeviceState.GetDeviceState(index)});
+            }
           }
         }
+
+        // …
+        Util.Pointers.IsAdding   = false;
+        Util.Pointers.IsChanging = false;
+        Util.Pointers.IsRemoving = false;
 
         if (!UI.Blurred) {
           UnityEngine.Vector2 pointerPosition = (
@@ -6107,16 +6206,17 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
           );
 
           // …
-          UI.ScrollValue = UnityEngine.Vector2.zero;
+          Util.Pointers.ScrollPreviousValue = Util.Pointers.ScrollValue;
+          Util.Pointers.ScrollValue         = UnityEngine.Vector2.zero;
 
           // … ⟶ Acknowledge `UnityEngine.Input.GetMouse*(…)` pointer (e.g. mouse, pen, touch, e.t.c.) binds
           for (sbyte button = Util.Pointers.MouseButtonMiddle; Util.Pointers.MouseButtonLeft != button--; )
-          PollPointers(Util.Pointers.MakeMouseId((uint) button), timestamp, in pointerPosition, in pointerPosition, false, stackalloc[] {UnityEngine.Input.GetMouseButtonDown(button), UnityEngine.Input.GetMouseButton(button), UnityEngine.Input.GetMouseButtonUp(button)}, null);
+          PollPointers(Util.Pointers.MakeMouseId((uint) button), timestamp, 1u, false, in pointerPosition, 1.0f, in pointerPosition, UnityEngine.Vector2.one, false, stackalloc[] {UnityEngine.Input.GetMouseButtonDown(button), UnityEngine.Input.GetMouseButton(button), UnityEngine.Input.GetMouseButtonUp(button)}, null);
 
           // … ⟶ Acknowledge `UnityEngine.Touch` touch binds
           for (int index = UnityEngine.Input.touchCount; 0 != index--; ) {
             UnityEngine.Touch touch = UnityEngine.Input.GetTouch(index);
-            PollPointers(Util.Pointers.MakeTouchId((uint) touch.fingerId), timestamp /* ⟶ Not `UnityEngine.Touch::deltaTime` */, touch.position, touch.rawPosition, false, stackalloc[] {UnityEngine.TouchPhase.Began == touch.phase, UnityEngine.TouchPhase.Moved == touch.phase || UnityEngine.TouchPhase.Stationary == touch.phase, UnityEngine.TouchPhase.Canceled == touch.phase || UnityEngine.TouchPhase.Ended == touch.phase}, null);
+            PollPointers(Util.Pointers.MakeTouchId((uint) touch.fingerId), timestamp /* ⟶ Not `UnityEngine.Touch::deltaTime` */, (uint) touch.tapCount, false, touch.position, touch.pressure, touch.rawPosition, UnityEngine.Vector2.one * touch.radius, false, stackalloc[] {UnityEngine.TouchPhase.Began == touch.phase, UnityEngine.TouchPhase.Moved == touch.phase || UnityEngine.TouchPhase.Stationary == touch.phase, UnityEngine.TouchPhase.Canceled == touch.phase || UnityEngine.TouchPhase.Ended == touch.phase}, null);
           }
 
           // … ⟶ Acknowledge `UnityEngine.InputSystem.*` mouse binds
@@ -6126,13 +6226,13 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
             UnityEngine.Vector2 scroll   = UI.Mouse.Value.scroll  .ReadValue();
 
             // …
-            UI.ScrollValue = scroll;
+            Util.Pointers.ScrollValue = scroll;
 
-            if (UI.Mouse.Value.leftButton    is not null) PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonLeft)    /* ⟶ `UI.Mouse.Value.leftButton   .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.leftButton   .wasPressedThisFrame, UI.Mouse.Value.leftButton   .isPressed, UI.Mouse.Value.leftButton   .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
-            if (UI.Mouse.Value.middleButton  is not null) PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonMiddle)  /* ⟶ `UI.Mouse.Value.middleButton .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.middleButton .wasPressedThisFrame, UI.Mouse.Value.middleButton .isPressed, UI.Mouse.Value.middleButton .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
-            if (UI.Mouse.Value.rightButton   is not null) PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonRight)   /* ⟶ `UI.Mouse.Value.rightButton  .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.rightButton  .wasPressedThisFrame, UI.Mouse.Value.rightButton  .isPressed, UI.Mouse.Value.rightButton  .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
-            if (UI.Mouse.Value.forwardButton is not null) PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonForward) /* ⟶ `UI.Mouse.Value.forwardButton.path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.forwardButton.wasPressedThisFrame, UI.Mouse.Value.forwardButton.isPressed, UI.Mouse.Value.forwardButton.wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
-            if (UI.Mouse.Value.backButton    is not null) PollPointers(Util.Pointers.MakeTouchId(id + (uint) Util.Pointers.MouseButtonBack)    /* ⟶ `UI.Mouse.Value.backButton   .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Mouse.Value.backButton   .wasPressedThisFrame, UI.Mouse.Value.backButton   .isPressed, UI.Mouse.Value.backButton   .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
+            if (UI.Mouse.Value.leftButton    is not null) PollPointers(Util.Pointers.MakeTouchId(/* id + */ (uint) Util.Pointers.MouseButtonLeft)    /* ⟶ `UI.Mouse.Value.leftButton   .path` */, timestamp, 1u, false, in position, 1.0f, in position, UnityEngine.Vector2.one, false, stackalloc[] {UI.Mouse.Value.leftButton   .wasPressedThisFrame, UI.Mouse.Value.leftButton   .isPressed, UI.Mouse.Value.leftButton   .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
+            if (UI.Mouse.Value.middleButton  is not null) PollPointers(Util.Pointers.MakeTouchId(/* id + */ (uint) Util.Pointers.MouseButtonMiddle)  /* ⟶ `UI.Mouse.Value.middleButton .path` */, timestamp, 1u, false, in position, 1.0f, in position, UnityEngine.Vector2.one, false, stackalloc[] {UI.Mouse.Value.middleButton .wasPressedThisFrame, UI.Mouse.Value.middleButton .isPressed, UI.Mouse.Value.middleButton .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
+            if (UI.Mouse.Value.rightButton   is not null) PollPointers(Util.Pointers.MakeTouchId(/* id + */ (uint) Util.Pointers.MouseButtonRight)   /* ⟶ `UI.Mouse.Value.rightButton  .path` */, timestamp, 1u, false, in position, 1.0f, in position, UnityEngine.Vector2.one, false, stackalloc[] {UI.Mouse.Value.rightButton  .wasPressedThisFrame, UI.Mouse.Value.rightButton  .isPressed, UI.Mouse.Value.rightButton  .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
+            if (UI.Mouse.Value.forwardButton is not null) PollPointers(Util.Pointers.MakeTouchId(/* id + */ (uint) Util.Pointers.MouseButtonForward) /* ⟶ `UI.Mouse.Value.forwardButton.path` */, timestamp, 1u, false, in position, 1.0f, in position, UnityEngine.Vector2.one, false, stackalloc[] {UI.Mouse.Value.forwardButton.wasPressedThisFrame, UI.Mouse.Value.forwardButton.isPressed, UI.Mouse.Value.forwardButton.wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
+            if (UI.Mouse.Value.backButton    is not null) PollPointers(Util.Pointers.MakeTouchId(/* id + */ (uint) Util.Pointers.MouseButtonBack)    /* ⟶ `UI.Mouse.Value.backButton   .path` */, timestamp, 1u, false, in position, 1.0f, in position, UnityEngine.Vector2.one, false, stackalloc[] {UI.Mouse.Value.backButton   .wasPressedThisFrame, UI.Mouse.Value.backButton   .isPressed, UI.Mouse.Value.backButton   .wasReleasedThisFrame}, (UnityEngine.InputSystem.Mouse) UI.Mouse);
           }
 
           // … ⟶ Acknowledge `UnityEngine.InputSystem.*` pen binds
@@ -6141,12 +6241,12 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
             UnityEngine.Vector2 position = UI.Pen.Value.position.ReadValue();
 
             // …
-            if (UI.Pen.Value.tip                                        is not null) PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonTip)        /* ⟶ `UI.Pen.Value.tip                                       .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value.tip                                       .wasPressedThisFrame, UI.Pen.Value.tip                                       .isPressed, UI.Pen.Value.tip                                       .wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
-            if (UI.Pen.Value.eraser                                     is not null) PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonEraser)     /* ⟶ `UI.Pen.Value.eraser                                    .path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value.eraser                                    .wasPressedThisFrame, UI.Pen.Value.eraser                                    .isPressed, UI.Pen.Value.eraser                                    .wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
-            if (UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1] is not null) PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 0) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
-            if (UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2] is not null) PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 1) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
-            if (UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3] is not null) PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 2) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
-            if (UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4] is not null) PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 3) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].path` */, timestamp, in position, in position, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
+            if (UI.Pen.Value.tip                                        is not null) PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonTip)        /* ⟶ `UI.Pen.Value.tip                                       .path` */, timestamp, 1u, UI.Pen.Value.tip                                       .invert, in position, UI.Pen.Value.pressure.ReadValue(), in position, UnityEngine.Vector2.one, false, stackalloc[] {UI.Pen.Value.tip                                       .wasPressedThisFrame, UI.Pen.Value.tip                                       .isPressed, UI.Pen.Value.tip                                       .wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
+            if (UI.Pen.Value.eraser                                     is not null) PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonEraser)     /* ⟶ `UI.Pen.Value.eraser                                    .path` */, timestamp, 1u, UI.Pen.Value.eraser                                    .invert, in position, UI.Pen.Value.pressure.ReadValue(), in position, UnityEngine.Vector2.one, false, stackalloc[] {UI.Pen.Value.eraser                                    .wasPressedThisFrame, UI.Pen.Value.eraser                                    .isPressed, UI.Pen.Value.eraser                                    .wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
+            if (UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1] is not null) PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 0) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].path` */, timestamp, 1u, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].invert, in position, UI.Pen.Value.pressure.ReadValue(), in position, UnityEngine.Vector2.one, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel1].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
+            if (UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2] is not null) PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 1) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].path` */, timestamp, 1u, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].invert, in position, UI.Pen.Value.pressure.ReadValue(), in position, UnityEngine.Vector2.one, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel2].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
+            if (UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3] is not null) PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 2) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].path` */, timestamp, 1u, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].invert, in position, UI.Pen.Value.pressure.ReadValue(), in position, UnityEngine.Vector2.one, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel3].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
+            if (UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4] is not null) PollPointers(Util.Pointers.MakePenId(id + (uint) Util.Pointers.PenButtonBarrel + 3) /* ⟶ `UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].path` */, timestamp, 1u, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].invert, in position, UI.Pen.Value.pressure.ReadValue(), in position, UnityEngine.Vector2.one, false, stackalloc[] {UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].wasPressedThisFrame, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].isPressed, UI.Pen.Value[UnityEngine.InputSystem.PenButton.Barrel4].wasReleasedThisFrame}, (UnityEngine.InputSystem.Pen) UI.Pen);
           }
 
           // … ⟶ Acknowledge `UnityEngine.InputSystem.*` touch binds
@@ -6166,29 +6266,29 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
                 UnityEngine.InputSystem.Controls.TouchPressControl press = touch.press;
 
                 if (press is not null)
-                PollPointers(Util.Pointers.MakeTouchId((uint) touch.touchId.ReadValue()) /* ⟶ `touch.path` */, timestamp, touch.position.ReadValue(), touch.startPosition.ReadValue(), UnityEngine.InputSystem.TouchPhase.None == phase, stackalloc[] {press.wasPressedThisFrame || UnityEngine.InputSystem.TouchPhase.Began == phase, press.isPressed || UnityEngine.InputSystem.TouchPhase.Moved == phase || UnityEngine.InputSystem.TouchPhase.Stationary == phase, press.wasReleasedThisFrame || UnityEngine.InputSystem.TouchPhase.Canceled == phase || UnityEngine.InputSystem.TouchPhase.Ended == phase}, (UnityEngine.InputSystem.Touchscreen) UI.Touchscreen);
+                PollPointers(Util.Pointers.MakeTouchId((uint) touch.touchId.ReadValue()) /* ⟶ `touch.path` */, timestamp, (uint) touch.tapCount.ReadValue(), false, touch.position.ReadValue(), touch.pressure.ReadValue(), touch.startPosition.ReadValue(), touch.radius.ReadValue(), UnityEngine.InputSystem.TouchPhase.None == phase, stackalloc[] {press.wasPressedThisFrame || UnityEngine.InputSystem.TouchPhase.Began == phase, press.isPressed || UnityEngine.InputSystem.TouchPhase.Moved == phase || UnityEngine.InputSystem.TouchPhase.Stationary == phase, press.wasReleasedThisFrame || UnityEngine.InputSystem.TouchPhase.Canceled == phase || UnityEngine.InputSystem.TouchPhase.Ended == phase}, (UnityEngine.InputSystem.Touchscreen) UI.Touchscreen);
               }
 
               if (primaryTouch is not null && primaryTouchPress is not null)
-              PollPointers(Util.Pointers.MakeTouchId((uint) primaryTouch.touchId.ReadValue()) /* ⟶ `primaryTouch.path` */, timestamp, primaryTouch.position.ReadValue(), primaryTouch.startPosition.ReadValue(), UnityEngine.InputSystem.TouchPhase.None == primaryTouchPhase, stackalloc[] {primaryTouchPress.wasPressedThisFrame || UnityEngine.InputSystem.TouchPhase.Began == primaryTouchPhase, primaryTouchPress.isPressed || UnityEngine.InputSystem.TouchPhase.Moved == primaryTouchPhase || UnityEngine.InputSystem.TouchPhase.Stationary == primaryTouchPhase, primaryTouchPress.wasReleasedThisFrame || UnityEngine.InputSystem.TouchPhase.Canceled == primaryTouchPhase || UnityEngine.InputSystem.TouchPhase.Ended == primaryTouchPhase}, (UnityEngine.InputSystem.Touchscreen) UI.Touchscreen);
+              PollPointers(Util.Pointers.MakeTouchId((uint) primaryTouch.touchId.ReadValue()) /* ⟶ `primaryTouch.path` */, timestamp, (uint) primaryTouch.tapCount.ReadValue(), false, primaryTouch.position.ReadValue(), primaryTouch.pressure.ReadValue(), primaryTouch.startPosition.ReadValue(), primaryTouch.radius.ReadValue(), UnityEngine.InputSystem.TouchPhase.None == primaryTouchPhase, stackalloc[] {primaryTouchPress.wasPressedThisFrame || UnityEngine.InputSystem.TouchPhase.Began == primaryTouchPhase, primaryTouchPress.isPressed || UnityEngine.InputSystem.TouchPhase.Moved == primaryTouchPhase || UnityEngine.InputSystem.TouchPhase.Stationary == primaryTouchPhase, primaryTouchPress.wasReleasedThisFrame || UnityEngine.InputSystem.TouchPhase.Canceled == primaryTouchPhase || UnityEngine.InputSystem.TouchPhase.Ended == primaryTouchPhase}, (UnityEngine.InputSystem.Touchscreen) UI.Touchscreen);
             }
           }
 
           if (UnityEngine.InputSystem.EnhancedTouch.EnhancedTouchSupport.enabled)
           foreach (UnityEngine.InputSystem.EnhancedTouch.Touch touch in UnityEngine.InputSystem.EnhancedTouch.Touch.activeTouches) {
             UnityEngine.InputSystem.TouchPhase phase = touch.phase;
-            PollPointers(Util.Pointers.MakeEnhancedTouchId((uint) touch.touchId), touch.startTime, touch.screenPosition, touch.startScreenPosition, !touch.valid || UnityEngine.InputSystem.TouchPhase.None == phase, stackalloc[] {UnityEngine.InputSystem.TouchPhase.Began == phase, UnityEngine.InputSystem.TouchPhase.Moved == phase || UnityEngine.InputSystem.TouchPhase.Stationary == phase, UnityEngine.InputSystem.TouchPhase.Canceled == phase || UnityEngine.InputSystem.TouchPhase.Ended == phase}, (UnityEngine.InputSystem.Touchscreen) UI.Touchscreen);
+            PollPointers(Util.Pointers.MakeEnhancedTouchId((uint) touch.touchId), touch.startTime, (uint) touch.tapCount, false, touch.screenPosition, touch.pressure, touch.startScreenPosition, touch.radius, !touch.valid || UnityEngine.InputSystem.TouchPhase.None == phase, stackalloc[] {UnityEngine.InputSystem.TouchPhase.Began == phase, UnityEngine.InputSystem.TouchPhase.Moved == phase || UnityEngine.InputSystem.TouchPhase.Stationary == phase, UnityEngine.InputSystem.TouchPhase.Canceled == phase || UnityEngine.InputSystem.TouchPhase.Ended == phase}, (UnityEngine.InputSystem.Touchscreen) UI.Touchscreen);
           }
 
           // … ⟶ Acknowledge `UnityEngine.InputSystem.*` pointer binds
           if (UI.Pointer) {
             UnityEngine.Vector2 position = UI.Pointer.Value.position.ReadValue();
-            PollPointers(Util.Pointers.MakePointerId((uint) UI.Pointer.Value.deviceId) /* ⟶ Unsure about `::pointerId.ReadValue()` */, timestamp, in position, in position, false, stackalloc[] {UI.Pointer.Value.press.wasPressedThisFrame, UI.Pointer.Value.press.isPressed, UI.Pointer.Value.press.wasReleasedThisFrame}, (UnityEngine.InputSystem.Pointer) UI.Pointer);
+            PollPointers(Util.Pointers.MakePointerId((uint) UI.Pointer.Value.deviceId) /* ⟶ Unsure about `::pointerId.ReadValue()` */, timestamp, 1u, false, in position, 1.0f, in position, UnityEngine.Vector2.one, false, stackalloc[] {UI.Pointer.Value.press.wasPressedThisFrame, UI.Pointer.Value.press.isPressed, UI.Pointer.Value.press.wasReleasedThisFrame}, (UnityEngine.InputSystem.Pointer) UI.Pointer);
           }
 
           // … ⟶ Acknowledge cursor movement at least
           if (Util.Pointers.BeginState.IsEmpty() && Util.Pointers.CurrentState.IsEmpty())
-          Util.Pointers.BeginState.Add(new() {device = null, epoch = timestamp, id = Util.Pointers.MakeId(), origin = pointerPosition, polled = true, position = pointerPosition, state = PatchOdyssey.Collections.DeviceState.BEGIN});
+          Util.Pointers.BeginState.Add(new() {device = null, epoch = timestamp, id = Util.Pointers.MakeId(), inverted = false, origin = pointerPosition, polled = true, position = pointerPosition, positionPrevious = pointerPosition, positionRecent = pointerPosition, pressure = 0.0f, radius = UnityEngine.Vector2.one, sequenced = 0u, state = PatchOdyssey.Collections.DeviceState.BEGIN});
         }
 
         // … ⟶ Update prior pointers
@@ -6203,16 +6303,27 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
           return;
         }
 
+        UI.TabIsChanging = false;
+
         if (!UI.Blurred) {
-          UI.TabIsBlurred = true;
+          UI.TabIsBlurred = false;
 
           if (Util.Keys.Specials.Tab < PatchOdyssey.Collections.DeviceState.END) {
+            int   count = UI.TabList.Count;
             sbyte shift = Util.Keys.Modifiers.Shift < PatchOdyssey.Collections.DeviceState.END ? (sbyte) -1 : (sbyte) +1;
 
             // …
             if (0.0 == UI.TabDelayElapsed || Util.Keys.RepeatDelay <= UI.TabDelayElapsed) {
-              UI.TabIndex = (UI.TabIndex == -1 && shift == -1 ? UI.TabList.Count     : UI.TabIndex) + shift;
-              UI.TabIndex = (UI.TabIndex == -1                ? UI.TabList.Count - 1 : UI.TabIndex) % UI.TabList.Count;
+              if (UI.TabIndex == -1 && UI.TabIndexPreserved && UI.TabPreviousIndex < count && UI.TabPreviousIndex != -1)
+                UI.TabIndex = UI.TabPreviousIndex;
+
+              else {
+                UI.TabIndex = (UI.TabIndex == -1 && shift == -1 ? count     : UI.TabIndex) + shift;
+                UI.TabIndex = (UI.TabIndex == -1                ? count - 1 : UI.TabIndex) % UI.TabList.Count;
+              }
+
+              UI.TabIsChanging    = true;
+              UI.TabPreviousIndex = UI.TabIndex;
             }
 
             UI.TabDelayElapsed = System.Math.Min((float) Util.Keys.RepeatDelay, UI.TabDelayElapsed + (UnityEngine.Time.unscaledDeltaTime + float.Epsilon));

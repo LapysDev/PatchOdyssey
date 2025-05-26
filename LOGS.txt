@@ -140,13 +140,14 @@ May 20th, 2025 – May 22nd, 2025
 • Fixed minor bug with `UISequence` animator i.e. `(b - a) * progress` to `((b - a) * progress) + a`
 • Explicit `Util.Lerp(…)` function
 
-May 23rd, 2025 – May 24th, 2025
+May 23rd, 2025 – May 25th, 2025
 • Menu animated
 • Splash screen animated
 • Updated extension methods to support nullish coalescence
 • Menu buttons animated
 • UI selection event system completed
 • Renamed `UIKeyframe` and `UISequence` to `AnimationKeyframe` and `AnimationSequence`
+• Fixed minor bug in `AnimationSequence` interpolating the wrong `AnimationKeyframe`s
 
 📆
 • Lesson learned: Learning C# technical details and ECS is a time investment that must be planned for within the timeline of the project
