@@ -1454,8 +1454,8 @@ namespace PatchOdyssey /* ⟶ Class types and delegates */ {
       [PatchMethod(AggressiveInlining)] public          readonly bool    Equals                                                            (in PointedInfo pointed)  { PointedInfo subpointed = pointed; return subpointed.graphic == this.graphic && subpointed.pointersList.Count == this.pointersList.Count && subpointed.state == this.state && (subpointed.pointersList == this.pointersList || this.pointersList.TrueForAll((in PatchOdyssey.Collections.PointerInfo pointer) => subpointed.pointersList.Exists((PatchOdyssey.RefReadOnlyPredicate<PatchOdyssey.Collections.PointerInfo>) pointer.Equals))); }
       [PatchMethod(AggressiveInlining)] public override readonly bool    Equals                                                            (object?        value)    => value is PointedInfo pointed && this.Equals(pointed);
       [PatchMethod(AggressiveInlining)] public override readonly int     GetHashCode                                                       ()                        => System.HashCode.Combine(this.graphic, this.pointersList, this.state);
-      [PatchMethod(AggressiveInlining)] public          readonly bool    IsClicking                                                        ()                        { for (uint index = this.pointersList.Count; 0u != index--; ) { if (!this.pointersList[index].IsClicking()) return false; } return !this.pointersList.IsEmpty(); }
-      [PatchMethod(AggressiveInlining)] public          readonly bool    IsPointing                                                        ()                        { for (uint index = this.pointersList.Count; 0u != index--; ) { if  (this.pointersList[index].IsPointing()) return true; }  return false; }
+      [PatchMethod(AggressiveInlining)] public          readonly bool    IsClicking                                                        ()                        { uint count = this.pointersList.Count; for (uint index = count; 0u != index--; ) { ref readonly PatchOdyssey.Collections.PointerInfo pointer = ref this.pointersList[index]; if (Util.Pointers.IsId(pointer.id)) { --count; continue; } if (!pointer.IsClicking()) return false; } return 0u != count; }
+      [PatchMethod(AggressiveInlining)] public          readonly bool    IsPointing                                                        ()                        { uint count = this.pointersList.Count; for (uint index = count; 0u != index--; ) { ref readonly PatchOdyssey.Collections.PointerInfo pointer = ref this.pointersList[index];                                                            if ( pointer.IsPointing()) return true; }  return false; }
       [PatchMethod(AggressiveInlining)] public override readonly string? ToString                                                          ()                        => $"({(PatchOdyssey.Collections.DeviceState.BEGIN == this.state ? "↓" : PatchOdyssey.Collections.DeviceState.CURRENT == this.state ? "―" : PatchOdyssey.Collections.DeviceState.END == this.state ? "↑" : "…")}) {(this.IsClicking() ? "🖱️" : this.IsPointing() ? "👆" : "🖐️")} [{this.graphic}]";
       [PatchMethod(AggressiveInlining)] readonly bool                    PatchOdyssey.Collections.IRefEquatable<PointedInfo>.Equals        (ref PointedInfo pointed) => this.Equals(in pointed);
       [PatchMethod(AggressiveInlining)] readonly bool                    PatchOdyssey.Collections.IRefReadOnlyEquatable<PointedInfo>.Equals(in  PointedInfo pointed) => this.Equals(in pointed);
@@ -5560,6 +5560,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       public  static          UnityEngine.Color                       PointerColor                     = UnityEngine.Color.mediumSeaGreen;
       private static readonly System.Collections.Generic.List<object> Recursives                       = new(1);
       private static readonly string                                  RecursiveEntry                   = "{…}";
+      public  static          UnityEngine.Color                       RecursiveEntryColor              = UnityEngine.Color.firebrick;
       public  static          UnityEngine.Color                       StringColor                      = UnityEngine.Color.orange;
       public  static          bool                                    StringsDelimited                 = true;
       public  static          bool                                    StringsDelimitedAlways           = false;
@@ -5639,8 +5640,8 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
         }
       }
 
-      [PatchMethod(AggressiveInlining)] private static string ToString<T>(T value)                 => Log.ToString(value, false,   false);
-      [PatchMethod(AggressiveInlining)] private static string ToString<T>(T value, bool formatted) => Log.ToString(value, formatted, true);
+      [PatchMethod(AggressiveInlining)] private static string ToString<T>(T value)                 => Log.ToString(value, false,     false);
+      [PatchMethod(AggressiveInlining)] private static string ToString<T>(T value, bool formatted) => Log.ToString(value, formatted, false);
       [PatchMethod(AggressiveInlining)]
       private unsafe static string ToString<T>(in T value, bool formatted, bool recursive) {
         #pragma warning disable CS0219 // ⟶ “ThE VaRiAbLe '…' iS AsSiGnEd bUt iTs vAlUe iS NeVeR UsEd.”
@@ -5712,7 +5713,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
           // …
           if (Recur(keyframe, recursive))
-          return Log.RecursiveEntry;
+          return formatted ? $"<color=#{ColorToFormattedString(Log.RecursiveEntryColor)}>{Log.RecursiveEntry}</color>" : Log.RecursiveEntry;
 
           for (System.Collections.IDictionaryEnumerator enumerator = keyframe.properties.GetEnumerator(); enumerator.MoveNext(); )
           subvalue[index++] = (formatted ? $"<color=#{ColorToFormattedString(Log.StringColor)}>{enumerator.Key}</color>" : enumerator.Key.ToString()) + ": " + (keyframe.begin is null ? ValueToFormattedString(enumerator.Value, formatted, recursive) : $"{ValueToFormattedString(keyframe.begin![enumerator.Key], formatted, recursive)} → {ValueToFormattedString(keyframe.end![enumerator.Key], formatted, recursive)}");
@@ -5732,10 +5733,10 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
         // … ⟶ Interfaces
         if (value is PatchOdyssey.Collections.IEventHandler events) goto fallback;
-        if (value is PatchOdyssey.Collections.IMono         mono)    { if (Recur(mono,    recursive)) { return Log.RecursiveEntry; } return Log.ToString(mono.Value, formatted, recursive); }
-        if (value is PatchOdyssey.Collections.IHandlerInfo  handler) { if (Recur(handler, recursive)) { return Log.RecursiveEntry; } return formatted ? $"<b><color=#{ColorToFormattedString(Log.EnumerableColor)}>{Util.Reference<char>.First(container)}</color></b><b><color=#{ColorToFormattedString(Log.EnumerableColor)}>{Util.Reference<char>.First(container)}</color></b>{Log.ToString(handler.target, true, true)}<b><color=#{ColorToFormattedString(Log.EnumerableColor)}>{Util.Reference<char>.Last(container)}</color></b> {Log.ToString(handler.metadata, true, true)}<b><color=#{ColorToFormattedString(Log.EnumerableColor)}>{Util.Reference<char>.Last(container)}</color></b>" : $"[[{Log.ToString(handler.target, false, true)}] {Log.ToString(handler.metadata, false, true)}]"; }
+        if (value is PatchOdyssey.Collections.IMono         mono)    { if (Recur(mono,    recursive)) { return formatted ? $"<color=#{ColorToFormattedString(Log.RecursiveEntryColor)}>{Log.RecursiveEntry}</color>" : Log.RecursiveEntry; } return Log.ToString(mono.Value, formatted, true); }
+        if (value is PatchOdyssey.Collections.IHandlerInfo  handler) { if (Recur(handler, recursive)) { return formatted ? $"<color=#{ColorToFormattedString(Log.RecursiveEntryColor)}>{Log.RecursiveEntry}</color>" : Log.RecursiveEntry; } return formatted ? $"<b><color=#{ColorToFormattedString(Log.EnumerableColor)}>{Util.Reference<char>.First(container)}</color></b><b><color=#{ColorToFormattedString(Log.EnumerableColor)}>{Util.Reference<char>.First(container)}</color></b>{Log.ToString(handler.target, true, true)}<b><color=#{ColorToFormattedString(Log.EnumerableColor)}>{Util.Reference<char>.Last(container)}</color></b> {Log.ToString(handler.metadata, true, true)}<b><color=#{ColorToFormattedString(Log.EnumerableColor)}>{Util.Reference<char>.Last(container)}</color></b>" : $"[[{Log.ToString(handler.target, false, true)}] {Log.ToString(handler.metadata, false, true)}]"; }
         if (value is PatchOdyssey.Collections.IKeyValuePair pair)    valueAsTuple = new object[] {pair.Key, pair.Value!};
-        if (value is PatchOdyssey.Collections.IShared       shared)  { if (Recur(shared, recursive)) { return Log.RecursiveEntry; } return Log.ToString(shared.Value, formatted, recursive); }
+        if (value is PatchOdyssey.Collections.IShared       shared)  { if (Recur(shared, recursive)) { return formatted ? $"<color=#{ColorToFormattedString(Log.RecursiveEntryColor)}>{Log.RecursiveEntry}</color>" : Log.RecursiveEntry; } return Log.ToString(shared.Value, formatted, true); }
 
         if (value is System.Runtime.CompilerServices.ITuple tuple) {
           valueAsTuple = new object[tuple.Length];
@@ -5755,7 +5756,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
 
           // …
           if (Recur(enumerable, recursive))
-          return Log.RecursiveEntry;
+          return formatted ? $"<color=#{ColorToFormattedString(Log.RecursiveEntryColor)}>{Log.RecursiveEntry}</color>" : Log.RecursiveEntry;
 
           for (System.Collections.IEnumerator enumerator = enumerable.GetEnumerator(); ; ++count) {
             if (Log.EnumerablesMaximumEntries == count) { builder.Append(separator, 3); while (enumerator.MoveNext()) ++count; break; }
@@ -6041,6 +6042,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       internal static          PatchOdyssey.Collections.SharedLazyMono<UnityEngine.InputSystem.Mouse>       Mouse                               =  new(() => UnityEngine.InputSystem.Mouse   .current);
       internal static          PatchOdyssey.Collections.SharedLazyMono<UnityEngine.InputSystem.Pen>         Pen                                 =  new(() => UnityEngine.InputSystem.Pen     .current);
       internal static          PatchOdyssey.Collections.SharedLazyMono<UnityEngine.InputSystem.Pointer>     Pointer                             =  new(() => UnityEngine.InputSystem.Pointer .current);
+      private  static          byte                                                                         PointerAcknowledged                 =  (byte) 0u; // ⟶ Responsible for shifting the acknowledged cursor movement from `PatchOdyssey.Collections.DeviceState.BEGIN` to `PatchOdyssey.Collections.DeviceState.END`
       public   static          UnityEngine.GameObject?                                                      Tabbed                              => UI.TabIsActive ? UI.TabList[UI.TabIndex] : null;
       private  static          float                                                                        TabDelayElapsed                     =  0.0f;
       public   static          int                                                                          TabIndex                            =  -1;
@@ -6055,11 +6057,13 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       /* … */
       [PatchMethod(AggressiveInlining)]
       internal static void Blur() {
-        PatchOdyssey.Util.UI.Blurred = true;
+        UI.Blurred = true;
 
         UI.BlurKeys    ();
         UI.BlurPointers();
         UI.BlurTabs    ();
+
+        UI.PointerAcknowledged = (byte) 0u;
       }
 
       private static void Blur<T>(in PatchOdyssey.Collections.RefList<T> state, in PatchOdyssey.Collections.RefList<T> endState, PatchOdyssey.RefReadOnlyEqualityComparison<T> comparison) where T : PatchOdyssey.Collections.InputInfo {
@@ -6114,7 +6118,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       }
 
       internal static void Focus() {
-        PatchOdyssey.Util.UI.Blurred = false;
+        UI.Blurred = false;
       }
 
       [PatchMethod(AggressiveInlining)]
@@ -6134,13 +6138,49 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       [PatchMethod(AggressiveInlining)]
       private static void Progress<T>(in PatchOdyssey.Collections.RefList<T> sourceState, PatchOdyssey.Collections.RefList<T>? destinationState) where T : PatchOdyssey.Collections.InputInfo {
         for (uint index = sourceState.Count; 0u != index--; ) {
-          ref T input = ref sourceState[index];
+          int   duplicateIndex = -1;
+          ref T input          = ref sourceState[index];
 
           // …
           if (!input.polled) {
-            input.state++;
-            destinationState?.Add     (in input);
-            sourceState      .RemoveAt(index);
+            input.state++; // ⟶ From `PatchOdyssey.Collections.DeviceState.BEGIN` to `PatchOdyssey.Collections.DeviceState.END` and beyond
+
+            if (destinationState is not null) {
+              for (duplicateIndex = (int) destinationState.Count; 0 != duplicateIndex--; ) {
+                ref readonly T subinput = ref destinationState[(uint) duplicateIndex];
+
+                if (input.device == subinput.device && input.id == subinput.id)
+                break;
+              }
+
+              // … ⟶ Repress duplicates
+              if (duplicateIndex != -1) {
+                ref T preinput = ref destinationState[(uint) duplicateIndex];
+
+                // … ⟶ Update `pre`-existing `input`
+                preinput.epoch  = input.epoch;
+                preinput.polled = true;
+
+                switch (input) {
+                  case PatchOdyssey.Collections.KeyInfo key: {
+                    ref PatchOdyssey.Collections.KeyInfo prekey = ref (destinationState as PatchOdyssey.Collections.RefList<PatchOdyssey.Collections.KeyInfo>)![(uint) duplicateIndex];
+                    /* Do nothing… */
+                  } break;
+
+                  case PatchOdyssey.Collections.PointerInfo pointer: {
+                    ref PatchOdyssey.Collections.PointerInfo prepointer = ref (destinationState as PatchOdyssey.Collections.RefList<PatchOdyssey.Collections.PointerInfo>)![(uint) duplicateIndex];
+
+                    // …
+                    prepointer.origin           = pointer.origin;
+                    prepointer.positionPrevious = pointer.positionPrevious != prepointer.position ? pointer.positionPrevious : prepointer.positionPrevious;
+                    prepointer.positionRecent   = pointer.positionRecent == prepointer.positionPrevious || pointer.positionRecent == prepointer.position ? pointer.positionRecent : prepointer.positionRecent;
+                    prepointer.sequenced        = System.Math.Max(pointer.sequenced, prepointer.sequenced);
+                  } break;
+                }
+              } else destinationState.Add(in input);
+            }
+
+            sourceState.RemoveAt(index);
 
             if (typeof(T) == typeof(PatchOdyssey.Collections.KeyInfo))     Util.Keys    .IsChanging = !(Util.Keys    .IsRemoving = destinationState is null);
             if (typeof(T) == typeof(PatchOdyssey.Collections.PointerInfo)) Util.Pointers.IsChanging = !(Util.Pointers.IsRemoving = destinationState is null);
@@ -6359,6 +6399,7 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
       }
 
       internal static void UpdatePointers(double timestamp) {
+
         [PatchMethod(AggressiveInlining)]
         static void PollPointers(long id, double epoch, uint count, bool inverted, in UnityEngine.Vector2 position, float pressure, in UnityEngine.Vector2 origin, in UnityEngine.Vector2 radius, bool invalidate, in System.ReadOnlySpan<bool> states, UnityEngine.InputSystem.InputDevice? device) {
           for (uint index = PatchOdyssey.Collections.DeviceState.END; PatchOdyssey.Collections.DeviceState.BEGIN != index; )
@@ -6404,10 +6445,8 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
           foreach (ref readonly PatchOdyssey.Collections.PointerInfo pointer in state) {
             Util.Pointers.IsMoving = pointer.IsMoving();
 
-            if (Util.Pointers.IsId(pointer.id)) {
-              new stdout("RECOGNIZED");
-              continue;
-            }
+            if (Util.Pointers.IsId(pointer.id))
+            continue;
 
             Util.Pointers.IsPointing = true;
 
@@ -6538,8 +6577,10 @@ namespace PatchOdyssey /* ⟶ …everything else */ {
           }
 
           // … ⟶ Acknowledge cursor movement at least
-          if (Util.Pointers.BeginState.IsEmpty() && Util.Pointers.CurrentState.IsEmpty())
-          PollPointers(Util.Pointers.MakeId(), timestamp, 0u, false, in pointerPosition, 0.0f, in pointerPosition, UnityEngine.Vector2.one, false, stackalloc[] {true, false, false}, null);
+          if (0u != UI.PointerAcknowledged)
+            PollPointers(Util.Pointers.MakeId(), timestamp, 0u, false, in pointerPosition, 0.0f, in pointerPosition, UnityEngine.Vector2.one, false, stackalloc[] {UI.PointerAcknowledged == 1u, UI.PointerAcknowledged >= 2u, false}, null);
+
+          UI.PointerAcknowledged = (byte) System.Math.Min(UI.PointerAcknowledged + 1u, 2u);
         }
 
         // … ⟶ Update prior pointers

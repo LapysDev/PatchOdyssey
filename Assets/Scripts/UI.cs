@@ -306,13 +306,13 @@ public sealed class UI : UnityEngine.MonoBehaviour {
     UnityEngine.GameObject                                 transition       = this.components["transition"];
 
     // …
-    this.tabbedPrevious                   = Util.UI.TabIsActive ? this.tabbedPrevious : null;                                                           // ⟶ Track tabbed `UnityEngine.GameObject` objects
-    this.tabbedCurrent                    = Util.UI.TabIsActive ? this.tabbedCurrent  : null;                                                           //    ^^
-    this.canvas.additionalShaderChannels &= ~(UnityEngine.AdditionalCanvasShaderChannels.Normal | UnityEngine.AdditionalCanvasShaderChannels.Tangent);  // ⟶ Is this alright?
-    this.buttonSelectionPreviousMode      = this.buttonSelectionMode;                                                                                   //
-    this.buttonSelectionMode              = Util.Pointers.IsMoving ||  Util.Pointers.IsPointing ? UI.SelectionMode.Pointed : this.buttonSelectionMode;  // ⟶ Determine how components will be selected events-wise
-    this.buttonSelectionMode              = Util.UI.TabIsChanging  && !Util.Pointers.IsPointing ? UI.SelectionMode.Tabbed  : this.buttonSelectionMode;  // ⟶ Prioritize (digitized) tabbed because pointers are analog
-    this.buttonSelectionMode              = UI.SelectionMode.None == this.buttonSelectionMode   ? UI.SelectionMode.Pointed : this.buttonSelectionMode;  //
+    this.tabbedPrevious                   =  Util.UI.TabIsActive ? this.tabbedPrevious : null;                                                                                                                  // ⟶ Track tabbed `UnityEngine.GameObject` objects
+    this.tabbedCurrent                    =  Util.UI.TabIsActive ? this.tabbedCurrent  : null;                                                                                                                  //    ^^
+    this.canvas.additionalShaderChannels &= ~(UnityEngine.AdditionalCanvasShaderChannels.Normal | UnityEngine.AdditionalCanvasShaderChannels.Tangent);                                                          // ⟶ Is this alright?
+    this.buttonSelectionPreviousMode      =  this.buttonSelectionMode;                                                                                                                                          //
+    this.buttonSelectionMode              =  Util.Pointers.IsPointing || (Util.Pointers.IsMoving && UI.SelectionMode.Tabbed != this.buttonSelectionMode) ? UI.SelectionMode.Pointed : this.buttonSelectionMode; // ⟶ Determine how components will be selected events-wise
+    this.buttonSelectionMode              = !Util.Pointers.IsPointing && Util.UI.TabIsChanging                                                           ? UI.SelectionMode.Tabbed  : this.buttonSelectionMode; // ⟶ Prioritize (digitized) tabbed because pointers are analog
+    this.buttonSelectionMode              =  UI.SelectionMode.None == this.buttonSelectionMode                                                           ? UI.SelectionMode.Pointed : this.buttonSelectionMode; //
 
     if (this.buttonSelectionMode != this.buttonSelectionPreviousMode) /* ⟶ Acknowledge the selection mode changes */ {
       if (this.buttonSelectionMode switch {
@@ -406,119 +406,133 @@ public sealed class UI : UnityEngine.MonoBehaviour {
       }
     }
 
-    // new stdout(this.buttonSelectionMode, Util.Pointers.IsMoving, Util.Pointers.IsPointing);
-    for (uint index = (uint) this.buttons.Length; 0u != index--; ) /* ⟶ Component buttons */ {
+    for ((uint index, uint refreshIndex, bool skipped) = ((uint) this.buttons.Length, (uint) this.buttons.Length, false); 0u != index--; ) /* ⟶ Component buttons */ {
       UnityEngine.UI.Button  button                  = this.buttons               [index];
       AnimationSequence      buttonEntryAnimation    = this.buttonsEntryAnimations[index];
-      bool                   buttonIsBackPrompted    = false;
-      bool                   buttonIsForwardPrompted = false;
+      bool                   buttonIsBackPrompted    = UI.SelectionMode.Pointed == this.buttonSelectionMode && DeviceState.LEAVE == Util.Pointers.MouseButtonBackState    && button.tag == "BackButton";
+      bool                   buttonIsForwardPrompted = UI.SelectionMode.Pointed == this.buttonSelectionMode && DeviceState.LEAVE == Util.Pointers.MouseButtonForwardState && button.tag == "NextButton"; // ⟶ Doesn’t exist at the moment
       bool                   buttonIsPointed         = Util.Pointed.IsPointed(button, out PointedInfo pointed); // ⟶ `::state` is `DeviceState.UNKNOWN` by default
       bool                   buttonIsPrompted        = buttonIsBackPrompted || buttonIsForwardPrompted;
-      DeviceState            buttonPointedState      = DeviceState.UNKNOWN;
-      DeviceState            buttonTabbedState       = DeviceState.UNKNOWN;
+      DeviceState            buttonPointedState      = UI.SelectionMode.Pointed != this.buttonSelectionMode ? DeviceState.UNKNOWN : pointed.state;
+      DeviceState            buttonTabbedState       = UI.SelectionMode.Tabbed  != this.buttonSelectionMode ? DeviceState.UNKNOWN : button.gameObject == this.tabbedPrevious ? DeviceState.LEAVE : Util.UI.Tabbed == button.gameObject ? button.gameObject == this.tabbedCurrent ? DeviceState.ONGOING : DeviceState.ENTER : DeviceState.UNKNOWN;
       UnityEngine.Transform  buttonTransform         = button.transform;
+      bool                   refresh                 = false;
+      bool                   refreshed               = index > refreshIndex;
 
       // …
-      // if (buttonIsPointed && DeviceState.ENTER == pointed.state) {
-      //   this.buttonSelectionMode = UI.SelectionMode.Pointed;
-      //   buttonTabbedState        = DeviceState.UNKNOWN;
-      // }
+      if (!skipped) {
+        // … ⟶ Acknowledge further selection mode changes
+        if (DeviceState.ENTER == pointed.state)
+        refresh = true;
 
-      buttonIsBackPrompted    = UI.SelectionMode.Pointed == this.buttonSelectionMode && DeviceState.LEAVE == Util.Pointers.MouseButtonBackState    && button.tag == "BackButton";
-      buttonIsForwardPrompted = UI.SelectionMode.Pointed == this.buttonSelectionMode && DeviceState.LEAVE == Util.Pointers.MouseButtonForwardState && button.tag == "NextButton"; // ⟶ Doesn’t exist at the moment
-      buttonPointedState      = UI.SelectionMode.Pointed != this.buttonSelectionMode ? DeviceState.UNKNOWN : pointed.state;
-      buttonTabbedState       = UI.SelectionMode.Tabbed  != this.buttonSelectionMode ? DeviceState.UNKNOWN : button.gameObject == this.tabbedPrevious ? DeviceState.LEAVE : Util.UI.Tabbed == button.gameObject ? button.gameObject == this.tabbedCurrent ? DeviceState.ONGOING : DeviceState.ENTER : DeviceState.UNKNOWN;
-
-      if (Util.UI.TabIsActive || Util.UI.TabIsBlurred || buttonIsPointed || buttonIsPrompted) {
-        if ((Util.UI.TabIsChanging || buttonIsPointed || buttonIsPrompted) && !buttonEntryAnimation.isFinished) {
-          // … ⟶ Don’t be non-responsive waiting for the component button’s entry animation
-          for (uint subindex = (uint) this.buttonsEntryAnimations.Length; 0u != subindex--; )
-          this.buttonsEntryAnimations[subindex].Finish();
-        }
-
-        else if (UI.SelectionMode.None != this.buttonSelectionMode) {
-          // … ⟶ Play a sound effect when entered/ selected 🎵
-          if (
-            DeviceState.ENTER == buttonPointedState || (pointed.IsPointing() && DeviceState.BEGIN == pointed.pointerState) ||
-            DeviceState.ENTER == buttonTabbedState  || (Util.Keys.IsPrompted && DeviceState.LEAVE >  buttonTabbedState)    ||
-            buttonIsPrompted
-          ) {
-            if (this.buttonSelectedAnimation.elapsed > 0.5)
-              UI.Load.UriAsSound("click.mp3", Load.Idle); // ⟶ only play the effect if it’s been more than a half-second
-
-            this.buttonSelectedAnimation.Reset();
-
-            // … ⟶ Acknowledge tabbed from pointed
-            if (DeviceState.ENTER == buttonPointedState) {
-              for (int subindex = Util.UI.TabList.Count; 0 != subindex--; )
-              if (button.gameObject == Util.UI.TabList[subindex]) {
-                Util.UI.TabIndex         = subindex;
-                Util.UI.TabPreviousIndex = subindex;
-
-                break;
-              }
-            }
-          }
-
-          // … ⟶ Hover over animation 🎭
-          if (DeviceState.LEAVE > buttonPointedState || DeviceState.LEAVE > buttonTabbedState) {
-            float buttonAnimationTeeter = Util.Cast<float>(this.buttonSelectedAnimation["teeter"]);
-
-            // …
-            buttonTransform.localEulerAngles = this.buttonsLocalEulerAngles[index] + (Util.Vector.MaskZ(UnityEngine.Vector3.one) * buttonAnimationTeeter * 5.0f /* ⟶ in Degrees */);
-            buttonTransform.localPosition    = this.buttonsLocalPositions  [index] + (UnityEngine.Vector3.one * Util.Lerp(this.buttonSelectedAnimation.easedProgress, 0.0f, 1.0f));
-            buttonTransform.localScale       = this.buttonsLocalScales     [index] + (this.buttonsLocalScales[index] * UnityEngine.Mathf.Abs(buttonAnimationTeeter) * Util.Perc(10.0f));
-
-            if (button.tag != "MenuQuitButton") {
-              if (button.tag == "MenuButton" || button.tag == "MenuCreditsButton" || button.tag == "MenuOptionsButton" || button.tag == "MenuStartButton")
-              UI.Load.UriAsTexture("menu-button-3.png", button.SetTexture);
-            } else UI.Load.UriAsTexture("menu-button-4.png", button.SetTexture);
-          }
-
-          // … ⟶ Do stuff; be invoked‥ 💡
-          if (DeviceState.LEAVE > buttonPointedState || DeviceState.LEAVE > buttonTabbedState || buttonIsPrompted) {
-            bool buttonIsKeyPrompted     = DeviceState.LEAVE > buttonTabbedState  && Util.Keys.IsPrompted;
-            bool buttonIsPointerPrompted = DeviceState.LEAVE > buttonPointedState && pointed.IsClicking();
-
-            // …
-            if (buttonIsKeyPrompted || buttonIsPointerPrompted || buttonIsPrompted) {
-              buttonIsPrompted = true;
-
-              if (button.interactable) // ⟶ Only for posterity in lieu of `button.onClick?.Invoke()`
-              foreach (ref readonly PointerInfo pointer in pointed.pointers) {
-                if (buttonIsPointerPrompted)
-                  button.OnPointerClick(Util.Pointers.MakePointerEventData(Util.Pointed.EventSystem!, in pointer, button.gameObject));
-
-                button.OnSubmit(new(Util.Pointed.EventSystem!) {/* currentInputModule = Util.Pointed.EventSystem!.currentInputModule ?? button.GetComponent<UnityEngine.EventSystems.BaseInputModule>(), */ selectedObject = button.gameObject});
-              }
-
-              if (button.tag != "MenuQuitButton") {
-                if (button.tag == "BackButton") switch (Game.GetState()) {
-                  case Game.State.Gameplay: /* TODO (Lapys) */          break;
-                  case Game.State.Menu    : this.LoadComponent("menu"); break;
-                }
-
-                else if (button.tag == "MenuStartButton")   Game.LoadState(Game.State.Gameplay);
-                else if (button.tag == "MenuCreditsButton") this.LoadComponent("credits");
-                else if (button.tag == "MenuOptionsButton") this.LoadComponent("options");
-              } else Util.Game.Quit();
-            }
-          }
-
-          // … ⟶ Reset the component button’s state e.g. animation, ‥
-          if (DeviceState.LEAVE == buttonTabbedState || DeviceState.LEAVE == buttonPointedState || Util.UI.TabIsBlurred || buttonIsPrompted) {
-            button         .SetTexture         (this.buttonsTextures         [index]);
-            buttonTransform.SetAnchoredPosition(this.buttonsAnchoredPositions[index], fallback: true);
-
-            buttonTransform.localEulerAngles = this.buttonsLocalEulerAngles[index];
-            buttonTransform.localPosition    = this.buttonsLocalPositions  [index];
-            buttonTransform.localScale       = this.buttonsLocalScales     [index];
-          }
+        if (refresh && index < refreshIndex) {
+          this.buttonSelectionMode = UI.SelectionMode.Pointed;
+          refreshIndex             = index;
+          index                    = (uint) this.buttons.Length;
 
           continue;
         }
+
+        // …
+        if (Util.UI.TabIsActive || Util.UI.TabIsBlurred || buttonIsPointed || buttonIsPrompted) {
+          // … ⟶ Don’t be non-responsive waiting for the component button’s entry animation
+          if (!buttonEntryAnimation.isFinished && (Util.UI.TabIsChanging || buttonIsPointed || buttonIsPrompted)) {
+            for (uint subindex = (uint) this.buttonsEntryAnimations.Length; 0u != subindex--; )
+              this.buttonsEntryAnimations[subindex].Finish();
+
+            index   = (uint) this.buttons.Length;
+            skipped = true; // ⟶ Skip everything and instead acknowledge selections on the next frame
+
+            continue;
+          }
+
+          // …
+          if (UI.SelectionMode.None != this.buttonSelectionMode) {
+            // … ⟶ Play a sound effect when entered/ selected 🎵
+            if (
+              DeviceState.ENTER == buttonPointedState || (pointed.IsPointing() && DeviceState.BEGIN == pointed.pointerState) ||
+              DeviceState.ENTER == buttonTabbedState  || (Util.Keys.IsPrompted && DeviceState.LEAVE >  buttonTabbedState)    ||
+              buttonIsPrompted
+            ) {
+              if (this.buttonSelectedAnimation.elapsed > 0.5)
+                UI.Load.UriAsSound("click.mp3", Load.Idle); // ⟶ only play the effect if it’s been more than a half-second
+
+              this.buttonSelectedAnimation.Reset();
+
+              // … ⟶ Acknowledge tabbed from pointed
+              if (DeviceState.ENTER == buttonPointedState) {
+                for (int subindex = Util.UI.TabList.Count; 0 != subindex--; )
+                if (button.gameObject == Util.UI.TabList[subindex]) {
+                  Util.UI.TabIndex         = subindex;
+                  Util.UI.TabPreviousIndex = subindex;
+
+                  break;
+                }
+              }
+            }
+
+            // … ⟶ Hover over animation 🎭
+            if (DeviceState.LEAVE > buttonPointedState || DeviceState.LEAVE > buttonTabbedState) {
+              float buttonAnimationTeeter = Util.Cast<float>(this.buttonSelectedAnimation["teeter"]);
+
+              // …
+              buttonAnimationTeeter            = (index & 1) == 1 ? -buttonAnimationTeeter : +buttonAnimationTeeter;
+              buttonTransform.localEulerAngles = this.buttonsLocalEulerAngles[index] + (Util.Vector.MaskZ(UnityEngine.Vector3.one) * buttonAnimationTeeter * 5.0f /* ⟶ in Degrees */);
+              buttonTransform.localPosition    = this.buttonsLocalPositions  [index] + (UnityEngine.Vector3.one * Util.Lerp(this.buttonSelectedAnimation.easedProgress, 0.0f, 1.0f));
+              buttonTransform.localScale       = this.buttonsLocalScales     [index] + (this.buttonsLocalScales[index] * UnityEngine.Mathf.Abs(buttonAnimationTeeter) * Util.Perc(10.0f));
+
+              if (button.tag != "MenuQuitButton") {
+                if (button.tag == "MenuButton" || button.tag == "MenuCreditsButton" || button.tag == "MenuOptionsButton" || button.tag == "MenuStartButton")
+                UI.Load.UriAsTexture("menu-button-3.png", button.SetTexture);
+              } else UI.Load.UriAsTexture("menu-button-4.png", button.SetTexture);
+            }
+
+            // … ⟶ Do stuff; be invoked‥ 💡
+            if (DeviceState.LEAVE > buttonPointedState || DeviceState.LEAVE > buttonTabbedState || buttonIsPrompted) {
+              bool buttonIsKeyPrompted     = DeviceState.LEAVE > buttonTabbedState  && Util.Keys.IsPrompted;
+              bool buttonIsPointerPrompted = DeviceState.LEAVE > buttonPointedState && pointed.IsClicking();
+
+              // …
+              if (buttonIsKeyPrompted || buttonIsPointerPrompted || buttonIsPrompted) {
+                buttonIsPrompted = true;
+
+                if (button.interactable) // ⟶ Only for posterity in lieu of `button.onClick?.Invoke()`
+                foreach (ref readonly PointerInfo pointer in pointed.pointers) {
+                  if (buttonIsPointerPrompted)
+                    button.OnPointerClick(Util.Pointers.MakePointerEventData(Util.Pointed.EventSystem!, in pointer, button.gameObject));
+
+                  button.OnSubmit(new(Util.Pointed.EventSystem!) {/* currentInputModule = Util.Pointed.EventSystem!.currentInputModule ?? button.GetComponent<UnityEngine.EventSystems.BaseInputModule>(), */ selectedObject = button.gameObject});
+                }
+
+                if (button.tag != "MenuQuitButton") {
+                  if (button.tag == "BackButton") switch (Game.GetState()) {
+                    case Game.State.Gameplay: /* TODO (Lapys) */          break;
+                    case Game.State.Menu    : this.LoadComponent("menu"); break;
+                  }
+
+                  else if (button.tag == "MenuStartButton")   Game.LoadState(Game.State.Gameplay);
+                  else if (button.tag == "MenuCreditsButton") this.LoadComponent("credits");
+                  else if (button.tag == "MenuOptionsButton") this.LoadComponent("options");
+                } else Util.Game.Quit();
+              }
+            }
+
+            // … ⟶ Reset the component button’s state e.g. animation, ‥
+            if (DeviceState.LEAVE == buttonPointedState || DeviceState.LEAVE == buttonTabbedState || Util.UI.TabIsBlurred || buttonIsPrompted || this.buttonSelectionMode != this.buttonSelectionPreviousMode) {
+              button         .SetTexture         (this.buttonsTextures         [index]);
+              buttonTransform.SetAnchoredPosition(this.buttonsAnchoredPositions[index], fallback: true);
+
+              buttonTransform.localEulerAngles = this.buttonsLocalEulerAngles[index];
+              buttonTransform.localPosition    = this.buttonsLocalPositions  [index];
+              buttonTransform.localScale       = this.buttonsLocalScales     [index];
+            }
+
+            continue;
+          }
+        }
       }
 
+      // … ⟶ Entry animation
       button         .SetAlpha           (Util.Perc(100.0f) * (float) buttonEntryAnimation.progress);
       buttonTransform.SetAnchoredPosition(Util.Vector.ExcludeY(this.buttonsAnchoredPositions[index], value: this.buttonsAnchoredPositions[index].y + (Util.PercOf(buttonTransform.GetRectHeight(), 50.0f) * (float) (1.0 - buttonEntryAnimation.easedProgress))), fallback: true);
     }
