@@ -92,76 +92,85 @@ May 5th, 2025
 • There’s only ever one synchronous load in the list and it's either getting the payload or waiting for an asynchronous one.. Check if it's called up in a `repeated` `LoadUri(…)` call
 
 May 6th, 2025 – May 7th, 2025
-• …IndexFor<T>
-• …Load completed
-• Reordered Util
-• Vector2Bool, Vector3Bool, Vector4Bool
-• PatchOdyssey.Animation; PatchOdyssey.Collections; PatchOdyssey.Events; PatchOdyssey.Extensions; PatchOdyssey.Game; PatchOdyssey.Traits; PatchOdyssey.UI;
-• PatchOdyssey.Collections.KeyInfo.Translate(…)
-• KeyInfo
-• PointerInfo
-• UI system
+• `PatchOdyssey.Collections.KeyInfo` alongside `PatchOdyssey.Collections.KeyInfo.Translate(…)`
+• `PatchOdyssey.Collections.PointerInfo`
+• `PatchOdyssey.Collections.Vector2Bool`, `PatchOdyssey.Collections.Vector3Bool`, `PatchOdyssey.Collections.Vector4Bool`
+• `PatchOdyssey.*…IndexFor<T>`
+• `PatchOdyssey.*…Load` completed
+• Reordered `PatchOdyssey.Util`
+• User interface system
 
 May 8th, 2025
-• …Keyboard event system
+• Keyboard event system
 
 May 12th, 2025
-• `Log` utilities
-• `UI` utilities
-• `Shared` structure utility
-• `SharedMono` structure utility
-• Keys.IsPressed(…) easier to prototype than `Key.OnKeyPressed(…) event`
-• Keys.IsPressed, Keys.IsHeld, Keys.IsReleased
-• Keys.Modifiers, Keys.Specials
-• DeviceState structure with non-supported `Util.Reference.Compare` and `Util.Reference.Equals`
-• NoInlining for throw
-• operator false/ true
+• `PatchOdyssey.Collections.DeviceState` structure with non-supported `Util.Reference.Compare` and `Util.Reference.Equals`
+• `PatchOdyssey.Log` and `PatchOdyssey.UI` utilities
+• `PatchOdyssey.Collections.Shared` and `PatchOdyssey.Collections.SharedMono` structure utility
+• `Keys.IsPressed(…)` (as well as `Keys.IsHeld(…)`, `Keys.IsReleased(…)`) easier to prototype than some `Key.OnKeyPressed(…)` `event`
+• `Keys.Modifiers` and `Keys.Specials`
+• `NoInlining` (remember `AggressiveInlining`) for functions that `throw`
+• `operator false/ true` overloading
 
 May 13th, 2025
+• Mouse event system
 • Tabbing event system
 • `Util.Path` namespace
-• Util.Vector.Coalesce; Util.Vector.Set; Util.Vector rework
-• …Mouse event system
+• `Util.Vector` rework including `Util.Vector.Coalesce` and `Util.Vector.Set`
 
 May 14th, 2025 – May 15th, 2025
-• Edible `RefList` in Inspector. Had to learn how `UnityEngine.JsonUtility` worked — delimit each `T[]` by serialized because `T[]` isn’t serializable; and use `UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene())`
-• `LazyMono` and `SharedLazyMono` for deferred initialization
+• Edible `RefList` in Inspector. Had to learn how `UnityEngine.JsonUtility` worked — delimit each `T[]` by serialized because `T[]` itself isn’t serializable (and use `UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene())` to persist serialization)
+• `PatchOdyssey.Collections.LazyMono` and `PatchOdyssey.Collections.SharedLazyMono` for deferred initialization
 
 May 16th, 2025
-• Fixed `RefReadOnlyDictionary` wrapping for `RefDictionary` (again, bad design)
-• `UI::components` finally begun — background, combat, credits, dialogue, inventory, menu, pause, splash, tooltips (HUD), tooltips (scene)
+• Fixed `RefReadOnlyDictionary` wrapping for `RefDictionary` (again, bad initial design)
+• `UI::components` finally begun: “background”, “combat”, “credits”, “dialogue”, “inventory”, “menu”, “pause”, “splash”, “tooltips” (HUD), “tooltips” (scene)
+
+First step into a non-`PatchOdyssey` construct, I see
 
 May 19th, 2025
 • Metted `PatchOdyssey.Animation` classes into `PatchOdyssey.Collections`
-• Serialization with `UnityEngine.GameObject` didn’t work (must be main thread, not supported by default, can’t enumerate before scene load, …), fell back to manual drawing solution
+• Serialization with `UnityEngine.GameObject` didn’t work (must be main thread, not supported by default, can’t enumerate before scene load, …), temporarily fell back to manual drawing solution
 
-May 20th, 2025 – May 22nd, 2025
-• Serialization with `UnityEngine.GameObject` works now
+May 20th, 2025 – May 22nd, 2025 [BETA]
 • Fixed minor bug with `UISequence` animator i.e. `(b - a) * progress` to `((b - a) * progress) + a`
+• Serialization with `UnityEngine.GameObject` works now
 • Explicit `Util.Lerp(…)` function
 
 May 23rd, 2025 – May 25th, 2025
-• Components (including menu) animated
-• Splash screen animated
-• Updated extension methods to support nullish coalescence
-• Buttons animated
-• UI selection event system completed
-• Renamed `UIKeyframe` and `UISequence` to `AnimationKeyframe` and `AnimationSequence`
-• Fixed minor bug in `AnimationSequence` interpolating the wrong `AnimationKeyframe`s
-• Fixed minor bug with supporting both pointer and tabination for button selection
-• Serialization a la persistent save system prototyped
-• Wrote up a simple console prettifier
 • Added `Util.Log.Clear(…)`
+• Buttons animated
+• Components (including “menu”) animated
+• Fixed minor bug in `AnimationSequence` interpolating the wrong `AnimationKeyframe`s
+• Fixed minor bug with supporting both pointer and tabination devices for button selection
+• Renamed `UIKeyframe` and `UISequence` to `AnimationKeyframe` and `AnimationSequence`
+• Serialization a la persistent save system prototyped
+• Splash screen animated
+• UI selection event system completed
+• Updated extension methods to support nullish coalescence
+• Wrote up a simple console prettifier
 
 May 26th, 2025
 • Menu navigation
 • Music/ volume sliders functionality
+
+May 27th, 2025
+• Background component dynamism
 • Gameplay sequencing
+
+May 28th, 2025
+• `AnimationSequence`s as countdowns(?)
+• Let aside ECS due to deadline
+• Pause feature works
+• Quit to menu works
+• Transition includes icon
+• Unity’s “Script update consent” updated from `UnityEngine.Rigidbody.velocity` to `UnityEngine.Rigidbody.linearVelocity`
 
 📆
 • Lesson learned: Learning C# technical details and ECS is a time investment that must be planned for within the timeline of the project
 • Lesson learned: Low-level C# is more difficult to debug with Unity’s console, or work with considering Unity scarcely supports `MemoryMarshal` and `Unsafe`
 • Lesson learned: Premature optimization can be a tricky challenge to deal with i.e. “Keep It Simple, Stupid”
+• Next time going with a different game base because slow iteration times when developing are a pain
 • C# polyfilling exists because Unity uses an older .NET runtime
 
 ROADMAP_🗺️__________________________________________________________________________________________

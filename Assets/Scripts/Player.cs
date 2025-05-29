@@ -1,31 +1,45 @@
-// using PatchOdyssey;
+using PatchOdyssey;
 
-// /* … */
-// [UnityEngine.RequireComponent(typeof(UnityEngine.CapsuleCollider))]
-// public class Player : NPC {
-//   [PatchOdyssey.ReadWriteInInspector] public UnityEngine.Light?  spotlight       = null;                     // TODO (Lapys)
-//   [PatchOdyssey.ReadOnlyInInspector]  public UnityEngine.Vector3 spotlightOrigin = UnityEngine.Vector3.zero; // TODO (Lapys)
+/* … */
+public sealed class Player : Tamer {
+  public  new static readonly List<PatchEntity> Any                  = new(2u);
+  public  new const           float             HealthMaximumDefault = 125.0f;
+  private     const           float             PassiveHealAmount    = 5.0f;
 
-//   /* … */
-//   new private void Start() {
-//     base.Start();
+  public  bool              isKeyboardAndPointerPlayer => 0 == Player.Any.IndexOf(this);
+  private AnimationSequence passiveHealAnimation       =  new(1.0, AnimationSequence.Idle, AnimationSequence.Idle);
 
-//     if (null != this.spotlight)
-//     this.spotlightOrigin = this.spotlight.transform.position;
-//   }
+  /* … */
+  protected override void Awake() {
+    base.Awake();
 
-//   new private void Update() {
-//     UnityEngine.CapsuleCollider playerCollider = this.gameObject.GetComponent<UnityEngine.CapsuleCollider>();
+    this.health = this.healthMaximum = Player.HealthMaximumDefault;
+    this.team   = PatchEntity.Team.HostileMonsters;
+  }
 
-//     // …
-//     base.Update();
+  private new void OnAI() /* … ⟶ Failed the “CAPTCHA” 🤖 */ {
+    bool                  isKeyboardAndPointerPlayer = this.isKeyboardAndPointerPlayer;
+    UnityEngine.Transform transform                  = this.transform;
 
-//     playerCollider.enabled       = true;
-//     playerCollider.excludeLayers = 0x0; // → `~UnityEngine.Physics.AllLayers`
-//     playerCollider.includeLayers = 0x0; // → `~UnityEngine.Physics.AllLayers`
-//     playerCollider.isTrigger     = false;
+    // …
+    this.moveDirection = (
+      isKeyboardAndPointerPlayer && (DeviceState.RELEASE > Util.Keys.Specials.DownArrow  || DeviceState.RELEASE > Util.Keys.Specials.S) ? -UnityEngine.Vector3.forward :
+      isKeyboardAndPointerPlayer && (DeviceState.RELEASE > Util.Keys.Specials.UpArrow    || DeviceState.RELEASE > Util.Keys.Specials.W) ?  UnityEngine.Vector3.forward :
+      isKeyboardAndPointerPlayer && (DeviceState.RELEASE > Util.Keys.Specials.LeftArrow  || DeviceState.RELEASE > Util.Keys.Specials.A) ? -UnityEngine.Vector3.right   :
+      isKeyboardAndPointerPlayer && (DeviceState.RELEASE > Util.Keys.Specials.RightArrow || DeviceState.RELEASE > Util.Keys.Specials.D) ?  UnityEngine.Vector3.right   :
+      UnityEngine.Vector3.zero
+    );
+  }
 
-//     if (null != this.spotlight)
-//     this.spotlight.type = UnityEngine.LightType.Directional;
-//   }
-// }
+  public             void OnDefeated() { /* Do nothing… */ }
+  protected override void OnDestroy () { base.OnDestroy(); Player.Any.Remove(this); }
+  protected override void OnEnable  () { base.OnEnable (); Player.Any.Add   (this); }
+
+  protected override void Update() {
+    base.Update();
+
+    // … ⟶ Passive healing
+    if (this.passiveHealAnimation.isLooped)
+    PatchEntity.Heal(this, Player.PassiveHealAmount);
+  }
+}

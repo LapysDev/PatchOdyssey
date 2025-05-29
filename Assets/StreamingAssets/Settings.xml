@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding= "UTF-8"?>
 <Settings>
-  <Area>Tutorial</Area>
+  <Area>Arena</Area>
 
   <Monsters>
     <Monster>
@@ -11,6 +11,19 @@
 
   <Options>
     <Music>67.5</Music>
-    <Sound>100.0</Sound>
+    <Sound>35.0</Sound>
   </Options>
+
+  <Statistics>
+    <ArenaVisited>False</ArenaVisited>
+    <AttackCount>0</AttackCount>
+    <DefeatCount>0</DefeatCount>
+    <DistanceMoved>0.0</DistanceMoved>
+    <HasAskedName><!-- Guide, … --></HasAskedName>
+    <HighScore>0</HighScore>
+    <MonstersDefeated>0</MonstersDefeated>
+    <MonstersTamed><!-- Borka, … --></MonstersTamed>
+    <TameAttempts>0</TameAttempts>
+    <Time>0.0</Time>
+  </Statistics>
 </Settings>
