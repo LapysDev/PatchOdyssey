@@ -2,6 +2,13 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Layouts;
 
 /* … */
+#if !(NET5_0 || NET5_0_OR_GREATER)
+  namespace System.Runtime.CompilerServices {
+    // ->> `init` @ `https://web.archive.org/web/20220918192058/https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/init`
+    internal static class IsExternalInit {}
+  }
+#endif
+
 namespace PatchOdyssey {
   [UnityEngine.InputSystem.Layouts.InputControlLayout(displayName = "PatchKeyboard")] // “cOuLd nOt rEcReAtE DeViCe 'DuMmYkEyBoArD' wItH LaYoUt 'DuMmYkEyBoArD' aFtEr dOmAiN ReLoAd”
   public sealed class DummyKeyboard : UnityEngine.InputSystem.Keyboard /* , UnityEngine.InputSystem.LowLevel.ITextInputReceiver */ {
@@ -15,6 +22,7 @@ namespace PatchOdyssey {
     public  static bool                              IsPaused            { get; internal set; } = false;
     public  static bool                              IsQuitting          { get; internal set; } = false;
     public  static UnityEngine.InputSystem.Keyboard  Keyboard            { get { if (!Game.IsKeyboardAvailable && UnityEngine.InputSystem.Keyboard.current is UnityEngine.InputSystem.Keyboard keyboard) { Game._Keyboard = keyboard; Game.IsKeyboardAvailable = true; } return Game._Keyboard!; } }
+    private static UnityEngine.GameObject?           Object = null;
 
     // …
     public static bool AskToSave() => Game.AskToSave(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
@@ -55,27 +63,24 @@ namespace PatchOdyssey {
 
       // …
       #if UNITY_EDITOR
-        UnityEditor.EditorApplication.playmodeStateChanged += static () => Game.IsPaused = UnityEditor.EditorApplication.isPaused;
-        // focusChanged  Raises when the Editor gets or loses focus in the operating system.
-        // hierarchyChanged  Event that is raised when an object or group of objects in the hierarchy changes.
-        // pauseStateChanged Event that is raised whenever the Editor's pause state changes.
-        // playModeStateChanged  Event that is raised whenever the Editor's play mode state changes.
-        // projectChanged  Event that is raised whenever the state of the project changes.
-        // quitting  Unity raises this event when the editor application is quitting.
-        // updateMainWindowTitle Register a custom callback to specify how the Unity Editor title can be generated. Unity will trigger this callback when a new scene is loaded , when Unity starts or when EditorApplication.UpdateMainWindowTitle is called.
-        // wantsToQuit Unity raises this event when the editor application wants to quit.
+        UnityEditor.EditorApplication.focusChanged      += static (bool                   focused) => Game.IsPaused   = !focused; // --> !UnityEditor.EditorApplication.isFocused;
+        UnityEditor.EditorApplication.pauseStateChanged += static (UnityEditor.PauseState state)   => Game.IsPaused   =  state switch { UnityEditor.PauseState.Paused => true, UnityEditor.PauseState.Unpaused => false, _ => UnityEditor.EditorApplication.isPaused /* --> !UnityEditor.EditorApplication.isPlaying */ };
+        UnityEditor.EditorApplication.quitting          += static ()                               => Game.IsQuitting =  true;
+        UnityEditor.EditorApplication.wantsToQuit       += static ()                               => { UnityEngine.Object.Destroy(Game.Object); return true; };
       #endif
 
-      new UnityEngine.GameObject("🎮", typeof(GameBehaviour));
+      Game.Object = new UnityEngine.GameObject("🎮", typeof(GameBehaviour));
     }
   }
 
+  [Unity.Profiling.IgnoredByDeepProfiler]
   [UnityEngine.DefaultExecutionOrder(0)]
   internal sealed class GameBehaviour : UnityEngine.MonoBehaviour {
-    private void OnApplicationBlur(bool focused) => Game.IsPaused = !focused;
-    private void OnApplicationQuit()             => Game.IsQuitting = true;
-    private void OnDestroy        ()             => Game.Quit(0x1 /* --> EXIT_FAILURE */); // ->> Don’t bother continuing the application/ game if `GameBehaviour` is prematurely destroyed
-    private void Start            ()             => Game.IsLoading = true;
+    private void OnApplicationFocus(bool focused) => Game.IsPaused   = !focused;
+    private void OnApplicationPause(bool paused)  => Game.IsPaused   =  paused;
+    private void OnApplicationQuit ()             => Game.IsQuitting =  true;
+    private void OnDestroy         ()             => Game.Quit(0x1); // --> EXIT_FAILURE ->> Don’t bother continuing the application/ game if `GameBehaviour` is prematurely destroyed
+    private void Start             ()             => Game.IsLoading = true;
   }
 
   [System.AttributeUsage(System.AttributeTargets.All, AllowMultiple = false, Inherited = false)]
