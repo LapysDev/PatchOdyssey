@@ -196,10 +196,10 @@ public sealed class Player : Entity /* ->> Source file must be named â€œPlayerâ€
     if (unblurred)
     return;
 
-    // this.lasooIsDeploying = false;
-    // if (this.lasoo is not null) { this.lasoo.reach = this.lasoo.retractReach; }
+    this.lasooIsDeploying = false;
+    if (this.lasoo is not null) { this.lasoo.reach = this.lasoo.retractReach; }
 
-    // this.RetractLasoo();
+    this.RetractLasoo();
   }
 
   public void ResetLasoo() {
