@@ -16,13 +16,15 @@ namespace PatchOdyssey {
   }
 
   public sealed class Game {
-    private static UnityEngine.InputSystem.Keyboard? _Keyboard                                  = null;
-    public  static bool                              IsLoading           { get; internal set; } = false;
-    public  static bool                              IsKeyboardAvailable { get; internal set; } = false;
-    public  static bool                              IsPaused            { get; internal set; } = false;
-    public  static bool                              IsQuitting          { get; internal set; } = false;
-    public  static UnityEngine.InputSystem.Keyboard  Keyboard            { get { if (!Game.IsKeyboardAvailable && UnityEngine.InputSystem.Keyboard.current is UnityEngine.InputSystem.Keyboard keyboard) { Game._Keyboard = keyboard; Game.IsKeyboardAvailable = true; } return Game._Keyboard!; } }
-    private static UnityEngine.GameObject?           Object = null;
+    private static          UnityEngine.InputSystem.Keyboard? _Keyboard                                  = null;
+    public  static          bool                              IsLoading           { get; internal set; } = false;
+    public  static          bool                              IsKeyboardAvailable { get; internal set; } = false;
+    public  static          bool                              IsPaused            { get; internal set; } = false;
+    public  static          bool                              IsQuitting          { get; internal set; } = false;
+    public  static          UnityEngine.InputSystem.Keyboard  Keyboard            { get { if (!Game.IsKeyboardAvailable && UnityEngine.InputSystem.Keyboard.current is UnityEngine.InputSystem.Keyboard keyboard) { Game._Keyboard = keyboard; Game.IsKeyboardAvailable = true; } return Game._Keyboard!; } }
+    private static          UnityEngine.GameObject?           Object        = null;
+    public  static readonly System.Random                     Randomizer    = new();
+    public  const           float                             VectorEpsilon = 0.006f; // ->> Minimal amount to prevent Z-fighting and other false positives
 
     // …
     public static bool AskToSave() => Game.AskToSave(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
@@ -148,9 +150,10 @@ namespace PatchOdyssey {
     public static double EaseOutSine         (double time) { return System.Math.Sin((System.Math.PI * time) / 2.0); }
     public static double Linear              (double time) { return time; }
 
-    public void Finish()                 => this.timestamp = 0.0;
+    public void Finish()                 => this.timestamp =  0.0;
     public void Reset ()                 => this.Reset(Timeframe.CurrentTimestamp);
-    public void Reset (double timestamp) => this.timestamp = timestamp;
+    public void Reset (double timestamp) => this.timestamp  = timestamp;
+    public void Wait  (double duration)  => this.timestamp += duration;
   }
 
   #if UNITY_EDITOR

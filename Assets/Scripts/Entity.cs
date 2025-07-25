@@ -5,17 +5,30 @@ using PatchOdyssey;
 [UnityEngine.RequireComponent(typeof(UnityEngine.Collider))]
 [UnityEngine.RequireComponent(typeof(UnityEngine.Rigidbody))]
 public abstract class Entity : UnityEngine.MonoBehaviour {
-  [ReadOnlyInInspector]                                      private            bool                                     _dying                   = false;
-  [ReadOnlyInInspector]                                      private            UnityEngine.Collider                     _collider                = null!;
-  [ReadOnlyInInspector]                                      private            UnityEngine.Rigidbody                    _rigidBody               = null!;
-  [ReadWriteInInspector, UnityEngine.Tooltip("Must be set")] public             UnityEngine.GameObject                   bulletMeshPrefabrication = null!;
-  [ReadWriteInInspector]                                     public    new      ref readonly UnityEngine.Collider        collider                 { get { this._collider = null == this._collider ? this.GetComponent<UnityEngine.Collider>() : this._collider; /* --> base.collider */ return ref this._collider; } }
-  [ReadWriteInInspector]                                     public             bool                                     dying                    { get => this._dying; set => this._dying = this._dying || value; } // ->> Cannot be revived
-  [ReadWriteInInspector]                                     public             uint                                     health                   = 100u;
-  [ReadWriteInInspector]                                     public             float                                    movementDamping          = 1.0f;
-  [ReadWriteInInspector]                                     public    readonly System.Collections.Generic.List<Monster> monsters                 = new(1); // ->> Untamed
-  [ReadWriteInInspector]                                     public             ref readonly UnityEngine.Rigidbody       rigidBody                { get { this._rigidBody = null == this._rigidBody ? this.GetComponent<UnityEngine.Rigidbody>() : this._rigidBody; return ref this._rigidBody; } }
-  [ReadWriteInInspector]                                     public             Timeframe                                shootCooldown            = new(1.0);
+  public enum TurnDirection : byte { Anticlockwise, Clockwise }
+
+  /* … */
+  public static readonly UnityEngine.Vector3 MovementVelocityThreshold = UnityEngine.Vector3.one * 1.0f;
+
+  [ReadOnlyInInspector]                                         private          bool                                     _dying                   = false;
+  [ReadOnlyInInspector]                                         private          UnityEngine.Collider                     _collider                = null!;
+  [ReadOnlyInInspector]                                         private          UnityEngine.Rigidbody                    _rigidBody               = null!;
+  [ReadWriteInInspector]                                        public           bool                                     bounce                   = false;
+  [ReadWriteInInspector]                                        public           float                                    bounceAngle              = 10.0f; // ->> in Degrees --> 0.0f <= |bounceAngle| <= ~180.0f
+  [ReadWriteInInspector]                                        public           float                                    bounceSpeed              = 5.0f;  // ->> Degrees per second
+  [ReadOnlyInInspector]                                         public           Entity.TurnDirection                     bounceTurn               = Entity.TurnDirection.Clockwise;
+  [ReadWriteInInspector, UnityEngine.Tooltip("Must be set")]    public           UnityEngine.GameObject                   bulletMeshPrefabrication = null!;
+  [ReadWriteInInspector]                                        public  new      ref readonly UnityEngine.Collider        collider                 { get { this._collider = null == this._collider ? this.GetComponent<UnityEngine.Collider>() : this._collider; /* --> base.collider */ return ref this._collider; } }
+  [ReadWriteInInspector]                                        public           bool                                     dying                    { get => this._dying; set => this._dying = this._dying || value; } // ->> Cannot be revived
+  [ReadWriteInInspector]                                        public           uint                                     health                   = 100u;
+  [ReadWriteInInspector]                                        public  readonly System.Collections.Generic.List<Monster> monsters                 = new(1); // ->> Untamed
+  [ReadWriteInInspector, UnityEngine.Tooltip("For setup only")] public           float                                    movementDamping          = 1.0f;
+  [ReadOnlyInInspector]                                         public           UnityEngine.Vector3                      movementDirection        = UnityEngine.Vector3.zero;
+  [ReadWriteInInspector]                                        public           float                                    movementSpeed            = 1.5f;
+  [ReadWriteInInspector]                                        public           ref readonly UnityEngine.Rigidbody       rigidBody                { get { this._rigidBody = null == this._rigidBody ? this.GetComponent<UnityEngine.Rigidbody>() : this._rigidBody; return ref this._rigidBody; } }
+  [ReadWriteInInspector]                                        public           Timeframe                                shootCooldown            = new(1.0);
+  [ReadOnlyInInspector]                                         public           UnityEngine.Vector3                      turnDirection            = UnityEngine.Vector3.zero;
+  [ReadWriteInInspector]                                        public           float                                    turnSpeed                = 9.0f; // ->> Degrees per second
 
   /* … */
   protected void Awake() {
@@ -42,6 +55,38 @@ public abstract class Entity : UnityEngine.MonoBehaviour {
     this.rigidBody.linearDamping = this.movementDamping;
   }
 
-  protected virtual void OnApplicationFocus(bool _) { /* Do nothing… */ }
-  protected         void OnApplicationQuit ()       => this.OnApplicationFocus(false);
+  protected virtual void                OnApplicationFocus    (bool _)                                                   { /* Do nothing… */ }
+  protected         void                OnApplicationQuit     ()                                                         => this.OnApplicationFocus(false);
+  public    static  UnityEngine.Vector3 TurnDirectionToVector3(Entity.TurnDirection turn, UnityEngine.Vector3 direction) => turn switch { Entity.TurnDirection.Anticlockwise => -direction, Entity.TurnDirection.Clockwise => direction, _ => UnityEngine.Vector3.zero };
+
+  protected virtual void Update() {
+    UnityEngine.Vector3   rotation  = this.rigidBody.rotation.eulerAngles;
+    UnityEngine.Transform transform = this.transform;
+
+    // … ->> Bouncing
+    if (this.bounce || Entity.MovementVelocityThreshold.sqrMagnitude < this.rigidBody.linearVelocity.sqrMagnitude) {
+      this.rigidBody.MoveRotation(UnityEngine.Quaternion.Euler(
+        rotation + // ->> Apply Z-axis orientation (cumulative)
+        (Entity.TurnDirectionToVector3(this.bounceTurn, UnityEngine.Vector3.forward) * UnityEngine.Time.deltaTime * this.bounceAngle * this.bounceSpeed)
+      ));
+
+      rotation = this.rigidBody.rotation.eulerAngles;
+      rotation = new(rotation.x > 180.0f ? rotation.x - 360.0f : rotation.x, rotation.y > 180.0f ? rotation.y - 360.0f : rotation.y, rotation.z > 180.0f ? rotation.z - 360.0f : rotation.z);
+
+      // … ->> Check Z-axis orientation for `bounceAngle` threshold
+      if (UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, rotation).sqrMagnitude >= (UnityEngine.Vector3.forward * this.bounceAngle).sqrMagnitude) {
+        this.rigidBody.MoveRotation(UnityEngine.Quaternion.Euler(
+          UnityEngine.Vector3.Scale(UnityEngine.Vector3.right + UnityEngine.Vector3.up, rotation) +                               // ->> Remove Z-axis orientation
+          (Entity.TurnDirectionToVector3(this.bounceTurn, UnityEngine.Vector3.forward) * (this.bounceAngle - Game.VectorEpsilon)) // ->> Apply  Z-axis orientation
+        ));
+
+        this.bounceTurn = this.bounceTurn switch { Entity.TurnDirection.Anticlockwise => Entity.TurnDirection.Clockwise, Entity.TurnDirection.Clockwise => Entity.TurnDirection.Anticlockwise, _ => this.bounceTurn };
+      }
+    } else this.rigidBody.MoveRotation(UnityEngine.Quaternion.Slerp(
+      // ->> Remove Z-axis orientation
+      UnityEngine.Quaternion.Euler(rotation),
+      UnityEngine.Quaternion.Euler(UnityEngine.Vector3.Scale(UnityEngine.Vector3.right + UnityEngine.Vector3.up, rotation)),
+      UnityEngine.Time.deltaTime * this.bounceSpeed
+    ));
+  }
 }
