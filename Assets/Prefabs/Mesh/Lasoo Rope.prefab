@@ -85,6 +85,10 @@ PrefabInstance:
       value: Lasoo Rope
       objectReference: {fileID: 0}
     - target: {fileID: 4129356788942975847, guid: 7e44adb26e0fbff42ba341ce0bace4be, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4129356788942975847, guid: 7e44adb26e0fbff42ba341ce0bace4be, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 863cd866095116d4290be177766fac1e, type: 2}

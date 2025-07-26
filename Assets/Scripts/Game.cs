@@ -24,7 +24,7 @@ namespace PatchOdyssey {
     public  static          UnityEngine.InputSystem.Keyboard  Keyboard            { get { if (!Game.IsKeyboardAvailable && UnityEngine.InputSystem.Keyboard.current is UnityEngine.InputSystem.Keyboard keyboard) { Game._Keyboard = keyboard; Game.IsKeyboardAvailable = true; } return Game._Keyboard!; } }
     private static          UnityEngine.GameObject?           Object        = null;
     public  static readonly System.Random                     Randomizer    = new();
-    public  const           float                             VectorEpsilon = 0.075f; // ->> Minimal amount to prevent Z-fighting and other false positives
+    public  const           float                             VectorEpsilon = 0.09f; // ->> Minimal amount to prevent Z-fighting and other false positives
 
     // …
     public static bool AskToSave() => Game.AskToSave(UnityEngine.SceneManagement.SceneManager.GetActiveScene());

@@ -119,6 +119,58 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &18999360
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 18999361}
+  - component: {fileID: 18999362}
+  m_Layer: 0
+  m_Name: Assets
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 2147483647
+  m_IsActive: 1
+--- !u!4 &18999361
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 18999360}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &18999362
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 18999360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b744efe124c529f48a14de46842fa819, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  monsterBulletMeshPrefabrication: {fileID: 0}
+  playerBulletMeshPrefabrication: {fileID: 0}
+  tamerBulletMeshPrefabrication: {fileID: 0}
+  lasooCaptureIndicatorMaterial: {fileID: 2100000, guid: 8fa076447e22fa94da1fc2371a6477d9, type: 2}
+  lasooMeshPrefabrication: {fileID: 2990810272829963025, guid: 753266375a299b24f9a33caa18a512b0, type: 3}
+  lasooRopeMeshPrefabrication: {fileID: 1240481862196229341, guid: 9976ffdc76b0c7e4ba869160b244d9d6, type: 3}
+  outline: {fileID: 2100000, guid: 76a4f0befcaf3004f85864702663de6f, type: 2}
+  outlineAllowed: 0
 --- !u!1 &282482386
 GameObject:
   m_ObjectHideFlags: 0
@@ -187,12 +239,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7710f043dc0b22642a5d7e88bfaabc6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bounce: 0
+  bounceAutomatically: 0
   bounceAngle: 10
   bounceForce: 5
+  bounceIsAllowed: 1
   bounceSpeed: 5
   bounceTurn: 1
-  bulletMeshPrefabrication: {fileID: 0}
   health: 100
   movementDamping: 7
   movementDirection: {x: 0, y: 0, z: 0}
@@ -442,12 +494,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7710f043dc0b22642a5d7e88bfaabc6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bounce: 0
+  bounceAutomatically: 0
   bounceAngle: 10
   bounceForce: 5
+  bounceIsAllowed: 1
   bounceSpeed: 5
   bounceTurn: 1
-  bulletMeshPrefabrication: {fileID: 0}
   health: 100
   movementDamping: 7
   movementDirection: {x: 0, y: 0, z: 0}
@@ -660,12 +712,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d363ba72f24cb434bacdb7b2523a54cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bounce: 0
+  bounceAutomatically: 0
   bounceAngle: 15
   bounceForce: 7
+  bounceIsAllowed: 1
   bounceSpeed: 5
   bounceTurn: 1
-  bulletMeshPrefabrication: {fileID: 0}
   health: 100
   movementDamping: 4
   movementDirection: {x: 0, y: 0, z: 0}
@@ -675,16 +727,13 @@ MonoBehaviour:
   turnDirection: {x: 0, y: 0, z: 0}
   turnSpeed: 9
   lasoo: {fileID: 0}
-  lasooCaptureIndicatorMaterial: {fileID: 2100000, guid: 8fa076447e22fa94da1fc2371a6477d9, type: 2}
   lasooCaptureProgress: 0
   lasooCaptureProgressTurn: 1
   lasooDeployReach: 17.5
   lasooDeploySpeed: 7.5
   lasooIsDeploying: 0
-  lasooMeshPrefabrication: {fileID: 2990810272829963025, guid: 753266375a299b24f9a33caa18a512b0, type: 3}
   lasooRetractReach: 1
   lasooRetractSpeed: 20
-  lasooRopeMeshPrefabrication: {fileID: 1240481862196229341, guid: 9976ffdc76b0c7e4ba869160b244d9d6, type: 3}
   lasooTurnSpeed: 135
   movementRestCooldown:
     duration: 2
@@ -977,12 +1026,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7710f043dc0b22642a5d7e88bfaabc6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bounce: 0
+  bounceAutomatically: 0
   bounceAngle: 10
   bounceForce: 5
+  bounceIsAllowed: 1
   bounceSpeed: 5
   bounceTurn: 1
-  bulletMeshPrefabrication: {fileID: 0}
   health: 100
   movementDamping: 7
   movementDirection: {x: 0, y: 0, z: 0}
@@ -1219,12 +1268,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7710f043dc0b22642a5d7e88bfaabc6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bounce: 0
+  bounceAutomatically: 0
   bounceAngle: 10
   bounceForce: 5
+  bounceIsAllowed: 1
   bounceSpeed: 5
   bounceTurn: 1
-  bulletMeshPrefabrication: {fileID: 0}
   health: 100
   movementDamping: 7
   movementDirection: {x: 0, y: 0, z: 0}
@@ -1321,6 +1370,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Mesh
       objectReference: {fileID: 0}
+    - target: {fileID: 6240401338469378225, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6240401338469378225, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+      propertyPath: 'm_Materials.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 76a4f0befcaf3004f85864702663de6f, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1335,6 +1392,7 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 18999361}
   - {fileID: 330585546}
   - {fileID: 410087041}
   - {fileID: 832575519}

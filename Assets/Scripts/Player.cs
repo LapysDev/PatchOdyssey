@@ -10,30 +10,72 @@ public sealed class Lasoo : UnityEngine.MonoBehaviour /* ->> “Lasoo” is inte
   public const float RetractSpeed = 20.0f;  // ->> Units   per second
   public const float TurnSpeed    = 135.0f; // ->> Degrees per second
 
-  [ReadOnlyInInspector]                             private     UnityEngine.BoxCollider              _collider      = null!;
-  [ReadOnlyInInspector]                             public      Entity?                              capture        = null;
-  [ReadOnlyInInspector]                             public      UnityEngine.GameObject               coil           = null!; // ->> Must be set
-  [ReadWriteInInspector]                            public  new ref readonly UnityEngine.BoxCollider collider       { get { this._collider = null == this._collider ? this.GetComponent<UnityEngine.BoxCollider>() : this._collider; this._collider = null == this._collider ? this.gameObject.AddComponent<UnityEngine.BoxCollider>() : this._collider; return ref this._collider; } }
-  [ReadWriteInInspector]                            public      float                                deployReach    = Lasoo.DeployReach;
-  [ReadWriteInInspector]                            public      float                                deploySpeed    = Lasoo.DeploySpeed;
-  [ReadOnlyInInspector]                             internal    System.Func<bool>                    isDeploying    = static () => false; // --> bool*
-  [ReadOnlyInInspector]                             public      float                                reach          = Lasoo.RetractReach; // --> retractReach <= reach <= deployReach
-  [ReadOnlyInInspector, UnityEngine.SerializeField] internal    UnityEngine.Vector3                  reachDirection = UnityEngine.Vector3.forward;
-  [ReadWriteInInspector]                            public      float                                retractReach   = Lasoo.RetractReach;
-  [ReadWriteInInspector]                            public      float                                retractSpeed   = Lasoo.RetractSpeed;
-  [ReadOnlyInInspector]                             public      UnityEngine.GameObject               rope           = null!; // ->> Must be set
-  [ReadWriteInInspector]                            public      float                                turnSpeed      = Lasoo.TurnSpeed;
-  [ReadOnlyInInspector]                             public      Entity                               user           = null!; // ->> Must be set
+  [ReadOnlyInInspector]                             private     UnityEngine.BoxCollider                               _collider      = null!;
+  [ReadOnlyInInspector]                             public      Entity?                                               capture        = null;
+  [ReadOnlyInInspector]                             public      UnityEngine.GameObject                                coil           = null!; // ->> Must be set
+  [ReadWriteInInspector]                            public  new ref readonly UnityEngine.BoxCollider                  collider       { get { this._collider = null == this._collider ? this.GetComponent<UnityEngine.BoxCollider>() : this._collider; this._collider = null == this._collider ? this.gameObject.AddComponent<UnityEngine.BoxCollider>() : this._collider; return ref this._collider; } }
+  [ReadWriteInInspector]                            public      float                                                 deployReach    =  Lasoo.DeployReach;
+  [ReadWriteInInspector]                            public      float                                                 deploySpeed    =  Lasoo.DeploySpeed;
+  [ReadOnlyInInspector]                             internal    System.Func<bool>                                     isDeploying    =  static () => false; // --> bool*
+  [ReadOnlyInInspector]                             public      float                                                 reach          =  Lasoo.RetractReach; // --> retractReach <= reach <= deployReach
+  [ReadOnlyInInspector, UnityEngine.SerializeField] internal    UnityEngine.Vector3                                   reachDirection =  UnityEngine.Vector3.forward;
+  [ReadOnlyInInspector]                             public      float                                                 reachProgress  => UnityEngine.Mathf.Clamp01((this.reach - this.retractReach) / (this.deployReach - this.retractReach));
+  [ReadWriteInInspector]                            public      float                                                 retractReach   =  Lasoo.RetractReach;
+  [ReadWriteInInspector]                            public      float                                                 retractSpeed   =  Lasoo.RetractSpeed;
+  [ReadOnlyInInspector]                             public      UnityEngine.GameObject                                rope           =  null!; // ->> Must be set
+  [ReadOnlyInInspector]                             private     System.Collections.Generic.List<UnityEngine.Color>    ropeColors     =  new();
+  [ReadOnlyInInspector]                             private     System.Collections.Generic.List<UnityEngine.Material> ropeMaterials  =  new();
+  [ReadWriteInInspector]                            public      float                                                 turnSpeed      =  Lasoo.TurnSpeed;
+  [ReadOnlyInInspector]                             public      Entity                                                user           =  null!; // ->> Must be set
 
-  /* … ->> Solely responsible for revolving, scaling, and attaching to its `capture` */
+  /* … ->> Solely responsible for revolving, scaling, coloring, and attaching to its `capture` */
+  private void OnDestroy() {
+    foreach (UnityEngine.Material ropeMaterial in this.ropeMaterials)
+      UnityEngine.Object.Destroy(ropeMaterial);
+
+    this.ropeColors   .Clear();
+    this.ropeMaterials.Clear();
+  }
+
+  private void Start() {
+    UnityEngine.Transform ropeTransform = this.rope.transform;
+
+    // …
+    this.collider.enabled               = true;
+    this.collider.excludeLayers         = (UnityEngine.LayerMask) 0x0;
+    this.collider.hasModifiableContacts = false;
+    this.collider.includeLayers         = (UnityEngine.LayerMask) ~0x0;
+    this.collider.isTrigger             = true;
+    this.ropeColors                     = new(ropeTransform.hierarchyCount);
+    this.ropeMaterials                  = new(ropeTransform.hierarchyCount);
+
+    for (System.Collections.Generic.Queue<UnityEngine.Transform> transforms = new(new[] {ropeTransform}); 0 != transforms.Count; ) {
+      UnityEngine.Transform transform         = transforms.Dequeue();
+      UnityEngine.Renderer  transformRenderer = transform.GetComponent<UnityEngine.Renderer>();
+
+      // …
+      if (null != transformRenderer) {
+        this.ropeColors   .Add(transformRenderer.sharedMaterial.color);
+        this.ropeMaterials.Add(transformRenderer.material = transformRenderer.material);
+      }
+
+      foreach (UnityEngine.Transform subtransform in transform)
+      transforms.Enqueue(subtransform);
+    }
+  }
+
   private void Update() {
     UnityEngine.Transform captureTransform = this.capture?.transform!;
     UnityEngine.Vector3   reachSize        = UnityEngine.Vector3.one * (this.reach - this.retractReach);
+    UnityEngine.Renderer  ropeRenderer     = this.rope.GetComponent<UnityEngine.Renderer>();
     UnityEngine.Transform ropeTransform    = this.rope.transform;
     UnityEngine.Transform userTransform    = this.user.transform;
 
     // …
     ropeTransform.localScale = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, reachSize - UnityEngine.Vector3.one) + UnityEngine.Vector3.one;
+
+    for (int index = this.ropeMaterials.Count; 0 != index--; )
+    this.ropeMaterials[index].color = UnityEngine.Color.LerpUnclamped(this.ropeColors[index], UnityEngine.Color.red, this.reachProgress * 0.675f);
 
     if (this.capture is not null) {
       this.reach              = UnityEngine.Vector3.Distance(captureTransform.position, userTransform.position);
@@ -72,9 +114,9 @@ public sealed class Lasoo : UnityEngine.MonoBehaviour /* ->> “Lasoo” is inte
       }
 
       coilSize                     = coilBounds?.size ?? coilSize;
-      this.collider.size           = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, reachSize)                           + coilSize;
-      this.collider.center         = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, this.collider.size * -0.5f)          + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, coilSize);
-      this.reach                   = UnityEngine.Mathf.Clamp(this.reach + (UnityEngine.Time.deltaTime * (!this.isDeploying() ? -this.retractSpeed : +this.deploySpeed)), this.retractReach, this.deployReach);
+      this.collider.size           = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, reachSize)                  + coilSize;
+      this.collider.center         = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, this.collider.size * -0.5f) + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, coilSize);
+      this.reach                   = UnityEngine.Mathf.Clamp(this.reach + (UnityEngine.Time.unscaledDeltaTime * (!this.isDeploying() ? -this.retractSpeed : +this.deploySpeed)), this.retractReach, this.deployReach);
       this.reachDirection          = UnityEngine.Quaternion.Euler(UnityEngine.Vector3.up * UnityEngine.Time.unscaledDeltaTime * this.turnSpeed) * this.reachDirection;
       this.transform.position      = userTransform.position + (this.reachDirection * this.reach);
       this.transform.localRotation = UnityEngine.Quaternion.LookRotation(this.transform.localPosition - userTransform.localPosition);
@@ -98,28 +140,25 @@ public sealed class Player : Entity /* ->> Source file must be named “Player�
   private const           float                 LasooCaptureIndicatorInnerRadius   = 1.0f; // --> Player.LasooCaptureIndicatorInnerRadius < Player.LasooCaptureIndicatorOuterRadius
   private static readonly float                 LasooCaptureProgressAngle          = 360.0f / Player.LasooCaptureProgressPrecision;
 
-  [ReadOnlyInInspector]                                      private     UnityEngine.Camera?                                                       _camera                       = null;
-  [ReadOnlyInInspector]                                      private new ref readonly UnityEngine.Camera?                                          camera                        { get { this._camera = null == this._camera ? UnityEngine.Camera.main : this._camera; /* --> base.camera */ return ref this._camera; } }
-  [ReadWriteInInspector]                                     public  new UnityEngine.SphereCollider                                                collider                      => (UnityEngine.SphereCollider) base.collider;
-  [ReadOnlyInInspector]                                      public      Lasoo?                                                                    lasoo                         =  null;
-  [ReadOnlyInInspector]                                      private     UnityEngine.Vector3                                                       lasooCaptureDirection         =  UnityEngine.Vector3.zero;
-  [ReadOnlyInInspector]                                      private     (UnityEngine.MeshFilter? completed, UnityEngine.MeshFilter? progress)     lasooCaptureIndicator         =  (null, null);
-  [ReadWriteInInspector, UnityEngine.Tooltip("Must be set")] public      UnityEngine.Material                                                      lasooCaptureIndicatorMaterial =  null!;
-  [ReadOnlyInInspector]                                      private     (UnityEngine.Mesh?         completed, UnityEngine.Mesh?         progress) lasooCaptureIndicatorMesh     =  (null, null);
-  [ReadOnlyInInspector]                                      private     (UnityEngine.MeshRenderer? completed, UnityEngine.MeshRenderer? progress) lasooCaptureIndicatorRenderer =  (null, null);
-  [ReadOnlyInInspector, UnityEngine.SerializeField]          private     Player.LasooCaptureProgress                                               lasooCaptureProgress          =  Player.LasooCaptureProgress.Initiating;
-  [ReadOnlyInInspector]                                      private     UnityEngine.Vector3                                                       lasooCaptureProgressDirection =  UnityEngine.Vector3.zero;
-  [ReadOnlyInInspector, UnityEngine.SerializeField]          private     Entity.TurnDirection                                                      lasooCaptureProgressTurn      =  Entity.TurnDirection.Clockwise;
-  [ReadOnlyInInspector]                                      private     uint                                                                      lasooCaptureProgressTurnCount =  0u;
-  [ReadWriteInInspector]                                     public      float                                                                     lasooDeployReach              =  Lasoo.DeployReach;
-  [ReadWriteInInspector]                                     public      float                                                                     lasooDeploySpeed              =  Lasoo.DeploySpeed;
-  [ReadOnlyInInspector]                                      public      bool                                                                      lasooIsDeploying              =  false;
-  [ReadWriteInInspector, UnityEngine.Tooltip("Must be set")] public      UnityEngine.GameObject                                                    lasooMeshPrefabrication       =  null!;
-  [ReadWriteInInspector]                                     public      float                                                                     lasooRetractReach             =  Lasoo.RetractReach;
-  [ReadWriteInInspector]                                     public      float                                                                     lasooRetractSpeed             =  Lasoo.RetractSpeed;
-  [ReadWriteInInspector, UnityEngine.Tooltip("Must be set")] public      UnityEngine.GameObject                                                    lasooRopeMeshPrefabrication   =  null!;
-  [ReadWriteInInspector]                                     public      float                                                                     lasooTurnSpeed                =  Lasoo.TurnSpeed;
-  [ReadWriteInInspector]                                     public      Timeframe                                                                 movementRestCooldown          =  new(1.0);
+  [ReadOnlyInInspector]                             private     UnityEngine.Camera?                                                       _camera                       = null;
+  [ReadOnlyInInspector]                             private new ref readonly UnityEngine.Camera?                                          camera                        { get { this._camera = null == this._camera ? UnityEngine.Camera.main : this._camera; /* --> base.camera */ return ref this._camera; } }
+  [ReadWriteInInspector]                            public  new UnityEngine.SphereCollider                                                collider                      => (UnityEngine.SphereCollider) base.collider;
+  [ReadOnlyInInspector]                             public      Lasoo?                                                                    lasoo                         =  null;
+  [ReadOnlyInInspector]                             private     UnityEngine.Vector3                                                       lasooCaptureDirection         =  UnityEngine.Vector3.zero;
+  [ReadOnlyInInspector]                             private     (UnityEngine.MeshFilter?   completed, UnityEngine.MeshFilter?   progress) lasooCaptureIndicator         =  (null, null);
+  [ReadOnlyInInspector]                             private     (UnityEngine.Mesh?         completed, UnityEngine.Mesh?         progress) lasooCaptureIndicatorMesh     =  (null, null);
+  [ReadOnlyInInspector]                             private     (UnityEngine.MeshRenderer? completed, UnityEngine.MeshRenderer? progress) lasooCaptureIndicatorRenderer =  (null, null);
+  [ReadOnlyInInspector, UnityEngine.SerializeField] private     Player.LasooCaptureProgress                                               lasooCaptureProgress          =  Player.LasooCaptureProgress.Initiating;
+  [ReadOnlyInInspector]                             private     UnityEngine.Vector3                                                       lasooCaptureProgressDirection =  UnityEngine.Vector3.zero;
+  [ReadOnlyInInspector, UnityEngine.SerializeField] private     Entity.TurnDirection                                                      lasooCaptureProgressTurn      =  Entity.TurnDirection.Clockwise;
+  [ReadOnlyInInspector]                             private     uint                                                                      lasooCaptureProgressTurnCount =  0u;
+  [ReadWriteInInspector]                            public      float                                                                     lasooDeployReach              =  Lasoo.DeployReach;
+  [ReadWriteInInspector]                            public      float                                                                     lasooDeploySpeed              =  Lasoo.DeploySpeed;
+  [ReadOnlyInInspector]                             public      bool                                                                      lasooIsDeploying              =  false;
+  [ReadWriteInInspector]                            public      float                                                                     lasooRetractReach             =  Lasoo.RetractReach;
+  [ReadWriteInInspector]                            public      float                                                                     lasooRetractSpeed             =  Lasoo.RetractSpeed;
+  [ReadWriteInInspector]                            public      float                                                                     lasooTurnSpeed                =  Lasoo.TurnSpeed;
+  [ReadWriteInInspector]                            public      Timeframe                                                                 movementRestCooldown          =  new(1.0);
 
   /* … */
   private new void Awake() {
@@ -132,6 +171,9 @@ public sealed class Player : Entity /* ->> Source file must be named “Player�
 
   public void Capture(Entity entity) {
     this.ResetLasoo();
+
+    /* TODO */
+    this.bounceIsAllowed = false;
     UnityEngine.Debug.Log("CAPTURED");
   }
 
@@ -139,48 +181,49 @@ public sealed class Player : Entity /* ->> Source file must be named “Player�
     Lasoo                  lasoo;
     UnityEngine.GameObject lasooCoil;
     UnityEngine.GameObject lasooRope;
+    UnityEngine.Transform  transform = this.transform;
 
     // …
     if (this.lasoo is not null)
     return;
 
-    lasoo                                = new UnityEngine.GameObject("Lasoo", typeof(Lasoo)).GetComponent<Lasoo>();
-    lasooCoil                            = UnityEngine.Object.Instantiate(this.lasooMeshPrefabrication,     UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity, lasoo    .transform);
-    lasooRope                            = UnityEngine.Object.Instantiate(this.lasooRopeMeshPrefabrication, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity, lasooCoil.transform);
-    lasoo.user                           = this;
-    lasoo.turnSpeed                      = this.lasooTurnSpeed;
-    lasoo.rope                           = lasooRope;
-    lasoo.rope.name                      = "Rope";
-    lasoo.retractSpeed                   = this.lasooRetractSpeed;
-    lasoo.retractReach                   = this.lasooRetractReach;
-    lasoo.reachDirection                 = this.transform.forward;
-    lasoo.reach                          = this.lasooRetractReach; // ->> Starts at minimum
-    lasoo.isDeploying                    = () => this.lasooIsDeploying;
-    lasoo.deploySpeed                    = this.lasooDeploySpeed;
-    lasoo.deployReach                    = this.lasooDeployReach;
-    lasoo.collider.isTrigger             = true;
-    lasoo.collider.isTrigger             = true;
-    lasoo.collider.includeLayers         = (UnityEngine.LayerMask) ~0x0;
-    lasoo.collider.hasModifiableContacts = false;
-    lasoo.collider.excludeLayers         = (UnityEngine.LayerMask) 0x0;
-    lasoo.collider.enabled               = true;
-    lasoo.coil                           = lasooCoil;
-    lasoo.coil.name                      = "Knot";
+    lasoo     = new UnityEngine.GameObject("Lasoo", typeof(Lasoo)).GetComponent<Lasoo>();
+    lasooCoil = UnityEngine.Object.Instantiate(Assets.main.lasooMeshPrefabrication,     UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity, lasoo    .transform);
+    lasooRope = UnityEngine.Object.Instantiate(Assets.main.lasooRopeMeshPrefabrication, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity, lasooCoil.transform);
 
-    this.lasooCaptureIndicatorMesh    .completed                         = new() { name = "playerLasooCaptureIndicatorMesh" };
-    this.lasooCaptureIndicatorMesh    .progress                          = new() { name = "playerLasooCaptureProgressIndicatorMesh" };
-    this.lasooCaptureIndicator        .completed                         = new UnityEngine.GameObject("Indicator", typeof(UnityEngine.MeshFilter), typeof(UnityEngine.MeshRenderer)).GetComponent<UnityEngine.MeshFilter>();
-    this.lasooCaptureIndicator        .completed.sharedMesh              = this.lasooCaptureIndicatorMesh.completed;
-    this.lasooCaptureIndicator        .progress                          = new UnityEngine.GameObject("Progress",  typeof(UnityEngine.MeshFilter), typeof(UnityEngine.MeshRenderer)).GetComponent<UnityEngine.MeshFilter>();
-    this.lasooCaptureIndicator        .progress.sharedMesh               = this.lasooCaptureIndicatorMesh.progress;
-    this.lasooCaptureIndicator        .progress.transform.localPosition += UnityEngine.Vector3.up * Game.VectorEpsilon; // ->> Avoid Z-fighting
-    this.lasooCaptureIndicatorRenderer.completed                         = this.lasooCaptureIndicator.completed.GetComponent<UnityEngine.MeshRenderer>();
-    this.lasooCaptureIndicatorRenderer.progress                          = this.lasooCaptureIndicator.progress .GetComponent<UnityEngine.MeshRenderer>();
-    this.lasoo                                                           = lasoo;
+    lasoo.user                                                            = this;
+    lasoo.turnSpeed                                                       = this.lasooTurnSpeed;
+    lasoo.rope                                                            = lasooRope;
+    lasoo.rope.name                                                       = "Rope";
+    lasoo.retractSpeed                                                    = this.lasooRetractSpeed;
+    lasoo.retractReach                                                    = this.lasooRetractReach;
+    lasoo.reachDirection                                                  = UnityEngine.Quaternion.Euler(UnityEngine.Vector3.up * this.turnSpeed * -2.0f) * transform.forward;
+    lasoo.reach                                                           = this.lasooRetractReach; // ->> Starts at minimum
+    lasoo.isDeploying                                                     = () => this.lasooIsDeploying;
+    lasoo.deploySpeed                                                     = this.lasooDeploySpeed;
+    lasoo.deployReach                                                     = this.lasooDeployReach;
+    lasoo.coil                                                            = lasooCoil;
+    lasoo.coil.name                                                       = "Knot";
+    this .lasooCaptureIndicatorMesh    .completed                         = new() { name = "playerLasooCaptureIndicatorMesh" };
+    this .lasooCaptureIndicatorMesh    .progress                          = new() { name = "playerLasooCaptureProgressIndicatorMesh" };
+    this .lasooCaptureIndicator        .completed                         = new UnityEngine.GameObject("Indicator", typeof(UnityEngine.MeshFilter), typeof(UnityEngine.MeshRenderer)).GetComponent<UnityEngine.MeshFilter>();
+    this .lasooCaptureIndicator        .completed.sharedMesh              = this.lasooCaptureIndicatorMesh.completed;
+    this .lasooCaptureIndicator        .progress                          = new UnityEngine.GameObject("Progress",  typeof(UnityEngine.MeshFilter), typeof(UnityEngine.MeshRenderer)).GetComponent<UnityEngine.MeshFilter>();
+    this .lasooCaptureIndicator        .progress.sharedMesh               = this.lasooCaptureIndicatorMesh.progress;
+    this .lasooCaptureIndicator        .progress.transform.localPosition += UnityEngine.Vector3.up * Game.VectorEpsilon; // ->> Avoid Z-fighting
+    this .lasooCaptureIndicatorRenderer.completed                         = this.lasooCaptureIndicator.completed.GetComponent<UnityEngine.MeshRenderer>();
+    this .lasooCaptureIndicatorRenderer.progress                          = this.lasooCaptureIndicator.progress .GetComponent<UnityEngine.MeshRenderer>();
+    this .lasoo                                                           = lasoo;
 
-    if (this.lasooCaptureIndicatorMaterial is not null) {
-      for (int index = ((System.Runtime.CompilerServices.ITuple) this.lasooCaptureIndicator).Length; 0 != index--; )
-        ((UnityEngine.MeshRenderer) ((System.Runtime.CompilerServices.ITuple) this.lasooCaptureIndicatorRenderer)[index]).material = this.lasooCaptureIndicatorMaterial;
+    if (Assets.main.lasooCaptureIndicatorMaterial is not null) {
+      for (int index = ((System.Runtime.CompilerServices.ITuple) this.lasooCaptureIndicator).Length; 0 != index--; ) {
+        UnityEngine.MeshRenderer lasooCaptureIndicatorRenderer = (UnityEngine.MeshRenderer) ((System.Runtime.CompilerServices.ITuple) this.lasooCaptureIndicatorRenderer)[index];
+
+        // …
+        lasooCaptureIndicatorRenderer.receiveShadows    = false;
+        lasooCaptureIndicatorRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        lasooCaptureIndicatorRenderer.sharedMaterial    = Assets.main.lasooCaptureIndicatorMaterial;
+      }
 
       this.lasooCaptureIndicatorRenderer.completed.material.color = UnityEngine.Color.LerpUnclamped(this.lasooCaptureIndicatorRenderer.completed.material.color, UnityEngine.Color.black, 0.5f);
     }
@@ -189,16 +232,19 @@ public sealed class Player : Entity /* ->> Source file must be named “Player�
     this.lasooCaptureIndicatorMesh.progress           .MarkDynamic();
     this.lasooCaptureIndicator    .completed.transform.SetParent  (lasoo.transform,                                false);
     this.lasooCaptureIndicator    .progress .transform.SetParent  (this.lasooCaptureIndicator.completed.transform, false);
-    lasoo.transform                                   .SetParent  (this.transform,                                 false);
+    lasoo.transform                                   .SetParent  (transform,                                      false);
   }
 
-  protected override void OnApplicationFocus(bool unblurred) {
-    if (unblurred)
-    return;
+  protected override void OnApplicationFocus(bool focused) {
+    if (!focused) {
+      // if (this.lasoo is not null) // ->> Instant retraction
+      //   this.lasoo.reach = this.lasoo.retractReach;
 
-    this.lasooIsDeploying = false;
-    if (this.lasoo is not null) { this.lasoo.reach = this.lasoo.retractReach; }
+      // this.RetractLasoo();
+    }
+  }
 
+  private void OnDestroy() {
     this.RetractLasoo();
   }
 
@@ -257,13 +303,13 @@ public sealed class Player : Entity /* ->> Source file must be named “Player�
           UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, this.rigidBody.rotation.eulerAngles) + // ->> Remove Y-axis orientation
           UnityEngine.Vector3.Scale(UnityEngine.Vector3.up, UnityEngine.Quaternion.LookRotation(this.turnDirection).eulerAngles)    // ->> Apply  Y-axis orientation
         ),
-        UnityEngine.Time.deltaTime * this.turnSpeed
+        UnityEngine.Time.unscaledDeltaTime * this.turnSpeed
       ));
 
       // … ->> Moving
       if (UnityEngine.Vector3.zero != this.movementDirection) {
         this.movementRestCooldown.Reset   ();
-        this.rigidBody           .AddForce(this.movementDirection * this.movementSpeed, UnityEngine.ForceMode.Impulse);
+        this.rigidBody           .AddForce(this.movementDirection * this.movementSpeed * (this.lasoo is not null ? ((1.0f - this.lasoo.reachProgress) * 0.5f) + 0.5f : 1.0f), UnityEngine.ForceMode.Impulse);
 
         this.turnDirection = this.movementDirection;
       }

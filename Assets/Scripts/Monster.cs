@@ -45,16 +45,13 @@ public sealed class Monster : Entity {
     this.movementDirection = this.target is not null ? (this.target.transform.position - transform.position).normalized : UnityEngine.Vector3.zero;
 
     if (this.wrestling is not null) {
-      UnityEngine.Vector3 distance = this.wrestling.transform.position - transform.position;
-
-      // …
       this.movementDirection = -this.movementDirection;
       this.target            =  this.wrestling;
 
       if (this.wrestlingInterval.isLooped)
-      this.rigidBody.AddForce(distance.normalized * (this.wrestlingForce * (float) Game.Randomizer.NextDouble()), UnityEngine.ForceMode.Impulse);
+      this.rigidBody.AddForce((this.wrestling.transform.position - transform.position).normalized * (this.wrestlingForce * (float) Game.Randomizer.NextDouble()), UnityEngine.ForceMode.Impulse);
 
-      if (this.wrestling is Player player && distance.sqrMagnitude > (UnityEngine.Vector3.one * player.lasoo!.deployReach).sqrMagnitude)
+      if (this.wrestling is Player player && player.lasoo!.reachProgress >= 1.0f)
       player.ResetLasoo();
     } else this.wrestlingInterval.Reset();
 
@@ -66,6 +63,6 @@ public sealed class Monster : Entity {
     }
 
     if (UnityEngine.Vector3.zero != this.turnDirection)
-    this.rigidBody.MoveRotation(UnityEngine.Quaternion.Slerp(this.rigidBody.rotation, UnityEngine.Quaternion.LookRotation(this.turnDirection), UnityEngine.Time.deltaTime * this.turnSpeed));
+    this.rigidBody.MoveRotation(UnityEngine.Quaternion.Slerp(this.rigidBody.rotation, UnityEngine.Quaternion.LookRotation(this.turnDirection), UnityEngine.Time.unscaledDeltaTime * this.turnSpeed));
   }
 }
