@@ -1,5 +1,7 @@
 [UnityEngine.DisallowMultipleComponent]
-public class Assets : UnityEngine.MonoBehaviour {
+public sealed class Assets : UnityEngine.MonoBehaviour {
+  public static Assets main = null!;
+
   [UnityEngine.Header("Bullet (“Friendliness Pellet” 🌻)")]
   public UnityEngine.GameObject monsterBulletMeshPrefabrication = null!;
   public UnityEngine.GameObject playerBulletMeshPrefabrication  = null!;
@@ -11,11 +13,8 @@ public class Assets : UnityEngine.MonoBehaviour {
   public UnityEngine.GameObject lasooRopeMeshPrefabrication   = null!;
 
   [UnityEngine.Header("…")]
-  public UnityEngine.Material outline        = null!;
-  public bool                 outlineAllowed = true;
-
-  /* … */
-  public static Assets main = null!;
+  public UnityEngine.Material outline              = null!;
+  public bool                 outlineAutomatically = true;
 
   /* … */
   private void Awake() {
@@ -32,4 +31,6 @@ public class Assets : UnityEngine.MonoBehaviour {
     if (Assets.main == this)
     Assets.main = null!;
   }
+
+  private void Start() => this.gameObject.SetActive(false);
 }

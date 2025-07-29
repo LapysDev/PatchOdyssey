@@ -15,16 +15,17 @@ namespace PatchOdyssey {
     protected override void FinishSetup() => base.FinishSetup();
   }
 
-  public sealed class Game {
-    private static          UnityEngine.InputSystem.Keyboard? _Keyboard                                  = null;
-    public  static          bool                              IsLoading           { get; internal set; } = false;
-    public  static          bool                              IsKeyboardAvailable { get; internal set; } = false;
-    public  static          bool                              IsPaused            { get; internal set; } = false;
-    public  static          bool                              IsQuitting          { get; internal set; } = false;
-    public  static          UnityEngine.InputSystem.Keyboard  Keyboard            { get { if (!Game.IsKeyboardAvailable && UnityEngine.InputSystem.Keyboard.current is UnityEngine.InputSystem.Keyboard keyboard) { Game._Keyboard = keyboard; Game.IsKeyboardAvailable = true; } return Game._Keyboard!; } }
-    private static          UnityEngine.GameObject?           Object        = null;
-    public  static readonly System.Random                     Randomizer    = new();
-    public  const           float                             VectorEpsilon = 0.09f; // ->> Minimal amount to prevent Z-fighting and other false positives
+  public static class Game {
+    private static          UnityEngine.InputSystem.Keyboard?                                                                                     _Keyboard                                  = null;
+    public  static          bool                                                                                                                  IsLoading           { get; internal set; } = false;
+    public  static          bool                                                                                                                  IsKeyboardAvailable { get; internal set; } = false;
+    public  static          bool                                                                                                                  IsPaused            { get; internal set; } = false;
+    public  static          bool                                                                                                                  IsQuitting          { get; internal set; } = false;
+    public  static          UnityEngine.InputSystem.Keyboard                                                                                      Keyboard            { get { if (!Game.IsKeyboardAvailable && UnityEngine.InputSystem.Keyboard.current is UnityEngine.InputSystem.Keyboard keyboard) { Game._Keyboard = keyboard; Game.IsKeyboardAvailable = true; } return Game._Keyboard!; } }
+    private static          UnityEngine.GameObject?                                                                                               Object              = null;
+    public  static readonly System.Random                                                                                                         Randomizer          = new();
+    private static readonly System.Collections.Generic.Dictionary<System.Action<UnityEngine.Transform>, System.Func<UnityEngine.Transform, bool>> TransformTraversers = new();
+    public  const           float                                                                                                                 VectorEpsilon       = 0.09f; // ->> Minimal amount to prevent Z-fighting and other false positives
 
     // …
     public static bool AskToSave() => Game.AskToSave(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
@@ -36,6 +37,25 @@ namespace PatchOdyssey {
       #endif
 
       return false;
+    }
+
+    public static void ForEach(this UnityEngine.Transform transform, System.Action<UnityEngine.Transform> traverser) => transform.ForEach(transform => { traverser(transform); return true; });
+    public static void ForEach(this UnityEngine.Transform transform, System.Func<UnityEngine.Transform, bool> traverser) {
+      if (null == transform)
+      return;
+
+      // …
+      System.Collections.Generic.Queue<UnityEngine.Transform> transforms = new(transform.hierarchyCount);
+
+      for (transforms.Enqueue(transform); 0 != transforms.Count; )
+      for (System.Collections.IEnumerator enumerator = transforms.Dequeue().GetEnumerator(); ; ) {
+        if (enumerator.MoveNext()) {
+          UnityEngine.Transform subtransform = (UnityEngine.Transform) enumerator.Current;
+
+          if (traverser(subtransform))
+          transforms.Enqueue(subtransform);
+        } else break; // --> (enumerator as System.IDisposable)?.Dispose()
+      }
     }
 
     public static void Quit(int code = 0x0) /* --> EXIT_SUCCESS */ {
@@ -98,7 +118,7 @@ namespace PatchOdyssey {
     [System     .NonSerialized]  private readonly double                      delay         = 0.0;
     [UnityEngine.SerializeField] public           double                      duration      = 0.0;
     public                               readonly double                      easedProgress { get { double elapsed = Timeframe.CurrentTimestamp - this.timestamp; return System.Math.Min(System.Math.Round(this.delay > elapsed ? (elapsed - this.delay) / this.duration : this.duration <= elapsed - this.delay ? 1.0 : this.easing((elapsed - this.delay) / this.duration), 2, System.MidpointRounding.AwayFromZero), 1.0); } }
-    public                                        System.Func<double, double> easing        =  Timeframe.Linear;
+    public                                        System.Func<double, double> easing        =  Timeframe.Linear; // --> UnityEngine.AnimationCurve
     public                               readonly double                      elapsed       => Timeframe.CurrentTimestamp >= this.timestamp ? Timeframe.CurrentTimestamp - this.timestamp : 0.0;
     public                               readonly bool                        isElapsed     => Timeframe.CurrentTimestamp >= this.timestamp + this.duration + this.delay;
     public                                        bool                        isLooped      { get { double duration = this.delay + this.duration; if (0.0 != duration) { if (Timeframe.CurrentTimestamp > duration + this.timestamp) { this.timestamp += duration * (1uL + (ulong) ((Timeframe.CurrentTimestamp - (duration + this.timestamp)) / duration)); return true; } return false; } return true; } }

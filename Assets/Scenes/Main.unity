@@ -170,7 +170,7 @@ MonoBehaviour:
   lasooMeshPrefabrication: {fileID: 2990810272829963025, guid: 753266375a299b24f9a33caa18a512b0, type: 3}
   lasooRopeMeshPrefabrication: {fileID: 1240481862196229341, guid: 9976ffdc76b0c7e4ba869160b244d9d6, type: 3}
   outline: {fileID: 2100000, guid: 76a4f0befcaf3004f85864702663de6f, type: 2}
-  outlineAllowed: 0
+  outlineAutomatically: 1
 --- !u!1 &282482386
 GameObject:
   m_ObjectHideFlags: 0
@@ -239,27 +239,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7710f043dc0b22642a5d7e88bfaabc6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bounceAutomatically: 0
   bounceAngle: 10
-  bounceForce: 5
-  bounceIsAllowed: 1
+  bounceAutomatically: 1
+  bounceForce: 1
   bounceSpeed: 5
   bounceTurn: 1
+  defeatedPosition: {x: 0, y: 0, z: 0}
+  defeatTimeout:
+    duration: 4
+  followers: []
+  following: {fileID: 0}
   health: 100
+  moveAutomatically: 1
   movementDamping: 7
   movementDirection: {x: 0, y: 0, z: 0}
+  movementRestCooldown:
+    duration: 0
+  movementRestDuration: 1.5
+  movementRestDurationRandomness: 0.75
   movementSpeed: 15
+  movementSpeedFactor: 1
+  movementSpeedRandomnessFactor: 0.3
   shootCooldown:
     duration: 1
+  target: {fileID: 0}
+  targetBerth: 2.25
   turnDirection: {x: 0, y: 0, z: 0}
   turnSpeed: 9
-  tamer: {fileID: 0}
-  target: {fileID: 0}
-  targetBerth: 2
-  movementInterval:
-    duration: 1.5
+  mountAutomatically: 1
   wrestling: {fileID: 0}
-  wrestlingForce: 1
+  wrestlingForce: 30
   wrestlingInterval:
     duration: 3
 --- !u!54 &282482390
@@ -494,25 +503,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7710f043dc0b22642a5d7e88bfaabc6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bounceAutomatically: 0
   bounceAngle: 10
-  bounceForce: 5
-  bounceIsAllowed: 1
+  bounceAutomatically: 1
+  bounceForce: 1
   bounceSpeed: 5
   bounceTurn: 1
+  defeatedPosition: {x: 0, y: 0, z: 0}
+  defeatTimeout:
+    duration: 4
+  followers: []
+  following: {fileID: 0}
   health: 100
+  moveAutomatically: 1
   movementDamping: 7
   movementDirection: {x: 0, y: 0, z: 0}
+  movementRestCooldown:
+    duration: 0
+  movementRestDuration: 1.5
+  movementRestDurationRandomness: 0.75
   movementSpeed: 15
+  movementSpeedFactor: 1
+  movementSpeedRandomnessFactor: 0.3
   shootCooldown:
     duration: 1
+  target: {fileID: 0}
+  targetBerth: 2.25
   turnDirection: {x: 0, y: 0, z: 0}
   turnSpeed: 9
-  tamer: {fileID: 0}
-  target: {fileID: 0}
-  targetBerth: 2
-  movementInterval:
-    duration: 1.5
+  mountAutomatically: 1
   wrestling: {fileID: 0}
   wrestlingForce: 30
   wrestlingInterval:
@@ -712,18 +730,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d363ba72f24cb434bacdb7b2523a54cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bounceAutomatically: 0
   bounceAngle: 15
-  bounceForce: 7
-  bounceIsAllowed: 1
+  bounceAutomatically: 1
+  bounceForce: 0.5
   bounceSpeed: 5
   bounceTurn: 1
+  defeatedPosition: {x: 0, y: 0, z: 0}
+  defeatTimeout:
+    duration: 4
+  followers: []
+  following: {fileID: 0}
   health: 100
+  moveAutomatically: 1
   movementDamping: 4
   movementDirection: {x: 0, y: 0, z: 0}
-  movementSpeed: 2
+  movementRestCooldown:
+    duration: 2
+  movementRestDuration: 2
+  movementRestDurationRandomness: 0
+  movementSpeed: 1.825
+  movementSpeedFactor: 1
+  movementSpeedRandomnessFactor: 0
   shootCooldown:
     duration: 1
+  target: {fileID: 0}
+  targetBerth: 0
   turnDirection: {x: 0, y: 0, z: 0}
   turnSpeed: 9
   lasoo: {fileID: 0}
@@ -735,8 +766,8 @@ MonoBehaviour:
   lasooRetractReach: 1
   lasooRetractSpeed: 20
   lasooTurnSpeed: 135
-  movementRestCooldown:
-    duration: 2
+  releaseWindow:
+    duration: 1
 --- !u!54 &426952051
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1026,27 +1057,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7710f043dc0b22642a5d7e88bfaabc6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bounceAutomatically: 0
   bounceAngle: 10
-  bounceForce: 5
-  bounceIsAllowed: 1
+  bounceAutomatically: 1
+  bounceForce: 1
   bounceSpeed: 5
   bounceTurn: 1
+  defeatedPosition: {x: 0, y: 0, z: 0}
+  defeatTimeout:
+    duration: 4
+  followers: []
+  following: {fileID: 0}
   health: 100
+  moveAutomatically: 1
   movementDamping: 7
   movementDirection: {x: 0, y: 0, z: 0}
+  movementRestCooldown:
+    duration: 0
+  movementRestDuration: 1.5
+  movementRestDurationRandomness: 0.75
   movementSpeed: 15
+  movementSpeedFactor: 1
+  movementSpeedRandomnessFactor: 0.3
   shootCooldown:
     duration: 1
+  target: {fileID: 0}
+  targetBerth: 2.25
   turnDirection: {x: 0, y: 0, z: 0}
   turnSpeed: 9
-  tamer: {fileID: 0}
-  target: {fileID: 0}
-  targetBerth: 2
-  movementInterval:
-    duration: 1.5
+  mountAutomatically: 1
   wrestling: {fileID: 0}
-  wrestlingForce: 1
+  wrestlingForce: 30
   wrestlingInterval:
     duration: 3
 --- !u!54 &1215380163
@@ -1268,27 +1308,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7710f043dc0b22642a5d7e88bfaabc6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bounceAutomatically: 0
   bounceAngle: 10
-  bounceForce: 5
-  bounceIsAllowed: 1
+  bounceAutomatically: 1
+  bounceForce: 1
   bounceSpeed: 5
   bounceTurn: 1
+  defeatedPosition: {x: 0, y: 0, z: 0}
+  defeatTimeout:
+    duration: 4
+  followers: []
+  following: {fileID: 0}
   health: 100
+  moveAutomatically: 1
   movementDamping: 7
   movementDirection: {x: 0, y: 0, z: 0}
+  movementRestCooldown:
+    duration: 0
+  movementRestDuration: 1.5
+  movementRestDurationRandomness: 0.75
   movementSpeed: 15
+  movementSpeedFactor: 1
+  movementSpeedRandomnessFactor: 0.3
   shootCooldown:
     duration: 1
+  target: {fileID: 0}
+  targetBerth: 2.25
   turnDirection: {x: 0, y: 0, z: 0}
   turnSpeed: 9
-  tamer: {fileID: 0}
-  target: {fileID: 0}
-  targetBerth: 2
-  movementInterval:
-    duration: 1.5
+  mountAutomatically: 1
   wrestling: {fileID: 0}
-  wrestlingForce: 1
+  wrestlingForce: 30
   wrestlingInterval:
     duration: 3
 --- !u!54 &1814384135
