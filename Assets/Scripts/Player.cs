@@ -1,6 +1,7 @@
 using PatchOdyssey;
 
 /* … */
+[UnityEngine.DefaultExecutionOrder(4)]
 [UnityEngine.DisallowMultipleComponent]
 [UnityEngine.RequireComponent(typeof(UnityEngine.BoxCollider))]
 public sealed class Lasoo : UnityEngine.MonoBehaviour /* ->> “Lasoo” is intentionally misspelled */ {
@@ -41,7 +42,6 @@ public sealed class Lasoo : UnityEngine.MonoBehaviour /* ->> “Lasoo” is inte
     UnityEngine.Transform ropeTransform = this.rope.transform;
 
     // …
-    this.collider     .enabled               = true;
     this.collider     .excludeLayers         = (UnityEngine.LayerMask) 0x0;
     this.collider     .hasModifiableContacts = false;
     this.collider     .includeLayers         = (UnityEngine.LayerMask) ~0x0;
@@ -74,7 +74,7 @@ public sealed class Lasoo : UnityEngine.MonoBehaviour /* ->> “Lasoo” is inte
     for (int index = this.ropeMaterials.Count; 0 != index--; )
     this.ropeMaterials[index].color = UnityEngine.Color.LerpUnclamped(this.ropeColors[index], UnityEngine.Color.red, this.reachProgress * 0.675f);
 
-    if (this.capture is not null) {
+    if (null != this.capture) {
       this.reach              = UnityEngine.Vector3.Distance(captureTransform.position, userTransform.position);
       this.reachDirection     = (captureTransform.position - userTransform.position).normalized;
       this.transform.position = captureTransform.position;
@@ -115,18 +115,37 @@ public sealed class Lasoo : UnityEngine.MonoBehaviour /* ->> “Lasoo” is inte
       this.reach                   = UnityEngine.Mathf.Clamp(this.reach + (UnityEngine.Time.unscaledDeltaTime * (!this.isDeploying() ? -this.retractSpeed : +this.deploySpeed)), this.retractReach, this.deployReach);
       this.reachDirection          = UnityEngine.Quaternion.Euler(UnityEngine.Vector3.up * UnityEngine.Time.unscaledDeltaTime * this.turnSpeed) * this.reachDirection;
       this.transform.position      = userTransform.position + (this.reachDirection * this.reach);
-      this.transform.localRotation = UnityEngine.Quaternion.LookRotation(this.transform.localPosition - userTransform.localPosition);
+      this.transform.localRotation = UnityEngine.Quaternion.LookRotation(this.transform.localPosition - userTransform.localPosition, UnityEngine.Vector3.up);
     }
 
     ropeTransform.LookAt(userTransform, UnityEngine.Vector3.up);
   }
 }
 
+[UnityEngine.DefaultExecutionOrder(3)]
 [UnityEngine.RequireComponent(typeof(UnityEngine.SphereCollider))]
 public sealed class Player : Tamer /* ->> Source file must be named “Player” */ {
   public enum LasooCaptureProgress : byte { Initiating, Capturing, Finishing }
 
+  [System.Serializable]
+  public struct LasooInfo {
+    [ReadOnlyInInspector]                             internal UnityEngine.Vector3                                                       captureDirection;
+    [ReadOnlyInInspector]                             internal (UnityEngine.MeshFilter?   completed, UnityEngine.MeshFilter?   progress) captureIndicator;
+    [ReadOnlyInInspector]                             internal (UnityEngine.Mesh?         completed, UnityEngine.Mesh?         progress) captureIndicatorMesh;
+    [ReadOnlyInInspector]                             internal (UnityEngine.MeshRenderer? completed, UnityEngine.MeshRenderer? progress) captureIndicatorRenderer;
+    [ReadOnlyInInspector, UnityEngine.SerializeField] internal Player.LasooCaptureProgress                                               captureProgress;
+    [ReadOnlyInInspector]                             internal UnityEngine.Vector3                                                       captureProgressDirection;
+    [ReadOnlyInInspector, UnityEngine.SerializeField] internal Entity.TurnDirection                                                      captureProgressTurn;
+    [ReadOnlyInInspector]                             internal uint                                                                      captureProgressTurnCount;
+    [ReadWriteInInspector]                            public   float                                                                     deployReach;
+    [ReadWriteInInspector]                            public   float                                                                     deploySpeed;
+    [ReadWriteInInspector]                            public   float                                                                     retractReach;
+    [ReadWriteInInspector]                            public   float                                                                     retractSpeed;
+    [ReadWriteInInspector]                            public   float                                                                     turnSpeed;
+  }
+
   /* … */
+  public  static          bool                  AnyInput                           = false;
   private static readonly float                 LasooCaptureProgressThreshold      = (UnityEngine.Vector3.one * 0.25f).sqrMagnitude;
   private const           uint                  LasooCaptureProgressPrecision      = 10u;  // --> Player.LasooCaptureProgressPrecision >= 2
   private const           byte                  LasooCaptureIndicatorPrecision     = 20;   // ->> Number of segments
@@ -136,31 +155,23 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
   private const           float                 LasooCaptureIndicatorInnerRadius   = 1.0f; // --> Player.LasooCaptureIndicatorInnerRadius < Player.LasooCaptureIndicatorOuterRadius
   private static readonly float                 LasooCaptureProgressAngle          = 360.0f / Player.LasooCaptureProgressPrecision;
 
-  [ReadOnlyInInspector]                             public      Lasoo?                                                                    lasoo                         =  null;
-  [ReadOnlyInInspector]                             private     UnityEngine.Vector3                                                       lasooCaptureDirection         =  UnityEngine.Vector3.zero;
-  [ReadOnlyInInspector]                             private     (UnityEngine.MeshFilter?   completed, UnityEngine.MeshFilter?   progress) lasooCaptureIndicator         =  (null, null);
-  [ReadOnlyInInspector]                             private     (UnityEngine.Mesh?         completed, UnityEngine.Mesh?         progress) lasooCaptureIndicatorMesh     =  (null, null);
-  [ReadOnlyInInspector]                             private     (UnityEngine.MeshRenderer? completed, UnityEngine.MeshRenderer? progress) lasooCaptureIndicatorRenderer =  (null, null);
-  [ReadOnlyInInspector, UnityEngine.SerializeField] private     Player.LasooCaptureProgress                                               lasooCaptureProgress          =  Player.LasooCaptureProgress.Initiating;
-  [ReadOnlyInInspector]                             private     UnityEngine.Vector3                                                       lasooCaptureProgressDirection =  UnityEngine.Vector3.zero;
-  [ReadOnlyInInspector, UnityEngine.SerializeField] private     Entity.TurnDirection                                                      lasooCaptureProgressTurn      =  Entity.TurnDirection.Clockwise;
-  [ReadOnlyInInspector]                             private     uint                                                                      lasooCaptureProgressTurnCount =  0u;
-  [ReadWriteInInspector]                            public      float                                                                     lasooDeployReach              =  Lasoo.DeployReach;
-  [ReadWriteInInspector]                            public      float                                                                     lasooDeploySpeed              =  Lasoo.DeploySpeed;
-  [ReadOnlyInInspector]                             public      bool                                                                      lasooIsDeploying              =  false;
-  [ReadWriteInInspector]                            public      float                                                                     lasooRetractReach             =  Lasoo.RetractReach;
-  [ReadWriteInInspector]                            public      float                                                                     lasooRetractSpeed             =  Lasoo.RetractSpeed;
-  [ReadWriteInInspector]                            public      float                                                                     lasooTurnSpeed                =  Lasoo.TurnSpeed;
-  [ReadOnlyInInspector]                             public      Timeframe                                                                 releaseWindow                 =  new(1.0);
+  [UnityEngine.Header("Player")]
+  [ReadOnlyInInspector]                             public  bool                isInputing         = false; // ->> Only significant actions count
+  [ReadOnlyInInspector]                             public  bool                isLassoing         = false;
+  [ReadWriteInInspector]                            public  Player.LasooInfo    lasoo              = new() {captureDirection = UnityEngine.Vector3.zero, captureIndicator = (null, null), captureIndicatorMesh = (null, null), captureIndicatorRenderer = (null, null), captureProgress = Player.LasooCaptureProgress.Initiating, captureProgressDirection = UnityEngine.Vector3.zero, captureProgressTurn = Entity.TurnDirection.Clockwise, captureProgressTurnCount = 0u, deployReach = Lasoo.DeployReach, deploySpeed = Lasoo.DeploySpeed, retractReach = Lasoo.RetractReach, retractSpeed = Lasoo.RetractSpeed, turnSpeed = Lasoo.TurnSpeed};
+  [ReadOnlyInInspector]                             public  Lasoo?              lasooing           = null;
+  [ReadOnlyInInspector, UnityEngine.SerializeField] private UnityEngine.Vector3 mainCameraDistance = UnityEngine.Vector3.zero;
+  [ReadWriteInInspector]                            public  Timeframe           releaseWindow      = new(1.0);
 
   /* … */
   protected override void Awake() {
-    this.movementDamping = 4.0f;
     base.Awake();
 
     // …
-    this.collider.radius               = 1.5f;
-    this.movementSpeedRandomnessFactor = 0.0f;
+    this.collider.isTrigger  = false;
+    this.followAutomatically = false;
+    this.mainCameraDistance  = null != this.mainCamera ? this.mainCamera.transform.position - this.transform.position : UnityEngine.Vector3.zero;
+    this.shootAutomatically  = false;
   }
 
   protected override void Capture(Entity entity) {
@@ -169,62 +180,59 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
   }
 
   public bool DeployLasoo() {
+    UnityEngine.Transform transform = this.transform;
+
+    // …
     if (0 == this.followers.Count) {
-      Lasoo                  lasoo;
-      UnityEngine.GameObject lasooCoil;
-      UnityEngine.GameObject lasooRope;
-      UnityEngine.Transform  transform = this.transform;
+      if (this.lasooing is null) {
+        Lasoo                  lasoo     = new UnityEngine.GameObject("Lasoo", typeof(Lasoo)).GetComponent<Lasoo>();
+        UnityEngine.GameObject lasooCoil = (UnityEngine.GameObject) UnityEngine.Object.Instantiate(Assets.main.lasoo.meshPrefabrication,     UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity, lasoo    .transform);
+        UnityEngine.GameObject lasooRope = (UnityEngine.GameObject) UnityEngine.Object.Instantiate(Assets.main.lasoo.ropeMeshPrefabrication, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity, lasooCoil.transform);
 
-      // …
-      if (this.lasoo is null) {
-        lasoo     = new UnityEngine.GameObject("Lasoo", typeof(Lasoo)).GetComponent<Lasoo>();
-        lasooCoil = UnityEngine.Object.Instantiate(Assets.main.lasooMeshPrefabrication,     UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity, lasoo    .transform);
-        lasooRope = UnityEngine.Object.Instantiate(Assets.main.lasooRopeMeshPrefabrication, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity, lasooCoil.transform);
+        lasoo.user                                                              = this;
+        lasoo.turnSpeed                                                         = this.lasoo.turnSpeed;
+        lasoo.rope                                                              = lasooRope;
+        lasoo.rope.name                                                         = "Rope";
+        lasoo.retractSpeed                                                      = this.lasoo.retractSpeed;
+        lasoo.retractReach                                                      = this.lasoo.retractReach;
+        lasoo.reachDirection                                                    = UnityEngine.Quaternion.Euler(UnityEngine.Vector3.up * lasoo.turnSpeed * -3.0f) * transform.forward;
+        lasoo.reach                                                             = this.lasoo.retractReach; // ->> Starts at minimum
+        lasoo.isDeploying                                                       = () => this.isLassoing;
+        lasoo.deploySpeed                                                       = this.lasoo.deploySpeed;
+        lasoo.deployReach                                                       = this.lasoo.deployReach;
+        lasoo.coil                                                              = lasooCoil;
+        lasoo.coil.name                                                         = "Knot";
+        this.lasooing                                                           = lasoo;
+        this.lasoo.captureIndicatorMesh    .completed                           = new() { name = "playerLasooCaptureIndicatorMesh" };
+        this.lasoo.captureIndicatorMesh    .progress                            = new() { name = "playerLasooCaptureProgressIndicatorMesh" };
+        this.lasoo.captureIndicator        .completed                           = new UnityEngine.GameObject("Indicator", typeof(UnityEngine.MeshFilter), typeof(UnityEngine.MeshRenderer)).GetComponent<UnityEngine.MeshFilter>();
+        this.lasoo.captureIndicator        .completed.sharedMesh                = this.lasoo.captureIndicatorMesh.completed;
+        this.lasoo.captureIndicator        .progress                            = new UnityEngine.GameObject("Progress",  typeof(UnityEngine.MeshFilter), typeof(UnityEngine.MeshRenderer)).GetComponent<UnityEngine.MeshFilter>();
+        this.lasoo.captureIndicator        .progress.sharedMesh                 = this.lasoo.captureIndicatorMesh.progress;
+        this.lasoo.captureIndicator        .progress.transform.localPosition   += UnityEngine.Vector3.up * Game.VectorEpsilon; // ->> Avoid Z-fighting
+        this.lasoo.captureIndicatorRenderer.completed                           = this.lasoo.captureIndicator.completed.GetComponent<UnityEngine.MeshRenderer>();
+        this.lasoo.captureIndicatorRenderer.completed.allowOcclusionWhenDynamic = false;
+        this.lasoo.captureIndicatorRenderer.progress                            = this.lasoo.captureIndicator.progress .GetComponent<UnityEngine.MeshRenderer>();
+        this.lasoo.captureIndicatorRenderer.progress.allowOcclusionWhenDynamic  = false;
 
-        lasoo.user                                                             = this;
-        lasoo.turnSpeed                                                        = this.lasooTurnSpeed;
-        lasoo.rope                                                             = lasooRope;
-        lasoo.rope.name                                                        = "Rope";
-        lasoo.retractSpeed                                                     = this.lasooRetractSpeed;
-        lasoo.retractReach                                                     = this.lasooRetractReach;
-        lasoo.reachDirection                                                   = UnityEngine.Quaternion.Euler(UnityEngine.Vector3.up * this.turnSpeed * -4.0f) * transform.forward;
-        lasoo.reach                                                            = this.lasooRetractReach; // ->> Starts at minimum
-        lasoo.isDeploying                                                      = () => this.lasooIsDeploying;
-        lasoo.deploySpeed                                                      = this.lasooDeploySpeed;
-        lasoo.deployReach                                                      = this.lasooDeployReach;
-        lasoo.coil                                                             = lasooCoil;
-        lasoo.coil.name                                                        = "Knot";
-        this.lasooCaptureIndicatorMesh    .completed                           = new() { name = "playerLasooCaptureIndicatorMesh" };
-        this.lasooCaptureIndicatorMesh    .progress                            = new() { name = "playerLasooCaptureProgressIndicatorMesh" };
-        this.lasooCaptureIndicator        .completed                           = new UnityEngine.GameObject("Indicator", typeof(UnityEngine.MeshFilter), typeof(UnityEngine.MeshRenderer)).GetComponent<UnityEngine.MeshFilter>();
-        this.lasooCaptureIndicator        .completed.sharedMesh                = this.lasooCaptureIndicatorMesh.completed;
-        this.lasooCaptureIndicator        .progress                            = new UnityEngine.GameObject("Progress",  typeof(UnityEngine.MeshFilter), typeof(UnityEngine.MeshRenderer)).GetComponent<UnityEngine.MeshFilter>();
-        this.lasooCaptureIndicator        .progress.sharedMesh                 = this.lasooCaptureIndicatorMesh.progress;
-        this.lasooCaptureIndicator        .progress.transform.localPosition   += UnityEngine.Vector3.up * Game.VectorEpsilon; // ->> Avoid Z-fighting
-        this.lasooCaptureIndicatorRenderer.completed                           = this.lasooCaptureIndicator.completed.GetComponent<UnityEngine.MeshRenderer>();
-        this.lasooCaptureIndicatorRenderer.completed.allowOcclusionWhenDynamic = false;
-        this.lasooCaptureIndicatorRenderer.progress                            = this.lasooCaptureIndicator.progress .GetComponent<UnityEngine.MeshRenderer>();
-        this.lasooCaptureIndicatorRenderer.progress.allowOcclusionWhenDynamic  = false;
-        this.lasoo                                                             = lasoo;
-
-        if (Assets.main.lasooCaptureIndicatorMaterial is not null) {
-          for (int index = ((System.Runtime.CompilerServices.ITuple) this.lasooCaptureIndicator).Length; 0 != index--; ) {
-            UnityEngine.MeshRenderer lasooCaptureIndicatorRenderer = (UnityEngine.MeshRenderer) ((System.Runtime.CompilerServices.ITuple) this.lasooCaptureIndicatorRenderer)[index];
+        if (Assets.main.lasoo.captureIndicatorMaterial is not null) {
+          for (int index = ((System.Runtime.CompilerServices.ITuple) this.lasoo.captureIndicator).Length; 0 != index--; ) {
+            UnityEngine.MeshRenderer lasooCaptureIndicatorRenderer = (UnityEngine.MeshRenderer) ((System.Runtime.CompilerServices.ITuple) this.lasoo.captureIndicatorRenderer)[index];
 
             // …
             lasooCaptureIndicatorRenderer.receiveShadows    = false;
             lasooCaptureIndicatorRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            lasooCaptureIndicatorRenderer.sharedMaterial    = Assets.main.lasooCaptureIndicatorMaterial;
+            lasooCaptureIndicatorRenderer.sharedMaterial    = Assets.main.lasoo.captureIndicatorMaterial;
           }
 
-          this.lasooCaptureIndicatorRenderer.completed.material.color = UnityEngine.Color.LerpUnclamped(this.lasooCaptureIndicatorRenderer.completed.material.color, UnityEngine.Color.black, 0.5f);
+          this.lasoo.captureIndicatorRenderer.completed.material.color = UnityEngine.Color.LerpUnclamped(this.lasoo.captureIndicatorRenderer.completed.material.color, UnityEngine.Color.black, 0.5f);
         }
 
-        this.lasooCaptureIndicatorMesh.completed.MarkDynamic();
-        this.lasooCaptureIndicatorMesh.progress .MarkDynamic();
-        this.lasooCaptureIndicator.completed.transform.SetParent(lasoo.transform,                                false);
-        this.lasooCaptureIndicator.progress .transform.SetParent(this.lasooCaptureIndicator.completed.transform, false);
-        lasoo.transform                               .SetParent(transform,                                      false);
+        this.lasoo.captureIndicatorMesh.completed.MarkDynamic();
+        this.lasoo.captureIndicatorMesh.progress .MarkDynamic();
+        this.lasoo.captureIndicator.completed.transform.SetParent(lasoo.transform,                                 false);
+        this.lasoo.captureIndicator.progress .transform.SetParent(this.lasoo.captureIndicator.completed.transform, false);
+        lasoo.transform                                .SetParent(transform,                                       false);
       }
 
       return true;
@@ -235,42 +243,45 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
 
   protected override void OnApplicationFocus(bool focused) {
     if (!focused) {
-      if (this.lasoo is not null) // ->> Instant retraction
-        this.lasoo.reach = this.lasoo.retractReach;
+      if (this.lasooing is not null) // ->> Instant retraction
+        this.lasooing.reach = this.lasooing.retractReach;
 
       this.RetractLasoo();
     }
   }
 
-  private void OnDestroy() {
+  protected override void OnDestroy() {
+    base.OnDestroy();
     this.RetractLasoo();
   }
 
   public void ResetLasoo() {
-    this.lasooCaptureProgress          = Player.LasooCaptureProgress.Initiating;
-    this.lasooCaptureProgressTurnCount = 0u;
-    this.lasooIsDeploying              = false;
+    this.isLassoing                     = false;
+    this.lasoo.captureProgress          = Player.LasooCaptureProgress.Initiating;
+    this.lasoo.captureProgressTurnCount = 0u;
 
-    if (this.lasoo is not null) {
-      if (this.lasoo.capture is Monster monster)
+    if (this.lasooing is not null) {
+      if (this.lasooing.capture is Monster monster && null != monster)
         monster.wrestling = null;
 
-      this.lasoo.capture = null;
+      this.lasooing.capture = null;
     }
   }
 
   public void RetractLasoo() {
-    if (this.lasoo is null)
+    if (this.lasooing is null)
     return;
 
     // …
     this.ResetLasoo();
-    UnityEngine.Object.Destroy(this.lasooCaptureIndicatorMesh.progress);
-    UnityEngine.Object.Destroy(this.lasooCaptureIndicatorMesh.completed);
-    UnityEngine.Object.Destroy(this.lasoo.gameObject);
+    UnityEngine.Object.Destroy(this.lasoo.captureIndicatorMesh.progress);
+    UnityEngine.Object.Destroy(this.lasoo.captureIndicatorMesh.completed);
+    UnityEngine.Object.Destroy(this.lasooing.gameObject);
 
-    this.lasoo = null;
+    this.lasooing = null;
   }
+
+  private void Start() => this.followAutomatically = false;
 
   protected override void Update() {
     UnityEngine.Transform transform = this.transform;
@@ -281,18 +292,22 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
     if (Game.IsPaused || this.isDefeated)
     return;
 
-    // … ->> Acknowledge inputs
+    // … ->> Input
+    Player.AnyInput = Player.AnyInput || this.isInputing;
+    this.isInputing = false;
       // … ->> Moving
-      this.movementDirection  = UnityEngine.Vector3.zero;
-      this.movementDirection += Game.Keyboard.aKey.isPressed || Game.Keyboard.aKey.wasPressedThisFrame || Game.Keyboard.leftArrowKey .isPressed || Game.Keyboard.leftArrowKey .wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.A) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.LeftArrow)  || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.A) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.LeftArrow)  ? UnityEngine.Vector3.left    : UnityEngine.Vector3.zero;
-      this.movementDirection += Game.Keyboard.dKey.isPressed || Game.Keyboard.dKey.wasPressedThisFrame || Game.Keyboard.rightArrowKey.isPressed || Game.Keyboard.rightArrowKey.wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.D) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.RightArrow) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.D) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.RightArrow) ? UnityEngine.Vector3.right   : UnityEngine.Vector3.zero;
-      this.movementDirection += Game.Keyboard.sKey.isPressed || Game.Keyboard.sKey.wasPressedThisFrame || Game.Keyboard.downArrowKey .isPressed || Game.Keyboard.downArrowKey .wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.S) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.DownArrow)  || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.S) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.DownArrow)  ? UnityEngine.Vector3.back    : UnityEngine.Vector3.zero;
-      this.movementDirection += Game.Keyboard.wKey.isPressed || Game.Keyboard.wKey.wasPressedThisFrame || Game.Keyboard.upArrowKey   .isPressed || Game.Keyboard.upArrowKey   .wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.W) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.UpArrow)    || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.W) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.UpArrow)    ? UnityEngine.Vector3.forward : UnityEngine.Vector3.zero;
+      this.followAutomatically = false;
+      this.movement.direction  = UnityEngine.Vector3.zero;
+      this.movement.direction += Game.Keyboard.aKey.isPressed || Game.Keyboard.aKey.wasPressedThisFrame || Game.Keyboard.leftArrowKey .isPressed || Game.Keyboard.leftArrowKey .wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.A) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.LeftArrow)  || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.A) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.LeftArrow)  ? UnityEngine.Vector3.left    : UnityEngine.Vector3.zero;
+      this.movement.direction += Game.Keyboard.dKey.isPressed || Game.Keyboard.dKey.wasPressedThisFrame || Game.Keyboard.rightArrowKey.isPressed || Game.Keyboard.rightArrowKey.wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.D) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.RightArrow) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.D) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.RightArrow) ? UnityEngine.Vector3.right   : UnityEngine.Vector3.zero;
+      this.movement.direction += Game.Keyboard.sKey.isPressed || Game.Keyboard.sKey.wasPressedThisFrame || Game.Keyboard.downArrowKey .isPressed || Game.Keyboard.downArrowKey .wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.S) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.DownArrow)  || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.S) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.DownArrow)  ? UnityEngine.Vector3.back    : UnityEngine.Vector3.zero;
+      this.movement.direction += Game.Keyboard.wKey.isPressed || Game.Keyboard.wKey.wasPressedThisFrame || Game.Keyboard.upArrowKey   .isPressed || Game.Keyboard.upArrowKey   .wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.W) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.UpArrow)    || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.W) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.UpArrow)    ? UnityEngine.Vector3.forward : UnityEngine.Vector3.zero;
+      this.isInputing          = UnityEngine.Vector3.zero != this.movement.direction;
 
       // … ->> Lassoing
       if (Game.Keyboard.enterKey.wasPressedThisFrame || Game.Keyboard.tabKey.wasPressedThisFrame || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.Return) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.Tab)) {
-        if (this.lasooIsDeploying) this.ResetLasoo();
-        else this.lasooIsDeploying = 0 == this.followers.Count && (this.lasoo is null || this.lasoo.reach == this.lasoo.retractReach);
+        if (this.isLassoing) this.ResetLasoo();
+        else { this.isInputing = true; this.isLassoing = 0 == this.followers.Count && (this.lasooing is null || this.lasooing.reach == this.lasooing.retractReach); }
       }
 
       // … ->> Releasing
@@ -300,119 +315,126 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
         if (!this.releaseWindow.isElapsed) {
           this.ResetLasoo();
 
-          if (0 != this.followers.Count)
-          this.Release(this.followers[0]);
+          if (0 != this.followers.Count) {
+            this.isInputing = true;
+            this.Release(this.followers[0]);
+          }
         }
 
         this.releaseWindow.Reset();
       }
 
-    // … ->> Apply inputs
+      // … ->> Shooting
+      if (Game.Keyboard.spaceKey.wasPressedThisFrame || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.Space)) {
+        if (null != this.Shoot())
+        this.isInputing = true;
+      }
+
+    // … ->> Application
       // … ->> Moving/ Turning
-      this.movementSpeedFactor = this.lasoo is not null ? ((1.0f - this.lasoo.reachProgress) * 0.5f) + 0.5f : 1.0f;
+      this.movement.speedFactor = this.lasooing is not null ? ((1.0f - this.lasooing.reachProgress) * 0.5f) + 0.5f : 1.0f;
 
-      if (UnityEngine.Vector3.zero != this.movementDirection)
-        this.movementRestCooldown.Reset();
+      if (this.isInputing || UnityEngine.Vector3.zero != this.movement.direction)
+        this.movement.restTimer.Reset();
 
-      else if (this.movementRestCooldown.isElapsed && Entity.MovementVelocityThreshold.sqrMagnitude > this.rigidBody.linearVelocity.sqrMagnitude) {
+      else if (this.movement.restTimer.isElapsed && Entity.MovementVelocityThreshold.sqrMagnitude > this.rigidBody.linearVelocity.sqrMagnitude) {
         this.rigidBody.angularVelocity = UnityEngine.Vector3.zero;
         this.rigidBody.linearVelocity  = UnityEngine.Vector3.zero;
-        this.turnDirection             = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, ((this.mainCamera?.transform.position ?? (UnityEngine.Vector3.back + transform.position)) - transform.position).normalized);
+        this.turn.direction            = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, ((this.mainCamera?.transform.position ?? (UnityEngine.Vector3.back + transform.position)) - transform.position).normalized);
       }
 
       // … ->> Lassoing
-      if (!this.lasooIsDeploying && (this.lasoo is null || this.lasoo.reach == this.lasoo.retractReach))
+      if (!this.isLassoing && (this.lasooing is null || this.lasooing.reach == this.lasooing.retractReach))
         this.RetractLasoo();
 
       else if (this.DeployLasoo()) {
         (float completed, float progress) lasooCaptureAngles = (360.0f, 0.0f); // ->> in Degrees
 
         // … ->> Capturing
-        if (this.lasoo!.capture is not null) {
-          switch (this.lasooCaptureProgress) {
+        if (this.lasooing!.capture is not null) {
+          switch (this.lasoo.captureProgress) {
             case Player.LasooCaptureProgress.Capturing: {
               foreach (ref readonly Entity.TurnDirection direction in (System.ReadOnlySpan<Entity.TurnDirection>) stackalloc[] {Entity.TurnDirection.Anticlockwise, Entity.TurnDirection.Clockwise}) {
-                this.lasooCaptureProgressTurnCount = 1u;
-                this.lasooCaptureProgressTurn      = direction;
-                this.lasooCaptureProgressDirection = UnityEngine.Quaternion.AngleAxis(Player.LasooCaptureProgressAngle, Entity.TurnDirectionToVector3(this.lasooCaptureProgressTurn, UnityEngine.Vector3.up)) * this.lasooCaptureDirection;
+                this.lasoo.captureProgressTurnCount  = 1u;
+                this.lasoo.captureProgressTurn       = direction;
+                this.lasoo.captureProgressDirection  = UnityEngine.Quaternion.AngleAxis(Player.LasooCaptureProgressAngle, Entity.TurnDirectionToVector3(this.lasoo.captureProgressTurn, UnityEngine.Vector3.up)) * this.lasoo.captureDirection;
 
-                if (Player.LasooCaptureProgressThreshold > (this.lasooCaptureProgressDirection - this.lasoo!.reachDirection).sqrMagnitude) {
-                  this.lasooCaptureProgress          = Player.LasooCaptureProgress.Finishing;
-                  this.lasooCaptureProgressDirection = UnityEngine.Quaternion.AngleAxis(Player.LasooCaptureProgressAngle, Entity.TurnDirectionToVector3(this.lasooCaptureProgressTurn, UnityEngine.Vector3.up)) * this.lasooCaptureProgressDirection;
+                if (Player.LasooCaptureProgressThreshold > (this.lasoo.captureProgressDirection - this.lasooing!.reachDirection).sqrMagnitude) {
+                  this.lasoo.captureProgress          = Player.LasooCaptureProgress.Finishing;
+                  this.lasoo.captureProgressDirection = UnityEngine.Quaternion.AngleAxis(Player.LasooCaptureProgressAngle, Entity.TurnDirectionToVector3(this.lasoo.captureProgressTurn, UnityEngine.Vector3.up)) * this.lasoo.captureProgressDirection;
 
                   break;
                 }
 
                 #if DEBUG || DEVELOPMENT_BUILD
-                  UnityEngine.Debug.DrawRay(UnityEngine.Vector3.zero, this.lasooCaptureProgressDirection * 100.0f, UnityEngine.Color.green, 0.0f, false);
+                  UnityEngine.Debug.DrawRay(UnityEngine.Vector3.zero, this.lasoo.captureProgressDirection * Game.SceneSize, UnityEngine.Color.green, 0.0f, false);
                 #endif
               }
 
-              lasooCaptureAngles.progress = UnityEngine.Vector3.Angle(this.lasooCaptureDirection, this.lasoo!.reachDirection);
+              lasooCaptureAngles.progress = UnityEngine.Vector3.Angle(this.lasoo.captureDirection, this.lasooing!.reachDirection);
 
               #if DEBUG || DEVELOPMENT_BUILD
-                UnityEngine.Debug.DrawRay(UnityEngine.Vector3.zero, this.lasooCaptureDirection * 100.0f, UnityEngine.Color.white, 0.0f, false);
-                UnityEngine.Debug.DrawRay(UnityEngine.Vector3.zero, this.lasoo!.reachDirection * 100.0f, UnityEngine.Color.red,   0.0f, false);
+                UnityEngine.Debug.DrawRay(UnityEngine.Vector3.zero, this.lasoo.captureDirection   * Game.SceneSize, UnityEngine.Color.white, 0.0f, false);
+                UnityEngine.Debug.DrawRay(UnityEngine.Vector3.zero, this.lasooing!.reachDirection * Game.SceneSize, UnityEngine.Color.red,   0.0f, false);
               #endif
             } break;
 
             case Player.LasooCaptureProgress.Initiating: {
-              this.lasooCaptureDirection = (this.lasoo!.capture.transform.position - this.transform.position).normalized;
-              this.lasooCaptureProgress  = Player.LasooCaptureProgress.Capturing;
+              this.lasoo.captureDirection = (this.lasooing!.capture.transform.position - this.transform.position).normalized;
+              this.lasoo.captureProgress  = Player.LasooCaptureProgress.Capturing;
 
               lasooCaptureAngles.progress = 0.0f;
 
               #if DEBUG || DEVELOPMENT_BUILD
-                UnityEngine.Debug.DrawRay(UnityEngine.Vector3.zero, this.lasooCaptureDirection * 100.0f, UnityEngine.Color.white, 0.0f, false);
-                UnityEngine.Debug.DrawRay(UnityEngine.Vector3.zero, this.lasoo!.reachDirection * 100.0f, UnityEngine.Color.red,   0.0f, false);
+                UnityEngine.Debug.DrawRay(UnityEngine.Vector3.zero, this.lasoo.captureDirection   * Game.SceneSize, UnityEngine.Color.white, 0.0f, false);
+                UnityEngine.Debug.DrawRay(UnityEngine.Vector3.zero, this.lasooing!.reachDirection * Game.SceneSize, UnityEngine.Color.red,   0.0f, false);
               #endif
             } break;
 
             case Player.LasooCaptureProgress.Finishing: {
-              if (Player.LasooCaptureProgressPrecision - this.lasooCaptureProgressTurnCount == 1u)
-                this.Capture(this.lasoo!.capture);
+              if (Player.LasooCaptureProgressPrecision - this.lasoo.captureProgressTurnCount == 1u)
+                this.Capture(this.lasooing!.capture);
 
-              else if (Player.LasooCaptureProgressThreshold > (this.lasooCaptureProgressDirection - this.lasoo!.reachDirection).sqrMagnitude) {
-                this.lasooCaptureProgressDirection =  UnityEngine.Quaternion.AngleAxis(Player.LasooCaptureProgressAngle, Entity.TurnDirectionToVector3(this.lasooCaptureProgressTurn, UnityEngine.Vector3.up)) * this.lasooCaptureProgressDirection;
-                this.lasooCaptureProgressTurnCount += 1u;
+              else if (Player.LasooCaptureProgressThreshold > (this.lasoo.captureProgressDirection - this.lasooing!.reachDirection).sqrMagnitude) {
+                this.lasoo.captureProgressDirection  = UnityEngine.Quaternion.AngleAxis(Player.LasooCaptureProgressAngle, Entity.TurnDirectionToVector3(this.lasoo.captureProgressTurn, UnityEngine.Vector3.up)) * this.lasoo.captureProgressDirection;
+                this.lasoo.captureProgressTurnCount += 1u;
               }
 
-              else if (Player.LasooCaptureProgressThreshold > (this.lasooCaptureDirection - this.lasoo!.reachDirection).sqrMagnitude) {
-                this.lasooCaptureProgress          = Player.LasooCaptureProgress.Capturing;
-                this.lasooCaptureProgressTurnCount = 0u;
+              else if (Player.LasooCaptureProgressThreshold > (this.lasoo.captureDirection - this.lasooing!.reachDirection).sqrMagnitude) {
+                this.lasoo.captureProgress          = Player.LasooCaptureProgress.Capturing;
+                this.lasoo.captureProgressTurnCount = 0u;
               }
 
-              lasooCaptureAngles.progress  = UnityEngine.Vector3.SignedAngle(this.lasooCaptureDirection, this.lasoo!.reachDirection, UnityEngine.Vector3.up) / 360.0f;
-              lasooCaptureAngles.progress  = lasooCaptureAngles.progress < +0.0f                                 ? 1.0f + lasooCaptureAngles.progress : lasooCaptureAngles.progress;
-              lasooCaptureAngles.progress  = Entity.TurnDirection.Anticlockwise == this.lasooCaptureProgressTurn ? 1.0f - lasooCaptureAngles.progress : lasooCaptureAngles.progress;
+              lasooCaptureAngles.progress  = UnityEngine.Vector3.SignedAngle(this.lasoo.captureDirection, this.lasooing!.reachDirection, UnityEngine.Vector3.up) / 360.0f;
+              lasooCaptureAngles.progress  = lasooCaptureAngles.progress < +0.0f                                  ? 1.0f + lasooCaptureAngles.progress : lasooCaptureAngles.progress;
+              lasooCaptureAngles.progress  = Entity.TurnDirection.Anticlockwise == this.lasoo.captureProgressTurn ? 1.0f - lasooCaptureAngles.progress : lasooCaptureAngles.progress;
               lasooCaptureAngles.progress *= 360.0f;
 
               #if DEBUG || DEVELOPMENT_BUILD
-                UnityEngine.Debug.DrawRay(UnityEngine.Vector3.zero, this.lasooCaptureDirection         * 100.0f, UnityEngine.Color.white, 0.0f, false);
-                UnityEngine.Debug.DrawRay(UnityEngine.Vector3.zero, this.lasooCaptureProgressDirection * 100.0f, UnityEngine.Color.blue,  0.0f, false);
-                UnityEngine.Debug.DrawRay(UnityEngine.Vector3.zero, this.lasoo!.reachDirection         * 100.0f, UnityEngine.Color.red,   0.0f, false);
+                UnityEngine.Debug.DrawRay(UnityEngine.Vector3.zero, this.lasoo.captureDirection         * Game.SceneSize, UnityEngine.Color.white, 0.0f, false);
+                UnityEngine.Debug.DrawRay(UnityEngine.Vector3.zero, this.lasoo.captureProgressDirection * Game.SceneSize, UnityEngine.Color.blue,  0.0f, false);
+                UnityEngine.Debug.DrawRay(UnityEngine.Vector3.zero, this.lasooing!.reachDirection       * Game.SceneSize, UnityEngine.Color.red,   0.0f, false);
               #endif
             } break;
           }
         }
 
         // … ->> Indicating (capture)
-        if (Player.LasooCaptureProgress.Capturing == this.lasooCaptureProgress || Player.LasooCaptureProgress.Finishing == this.lasooCaptureProgress) {
-          this.lasooCaptureIndicator.progress!.transform.LookAt(this.lasoo!.user.transform);
-          this.lasooCaptureIndicator.progress!.transform.Rotate(UnityEngine.Vector3.up * lasooCaptureAngles.progress * 0.5f, UnityEngine.Space.Self);
+        if (Player.LasooCaptureProgress.Capturing == this.lasoo.captureProgress || Player.LasooCaptureProgress.Finishing == this.lasoo.captureProgress) {
+          this.lasoo.captureIndicator.progress!.transform.LookAt(this.lasooing!.user.transform);
+          this.lasoo.captureIndicator.progress!.transform.Rotate(UnityEngine.Vector3.up * lasooCaptureAngles.progress * 0.5f, UnityEngine.Space.Self);
         }
 
-        for (int index = ((System.Runtime.CompilerServices.ITuple) this.lasooCaptureIndicator).Length; 0 != index--; ) {
-          UnityEngine.MeshRenderer lasooCaptureIndicatorRenderer = (UnityEngine.MeshRenderer) ((System.Runtime.CompilerServices.ITuple) this.lasooCaptureIndicatorRenderer)[index];
+        for (int index = ((System.Runtime.CompilerServices.ITuple) this.lasoo.captureIndicator).Length; 0 != index--; ) {
+          UnityEngine.MeshRenderer lasooCaptureIndicatorRenderer = (UnityEngine.MeshRenderer) ((System.Runtime.CompilerServices.ITuple) this.lasoo.captureIndicatorRenderer)[index];
 
           // …
-          if (Player.LasooCaptureProgress.Capturing == this.lasooCaptureProgress || Player.LasooCaptureProgress.Finishing == this.lasooCaptureProgress) {
-            float                  lasooCaptureAngle                      = (float) ((System.Runtime.CompilerServices.ITuple) lasooCaptureAngles)[index];
-            float                  lasooCaptureAngleDelta                 = lasooCaptureAngle / (Player.LasooCaptureIndicatorPrecision - 1u);
-            UnityEngine.MeshFilter lasooCaptureIndicator                  = (UnityEngine.MeshFilter) ((System.Runtime.CompilerServices.ITuple) this.lasooCaptureIndicator)    [index];
-            UnityEngine.Mesh       lasooCaptureIndicatorMesh              = (UnityEngine.Mesh)       ((System.Runtime.CompilerServices.ITuple) this.lasooCaptureIndicatorMesh)[index];
-            uint                   lasooCaptureIndicatorMeshTriangleIndex = 0u;
-            uint                   lasooCaptureIndicatorMeshVertexIndex   = 0u;
+          if (Player.LasooCaptureProgress.Capturing == this.lasoo.captureProgress || Player.LasooCaptureProgress.Finishing == this.lasoo.captureProgress) {
+            float            lasooCaptureAngle                      = (float) ((System.Runtime.CompilerServices.ITuple) lasooCaptureAngles)[index];
+            float            lasooCaptureAngleDelta                 = lasooCaptureAngle / (Player.LasooCaptureIndicatorPrecision - 1u);
+            UnityEngine.Mesh lasooCaptureIndicatorMesh              = (UnityEngine.Mesh) ((System.Runtime.CompilerServices.ITuple) this.lasoo.captureIndicatorMesh)[index];
+            uint             lasooCaptureIndicatorMeshTriangleIndex = 0u;
+            uint             lasooCaptureIndicatorMeshVertexIndex   = 0u;
 
             // …
             for (uint subindex = 0u; ; ) {
@@ -433,12 +455,17 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
               Player.LasooCaptureIndicatorMeshTriangles[lasooCaptureIndicatorMeshTriangleIndex++] = (int) lasooCaptureIndicatorMeshVertexIndex + 1;
             }
 
-            lasooCaptureIndicatorRenderer.enabled   = true;
-            lasooCaptureIndicatorMesh    .vertices  = Player.LasooCaptureIndicatorMeshVertices;
-            lasooCaptureIndicatorMesh    .triangles = Player.LasooCaptureIndicatorMeshTriangles;
-            lasooCaptureIndicatorMesh    .RecalculateNormals();
-          } else lasooCaptureIndicatorRenderer.enabled = false;
+            lasooCaptureIndicatorRenderer.forceRenderingOff = false;
+            lasooCaptureIndicatorMesh.vertices              = Player.LasooCaptureIndicatorMeshVertices;
+            lasooCaptureIndicatorMesh.triangles             = Player.LasooCaptureIndicatorMeshTriangles;
+
+            lasooCaptureIndicatorMesh.RecalculateNormals();
+          } else lasooCaptureIndicatorRenderer.forceRenderingOff = true;
         }
       }
+
+    // … ->> Camera
+    if (null != this.mainCamera && UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, Entity.MovementVelocityThreshold).sqrMagnitude < UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, this.rigidBody.linearVelocity).sqrMagnitude)
+    this.mainCamera.transform.position = this.mainCameraDistance + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, transform.position);
   }
 }

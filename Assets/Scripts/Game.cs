@@ -17,13 +17,14 @@ namespace PatchOdyssey {
 
   public static class Game {
     private static          UnityEngine.InputSystem.Keyboard?                                                                                     _Keyboard                                  = null;
-    public  static          bool                                                                                                                  IsLoading           { get; internal set; } = false;
+    public  static          bool                                                                                                                  IsLoaded            { get; internal set; } = false;
     public  static          bool                                                                                                                  IsKeyboardAvailable { get; internal set; } = false;
     public  static          bool                                                                                                                  IsPaused            { get; internal set; } = false;
     public  static          bool                                                                                                                  IsQuitting          { get; internal set; } = false;
     public  static          UnityEngine.InputSystem.Keyboard                                                                                      Keyboard            { get { if (!Game.IsKeyboardAvailable && UnityEngine.InputSystem.Keyboard.current is UnityEngine.InputSystem.Keyboard keyboard) { Game._Keyboard = keyboard; Game.IsKeyboardAvailable = true; } return Game._Keyboard!; } }
     private static          UnityEngine.GameObject?                                                                                               Object              = null;
-    public  static readonly System.Random                                                                                                         Randomizer          = new();
+    public  static readonly System.Random                                                                                                         Randomizer          = new();  // ->> Superseded (mostly) by `UnityEngine.Random`
+    public  const           float                                                                                                                 SceneSize           = 100.0f; // ->> Meant for sizing objects that bound the entire visible part of the scene
     private static readonly System.Collections.Generic.Dictionary<System.Action<UnityEngine.Transform>, System.Func<UnityEngine.Transform, bool>> TransformTraversers = new();
     public  const           float                                                                                                                 VectorEpsilon       = 0.09f; // ->> Minimal amount to prevent Z-fighting and other false positives
 
@@ -91,7 +92,8 @@ namespace PatchOdyssey {
         UnityEditor.EditorApplication.wantsToQuit       += static ()                               => { UnityEngine.Object.Destroy(Game.Object); return true; };
       #endif
 
-      Game.Object = new UnityEngine.GameObject("🎮", typeof(GameBehaviour));
+      Game.Object          = new UnityEngine.GameObject("🎮", typeof(GameBehaviour));
+      Game.Object.isStatic = true;
     }
   }
 
@@ -102,7 +104,7 @@ namespace PatchOdyssey {
     private void OnApplicationPause(bool paused)  => Game.IsPaused   =  paused;
     private void OnApplicationQuit ()             => Game.IsQuitting =  true;
     private void OnDestroy         ()             => Game.Quit(0x1); // --> EXIT_FAILURE ->> Don’t bother continuing the application/ game if `GameBehaviour` is prematurely destroyed
-    private void Start             ()             => Game.IsLoading = true;
+    private void Start             ()             => Game.IsLoaded = true;
   }
 
   [System.AttributeUsage(System.AttributeTargets.All, AllowMultiple = false, Inherited = false)]
@@ -113,9 +115,9 @@ namespace PatchOdyssey {
 
   [System.Serializable]
   public struct Timeframe {
-    public static double CurrentTimestamp => Game.IsLoading && !Game.IsQuitting ? UnityEngine.Time.realtimeSinceStartupAsDouble : 0.0;
+    public static double CurrentTimestamp => Game.IsLoaded && !Game.IsQuitting ? UnityEngine.Time.realtimeSinceStartupAsDouble : 0.0;
 
-    [System     .NonSerialized]  private readonly double                      delay         = 0.0;
+    [System.NonSerialized]       private readonly double                      delay         = 0.0;
     [UnityEngine.SerializeField] public           double                      duration      = 0.0;
     public                               readonly double                      easedProgress { get { double elapsed = Timeframe.CurrentTimestamp - this.timestamp; return System.Math.Min(System.Math.Round(this.delay > elapsed ? (elapsed - this.delay) / this.duration : this.duration <= elapsed - this.delay ? 1.0 : this.easing((elapsed - this.delay) / this.duration), 2, System.MidpointRounding.AwayFromZero), 1.0); } }
     public                                        System.Func<double, double> easing        =  Timeframe.Linear; // --> UnityEngine.AnimationCurve
@@ -130,7 +132,7 @@ namespace PatchOdyssey {
     public Timeframe(double duration = 0.0)                                       => this.duration = duration;
     public Timeframe(double duration, System.Func<double, double> easing = null!) {  this.duration = duration; this.easing = easing ?? this.easing; }
 
-    /* … */
+    /* … ->> See `UnityEngine.AnimationCurve` */
     public static double CubicBézier    (double time, double p0, double p1, double p2, double p3) { return (p0 * System.Math.Pow(1.0 - time, 3.0)) + (p1 * time * 3.0 * System.Math.Pow(1.0 - time, 2.0)) + (p2 * (1.0 - time) * 3.0 * System.Math.Pow(time, 2.0)) + (p3 * System.Math.Pow(time, 3.0)); }
     public static double QuadraticBézier(double time, double p0, double p1, double p2)            { return (p0 * System.Math.Pow(1.0 - time, 2.0)) + (p1 * time * 2.0 * System.Math.Pow(1.0 - time, 1.0))                                                          + (p2 * System.Math.Pow(time, 2.0)); }
 
@@ -190,10 +192,13 @@ namespace PatchOdyssey {
       /* … */
       public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent         label) => base.GetPropertyHeight(property, label) * 2.0f;
       public override void  OnGUI            (UnityEngine.Rect               position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
-        UnityEngine.Color              color     = UnityEngine.GUI.color;
-        UnityEditor.SerializedProperty duration  = property.FindPropertyRelative("duration");
-        UnityEngine.GUIStyle           style     = UnityEngine.GUIStyle.none;
-        Timeframe                      timeframe = (Timeframe) base.fieldInfo.GetValue(property.serializedObject.targetObject);
+        UnityEngine.Color              color              = UnityEngine.GUI.color;
+        double                         duration           = default;
+        bool                           multipleIsSelected = property.hasMultipleDifferentValues; // --> property.serializedObject.targetObjects.Length > 1;
+        string[]                       propertyPath       = property.propertyPath.Substring(property.propertyPath.IndexOf('.', System.StringComparison.OrdinalIgnoreCase) + 1).Split('.', System.StringSplitOptions.RemoveEmptyEntries /* | System.StringSplitOptions.TrimEntries */);
+        UnityEngine.GUIStyle           style              = UnityEngine.GUIStyle.none;
+        Timeframe                      timeframe          = default;
+        UnityEditor.SerializedProperty timeframeDuration  = null!;
 
         // … ->> Always update because `Timeframe` could either be `isElapsed` or not
         TimeframeDrawer.SerializedObject      = property.serializedObject;
@@ -201,11 +206,17 @@ namespace PatchOdyssey {
         UnityEditor.EditorApplication.update += TimeframeDrawer.Repaint;
 
         // …
+        for (uint index = 1u; index != (uint) propertyPath.Length; ++index)
+          property = property.FindPropertyRelative(propertyPath[index]);
+
+        timeframe         = (Timeframe) property.boxedValue;
+        timeframeDuration = property.FindPropertyRelative("duration");
+
         UnityEditor.EditorGUI.BeginProperty(position, label, property);
           UnityEngine.GUI.color = new(color.r, color.g, color.b, color.a * 0.5f);
-          style                 = new UnityEngine.GUIStyle(UnityEngine.GUI.skin.label);
+          style                 = new(UnityEngine.GUI.skin.label);
           style.alignment       = UnityEngine.TextAnchor.MiddleRight;
-          UnityEngine.GUI.Label(new UnityEngine.Rect(position.x + UnityEditor.EditorGUIUtility.labelWidth, position.y, position.width - UnityEditor.EditorGUIUtility.labelWidth, position.height * 0.5f), $"{(timeframe.easedProgress * 100.0).ToString("F2")}% ({timeframe.loops})", style);
+          UnityEngine.GUI.Label(new UnityEngine.Rect(position.x + UnityEditor.EditorGUIUtility.labelWidth, position.y, position.width - UnityEditor.EditorGUIUtility.labelWidth, position.height * 0.5f), $"{(Game.IsLoaded && !Game.IsQuitting ? (timeframe.easedProgress * 100.0).ToString("F2") : "-.--")}% ({(Game.IsLoaded && !Game.IsQuitting ? timeframe.loops.ToString() : "—")})", style);
 
           UnityEngine.GUI.color = color;
           style                 = UnityEngine.GUI.skin.label;
@@ -214,13 +225,10 @@ namespace PatchOdyssey {
 
           style = UnityEditor.EditorStyles.numberField;
           UnityEditor.EditorGUI.BeginChangeCheck();
-            duration.doubleValue = UnityEditor.EditorGUI.DoubleField(new UnityEngine.Rect(position.x + (position.width * 0.5f), position.y + (position.height * 0.5f), position.width * 0.5f, position.height * 0.5f), duration.doubleValue, style);
-          if (UnityEditor.EditorGUI.EndChangeCheck()) {
-            timeframe.duration = duration.doubleValue;
-
-            base.fieldInfo.SetValue(property.serializedObject.targetObject, timeframe);
-            Game.AskToSave();
-          }
+            UnityEditor.EditorGUI.showMixedValue = multipleIsSelected;
+            duration                             = UnityEditor.EditorGUI.DoubleField(new UnityEngine.Rect(position.x + (position.width * 0.5f), position.y + (position.height * 0.5f), position.width * 0.5f, position.height * 0.5f), timeframeDuration.doubleValue, style);
+            UnityEditor.EditorGUI.showMixedValue = false;
+          if (UnityEditor.EditorGUI.EndChangeCheck()) { timeframeDuration.doubleValue = duration; property.serializedObject.ApplyModifiedProperties(); } // --> Game.AskToSave()
         UnityEditor.EditorGUI.EndProperty();
       }
 
