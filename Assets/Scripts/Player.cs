@@ -1,127 +1,6 @@
 using PatchOdyssey;
 
 /* … */
-[UnityEngine.DefaultExecutionOrder(4)]
-[UnityEngine.DisallowMultipleComponent]
-[UnityEngine.RequireComponent(typeof(UnityEngine.BoxCollider))]
-public sealed class Lasoo : UnityEngine.MonoBehaviour /* ->> “Lasoo” is intentionally misspelled */ {
-  public const float DeployReach  = 17.5f;  // ->> Maximum reach
-  public const float DeploySpeed  = 7.0f;   // ->> Units per second
-  public const float RetractReach = 1.0f;   // ->> Minimum reach
-  public const float RetractSpeed = 20.0f;  // ->> Units   per second
-  public const float TurnSpeed    = 135.0f; // ->> Degrees per second
-
-  [ReadOnlyInInspector]                             private          UnityEngine.BoxCollider                               _collider      = null!;
-  [ReadOnlyInInspector]                             public           Entity?                                               capture        = null;
-  [ReadOnlyInInspector]                             public           UnityEngine.GameObject                                coil           = null!; // ->> Must be set
-  [ReadWriteInInspector]                            public  new      ref readonly UnityEngine.BoxCollider                  collider       { get { this._collider = null == this._collider ? this.GetComponent<UnityEngine.BoxCollider>() : this._collider; this._collider = null == this._collider ? this.gameObject.AddComponent<UnityEngine.BoxCollider>() : this._collider; return ref this._collider; } }
-  [ReadWriteInInspector]                            public           float                                                 deployReach    =  Lasoo.DeployReach;
-  [ReadWriteInInspector]                            public           float                                                 deploySpeed    =  Lasoo.DeploySpeed;
-  [ReadOnlyInInspector]                             internal         System.Func<bool>                                     isDeploying    =  static () => false; // --> bool*
-  [ReadOnlyInInspector]                             public           float                                                 reach          =  Lasoo.RetractReach; // --> retractReach <= reach <= deployReach
-  [ReadOnlyInInspector, UnityEngine.SerializeField] internal         UnityEngine.Vector3                                   reachDirection =  UnityEngine.Vector3.forward;
-  [ReadOnlyInInspector]                             public           float                                                 reachProgress  => UnityEngine.Mathf.Clamp01((this.reach - this.retractReach) / (this.deployReach - this.retractReach));
-  [ReadWriteInInspector]                            public           float                                                 retractReach   =  Lasoo.RetractReach;
-  [ReadWriteInInspector]                            public           float                                                 retractSpeed   =  Lasoo.RetractSpeed;
-  [ReadOnlyInInspector]                             public           UnityEngine.GameObject                                rope           =  null!; // ->> Must be set
-  [ReadOnlyInInspector]                             private readonly System.Collections.Generic.List<UnityEngine.Color>    ropeColors     =  new();
-  [ReadOnlyInInspector]                             private readonly System.Collections.Generic.List<UnityEngine.Material> ropeMaterials  =  new();
-  [ReadWriteInInspector]                            public           float                                                 turnSpeed      =  Lasoo.TurnSpeed;
-  [ReadOnlyInInspector]                             public           Entity                                                user           =  null!; // ->> Must be set
-
-  /* … ->> Solely responsible for revolving, scaling, coloring, and attaching to its `capture` */
-  private void OnDestroy() {
-    foreach (UnityEngine.Material ropeMaterial in this.ropeMaterials)
-      UnityEngine.Object.Destroy(ropeMaterial);
-
-    this.ropeColors   .Clear();
-    this.ropeMaterials.Clear();
-  }
-
-  private void Start() {
-    UnityEngine.Transform ropeTransform = this.rope.transform;
-
-    // …
-    this.collider     .excludeLayers         = (UnityEngine.LayerMask) 0x0;
-    this.collider     .hasModifiableContacts = false;
-    this.collider     .includeLayers         = (UnityEngine.LayerMask) ~0x0;
-    this.collider     .isTrigger             = true;
-    this.ropeColors   .Capacity              = ropeTransform.hierarchyCount;
-    this.ropeMaterials.Capacity              = ropeTransform.hierarchyCount;
-
-    ropeTransform.ForEach(transform => {
-      if (transform.GetComponent<UnityEngine.Renderer>() is UnityEngine.Renderer renderer && null != renderer) {
-        this.ropeColors   .Add(renderer.sharedMaterial.color);
-        this.ropeMaterials.Add(renderer.material = renderer.material);
-      }
-    });
-  }
-
-  private void Update() {
-    UnityEngine.Transform captureTransform = this.capture?.transform!;
-    UnityEngine.Vector3   reachSize        = UnityEngine.Vector3.one * (this.reach - this.retractReach);
-    UnityEngine.Renderer  ropeRenderer     = this.rope.GetComponent<UnityEngine.Renderer>();
-    UnityEngine.Transform ropeTransform    = this.rope.transform;
-    UnityEngine.Transform userTransform    = this.user.transform;
-
-    // …
-    if (Game.IsPaused)
-    return;
-
-    // …
-    ropeTransform.localScale = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, reachSize - UnityEngine.Vector3.one) + UnityEngine.Vector3.one;
-
-    for (int index = this.ropeMaterials.Count; 0 != index--; )
-    this.ropeMaterials[index].color = UnityEngine.Color.LerpUnclamped(this.ropeColors[index], UnityEngine.Color.red, this.reachProgress * 0.675f);
-
-    if (null != this.capture) {
-      this.reach              = UnityEngine.Vector3.Distance(captureTransform.position, userTransform.position);
-      this.reachDirection     = (captureTransform.position - userTransform.position).normalized;
-      this.transform.position = captureTransform.position;
-      this.transform.rotation = UnityEngine.Quaternion.LookRotation(this.transform.position - userTransform.position, UnityEngine.Vector3.up);
-    }
-
-    else {
-      UnityEngine.Bounds? coilBounds = null;
-      UnityEngine.Vector3 coilSize   = UnityEngine.Vector3.one;
-
-      // …
-      this.coil.transform.ForEach(transform => {
-        UnityEngine.Bounds meshBounds;
-
-        // …
-        if (transform == ropeTransform)
-        return false;
-
-        if      (transform.GetComponent<UnityEngine.MeshFilter>         () is UnityEngine.MeshFilter          meshFilter          && null != meshFilter)          meshBounds = meshFilter         .sharedMesh.bounds;
-        else if (transform.GetComponent<UnityEngine.SkinnedMeshRenderer>() is UnityEngine.SkinnedMeshRenderer skinnedMeshRenderer && null != skinnedMeshRenderer) meshBounds = skinnedMeshRenderer.sharedMesh.bounds;
-        else    return true;
-
-        // …
-        if (coilBounds is UnityEngine.Bounds bounds) {
-          bounds.Encapsulate(meshBounds.center - meshBounds.extents);
-          bounds.Encapsulate(meshBounds.center + meshBounds.extents);
-
-          coilBounds = bounds;
-        } else coilBounds = meshBounds;
-
-        // …
-        return true;
-      });
-
-      coilSize                     = coilBounds?.size ?? coilSize;
-      this.collider.size           = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, reachSize)                  + coilSize;
-      this.collider.center         = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, this.collider.size * -0.5f) + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, coilSize);
-      this.reach                   = UnityEngine.Mathf.Clamp(this.reach + (UnityEngine.Time.unscaledDeltaTime * (!this.isDeploying() ? -this.retractSpeed : +this.deploySpeed)), this.retractReach, this.deployReach);
-      this.reachDirection          = UnityEngine.Quaternion.Euler(UnityEngine.Vector3.up * UnityEngine.Time.unscaledDeltaTime * this.turnSpeed) * this.reachDirection;
-      this.transform.position      = userTransform.position + (this.reachDirection * this.reach);
-      this.transform.localRotation = UnityEngine.Quaternion.LookRotation(this.transform.localPosition - userTransform.localPosition, UnityEngine.Vector3.up);
-    }
-
-    ropeTransform.LookAt(userTransform, UnityEngine.Vector3.up);
-  }
-}
-
 [UnityEngine.DefaultExecutionOrder(3)]
 [UnityEngine.RequireComponent(typeof(UnityEngine.SphereCollider))]
 public sealed class Player : Tamer /* ->> Source file must be named “Player” */ {
@@ -145,7 +24,7 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
   }
 
   /* … */
-  public  static          bool                  AnyInput                           = false;
+  public  static          bool                  IsReady                            = false;
   private static readonly float                 LasooCaptureProgressThreshold      = (UnityEngine.Vector3.one * 0.25f).sqrMagnitude;
   private const           uint                  LasooCaptureProgressPrecision      = 10u;  // --> Player.LasooCaptureProgressPrecision >= 2
   private const           byte                  LasooCaptureIndicatorPrecision     = 20;   // ->> Number of segments
@@ -161,14 +40,14 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
   [ReadWriteInInspector]                            public  Player.LasooInfo    lasoo              = new() {captureDirection = UnityEngine.Vector3.zero, captureIndicator = (null, null), captureIndicatorMesh = (null, null), captureIndicatorRenderer = (null, null), captureProgress = Player.LasooCaptureProgress.Initiating, captureProgressDirection = UnityEngine.Vector3.zero, captureProgressTurn = Entity.TurnDirection.Clockwise, captureProgressTurnCount = 0u, deployReach = Lasoo.DeployReach, deploySpeed = Lasoo.DeploySpeed, retractReach = Lasoo.RetractReach, retractSpeed = Lasoo.RetractSpeed, turnSpeed = Lasoo.TurnSpeed};
   [ReadOnlyInInspector]                             public  Lasoo?              lasooing           = null;
   [ReadOnlyInInspector, UnityEngine.SerializeField] private UnityEngine.Vector3 mainCameraDistance = UnityEngine.Vector3.zero;
-  [ReadWriteInInspector]                            public  Timeframe           releaseWindow      = new(1.0);
+  [ReadWriteInInspector]                            public  Timeframe           releaseWindow      = new(1.00);
 
   /* … */
   protected override void Awake() {
     base.Awake();
 
     // …
-    this.collider.isTrigger  = false;
+    base.collider.isTrigger  = false;
     this.followAutomatically = false;
     this.mainCameraDistance  = null != this.mainCamera ? this.mainCamera.transform.position - this.transform.position : UnityEngine.Vector3.zero;
     this.shootAutomatically  = false;
@@ -293,7 +172,7 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
     return;
 
     // … ->> Input
-    Player.AnyInput = Player.AnyInput || this.isInputing;
+    Player.IsReady = Player.IsReady || this.isInputing;
     this.isInputing = false;
       // … ->> Moving
       this.followAutomatically = false;
@@ -335,11 +214,11 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
       this.movement.speedFactor = this.lasooing is not null ? ((1.0f - this.lasooing.reachProgress) * 0.5f) + 0.5f : 1.0f;
 
       if (this.isInputing || UnityEngine.Vector3.zero != this.movement.direction)
-        this.movement.restTimer.Reset();
+        this.movement.pauseCooldown.Reset();
 
-      else if (this.movement.restTimer.isElapsed && Entity.MovementVelocityThreshold.sqrMagnitude > this.rigidBody.linearVelocity.sqrMagnitude) {
-        this.rigidBody.angularVelocity = UnityEngine.Vector3.zero;
-        this.rigidBody.linearVelocity  = UnityEngine.Vector3.zero;
+      else if (this.movement.pauseCooldown.isElapsed && Entity.MovementVelocityThreshold.sqrMagnitude > base.rigidBody.linearVelocity.sqrMagnitude) {
+        base.rigidBody.angularVelocity = UnityEngine.Vector3.zero;
+        base.rigidBody.linearVelocity  = UnityEngine.Vector3.zero;
         this.turn.direction            = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, ((this.mainCamera?.transform.position ?? (UnityEngine.Vector3.back + transform.position)) - transform.position).normalized);
       }
 
@@ -465,7 +344,119 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
       }
 
     // … ->> Camera
-    if (null != this.mainCamera && UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, Entity.MovementVelocityThreshold).sqrMagnitude < UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, this.rigidBody.linearVelocity).sqrMagnitude)
+    if (null != this.mainCamera && UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, Entity.MovementVelocityThreshold).sqrMagnitude < UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, base.rigidBody.linearVelocity).sqrMagnitude)
     this.mainCamera.transform.position = this.mainCameraDistance + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, transform.position);
   }
 }
+  [UnityEngine.DefaultExecutionOrder(4)]
+  [UnityEngine.RequireComponent(typeof(UnityEngine.BoxCollider))]
+  public sealed class Lasoo : GameComponent /* ->> “Lasoo” is intentionally misspelled */ {
+    public const float DeployReach  = 17.5f;  // ->> Maximum reach
+    public const float DeploySpeed  = 7.0f;   // ->> Units per second
+    public const float RetractReach = 1.0f;   // ->> Minimum reach
+    public const float RetractSpeed = 20.0f;  // ->> Units   per second
+    public const float TurnSpeed    = 135.0f; // ->> Degrees per second
+
+    public            Entity?                                               capture        =  null;
+    public   new      UnityEngine.BoxCollider                               collider       => (UnityEngine.BoxCollider) base.collider;
+    public            UnityEngine.GameObject                                coil           =  null!; // ->> Must be set
+    public            float                                                 deployReach    =  Lasoo.DeployReach;
+    public            float                                                 deploySpeed    =  Lasoo.DeploySpeed;
+    internal          System.Func<bool>                                     isDeploying    =  static () => false; // --> bool*
+    public            float                                                 reach          =  Lasoo.RetractReach; // --> retractReach <= reach <= deployReach
+    internal          UnityEngine.Vector3                                   reachDirection =  UnityEngine.Vector3.forward;
+    public            float                                                 reachProgress  => UnityEngine.Mathf.Clamp01((this.reach - this.retractReach) / (this.deployReach - this.retractReach));
+    public            float                                                 retractReach   =  Lasoo.RetractReach;
+    public            float                                                 retractSpeed   =  Lasoo.RetractSpeed;
+    public            UnityEngine.GameObject                                rope           =  null!; // ->> Must be set
+    private  readonly System.Collections.Generic.List<UnityEngine.Color>    ropeColors     =  new();
+    private  readonly System.Collections.Generic.List<UnityEngine.Material> ropeMaterials  =  new();
+    public            float                                                 turnSpeed      =  Lasoo.TurnSpeed;
+    public            Entity                                                user           =  null!; // ->> Must be set
+
+    /* … ->> Solely responsible for revolving, scaling, coloring, and attaching to its `capture` */
+    private void OnDestroy() {
+      foreach (UnityEngine.Material ropeMaterial in this.ropeMaterials)
+        UnityEngine.Object.Destroy(ropeMaterial);
+
+      this.ropeColors   .Clear();
+      this.ropeMaterials.Clear();
+    }
+
+    private void Start() {
+      UnityEngine.Transform ropeTransform = this.rope.transform;
+
+      // …
+      base.collider     .excludeLayers         = (UnityEngine.LayerMask) 0x0;
+      base.collider     .hasModifiableContacts = false;
+      base.collider     .includeLayers         = (UnityEngine.LayerMask) ~0x0;
+      base.collider     .isTrigger             = true;
+      this.ropeColors   .Capacity              = ropeTransform.hierarchyCount;
+      this.ropeMaterials.Capacity              = ropeTransform.hierarchyCount;
+
+      ropeTransform.ForEach<UnityEngine.Renderer>(renderer => {
+        this.ropeColors   .Add(renderer.sharedMaterial.color);
+        this.ropeMaterials.Add(renderer.material = renderer.material);
+      });
+    }
+
+    private void Update() {
+      UnityEngine.Transform captureTransform = this.capture?.transform!;
+      UnityEngine.Vector3   reachSize        = UnityEngine.Vector3.one * (this.reach - this.retractReach);
+      UnityEngine.Renderer  ropeRenderer     = this.rope.GetComponent<UnityEngine.Renderer>();
+      UnityEngine.Transform ropeTransform    = this.rope.transform;
+      UnityEngine.Transform userTransform    = this.user.transform;
+
+      // …
+      if (Game.IsPaused)
+      return;
+
+      // …
+      ropeTransform.localScale = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, reachSize - UnityEngine.Vector3.one) + UnityEngine.Vector3.one;
+
+      for (int index = this.ropeMaterials.Count; 0 != index--; )
+      this.ropeMaterials[index].color = UnityEngine.Color.LerpUnclamped(this.ropeColors[index], UnityEngine.Color.red, this.reachProgress * 0.675f);
+
+      if (null != this.capture) {
+        this.reach              = UnityEngine.Vector3.Distance(captureTransform.position, userTransform.position);
+        this.reachDirection     = (captureTransform.position - userTransform.position).normalized;
+        this.transform.position = captureTransform.position;
+        this.transform.rotation = UnityEngine.Quaternion.LookRotation(this.transform.position - userTransform.position, UnityEngine.Vector3.up);
+      }
+
+      else {
+        UnityEngine.Bounds? coilBounds = null;
+        UnityEngine.Vector3 coilSize   = UnityEngine.Vector3.one;
+
+        // …
+        this.coil.transform.ForEach(transform => {
+          UnityEngine.Bounds meshBounds;
+
+          // …
+          if (transform == ropeTransform)
+          return false;
+
+          if      (transform.GetComponent<UnityEngine.MeshFilter>         () is UnityEngine.MeshFilter          meshFilter          && null != meshFilter)          meshBounds = meshFilter         .sharedMesh.bounds;
+          else if (transform.GetComponent<UnityEngine.SkinnedMeshRenderer>() is UnityEngine.SkinnedMeshRenderer skinnedMeshRenderer && null != skinnedMeshRenderer) meshBounds = skinnedMeshRenderer.sharedMesh.bounds;
+          else    return true;
+
+          // …
+          if (coilBounds is not UnityEngine.Bounds bounds) coilBounds = meshBounds;
+          else { bounds.Encapsulate(meshBounds); coilBounds = bounds; }
+
+          // …
+          return true;
+        });
+
+        coilSize                     = coilBounds?.size ?? coilSize;
+        this.collider.size           = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, reachSize)                  + coilSize;
+        this.collider.center         = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, this.collider.size * -0.5f) + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, coilSize);
+        this.reach                   = UnityEngine.Mathf.Clamp(this.reach + (UnityEngine.Time.unscaledDeltaTime * (!this.isDeploying() ? -this.retractSpeed : +this.deploySpeed)), this.retractReach, this.deployReach);
+        this.reachDirection          = UnityEngine.Quaternion.Euler(UnityEngine.Vector3.up * UnityEngine.Time.unscaledDeltaTime * this.turnSpeed) * this.reachDirection;
+        this.transform.position      = userTransform.position + (this.reachDirection * this.reach);
+        this.transform.localRotation = UnityEngine.Quaternion.LookRotation(this.transform.localPosition - userTransform.localPosition, UnityEngine.Vector3.up);
+      }
+
+      ropeTransform.LookAt(userTransform, UnityEngine.Vector3.up);
+    }
+  }

@@ -7,11 +7,68 @@ public class Tamer : Entity {
   public static readonly UnityEngine.Vector3 MountingPosition = (UnityEngine.Vector3.back * 0.200f) + (UnityEngine.Vector3.up * 1.125f);
 
   [UnityEngine.Header("Tamer")]
-  [ReadWriteInInspector] public  new      UnityEngine.SphereCollider                             collider   => (UnityEngine.SphereCollider) base.collider;
-  [ReadOnlyInInspector]  private readonly System.Collections.Generic.List<UnityEngine.Transform> transforms =  new();
+  [ReadOnlyInInspector]  public           UnityEngine.GameObject?                                hair               =  null;
+  [ReadWriteInInspector] public           bool                                                   hairAutomatically  =  true;
+  [ReadWriteInInspector] public  new      UnityEngine.SphereCollider                             collider           => (UnityEngine.SphereCollider) base.collider;
+  [ReadOnlyInInspector]  private readonly System.Collections.Generic.List<UnityEngine.Transform> mountingTransforms =  new();
 
   /* … */
-  protected override void Awake() {
+  protected virtual void Capture(Entity entity) {
+    if (base.isDefeated)
+    return;
+
+    // …
+    if (entity is Monster monster) {
+      monster.following                = this;
+      monster.isInvincible             = true;
+      monster.team                     = base.team;
+      this.mountingTransforms.Capacity = System.Math.Max(this.mountingTransforms.Capacity, this.transform.hierarchyCount);
+
+      monster.transform.SetParent(this.transform, true);
+      this.followers.Add(monster);
+      this.transform.ForEach(transform => {
+        if (monster.transform == transform)
+        return false;
+
+        if (null != transform.GetComponent<UnityEngine.Renderer>() && !this.mountingTransforms.Contains(transform)) {
+          transform.localPosition += Tamer.MountingPosition;
+          this.mountingTransforms.Add(transform);
+
+          return false;
+        }
+
+        return true;
+      });
+    }
+
+    // NOTE (Lapys) ->> Other kinds of `Entity`s may entail other actions like switch activation, NPC interaction, e.t.c.
+  }
+
+  protected virtual void Release(Entity entity) {
+    if (base.isDefeated)
+    return;
+
+    // …
+    if (entity is Monster monster) {
+      monster.following  = null;
+      monster.isDefeated = true;
+
+      base.followers.Remove(monster);
+
+      if (0 == base.followers.Count) {
+        foreach (UnityEngine.Transform transform in this.mountingTransforms) {
+          if (null != transform)
+          transform.localPosition -= Tamer.MountingPosition;
+        }
+
+        this.mountingTransforms.Clear();
+      }
+    }
+
+    // NOTE (Lapys) ->> Other kinds of `Entity`s may entail other actions like switch de-activation, NPC interaction, e.t.c.
+  }
+
+  private void Start() {
     UnityEngine.Material?   hairMaterial        = Random(Assets.main.hairs.materials);
     UnityEngine.Material[]  hairMaterials       = System.Array.Empty<UnityEngine.Material>();
     UnityEngine.GameObject? hairMeshFabrication = Random(Assets.main.hairs.meshPrefabrications);
@@ -33,11 +90,8 @@ public class Tamer : Entity {
       }
     }
 
-    /* … */
-    base.Awake();
-
-    // …
-    if (this is not Player && hairMeshFabrication is not null) {
+    /* … ->> Hair */
+    if (this.hairAutomatically && hairMeshFabrication is not null) {
       UnityEngine.Transform hairTransform = ((UnityEngine.GameObject) UnityEngine.Object.Instantiate(hairMeshFabrication, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity, this.transform)).transform;
 
       // …
@@ -58,107 +112,44 @@ public class Tamer : Entity {
       hairTransform.name = "Hair";
 
       hairTransform.SetLocalPositionAndRotation(UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity);
-      this.transform.ForEach(transform => {
-        if (transform.GetComponent<UnityEngine.Renderer>() is UnityEngine.Renderer renderer && null != renderer) {
-          UnityEngine.Material[] materials          = renderer.sharedMaterials;
-          bool                   materialsIsUpdated = hairTransform.IsChildOf(transform);
+      this.transform.ForEach<UnityEngine.Renderer>(renderer => {
+        UnityEngine.Material[] materials          = renderer.sharedMaterials;
+        bool                   materialsIsUpdated = hairTransform.IsChildOf(this.transform);
 
-          // …
-          if (!materialsIsUpdated) {
-            for (uint index = (uint) materials.Length; 0u != index--; )
-            if (materials[index].name.TrimStart().StartsWith("human-hair", System.StringComparison.OrdinalIgnoreCase)) {
-              materials[index]   = hairMaterial;
-              materialsIsUpdated = true;
-            }
-
-            if (Assets.main.outlineAutomatically && Assets.main.outlineMaterial is not null) {
-              UnityEngine.Material[] submaterials = new UnityEngine.Material[materials.Length + 1];
-
-              // …
-              materials.CopyTo(submaterials, 0);
-
-              submaterials[materials.Length] = Assets.main.outlineMaterial;
-              materials                      = submaterials;
-            }
+        // …
+        if (!materialsIsUpdated) {
+          for (uint index = (uint) materials.Length; 0u != index--; )
+          if (materials[index].name.TrimStart().StartsWith("human-hair", System.StringComparison.OrdinalIgnoreCase)) {
+            materials[index]   = hairMaterial;
+            materialsIsUpdated = true;
           }
 
-          if      (materialsIsUpdated) renderer.sharedMaterials = materials;
-          else if (transform.GetComponent<UnityEngine.MeshFilter>() is UnityEngine.MeshFilter meshFilter && null != meshFilter) {
-            string name = meshFilter.name.Trim();
+          if (Assets.main.outlineAutomatically && Assets.main.outlineMaterial is not null) {
+            UnityEngine.Material[] submaterials = new UnityEngine.Material[materials.Length + 1];
 
-            if (
-              string.Equals(name, "brow",  System.StringComparison.OrdinalIgnoreCase) ||
-              string.Equals(name, "brows", System.StringComparison.OrdinalIgnoreCase) ||
-              name.EndsWith("Brow", System.StringComparison.OrdinalIgnoreCase)
-            ) renderer.sharedMaterials = hairMaterials;
+            // …
+            materials.CopyTo(submaterials, 0);
+
+            submaterials[materials.Length] = Assets.main.outlineMaterial;
+            materials                      = submaterials;
           }
+        }
+
+        if      (materialsIsUpdated) renderer.sharedMaterials = materials;
+        else if (this.transform.GetComponent<UnityEngine.MeshFilter>() is UnityEngine.MeshFilter meshFilter && null != meshFilter) {
+          string name = meshFilter.name.Trim();
+
+          if (
+            string.Equals(name, "brow",  System.StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(name, "brows", System.StringComparison.OrdinalIgnoreCase) ||
+            name.EndsWith("Brow", System.StringComparison.OrdinalIgnoreCase)
+          ) renderer.sharedMaterials = hairMaterials;
         }
       });
     }
-  }
-
-  protected virtual void Capture(Entity entity) {
-    if (this.isDefeated)
-    return;
-
-    // …
-    if (entity is Monster monster) {
-      UnityEngine.Transform monsterTransform = monster.transform;
-
-      // …
-      monster.following        = this;
-      monster.isInvincible     = true;
-      monster.team             = this.team;
-      this.transforms.Capacity = System.Math.Max(this.transform.hierarchyCount, this.transforms.Capacity);
-
-      monster.transform.SetParent(this.transform, true);
-      this.followers.Add(monster);
-      this.transform.ForEach(transform => {
-        if (monsterTransform == transform)
-        return false;
-
-        if (null != transform.GetComponent<UnityEngine.Renderer>() && !this.transforms.Contains(transform)) {
-          transform.localPosition += Tamer.MountingPosition;
-          this.transforms.Add(transform);
-
-          return false;
-        }
-
-        return true;
-      });
-    }
-
-    // NOTE (Lapys) ->> Other kinds of `Entity`s may entail other actions like switch activation, NPC interaction, e.t.c.
-  }
-
-  protected virtual void Release(Entity entity) {
-    if (this.isDefeated)
-    return;
-
-    // …
-    if (entity is Monster monster) {
-      monster.following  = null;
-      monster.isDefeated = true;
-
-      this.followers.Remove(monster);
-
-      if (0 == this.followers.Count) {
-        foreach (UnityEngine.Transform transform in this.transforms) {
-          if (null != transform)
-          transform.localPosition -= Tamer.MountingPosition;
-        }
-
-        this.transforms.Clear();
-      }
-    }
-
-    // NOTE (Lapys) ->> Other kinds of `Entity`s may entail other actions like switch de-activation, NPC interaction, e.t.c.
   }
 
   protected override void Update() {
-    UnityEngine.Transform transform = this.transform;
-
-    // …
     base.Update();
 
     if (Game.IsPaused || this.isDefeated)

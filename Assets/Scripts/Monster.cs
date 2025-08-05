@@ -7,6 +7,14 @@ public sealed class Monster : Entity {
   public enum Kind : byte { Antillery, Borka, Molem, Sirpens, Tyrage }
 
   [System.Serializable]
+  internal struct MountedInfo {
+    [ReadOnlyInInspector] internal /* readonly */ System.Collections.Generic.List<UnityEngine.Material[]> materials;       // ->> Copied `UnityEngine.Material`
+    [ReadOnlyInInspector] internal                UnityEngine.Material?                                   outlineMaterial; // ->> Original
+    [ReadOnlyInInspector] internal /* readonly */ System.Collections.Generic.List<UnityEngine.Renderer>   renderers;       // ->> `UnityEngine.Renderer` using either `Monster::materials` or `Monster::sharedMaterials`
+    [ReadOnlyInInspector] internal /* readonly */ System.Collections.Generic.List<UnityEngine.Material[]> sharedMaterials; // ->> Base `UnityEngine.Material`
+  }
+
+  [System.Serializable]
   public struct WrestleInfo {
     [ReadWriteInInspector] public float     force;
     [ReadWriteInInspector] public Timeframe interval;
@@ -14,108 +22,100 @@ public sealed class Monster : Entity {
 
   /* … */
   [UnityEngine.Header("Monster")]
-  [ReadWriteInInspector]                             public  new      UnityEngine.BoxCollider                               collider           => (UnityEngine.BoxCollider) base.collider;
-  [ReadWriteInInspector]                             public           Monster.Kind                                          kind               =  Monster.Kind.Borka;
-  [ReadOnlyInInspector]                              private readonly System.Collections.Generic.List<UnityEngine.Material> materials          =  new();
-  [ReadWriteInInspector]                             public           bool                                                  isMounted          => this.mountAutomatically && this.following is Tamer tamer && null != tamer && 0 != tamer.followers.Count && this == tamer.followers[0];
-  [ReadWriteInInspector, UnityEngine.SerializeField] private          bool                                                  mountAutomatically =  true;
-  [ReadOnlyInInspector]                              private readonly System.Collections.Generic.List<UnityEngine.Renderer> renderers          =  new();
-  [ReadOnlyInInspector]                              private readonly System.Collections.Generic.List<UnityEngine.Material> sharedMaterials    =  new();
-  [ReadWriteInInspector]                             public           Monster.WrestleInfo                                   wrestle            =  new() {force = 30.000f, interval = new(1.125)};
-  [ReadWriteInInspector]                             public           Entity?                                               wrestling          =  null;
+  [ReadWriteInInspector]                             public  Monster.Kind        kind               =  Monster.Kind.Borka;
+  [ReadWriteInInspector]                             public  bool                isMounted          => this.mountAutomatically && base.following is Tamer tamer && null != tamer && 0 != tamer.followers.Count && this == tamer.followers[0];
+  [ReadWriteInInspector]                             private Monster.MountedInfo mount              =  new() {materials = new(), outlineMaterial = null, renderers = new(), sharedMaterials = new()};
+  [ReadWriteInInspector, UnityEngine.SerializeField] private bool                mountAutomatically =  true;
+  [ReadWriteInInspector, UnityEngine.SerializeField] private bool                mountIsUsed        =  false;
+  [ReadWriteInInspector]                             public  Monster.WrestleInfo wrestle            =  new() {force = 30.000f, interval = new(1.125)};
+  [ReadWriteInInspector]                             public  Entity?             wrestling          =  null;
 
   /* … */
   protected override void Awake() {
     base.Awake();
-
-    // …
-    this.shoot.isAllowed = this.ShootIsAllowed;
+    base.shoot.isAllowed = ShootIsAllowed;
   }
 
-  protected override System.Converter<Entity, float> GetFindNonTeamTargetsDefaultComparison() {
-    System.Converter<Entity, float> comparison = base.GetFindTargetsDefaultComparison();
+  protected override System.Converter<Entity, float> FindTargetsSorter() {
+    System.Converter<Entity, float> comparison = base.FindTargetsSorter();
     return this.kind switch {
-      Monster.Kind.Antillery => entity => comparison(entity) / (entity is Monster monster ? null != monster.following && !monster.isMounted ? -1.0f : 1.0f : 1.0f),        // ->> Target followers
-      Monster.Kind.Borka     => entity => comparison(entity),                                                                                                              // ->> Target default
-      Monster.Kind.Molem     => entity => 1.0f / entity.health,                                                                                                            // ->> Target strongest
-      Monster.Kind.Sirpens   => entity => 1.0f * entity.health,                                                                                                            // ->> Target weakest
-      Monster.Kind.Tyrage    => entity => comparison(entity) + ((Game.SceneSize * Game.SceneSize) / ((entity is Player ? 3.0f : 1.0f) * (entity is Tamer ? 2.0f : 1.0f))), // ->> Prioritize `Player`s, then `Tamers`
+      Monster.Kind.Antillery =>        entity => comparison(entity) / (entity is Monster monster ? null != monster.following && !monster.isMounted ? -1.0f : 1.0f : 1.0f),        // ->> Target followers
+      Monster.Kind.Borka     =>        entity => comparison(entity),                                                                                                              // ->> Target default
+      Monster.Kind.Molem     => static entity => 1.0f / entity.health,                                                                                                            // ->> Target strongest
+      Monster.Kind.Sirpens   => static entity => 1.0f * entity.health,                                                                                                            // ->> Target weakest
+      Monster.Kind.Tyrage    =>        entity => comparison(entity) + ((Game.SceneSize * Game.SceneSize) / ((entity is Player ? 3.0f : 1.0f) * (entity is Tamer ? 2.0f : 1.0f))), // ->> Prioritize `Player`s, then `Tamers`
       _                      => comparison
     };
   }
 
   protected override void OnDestroy() {
+    base.outline.material = this.mountIsUsed ? this.mount.outlineMaterial : base.outline.material;
     base.OnDestroy();
 
-    foreach (UnityEngine.Material material in this.materials)
-      UnityEngine.Object.Destroy(material);
-
-    this.materials      .Clear();
-    this.renderers      .Clear();
-    this.sharedMaterials.Clear();
+    foreach (UnityEngine.Material[] materials in this.mount.materials)
+    foreach (UnityEngine.Material   material  in materials)
+      UnityEngine.Object.Destroy(material); // ->> Prior `base.outline.material` destroyed here
   }
 
   protected override void OnTriggerEnter(UnityEngine.Collider collider) {
     base.OnTriggerEnter(collider);
 
-    if (this.isDefeated)
-    return;
-
-    // …
-    if (collider.GetComponent<Lasoo>() is Lasoo lasoo && null == lasoo.capture && lasoo.isDeploying()) {
+    if (!base.isDefeated && null == this.following && collider.GetComponent<Lasoo>() is Lasoo lasoo && null == lasoo.capture && lasoo.isDeploying()) {
       lasoo.capture  = this;
       this.wrestling = lasoo.user;
     }
   }
 
+  protected override void PrefollowUpdate() {
+    /* Do nothing… */
+  }
+
   public override Bullet? Shoot() {
-    void DeployBullet(Bullet bullet) {
+    UnityEngine.Vector3 priorShootDirection = UnityEngine.Vector3.zero;
+
+    /* … */
+    void DeployBullet(Bullet bullet, ushort index) {
       switch (this.kind) {
         case Monster.Kind.Antillery:
         case Monster.Kind.Molem: {
-          UnityEngine.Bounds     bulletBounds = new(bullet.transform.position, UnityEngine.Vector3.zero);
-          UnityEngine.GameObject bulletMesh   = UnityEngine.GameObject.CreatePrimitive(UnityEngine.PrimitiveType.Cylinder);
-
-          // … ->> Replace existing “mesh” with `bulletMesh`
-          if (bulletMesh is not null) {
+          if (UnityEngine.GameObject.CreatePrimitive(UnityEngine.PrimitiveType.Cylinder) is UnityEngine.GameObject bulletMesh) {
+            UnityEngine.Bounds    bulletBounds        = new(bullet.transform.position, UnityEngine.Vector3.zero);
             UnityEngine.Renderer  bulletMeshRenderer  = bulletMesh.GetComponent<UnityEngine.Renderer>() ?? bulletMesh.AddComponent<UnityEngine.MeshRenderer>();
             UnityEngine.Transform bulletMeshTransform = bulletMesh.transform;
 
             // …
             bulletMeshRenderer.sharedMaterials = System.Array.Empty<UnityEngine.Material>();
             bulletMeshTransform.localScale     = UnityEngine.Vector3.one * Game.VectorEpsilon;
+            bulletMeshTransform.localRotation  = Monster.Kind.Molem == this.kind ? UnityEngine.Random.rotation : UnityEngine.Quaternion.AngleAxis(90.0f, UnityEngine.Vector3.right);
 
-            bullet.transform.ForEach(transform => {
-              if (transform.GetComponent<UnityEngine.Renderer>() is UnityEngine.Renderer renderer && null != renderer) {
-                bulletMeshRenderer.sharedMaterials = 0 == bulletMeshRenderer.sharedMaterials.Length ? renderer.sharedMaterials : bulletMeshRenderer.sharedMaterials;
+            bullet.transform.ForEach<UnityEngine.Renderer>(renderer => { bulletBounds.Encapsulate(renderer.bounds); bulletMeshRenderer.sharedMaterials = 0 == bulletMeshRenderer.sharedMaterials.Length ? renderer.sharedMaterials : bulletMeshRenderer.sharedMaterials; });
 
-                bulletBounds.Encapsulate(renderer.bounds.center - renderer.bounds.extents);
-                bulletBounds.Encapsulate(renderer.bounds.center + renderer.bounds.extents);
-              }
-            });
-
-            // …
             while (bulletBounds.size.sqrMagnitude > bulletMeshRenderer.bounds.size.sqrMagnitude)
               bulletMeshTransform.localScale *= 1.5f;
 
             switch (this.kind) {
-              case Monster.Kind.Antillery:
-                bulletMeshTransform.localScale = new(bulletMeshTransform.localScale.x * 0.4f, bulletMeshTransform.localScale.y * 0.9f, bulletMeshTransform.localScale.z * 0.4f);
-                break;
+              case Monster.Kind.Antillery: {
+                bullet.shootDirection             = priorShootDirection;
+                bulletMeshTransform.localPosition = UnityEngine.Vector3.right * (0 == (index & 1) ? +1.0f : -1.0f);
+                bulletMeshTransform.localScale    = new(bulletMeshTransform.localScale.x * 0.40f, bulletMeshTransform.localScale.y * 0.75f, bulletMeshTransform.localScale.z * 0.40f);
+              } break;
 
               case Monster.Kind.Molem: {
                 bullet.isInvincible             = true;
                 bullet.lifetime                 = 20.0f;
                 bulletMeshTransform.localScale *= 1.5f;
               } break;
+
+              default: break;
             }
+
+            foreach (UnityEngine.Collider collider in bulletMesh.GetComponents<UnityEngine.Collider>())
+              UnityEngine.Object.Destroy(collider);
 
             foreach (UnityEngine.Transform transform in bullet.transform)
               UnityEngine.Object.Destroy(transform.gameObject);
 
-            bulletMeshTransform.SetParent                  (bullet.transform, false);
-            bulletMeshTransform.SetLocalPositionAndRotation(UnityEngine.Vector3.zero, Monster.Kind.Molem == this.kind ? UnityEngine.Random.rotation : UnityEngine.Quaternion.AngleAxis(90.0f, UnityEngine.Vector3.right));
-            UnityEngine.Object.Destroy(bulletMesh.GetComponent<UnityEngine.Collider>());
+            bulletMeshTransform.SetParent(bullet.transform, false);
           }
         } break;
 
@@ -127,9 +127,11 @@ public sealed class Monster : Entity {
       }
     }
 
-    if (this.Shoot(DeployBullet /* Handle repeated firing */) is Bullet bullet) {
-      // Handle original bullet and let caller register it
-      DeployBullet(bullet);
+    /* … */
+    if (base.Shoot(DeployBullet) is Bullet bullet) {
+      priorShootDirection = bullet.shootDirection;
+      DeployBullet(bullet, (byte) 0u);
+
       return bullet;
     }
 
@@ -137,11 +139,11 @@ public sealed class Monster : Entity {
   }
 
   private bool ShootIsAllowed(bool allowed) {
-    float distance = (null != this.target ? this.transform.position - this.target.transform.position : UnityEngine.Vector3.positiveInfinity).sqrMagnitude;
+    float distance = (null != base.target ? this.transform.position - base.target.transform.position : UnityEngine.Vector3.positiveInfinity).sqrMagnitude;
     return this.kind switch {
-      Monster.Kind.Antillery => allowed && distance <= (UnityEngine.Vector3.one * 10.0f).sqrMagnitude,
-      Monster.Kind.Borka     => allowed && distance <= (UnityEngine.Vector3.one * 6.0f) .sqrMagnitude,
-      Monster.Kind.Molem     => allowed && distance <= (UnityEngine.Vector3.one * 2.0f) .sqrMagnitude,
+      Monster.Kind.Antillery => allowed && distance <= (UnityEngine.Vector3.one * 12.0f).sqrMagnitude,
+      Monster.Kind.Borka     => allowed && distance <= (UnityEngine.Vector3.one * 8.0f) .sqrMagnitude,
+      Monster.Kind.Molem     => allowed && distance <= (UnityEngine.Vector3.one * 3.0f) .sqrMagnitude,
       Monster.Kind.Sirpens   => allowed,
       Monster.Kind.Tyrage    => allowed,
       _                      => allowed
@@ -149,26 +151,23 @@ public sealed class Monster : Entity {
   }
 
   protected override void Update() {
-    UnityEngine.Transform transform = this.transform;
-
-    // …
     base.Update();
 
-    if (Game.IsPaused || this.isDefeated)
+    if (Game.IsPaused || base.isDefeated)
     return;
 
     // … ->> Bullet
-    foreach (Bullet bullet in this.bullets)
+    foreach (Bullet bullet in base.bullets)
     if (null != bullet && !bullet.isHit) {
       switch (this.kind) {
-        case Monster.Kind.Borka:   break;
-        case Monster.Kind.Molem:   break;
+        case Monster.Kind.Borka: break;
+        case Monster.Kind.Molem: /* Do nothing… */ break;
         case Monster.Kind.Sirpens: break;
         case Monster.Kind.Tyrage:  break;
 
         case Monster.Kind.Antillery:
         default: {
-          bullet.rigidBody.AddForce    (bullet.shootDirection * this.shoot.speed, UnityEngine.ForceMode.Impulse);
+          bullet.rigidBody.AddForce    (bullet.shootDirection * base.shoot.speed, UnityEngine.ForceMode.Impulse);
           bullet.rigidBody.MoveRotation(UnityEngine.Quaternion.Euler(
             UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, bullet.rigidBody.rotation.eulerAngles) +                       // ->> Remove Y-axis orientation
             UnityEngine.Vector3.Scale(UnityEngine.Vector3.up, UnityEngine.Quaternion.LookRotation(bullet.shootDirection, UnityEngine.Vector3.up).eulerAngles) // ->> Apply  Y-axis orientation
@@ -178,77 +177,99 @@ public sealed class Monster : Entity {
     }
 
     // … ->> Mounted
-    this.followAutomatically = !this.isMounted && null == this.wrestling;
+    base.followAutomatically = !this.isMounted && null == this.wrestling;
 
     if (this.isMounted) {
-      this.isInvincible = true;
+      base.rigidBody.Sleep();
 
-      if (this.prefollowIsUpdated) {
-        this.bounceAutomatically = false;
-        this.moveAutomatically   = false;
+      if (base.prefollowIsUpdated) {
+        base.bounceAutomatically = false;
+        base.isInvincible        = true;
+        base.moveAutomatically   = false;
       }
 
-      if (0 == this.materials.Count) {
-        this.materials      .Capacity = transform.hierarchyCount;
-        this.renderers      .Capacity = transform.hierarchyCount;
-        this.sharedMaterials.Capacity = transform.hierarchyCount;
+      if (!this.mountIsUsed) {
+        this.mount.materials.Capacity       = this.transform.hierarchyCount;
+        this.mount.outlineMaterial          = null;
+        this.mount.renderers      .Capacity = this.transform.hierarchyCount;
+        this.mount.sharedMaterials.Capacity = this.transform.hierarchyCount;
+        this.mountIsUsed                    = true;
 
-        transform.ForEach(transform => {
-          if (transform.GetComponent<UnityEngine.Renderer>() is UnityEngine.Renderer renderer && null != renderer) {
-            this.sharedMaterials.Add(renderer.sharedMaterial);
-            this.renderers      .Add(renderer);
-            this.materials      .Add(renderer.material = renderer.material);
-          }
+        this.transform.ForEach<UnityEngine.Renderer>(renderer => {
+          UnityEngine.Material[] sharedMaterials = renderer.sharedMaterials;
+          UnityEngine.Material[] materials       = new UnityEngine.Material[sharedMaterials.Length];
+
+          // …
+          this.mount.renderers      .Add(renderer);
+          this.mount.sharedMaterials.Add(sharedMaterials);
+
+          for (uint index = (uint) sharedMaterials.Length; 0u != index--; )
+            materials[index] = base.outline.material == sharedMaterials[index] ? this.mount.outlineMaterial ??= new UnityEngine.Material(base.outline.material) : new UnityEngine.Material(sharedMaterials[index]);
+
+          renderer.sharedMaterials = materials;
+          this.mount.materials.Add(materials);
         });
-      }
 
-      this.rigidBody.Sleep();
+        (base.outline.material, this.mount.outlineMaterial) = (this.mount.outlineMaterial, base.outline.material);
+      }
     }
 
     else {
-      this.bounceAutomatically = this.prefollow.bounceAutomatically;
-      this.isInvincible        = this.prefollow.isInvincible;
-      this.moveAutomatically   = this.prefollow.moveAutomatically;
+      base.bounceAutomatically = base.prefollow.bounceAutomatically;
+      base.isInvincible        = base.prefollow.isInvincible;
+      base.moveAutomatically   = base.prefollow.moveAutomatically;
+      base.outline.material    = this.mount.outlineMaterial;
+      this.mountIsUsed         = false;
 
-      for (int index = this.materials.Count; 0 != index--; ) {
-        this.renderers[index].sharedMaterial = this.sharedMaterials[index];
-        UnityEngine.Object.Destroy(this.materials[index]);
+      for (int index = this.mount.materials.Count; 0 != index--; ) {
+        this.mount.renderers[index].sharedMaterials = this.mount.sharedMaterials[index];
+
+        foreach (UnityEngine.Material material in this.mount.materials[index])
+        UnityEngine.Object.Destroy(material); // ->> Prior `base.outline.material` destroyed here
       }
 
-      this.materials.Clear();
-      this.renderers.Clear();
-      this.rigidBody.WakeUp();
-      this.sharedMaterials.Clear();
+      base.rigidBody.WakeUp();
+      this.mount.materials      .Clear();
+      this.mount.renderers      .Clear();
+      this.mount.sharedMaterials.Clear();
     }
 
     // … ->> Following
     if (this.isMounted) {
-      UnityEngine.Renderer  renderer           = this.GetComponent<UnityEngine.Renderer>();
-      UnityEngine.Transform followingTransform = this.following!.transform;
-      UnityEngine.Renderer  followingRenderer  = followingTransform.GetComponent<UnityEngine.Renderer>();
-      UnityEngine.Bounds    followingBounds    = null != followingRenderer ? followingRenderer.bounds : new(followingTransform.position, UnityEngine.Vector3.zero);
-      UnityEngine.Bounds    bounds             = null != renderer ? renderer.bounds : new(transform.position, UnityEngine.Vector3.zero);
+      UnityEngine.Renderer renderer                = this.GetComponent<UnityEngine.Renderer>();
+      UnityEngine.Renderer followingRenderer       = base.following!.transform.GetComponent<UnityEngine.Renderer>();
+      float                followingRatioThreshold = ((UnityEngine.Vector3.forward + UnityEngine.Vector3.right) * 8.0f).sqrMagnitude;
+      float                followingRatio          = 0.0f;
+      UnityEngine.Bounds   followingBounds         = null != followingRenderer ? followingRenderer.bounds : new UnityEngine.Bounds(base.following.transform.position, UnityEngine.Vector3.zero);
+      UnityEngine.Bounds   bounds                  = null != renderer          ? renderer         .bounds : new UnityEngine.Bounds(this.transform          .position, UnityEngine.Vector3.zero);
 
       // …
-      transform.SetPositionAndRotation(UnityEngine.Vector3.SlerpUnclamped(transform.position, followingTransform.position, 0.65f), UnityEngine.Quaternion.SlerpUnclamped(transform.rotation, followingTransform.rotation, 0.2f));
-      this.target = this.following!.target;
+      this.transform.SetPositionAndRotation(UnityEngine.Vector3.SlerpUnclamped(this.transform.position, base.following.transform.position, 0.65f), UnityEngine.Quaternion.SlerpUnclamped(transform.rotation, base.following.transform.rotation, 0.2f));
 
-      for (int index = this.materials.Count; 0 != index--; )
-      this.materials[index].color = UnityEngine.Color.Lerp(this.sharedMaterials[index].color, UnityEngine.Color.white, UnityEngine.Mathf.Min((followingBounds.min - bounds.max).sqrMagnitude, (followingBounds.max - bounds.min).sqrMagnitude) / (UnityEngine.Vector3.one * 8.0f).sqrMagnitude);
+      base.target            = base.following!.target;
+      bounds         .center = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, bounds         .center);
+      bounds         .size   = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, bounds         .size);
+      followingBounds.center = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, followingBounds.center);
+      followingBounds.size   = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, followingBounds.size);
+      followingRatio         = UnityEngine.Mathf.Min((followingBounds.min - bounds.max).sqrMagnitude, (followingBounds.max - bounds.min).sqrMagnitude) / followingRatioThreshold;
+
+      for (int  index    = this.mount.materials.Count;                0  != index--; )
+      for (uint subindex = (uint) this.mount.materials[index].Length; 0u != subindex--; )
+        this.mount.materials[index][subindex].color = UnityEngine.Color.Lerp(this.mount.sharedMaterials[index][subindex].color, UnityEngine.Color.white, followingRatio);
     }
 
     // … ->> Wrestling
     if (null != this.wrestling) {
-      UnityEngine.Vector3 targetDistance = (transform.position - this.wrestling.transform.position).normalized;
+      UnityEngine.Vector3 targetDistance = (this.transform.position - this.wrestling.transform.position).normalized;
 
       // …
-      this.movement.direction  = targetDistance;
-      this.target              = this.wrestling;
-      this.targetAutomatically = false;
+      base.movement.direction  = targetDistance;
+      base.target              = this.wrestling;
+      base.targetAutomatically = false;
 
       if (this.wrestling is Player player) {
         if (this.wrestle.interval.isLooped) // ->> Pulled toward
-        this.rigidBody.AddForce(-targetDistance * (UnityEngine.Random.value * this.wrestle.force), UnityEngine.ForceMode.Impulse);
+        base.rigidBody.AddForce(-targetDistance * (UnityEngine.Random.value * this.wrestle.force), UnityEngine.ForceMode.Impulse);
 
         if (player.lasooing!.reachProgress >= 1.0f)
         player.ResetLasoo(); // ->> Lasoo stretched too far
@@ -256,10 +277,13 @@ public sealed class Monster : Entity {
     }
 
     else {
-      this.movement.direction  = UnityEngine.Vector3.zero;
-      this.targetAutomatically = true;
+      base.movement.direction  = UnityEngine.Vector3.zero;
+      base.targetAutomatically = true;
 
       this.wrestle.interval.Reset();
     }
+
+    // … ->> Pre-follow
+    base.PrefollowUpdate();
   }
 }

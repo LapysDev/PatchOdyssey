@@ -17,16 +17,18 @@ namespace PatchOdyssey {
 
   public static class Game {
     private static          UnityEngine.InputSystem.Keyboard?                                                                                     _Keyboard                                  = null;
-    public  static          bool                                                                                                                  IsLoaded            { get; internal set; } = false;
     public  static          bool                                                                                                                  IsKeyboardAvailable { get; internal set; } = false;
+    public  static          bool                                                                                                                  IsLoaded            { get; internal set; } = false;
     public  static          bool                                                                                                                  IsPaused            { get; internal set; } = false;
     public  static          bool                                                                                                                  IsQuitting          { get; internal set; } = false;
     public  static          UnityEngine.InputSystem.Keyboard                                                                                      Keyboard            { get { if (!Game.IsKeyboardAvailable && UnityEngine.InputSystem.Keyboard.current is UnityEngine.InputSystem.Keyboard keyboard) { Game._Keyboard = keyboard; Game.IsKeyboardAvailable = true; } return Game._Keyboard!; } }
-    private static          UnityEngine.GameObject?                                                                                               Object              = null;
-    public  static readonly System.Random                                                                                                         Randomizer          = new();  // ->> Superseded (mostly) by `UnityEngine.Random`
-    public  const           float                                                                                                                 SceneSize           = 100.0f; // ->> Meant for sizing objects that bound the entire visible part of the scene
-    private static readonly System.Collections.Generic.Dictionary<System.Action<UnityEngine.Transform>, System.Func<UnityEngine.Transform, bool>> TransformTraversers = new();
-    public  const           float                                                                                                                 VectorEpsilon       = 0.09f; // ->> Minimal amount to prevent Z-fighting and other false positives
+    public  const           byte                                                                                                                  NumberPrecision      = (byte) 5u; // ->> Maximum precision supported by Unity (or `float`s); Should be about 6.0–7.2 digits
+    private static readonly double                                                                                                                NumberPrecisionScale = System.Math.Pow(10.0, (double) Game.NumberPrecision);
+    private static          UnityEngine.GameObject?                                                                                               Object               = null;
+    public  static readonly System.Random                                                                                                         Randomizer           = new();  // ->> Superseded (mostly) by `UnityEngine.Random`
+    public  const           float                                                                                                                 SceneSize            = 100.0f; // ->> Meant for sizing objects that bound the entire visible part of the scene
+    private static readonly System.Collections.Generic.Dictionary<System.Action<UnityEngine.Transform>, System.Func<UnityEngine.Transform, bool>> TransformTraversers  = new();
+    public  const           float                                                                                                                 VectorEpsilon        = 0.09f; // ->> Minimal amount to prevent Z-fighting and other false positives
 
     // …
     public static bool AskToSave() => Game.AskToSave(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
@@ -40,8 +42,15 @@ namespace PatchOdyssey {
       return false;
     }
 
-    public static void ForEach(this UnityEngine.Transform transform, System.Action<UnityEngine.Transform> traverser) => transform.ForEach(transform => { traverser(transform); return true; });
-    public static void ForEach(this UnityEngine.Transform transform, System.Func<UnityEngine.Transform, bool> traverser) {
+    public static void Encapsulate(this UnityEngine.Bounds bounds, in UnityEngine.Bounds encapsulated) {
+      bounds.Encapsulate(encapsulated.center - encapsulated.extents);
+      bounds.Encapsulate(encapsulated.center + encapsulated.extents);
+    }
+
+    public static void ForEach   (this UnityEngine.Transform transform, System.Action   <UnityEngine.Transform> iterator)                                 => transform.ForEach<UnityEngine.Transform>(transform => { iterator(transform); return true; });
+    public static void ForEach   (this UnityEngine.Transform transform, System.Predicate<UnityEngine.Transform> iterator)                                 => transform.ForEach<UnityEngine.Transform>(iterator);
+    public static void ForEach<T>(this UnityEngine.Transform transform, System.Action   <T>                     iterator) where T : UnityEngine.Component => transform.ForEach<T>                    (transform => { iterator(transform); return true; });
+    public static void ForEach<T>(this UnityEngine.Transform transform, System.Predicate<T>                     iterator) where T : UnityEngine.Component {
       if (null == transform)
       return;
 
@@ -52,12 +61,16 @@ namespace PatchOdyssey {
       for (System.Collections.IEnumerator enumerator = transforms.Dequeue().GetEnumerator(); ; ) {
         if (enumerator.MoveNext()) {
           UnityEngine.Transform subtransform = (UnityEngine.Transform) enumerator.Current;
+          T                     component    = subtransform.GetComponent<T>();
 
-          if (traverser(subtransform))
+          // …
+          if (null == component || iterator(component))
           transforms.Enqueue(subtransform);
         } else break; // --> (enumerator as System.IDisposable)?.Dispose()
       }
     }
+
+    public static float Normalize(float value) => (float) (System.Math.Truncate(Game.NumberPrecisionScale * (double) value) / Game.NumberPrecisionScale); // --> (float) System.Math.Round((double) value, Game.NumberPrecision, System.MidpointRounding.ToZero)
 
     public static void Quit(int code = 0x0) /* --> EXIT_SUCCESS */ {
       if (Game.IsQuitting)
@@ -105,6 +118,18 @@ namespace PatchOdyssey {
     private void OnApplicationQuit ()             => Game.IsQuitting =  true;
     private void OnDestroy         ()             => Game.Quit(0x1); // --> EXIT_FAILURE ->> Don’t bother continuing the application/ game if `GameBehaviour` is prematurely destroyed
     private void Start             ()             => Game.IsLoaded = true;
+  }
+
+  [UnityEngine.DisallowMultipleComponent]
+  public abstract class GameComponent : UnityEngine.MonoBehaviour {
+    private       UnityEngine.Collider                _collider  = null!;
+    private       UnityEngine.Collider[]              _colliders = null!;
+    private       UnityEngine.Rigidbody               _rigidBody = null!;
+    private       UnityEngine.Transform               _transform = null!;
+    public    new ref readonly UnityEngine.Collider   collider  { get { this._collider  ??= base.GetComponent <UnityEngine.Collider> (); /* --> base.collider */ return ref this._collider; } }
+    protected     ref readonly UnityEngine.Collider[] colliders { get { this._colliders ??= base.GetComponents<UnityEngine.Collider> ();                         return ref this._colliders; } }
+    public        ref readonly UnityEngine.Rigidbody  rigidBody { get { this._rigidBody ??= base.GetComponent <UnityEngine.Rigidbody>();                         return ref this._rigidBody; } }
+    public    new ref readonly UnityEngine.Transform  transform { get { this._transform ??= base.transform;                                                      return ref this._transform; } }
   }
 
   [System.AttributeUsage(System.AttributeTargets.All, AllowMultiple = false, Inherited = false)]
@@ -172,9 +197,10 @@ namespace PatchOdyssey {
     public static double EaseOutSine         (double time) { return System.Math.Sin((System.Math.PI * time) / 2.0); }
     public static double Linear              (double time) { return time; }
 
-    public void Finish()                 => this.timestamp =  0.0;
+    public void Finish()                 => this.timestamp = 0.0;
     public void Reset ()                 => this.Reset(Timeframe.CurrentTimestamp);
-    public void Reset (double timestamp) => this.timestamp  = timestamp;
+    public void Reset (double timestamp) => this.timestamp = timestamp;
+    public void Wait  ()                 => this.Wait(this.elapsed);
     public void Wait  (double duration)  => this.timestamp += duration;
   }
 

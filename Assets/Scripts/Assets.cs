@@ -38,6 +38,8 @@ public sealed class Assets : UnityEngine.MonoBehaviour {
   public Assets.Monsters       monsters             = new() {antilleryPrefabrication = null!, borkaPrefabrication = null!, molemPrefabrication = null!, sirpensPrefabrication = null!, tyragePrefabrication = null!};
   public bool                  outlineAutomatically = true;
   public UnityEngine.Material? outlineMaterial      = null;
+  public bool                  shadowAutomatically  = true;
+  public UnityEngine.Material? shadowMaterial       = null;
 
   /* … */
   private void Awake() {

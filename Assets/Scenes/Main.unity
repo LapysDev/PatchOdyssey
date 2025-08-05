@@ -210,6 +210,8 @@ MonoBehaviour:
     tyragePrefabrication: {fileID: 0}
   outlineAutomatically: 1
   outlineMaterial: {fileID: 2100000, guid: 76a4f0befcaf3004f85864702663de6f, type: 2}
+  shadowAutomatically: 1
+  shadowMaterial: {fileID: 2100000, guid: 58de7dd50dfeb7244983b7415c5c6095, type: 2}
 --- !u!1 &282482386
 GameObject:
   m_ObjectHideFlags: 0
@@ -273,7 +275,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 282482386}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7710f043dc0b22642a5d7e88bfaabc6c, type: 3}
   m_Name: 
@@ -284,7 +286,6 @@ MonoBehaviour:
     speed: 5
     turn: 1
   bounceAutomatically: 1
-  bulletMaterial: {fileID: 2100000, guid: d329a389459b99640918458710876615, type: 2}
   bullets: []
   contact:
     damage: 4
@@ -296,17 +297,22 @@ MonoBehaviour:
   followAutomatically: 1
   followers: []
   following: {fileID: 0}
-  health: 100
+  health: 1
+  healthMaximum: 25
+  isAggressive: 1
   isInvincible: 0
   moveAutomatically: 1
   movement:
-    damping: 5.5
+    damping: 4
     direction: {x: 0, y: 0, z: 0}
-    restCooldown: 0
-    restCooldownRandomness: 0
-    speed: 0.175
+    pause: 0
+    pauseRandomnessFactor: 0
+    speed: 0.4
     speedFactor: 1
     speedRandomnessFactor: 0
+  outline:
+    color: {r: 1, g: 1, b: 1, a: 1}
+    material: {fileID: 0}
   prefollow:
     bounceAutomatically: 0
     isFollowing: 0
@@ -315,13 +321,22 @@ MonoBehaviour:
     moveAutomatically: 0
     movementSpeed: 0
     targetBerth: 0
+  regeneration:
+    amount: 0
+    delay:
+      duration: 0
+    interval:
+      duration: 2
+  shadow:
+    material: {fileID: 0}
   shoot:
+    bulletHealth: 1
+    bulletLifetime: 2
+    bulletMaterial: {fileID: 2100000, guid: d329a389459b99640918458710876615, type: 2}
     cooldown:
       duration: 5
-    damage: 6.75
-    health: 1
-    lifetime: 2
-    repeatCount: 1
+    damage: 1
+    repeatCount: 0
     repeatDelay: 0
     repelForce: 4
     speed: 20
@@ -336,6 +351,7 @@ MonoBehaviour:
     speed: 13.5
   kind: 3
   mountAutomatically: 1
+  mountIsUsed: 0
   wrestle:
     force: 30
     interval:
@@ -362,7 +378,7 @@ Rigidbody:
     serializedVersion: 2
     m_Bits: 0
   m_ImplicitCom: 1
-  m_ImplicitTensor: 0
+  m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
@@ -604,7 +620,6 @@ MonoBehaviour:
     speed: 5
     turn: 0
   bounceAutomatically: 1
-  bulletMaterial: {fileID: 2100000, guid: 35a066a5317920d43839d39db1fb3253, type: 2}
   bullets: []
   contact:
     damage: 4
@@ -617,17 +632,22 @@ MonoBehaviour:
   followers:
   - {fileID: 393888367}
   following: {fileID: 0}
-  health: 100
+  health: 1
+  healthMaximum: 45
+  isAggressive: 1
   isInvincible: 0
   moveAutomatically: 1
   movement:
     damping: 7
     direction: {x: 0, y: 0, z: 0}
-    restCooldown: 0.3
-    restCooldownRandomness: 0.75
-    speed: 20
+    pause: 0.3
+    pauseRandomnessFactor: 0.75
+    speed: 7
     speedFactor: 1
     speedRandomnessFactor: 0.5
+  outline:
+    color: {r: 1, g: 1, b: 1, a: 1}
+    material: {fileID: 0}
   prefollow:
     bounceAutomatically: 0
     isFollowing: 0
@@ -636,14 +656,23 @@ MonoBehaviour:
     moveAutomatically: 0
     movementSpeed: 0
     targetBerth: 0
+  regeneration:
+    amount: 0
+    delay:
+      duration: 0
+    interval:
+      duration: 2
+  shadow:
+    material: {fileID: 0}
   shoot:
+    bulletHealth: 1
+    bulletLifetime: 2
+    bulletMaterial: {fileID: 2100000, guid: 35a066a5317920d43839d39db1fb3253, type: 2}
     cooldown:
       duration: 1
-    damage: 6.75
-    health: 1
-    lifetime: 2
-    repeatCount: 1
-    repeatDelay: 0
+    damage: 2
+    repeatCount: 0
+    repeatDelay: 16777215
     repelForce: 3
     speed: 7
     view: 21
@@ -655,6 +684,8 @@ MonoBehaviour:
   turn:
     direction: {x: 0, y: 0, z: 0}
     speed: 9
+  hair: {fileID: 0}
+  hairAutomatically: 1
 --- !u!54 &374531813
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -676,7 +707,7 @@ Rigidbody:
     serializedVersion: 2
     m_Bits: 0
   m_ImplicitCom: 1
-  m_ImplicitTensor: 0
+  m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
@@ -793,7 +824,6 @@ MonoBehaviour:
     speed: 5
     turn: 1
   bounceAutomatically: 1
-  bulletMaterial: {fileID: 2100000, guid: cd826987c578f7e448002aad3f17c8d4, type: 2}
   bullets: []
   contact:
     damage: 4
@@ -805,17 +835,22 @@ MonoBehaviour:
   followAutomatically: 1
   followers: []
   following: {fileID: 374531812}
-  health: 100
-  isInvincible: 0
+  health: 1
+  healthMaximum: 50
+  isAggressive: 1
+  isInvincible: 1
   moveAutomatically: 1
   movement:
     damping: 5.5
     direction: {x: 0, y: 0, z: 0}
-    restCooldown: 1
-    restCooldownRandomness: 0.3
+    pause: 1
+    pauseRandomnessFactor: 0.3
     speed: 20
     speedFactor: 1
     speedRandomnessFactor: 0.5
+  outline:
+    color: {r: 1, g: 1, b: 1, a: 1}
+    material: {fileID: 0}
   prefollow:
     bounceAutomatically: 0
     isFollowing: 0
@@ -824,14 +859,23 @@ MonoBehaviour:
     moveAutomatically: 0
     movementSpeed: 0
     targetBerth: 0
+  regeneration:
+    amount: 0
+    delay:
+      duration: 0
+    interval:
+      duration: 2
+  shadow:
+    material: {fileID: 0}
   shoot:
+    bulletHealth: 1
+    bulletLifetime: 2
+    bulletMaterial: {fileID: 2100000, guid: cd826987c578f7e448002aad3f17c8d4, type: 2}
     cooldown:
       duration: 2
-    damage: 6.75
-    health: 2
-    lifetime: 2
-    repeatCount: 1
-    repeatDelay: 0
+    damage: 1
+    repeatCount: 6
+    repeatDelay: 0.5
     repelForce: 1
     speed: 3.5
     view: 27
@@ -845,6 +889,7 @@ MonoBehaviour:
     speed: 13.5
   kind: 1
   mountAutomatically: 1
+  mountIsUsed: 0
   wrestle:
     force: 30
     interval:
@@ -871,7 +916,7 @@ Rigidbody:
     serializedVersion: 2
     m_Bits: 0
   m_ImplicitCom: 1
-  m_ImplicitTensor: 0
+  m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
@@ -1011,7 +1056,7 @@ GameObject:
   - component: {fileID: 426952051}
   - component: {fileID: 426952050}
   m_Layer: 0
-  m_Name: Player
+  m_Name: "Player \U0001F579\uFE0F"
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1051,7 +1096,6 @@ MonoBehaviour:
     speed: 5
     turn: 1
   bounceAutomatically: 1
-  bulletMaterial: {fileID: 2100000, guid: 9a6bb86d64eb90f46ada6d1ee08c0104, type: 2}
   bullets: []
   contact:
     damage: 0
@@ -1063,17 +1107,22 @@ MonoBehaviour:
   followAutomatically: 0
   followers: []
   following: {fileID: 0}
-  health: 100
+  health: 1
+  healthMaximum: 100
+  isAggressive: 0
   isInvincible: 1
   moveAutomatically: 1
   movement:
     damping: 4
     direction: {x: 0, y: 0, z: 0}
-    restCooldown: 2
-    restCooldownRandomness: 0
+    pause: 2
+    pauseRandomnessFactor: 0
     speed: 1.825
     speedFactor: 1
     speedRandomnessFactor: 0
+  outline:
+    color: {r: 1, g: 1, b: 1, a: 1}
+    material: {fileID: 0}
   prefollow:
     bounceAutomatically: 0
     isFollowing: 0
@@ -1082,14 +1131,23 @@ MonoBehaviour:
     moveAutomatically: 0
     movementSpeed: 0
     targetBerth: 0
+  regeneration:
+    amount: 7.5
+    delay:
+      duration: 3
+    interval:
+      duration: 2
+  shadow:
+    material: {fileID: 0}
   shoot:
+    bulletHealth: 1
+    bulletLifetime: 2
+    bulletMaterial: {fileID: 2100000, guid: 9a6bb86d64eb90f46ada6d1ee08c0104, type: 2}
     cooldown:
       duration: 0.2
-    damage: 6.75
-    health: 1
-    lifetime: 2
-    repeatCount: 3
-    repeatDelay: 1
+    damage: 3
+    repeatCount: 0
+    repeatDelay: 16777215
     repelForce: 5
     speed: 7
     view: 360
@@ -1101,6 +1159,8 @@ MonoBehaviour:
   turn:
     direction: {x: 0, y: 0, z: 0}
     speed: 9
+  hair: {fileID: 0}
+  hairAutomatically: 0
   isInputing: 0
   isLassoing: 0
   lasoo:
@@ -1123,7 +1183,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 426952047}
   serializedVersion: 5
-  m_Mass: 2
+  m_Mass: 1
   m_LinearDamping: 4
   m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -1136,7 +1196,7 @@ Rigidbody:
     serializedVersion: 2
     m_Bits: 0
   m_ImplicitCom: 1
-  m_ImplicitTensor: 0
+  m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
@@ -1216,7 +1276,6 @@ MonoBehaviour:
     speed: 5
     turn: 0
   bounceAutomatically: 1
-  bulletMaterial: {fileID: 2100000, guid: be1823ad657ffb6468b91d87dfc478c4, type: 2}
   bullets: []
   contact:
     damage: 4
@@ -1228,17 +1287,22 @@ MonoBehaviour:
   followAutomatically: 1
   followers: []
   following: {fileID: 0}
-  health: 100
+  health: 1
+  healthMaximum: 45
+  isAggressive: 1
   isInvincible: 0
   moveAutomatically: 1
   movement:
     damping: 7
     direction: {x: 0, y: 0, z: 0}
-    restCooldown: 0.3
-    restCooldownRandomness: 0.75
-    speed: 20
+    pause: 0.3
+    pauseRandomnessFactor: 0.75
+    speed: 7
     speedFactor: 1
     speedRandomnessFactor: 0.5
+  outline:
+    color: {r: 1, g: 1, b: 1, a: 1}
+    material: {fileID: 0}
   prefollow:
     bounceAutomatically: 0
     isFollowing: 0
@@ -1247,14 +1311,23 @@ MonoBehaviour:
     moveAutomatically: 0
     movementSpeed: 0
     targetBerth: 0
+  regeneration:
+    amount: 0
+    delay:
+      duration: 0
+    interval:
+      duration: 2
+  shadow:
+    material: {fileID: 0}
   shoot:
+    bulletHealth: 1
+    bulletLifetime: 2
+    bulletMaterial: {fileID: 2100000, guid: be1823ad657ffb6468b91d87dfc478c4, type: 2}
     cooldown:
       duration: 1
-    damage: 6.75
-    health: 1
-    lifetime: 2
-    repeatCount: 1
-    repeatDelay: 0
+    damage: 2
+    repeatCount: 0
+    repeatDelay: 16777215
     repelForce: 3
     speed: 7
     view: 21
@@ -1266,6 +1339,8 @@ MonoBehaviour:
   turn:
     direction: {x: 0, y: 0, z: 0}
     speed: 9
+  hair: {fileID: 0}
+  hairAutomatically: 1
 --- !u!54 &503228484
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1287,7 +1362,7 @@ Rigidbody:
     serializedVersion: 2
     m_Bits: 0
   m_ImplicitCom: 1
-  m_ImplicitTensor: 0
+  m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
@@ -1731,7 +1806,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1215380159}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7710f043dc0b22642a5d7e88bfaabc6c, type: 3}
   m_Name: 
@@ -1742,7 +1817,6 @@ MonoBehaviour:
     speed: 5
     turn: 1
   bounceAutomatically: 1
-  bulletMaterial: {fileID: 2100000, guid: 99a81c9cfd5255b428504210f5174b9d, type: 2}
   bullets: []
   contact:
     damage: 4
@@ -1754,17 +1828,22 @@ MonoBehaviour:
   followAutomatically: 1
   followers: []
   following: {fileID: 0}
-  health: 100
+  health: 1
+  healthMaximum: 65
+  isAggressive: 1
   isInvincible: 0
   moveAutomatically: 1
   movement:
     damping: 5.5
     direction: {x: 0, y: 0, z: 0}
-    restCooldown: 2
-    restCooldownRandomness: 0.35
+    pause: 2
+    pauseRandomnessFactor: 0.35
     speed: 10
     speedFactor: 1
     speedRandomnessFactor: 0.3
+  outline:
+    color: {r: 1, g: 1, b: 1, a: 1}
+    material: {fileID: 0}
   prefollow:
     bounceAutomatically: 0
     isFollowing: 0
@@ -1773,14 +1852,23 @@ MonoBehaviour:
     moveAutomatically: 0
     movementSpeed: 0
     targetBerth: 0
+  regeneration:
+    amount: 0
+    delay:
+      duration: 0
+    interval:
+      duration: 2
+  shadow:
+    material: {fileID: 0}
   shoot:
+    bulletHealth: 1
+    bulletLifetime: 2
+    bulletMaterial: {fileID: 2100000, guid: 99a81c9cfd5255b428504210f5174b9d, type: 2}
     cooldown:
       duration: 0
-    damage: 6.75
-    health: 255
-    lifetime: 2
-    repeatCount: 1
-    repeatDelay: 3
+    damage: 1
+    repeatCount: 15
+    repeatDelay: 0.1
     repelForce: 2.5
     speed: 1.75
     view: 45
@@ -1794,6 +1882,7 @@ MonoBehaviour:
     speed: 13.5
   kind: 2
   mountAutomatically: 1
+  mountIsUsed: 0
   wrestle:
     force: 30
     interval:
@@ -1820,7 +1909,7 @@ Rigidbody:
     serializedVersion: 2
     m_Bits: 0
   m_ImplicitCom: 1
-  m_ImplicitTensor: 0
+  m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
@@ -2024,7 +2113,6 @@ MonoBehaviour:
     speed: 5
     turn: 1
   bounceAutomatically: 1
-  bulletMaterial: {fileID: 2100000, guid: 6bb30884f3d2ae44db1460c80f46c7bf, type: 2}
   bullets: []
   contact:
     damage: 4
@@ -2036,17 +2124,22 @@ MonoBehaviour:
   followAutomatically: 1
   followers: []
   following: {fileID: 0}
-  health: 100
+  health: 1
+  healthMaximum: 30
+  isAggressive: 1
   isInvincible: 0
   moveAutomatically: 1
   movement:
-    damping: 5.5
+    damping: 3.65
     direction: {x: 0, y: 0, z: 0}
-    restCooldown: 1.5
-    restCooldownRandomness: 0.75
+    pause: 1.5
+    pauseRandomnessFactor: 0.75
     speed: 15
     speedFactor: 1
     speedRandomnessFactor: 0
+  outline:
+    color: {r: 1, g: 1, b: 1, a: 1}
+    material: {fileID: 0}
   prefollow:
     bounceAutomatically: 0
     isFollowing: 0
@@ -2055,12 +2148,21 @@ MonoBehaviour:
     moveAutomatically: 0
     movementSpeed: 0
     targetBerth: 0
+  regeneration:
+    amount: 0
+    delay:
+      duration: 0
+    interval:
+      duration: 2
+  shadow:
+    material: {fileID: 0}
   shoot:
+    bulletHealth: 1
+    bulletLifetime: 2
+    bulletMaterial: {fileID: 2100000, guid: 6bb30884f3d2ae44db1460c80f46c7bf, type: 2}
     cooldown:
       duration: 1
-    damage: 6.75
-    health: 1
-    lifetime: 2
+    damage: 1
     repeatCount: 1
     repeatDelay: 0
     repelForce: 10
@@ -2076,6 +2178,7 @@ MonoBehaviour:
     speed: 13.5
   kind: 0
   mountAutomatically: 1
+  mountIsUsed: 0
   wrestle:
     force: 30
     interval:
@@ -2102,7 +2205,7 @@ Rigidbody:
     serializedVersion: 2
     m_Bits: 0
   m_ImplicitCom: 1
-  m_ImplicitTensor: 0
+  m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0

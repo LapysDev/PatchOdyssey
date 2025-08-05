@@ -3,11 +3,10 @@ using PatchOdyssey;
 /* … */
 [UnityEngine.DefaultExecutionOrder(5)]
 [UnityEngine.DisallowMultipleComponent]
-public sealed class Area : UnityEngine.MonoBehaviour {
-  [ReadWriteInInspector]                             public  string                                  areaName  =  string.Empty;
-  [ReadWriteInInspector]                             private UnityEngine.Collider[]                  colliders => this.GetComponents<UnityEngine.Collider>();
-  [ReadOnlyInInspector,  UnityEngine.SerializeField] private bool                                    isLocked  =  false;
-  [ReadWriteInInspector, UnityEngine.SerializeField] private System.Collections.Generic.List<Entity> spawns    =  new();
+public sealed class Area : GameComponent {
+  [ReadWriteInInspector]                             public  string                                  areaName = string.Empty;
+  [ReadOnlyInInspector,  UnityEngine.SerializeField] private bool                                    isLocked = false;
+  [ReadWriteInInspector, UnityEngine.SerializeField] private System.Collections.Generic.List<Entity> spawns   = new();
 
   /* … */
   private void OnTriggerEnter(UnityEngine.Collider collider) {
@@ -20,7 +19,7 @@ public sealed class Area : UnityEngine.MonoBehaviour {
       UnityEngine.Bounds? areaBounds = null;
 
       // …
-      foreach (UnityEngine.Collider subcollider in this.colliders) {
+      foreach (UnityEngine.Collider subcollider in base.colliders) {
         UnityEngine.Bounds colliderBounds = subcollider.bounds;
 
         // …
@@ -39,7 +38,7 @@ public sealed class Area : UnityEngine.MonoBehaviour {
 
   private void Update() {
     // … ->> Lock in
-    foreach (UnityEngine.Collider collider in this.colliders)
+    foreach (UnityEngine.Collider collider in base.colliders)
     collider.isTrigger = !this.isLocked;
 
     // … ->> Spawning
