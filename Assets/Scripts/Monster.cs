@@ -74,54 +74,115 @@ public sealed class Monster : Entity {
     UnityEngine.Vector3 priorShootDirection = UnityEngine.Vector3.zero;
 
     /* … */
-    void DeployBullet(Bullet bullet, ushort index) {
+    void DeployBullet(Bullet bullet, ushort volleyIndex, ushort volleyCount) {
       switch (this.kind) {
         case Monster.Kind.Antillery:
         case Monster.Kind.Molem: {
-          if (UnityEngine.GameObject.CreatePrimitive(UnityEngine.PrimitiveType.Cylinder) is UnityEngine.GameObject bulletMesh) {
+          if ((null != Assets.main.primitives.cylinder ? UnityEngine.Object.Instantiate(Assets.main.primitives.cylinder, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity) : UnityEngine.GameObject.CreatePrimitive(UnityEngine.PrimitiveType.Cylinder)) is UnityEngine.GameObject bulletMesh) {
             UnityEngine.Bounds    bulletBounds        = new(bullet.transform.position, UnityEngine.Vector3.zero);
-            UnityEngine.Renderer  bulletMeshRenderer  = bulletMesh.GetComponent<UnityEngine.Renderer>() ?? bulletMesh.AddComponent<UnityEngine.MeshRenderer>();
+            UnityEngine.LayerMask bulletLayerMask     = UnityEngine.LayerMask.NameToLayer("Ignore Bullet");
+            UnityEngine.Renderer  bulletMeshRenderer  = bulletMesh.GetComponent<UnityEngine.Renderer>();
             UnityEngine.Transform bulletMeshTransform = bulletMesh.transform;
 
             // …
-            bulletMeshRenderer.sharedMaterials = System.Array.Empty<UnityEngine.Material>();
-            bulletMeshTransform.localScale     = UnityEngine.Vector3.one * Game.VectorEpsilon;
-            bulletMeshTransform.localRotation  = Monster.Kind.Molem == this.kind ? UnityEngine.Random.rotation : UnityEngine.Quaternion.AngleAxis(90.0f, UnityEngine.Vector3.right);
+            bulletMesh.name                      = "Mesh";
+            bulletMeshRenderer.lightProbeUsage   = UnityEngine.Rendering.LightProbeUsage.Off;
+            bulletMeshRenderer.receiveShadows    = false;
+            bulletMeshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            bulletMeshRenderer.sharedMaterials   = System.Array.Empty<UnityEngine.Material>();
+            bulletMeshTransform.localScale       = UnityEngine.Vector3.one * Game.VectorEpsilon;
 
-            bullet.transform.ForEach<UnityEngine.Renderer>(renderer => { bulletBounds.Encapsulate(renderer.bounds); bulletMeshRenderer.sharedMaterials = 0 == bulletMeshRenderer.sharedMaterials.Length ? renderer.sharedMaterials : bulletMeshRenderer.sharedMaterials; });
+            bullet.transform.ForEach<UnityEngine.Renderer>(renderer => {
+              if (0 == bulletMeshRenderer.sharedMaterials.Length && 0 != renderer.sharedMaterials.Length) {
+                if (null != Assets.main.outlineMaterial) {
+                  UnityEngine.Material[] materials = new UnityEngine.Material[renderer.sharedMaterials.Length + 1];
+
+                  // …
+                  materials[0] = Assets.main.outlineMaterial;
+                  renderer.sharedMaterials.CopyTo(materials, 1);
+
+                  bulletMeshRenderer.sharedMaterials = materials;
+                } else bulletMeshRenderer.sharedMaterials = renderer.sharedMaterials;
+              }
+
+              bulletBounds.Encapsulate(renderer.bounds);
+            });
 
             while (bulletBounds.size.sqrMagnitude > bulletMeshRenderer.bounds.size.sqrMagnitude)
               bulletMeshTransform.localScale *= 1.5f;
 
-            switch (this.kind) {
-              case Monster.Kind.Antillery: {
-                bullet.shootDirection             = priorShootDirection;
-                bulletMeshTransform.localPosition = UnityEngine.Vector3.right * (0 == (index & 1) ? +1.0f : -1.0f);
-                bulletMeshTransform.localScale    = new(bulletMeshTransform.localScale.x * 0.40f, bulletMeshTransform.localScale.y * 0.75f, bulletMeshTransform.localScale.z * 0.40f);
-              } break;
+            if (bulletLayerMask != -1) {
+              bullet.collider.excludeLayers  |= (UnityEngine.LayerMask)  (1 << bulletLayerMask);
+              bullet.collider.includeLayers  &= (UnityEngine.LayerMask) ~(1 << bulletLayerMask);
+              bullet.rigidBody.excludeLayers |= (UnityEngine.LayerMask)  (1 << bulletLayerMask);
+              bullet.rigidBody.includeLayers &= (UnityEngine.LayerMask) ~(1 << bulletLayerMask);
+              bulletMesh     .layer          |= bulletLayerMask;
+              this.gameObject.layer          |= bulletLayerMask;
 
-              case Monster.Kind.Molem: {
-                bullet.isInvincible             = true;
-                bullet.lifetime                 = 20.0f;
-                bulletMeshTransform.localScale *= 1.5f;
-              } break;
+              foreach (UnityEngine.Collider collider in bulletMesh.GetComponents<UnityEngine.Collider>()) {
+                collider.excludeLayers = (UnityEngine.LayerMask)  (1 << bulletLayerMask);
+                collider.includeLayers = (UnityEngine.LayerMask) ~(1 << bulletLayerMask);
+                collider.isTrigger     = false;
+              }
 
-              default: break;
+              if ((bulletMesh.TryGetComponent<UnityEngine.Rigidbody>(out UnityEngine.Rigidbody rigidBody) ? rigidBody : bulletMesh.AddComponent<UnityEngine.Rigidbody>()) is UnityEngine.Rigidbody bulletMeshRigidBody) {
+                bulletMeshRigidBody.Sleep(); // ->> Stack overflow triggered without this?
+                bulletMeshRigidBody.angularDamping         = 100.0f;
+                bulletMeshRigidBody.collisionDetectionMode = UnityEngine.CollisionDetectionMode.Discrete;
+                bulletMeshRigidBody.constraints            = UnityEngine.RigidbodyConstraints.FreezeAll;
+                bulletMeshRigidBody.excludeLayers          = (UnityEngine.LayerMask) (1 << bulletLayerMask);
+                bulletMeshRigidBody.freezeRotation         = true;
+                bulletMeshRigidBody.includeLayers          = (UnityEngine.LayerMask) ~(1 << bulletLayerMask);
+                bulletMeshRigidBody.interpolation          = UnityEngine.RigidbodyInterpolation.None;
+                bulletMeshRigidBody.isKinematic            = false;
+                bulletMeshRigidBody.linearDamping          = 100.0f;
+                bulletMeshRigidBody.maxAngularVelocity     = 0.0f;
+                bulletMeshRigidBody.maxLinearVelocity      = 0.0f;
+                bulletMeshRigidBody.useGravity             = false;
+                bulletMeshRigidBody.WakeUp();
+              }
             }
-
-            foreach (UnityEngine.Collider collider in bulletMesh.GetComponents<UnityEngine.Collider>())
-              UnityEngine.Object.Destroy(collider);
 
             foreach (UnityEngine.Transform transform in bullet.transform)
               UnityEngine.Object.Destroy(transform.gameObject);
 
             bulletMeshTransform.SetParent(bullet.transform, false);
+
+            switch (this.kind) {
+              case Monster.Kind.Antillery: {
+                bullet.rigidBody.position        += this.transform.right * (0 == (volleyIndex & 1) ? +1.0f : -1.0f);
+                bullet.shootDirection             = priorShootDirection;
+                bulletMeshTransform.localRotation = UnityEngine.Quaternion.AngleAxis(90.0f, UnityEngine.Vector3.right);
+                bulletMeshTransform.localScale    = new(bulletMeshTransform.localScale.x * 0.40f, bulletMeshTransform.localScale.y * 0.75f, bulletMeshTransform.localScale.z * 0.40f);
+              } break;
+
+              case Monster.Kind.Molem: {
+                bullet.lifetime                   = UnityEngine.Mathf.Max(10.00f, bullet.lifetime * 2.00f);
+                bullet.rigidBody.position        += (bullet.shootDirection * 3.25f) + (this.transform.forward * UnityEngine.Random.value * (UnityEngine.Random.value > 0.50f ? +1.00f : -1.00f) * 1.0f) + (this.transform.right * UnityEngine.Random.value * (UnityEngine.Random.value > 0.50f ? +1.00f : -1.00f) * 2.5f) + ((UnityEngine.Vector3.up * volleyIndex * (1.75f / volleyCount)) - (UnityEngine.Vector3.up * (1.75f / volleyCount) * 0.75f));
+                bullet.shootDirection             = null != base.target ? (base.target!.transform.position - this.transform.position).normalized : this.transform.forward;
+                bulletMeshTransform.localScale    = new(bulletMeshTransform.localScale.x * (0.75f + (UnityEngine.Random.value * 0.25f)), bulletMeshTransform.localScale.y * (0.50f + (UnityEngine.Random.value * 0.25f)), bulletMeshTransform.localScale.z * (0.75f + (UnityEngine.Random.value * 0.25f)));
+                bulletMeshTransform.localRotation = UnityEngine.Random.rotation;
+              } break;
+
+              default: break;
+            }
           }
         } break;
 
-        case Monster.Kind.Borka:   bullet.transform.localScale *= 1.1f;                                                                                                                  break;
-        case Monster.Kind.Sirpens: bullet.transform.localScale  = new(bullet.transform.localScale.x * 1.0f, bullet.transform.localScale.y * 1.0f, bullet.transform.localScale.z * 0.4f); break;
-        case Monster.Kind.Tyrage:  bullet.transform.localScale *= 2.0f;                                                                                                                  break;
+        case Monster.Kind.Borka:
+          bullet.transform.localScale *= 1.1f;
+          break;
+
+        case Monster.Kind.Sirpens: {
+          bullet.isInvincible         = true;
+          bullet.transform.localScale = new(bullet.transform.localScale.x * 0.4f, bullet.transform.localScale.y * 1.0f, bullet.transform.localScale.z * 1.0f);
+
+          bullet.transform.ForEach<UnityEngine.Renderer>(static renderer => renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On);
+        } break;
+
+        case Monster.Kind.Tyrage:
+          bullet.transform.localScale *= 2.0f;
+          break;
 
         default: break;
       }
@@ -130,7 +191,7 @@ public sealed class Monster : Entity {
     /* … */
     if (base.Shoot(DeployBullet) is Bullet bullet) {
       priorShootDirection = bullet.shootDirection;
-      DeployBullet(bullet, (byte) 0u);
+      DeployBullet(bullet, (ushort) 0u, (ushort) base.shoot.volleyCount);
 
       return bullet;
     }
@@ -141,8 +202,8 @@ public sealed class Monster : Entity {
   private bool ShootIsAllowed(bool allowed) {
     float distance = (null != base.target ? this.transform.position - base.target.transform.position : UnityEngine.Vector3.positiveInfinity).sqrMagnitude;
     return this.kind switch {
-      Monster.Kind.Antillery => allowed && distance <= (UnityEngine.Vector3.one * 12.0f).sqrMagnitude,
-      Monster.Kind.Borka     => allowed && distance <= (UnityEngine.Vector3.one * 8.0f) .sqrMagnitude,
+      Monster.Kind.Antillery => allowed && distance <= (UnityEngine.Vector3.one * 15.0f).sqrMagnitude,
+      Monster.Kind.Borka     => allowed && distance <= (UnityEngine.Vector3.one * 10.0f).sqrMagnitude,
       Monster.Kind.Molem     => allowed && distance <= (UnityEngine.Vector3.one * 3.0f) .sqrMagnitude,
       Monster.Kind.Sirpens   => allowed,
       Monster.Kind.Tyrage    => allowed,
@@ -160,19 +221,23 @@ public sealed class Monster : Entity {
     foreach (Bullet bullet in base.bullets)
     if (null != bullet && !bullet.isHit) {
       switch (this.kind) {
-        case Monster.Kind.Borka: break;
-        case Monster.Kind.Molem: /* Do nothing… */ break;
-        case Monster.Kind.Sirpens: break;
-        case Monster.Kind.Tyrage:  break;
+        case Monster.Kind.Borka: {
+          UnityEngine.Vector3 volleySpreadDirection = bullet.transform.right;
+          int                 volleyThreshold       = bullet.volleyCount / 2;
+
+          // …
+          volleySpreadDirection *= ((bullet.volleyIndex - volleyThreshold) / (float) volleyThreshold);
+          bullet.rigidBody.AddForce(base.shoot.speed * (bullet.shootDirection + volleySpreadDirection).normalized, UnityEngine.ForceMode.Impulse);
+        } break;
+
+        case Monster.Kind.Molem:  /* Do nothing… */   break;
+        case Monster.Kind.Tyrage: /* Do something… */ break;
 
         case Monster.Kind.Antillery:
-        default: {
-          bullet.rigidBody.AddForce    (bullet.shootDirection * base.shoot.speed, UnityEngine.ForceMode.Impulse);
-          bullet.rigidBody.MoveRotation(UnityEngine.Quaternion.Euler(
-            UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, bullet.rigidBody.rotation.eulerAngles) +                       // ->> Remove Y-axis orientation
-            UnityEngine.Vector3.Scale(UnityEngine.Vector3.up, UnityEngine.Quaternion.LookRotation(bullet.shootDirection, UnityEngine.Vector3.up).eulerAngles) // ->> Apply  Y-axis orientation
-          ));
-        } break;
+        case Monster.Kind.Sirpens:
+        default:
+          bullet.Travel();
+          break;
       }
     }
 

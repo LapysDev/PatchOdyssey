@@ -226,7 +226,7 @@ namespace PatchOdyssey {
         Timeframe                      timeframe          = default;
         UnityEditor.SerializedProperty timeframeDuration  = null!;
 
-        // … ->> Always update because `Timeframe` could either be `isElapsed` or not
+        // … ->> Always update because `Timeframe` could either be `isElapsed` or not --> bool UnityEditor.Editor::RequiresConstantRepaint() => true
         TimeframeDrawer.SerializedObject      = property.serializedObject;
         UnityEditor.EditorApplication.update -= TimeframeDrawer.Repaint;
         UnityEditor.EditorApplication.update += TimeframeDrawer.Repaint;

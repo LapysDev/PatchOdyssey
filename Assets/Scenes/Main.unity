@@ -148,7 +148,9 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 330585546}
+  - {fileID: 832575519}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &18999362
@@ -210,8 +212,16 @@ MonoBehaviour:
     tyragePrefabrication: {fileID: 0}
   outlineAutomatically: 1
   outlineMaterial: {fileID: 2100000, guid: 76a4f0befcaf3004f85864702663de6f, type: 2}
+  primitives:
+    capsule: {fileID: 0}
+    cube: {fileID: 0}
+    cylinder: {fileID: 1257132272412160779, guid: 53c25c65e7ddc924796bab025ffb29ca, type: 3}
+    plane: {fileID: 0}
+    quad: {fileID: 0}
+    sphere: {fileID: 0}
   shadowAutomatically: 1
   shadowMaterial: {fileID: 2100000, guid: 58de7dd50dfeb7244983b7415c5c6095, type: 2}
+  volume: {fileID: 832575518}
 --- !u!1 &282482386
 GameObject:
   m_ObjectHideFlags: 0
@@ -334,21 +344,28 @@ MonoBehaviour:
     bulletLifetime: 2
     bulletMaterial: {fileID: 2100000, guid: d329a389459b99640918458710876615, type: 2}
     cooldown:
-      duration: 5
+      duration: 1.35
     damage: 1
-    repeatCount: 0
-    repeatDelay: 0
     repelForce: 4
     speed: 20
+    spinAutomatically: 1
     view: 5
+    volleyCount: 0
+    volleyRandomCount: 1
+    volleyDelay: 0.5
   shootAutomatically: 1
   target: {fileID: 0}
   targetAutomatically: 1
   targetBerth: 2.25
   team: 1
+  tracking:
+    cameras: []
+    lights: []
   turn:
     direction: {x: 0, y: 0, z: 0}
     speed: 13.5
+  volumes: []
+  worldCameraDistance: {x: 0, y: 0, z: 0}
   kind: 3
   mountAutomatically: 1
   mountIsUsed: 0
@@ -459,7 +476,7 @@ GameObject:
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
   m_Layer: 0
-  m_Name: Camera
+  m_Name: "Camera \U0001F3A5"
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -537,7 +554,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 18999361}
   m_LocalEulerAnglesHint: {x: 45, y: -180, z: 0}
 --- !u!114 &330585547
 MonoBehaviour:
@@ -609,7 +626,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 374531811}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a44444aaeb495bb4281196d02839b777, type: 3}
   m_Name: 
@@ -629,8 +646,7 @@ MonoBehaviour:
     timeout:
       duration: 3
   followAutomatically: 1
-  followers:
-  - {fileID: 393888367}
+  followers: []
   following: {fileID: 0}
   health: 1
   healthMaximum: 45
@@ -671,19 +687,26 @@ MonoBehaviour:
     cooldown:
       duration: 1
     damage: 2
-    repeatCount: 0
-    repeatDelay: 16777215
     repelForce: 3
     speed: 7
+    spinAutomatically: 1
     view: 21
+    volleyCount: 0
+    volleyRandomCount: 1
+    volleyDelay: 0.75
   shootAutomatically: 1
   target: {fileID: 0}
   targetAutomatically: 1
   targetBerth: 4.5
   team: 2
+  tracking:
+    cameras: []
+    lights: []
   turn:
     direction: {x: 0, y: 0, z: 0}
     speed: 9
+  volumes: []
+  worldCameraDistance: {x: 0, y: 0, z: 0}
   hair: {fileID: 0}
   hairAutomatically: 1
 --- !u!54 &374531813
@@ -813,7 +836,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 393888362}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7710f043dc0b22642a5d7e88bfaabc6c, type: 3}
   m_Name: 
@@ -834,11 +857,11 @@ MonoBehaviour:
       duration: 4
   followAutomatically: 1
   followers: []
-  following: {fileID: 374531812}
+  following: {fileID: 0}
   health: 1
   healthMaximum: 50
   isAggressive: 1
-  isInvincible: 1
+  isInvincible: 0
   moveAutomatically: 1
   movement:
     damping: 5.5
@@ -869,24 +892,31 @@ MonoBehaviour:
     material: {fileID: 0}
   shoot:
     bulletHealth: 1
-    bulletLifetime: 2
+    bulletLifetime: 0.825
     bulletMaterial: {fileID: 2100000, guid: cd826987c578f7e448002aad3f17c8d4, type: 2}
     cooldown:
       duration: 2
     damage: 1
-    repeatCount: 6
-    repeatDelay: 0.5
     repelForce: 1
     speed: 3.5
+    spinAutomatically: 1
     view: 27
+    volleyCount: 6
+    volleyRandomCount: 4
+    volleyDelay: 0.5
   shootAutomatically: 1
   target: {fileID: 0}
   targetAutomatically: 1
   targetBerth: 2.25
-  team: 2
+  team: 1
+  tracking:
+    cameras: []
+    lights: []
   turn:
     direction: {x: 0, y: 0, z: 0}
     speed: 13.5
+  volumes: []
+  worldCameraDistance: {x: 0, y: 0, z: 0}
   kind: 1
   mountAutomatically: 1
   mountIsUsed: 0
@@ -934,7 +964,7 @@ GameObject:
   - component: {fileID: 410087040}
   - component: {fileID: 410087042}
   m_Layer: 0
-  m_Name: Light
+  m_Name: "Light \U0001F4A1"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -957,7 +987,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 2
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -1013,13 +1043,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 410087039}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalRotation: {x: 0.07465782, y: -0.90612745, z: 0.37533024, w: 0.18023993}
+  m_LocalPosition: {x: 3, y: 5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+  m_Father: {fileID: 426952049}
+  m_LocalEulerAnglesHint: {x: 45, y: 22.5, z: 0}
 --- !u!114 &410087042
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1076,6 +1106,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2111423690}
+  - {fileID: 410087041}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!114 &426952050
@@ -1146,19 +1177,27 @@ MonoBehaviour:
     cooldown:
       duration: 0.2
     damage: 3
-    repeatCount: 0
-    repeatDelay: 16777215
     repelForce: 5
     speed: 7
+    spinAutomatically: 1
     view: 360
+    volleyCount: 0
+    volleyRandomCount: 0
+    volleyDelay: 16777215
   shootAutomatically: 1
   target: {fileID: 393888367}
   targetAutomatically: 0
   targetBerth: 0
   team: 0
+  tracking:
+    cameras: []
+    lights:
+    - {fileID: 410087040}
   turn:
     direction: {x: 0, y: 0, z: 0}
     speed: 9
+  volumes: []
+  worldCameraDistance: {x: 0, y: 0, z: 0}
   hair: {fileID: 0}
   hairAutomatically: 0
   isInputing: 0
@@ -1172,7 +1211,6 @@ MonoBehaviour:
     retractSpeed: 20
     turnSpeed: 135
   lasooing: {fileID: 0}
-  mainCameraDistance: {x: 0, y: 0, z: 0}
   releaseWindow:
     duration: 1
 --- !u!54 &426952051
@@ -1265,7 +1303,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 503228481}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a44444aaeb495bb4281196d02839b777, type: 3}
   m_Name: 
@@ -1326,19 +1364,26 @@ MonoBehaviour:
     cooldown:
       duration: 1
     damage: 2
-    repeatCount: 0
-    repeatDelay: 16777215
     repelForce: 3
     speed: 7
+    spinAutomatically: 1
     view: 21
+    volleyCount: 0
+    volleyRandomCount: 1
+    volleyDelay: 0.75
   shootAutomatically: 1
   target: {fileID: 0}
   targetAutomatically: 1
   targetBerth: 4.5
   team: 1
+  tracking:
+    cameras: []
+    lights: []
   turn:
     direction: {x: 0, y: 0, z: 0}
     speed: 9
+  volumes: []
+  worldCameraDistance: {x: 0, y: 0, z: 0}
   hair: {fileID: 0}
   hairAutomatically: 1
 --- !u!54 &503228484
@@ -1736,12 +1781,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 832575517}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 18999361}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1215380159
 GameObject:
@@ -1861,25 +1906,32 @@ MonoBehaviour:
   shadow:
     material: {fileID: 0}
   shoot:
-    bulletHealth: 1
-    bulletLifetime: 2
+    bulletHealth: 5
+    bulletLifetime: 10
     bulletMaterial: {fileID: 2100000, guid: 99a81c9cfd5255b428504210f5174b9d, type: 2}
     cooldown:
-      duration: 0
+      duration: 4
     damage: 1
-    repeatCount: 15
-    repeatDelay: 0.1
     repelForce: 2.5
     speed: 1.75
+    spinAutomatically: 0
     view: 45
-  shootAutomatically: 0
+    volleyCount: 10
+    volleyRandomCount: 10
+    volleyDelay: 0.025
+  shootAutomatically: 1
   target: {fileID: 0}
   targetAutomatically: 1
   targetBerth: 2.25
   team: 1
+  tracking:
+    cameras: []
+    lights: []
   turn:
     direction: {x: 0, y: 0, z: 0}
     speed: 13.5
+  volumes: []
+  worldCameraDistance: {x: 0, y: 0, z: 0}
   kind: 2
   mountAutomatically: 1
   mountIsUsed: 0
@@ -2102,7 +2154,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1814384131}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7710f043dc0b22642a5d7e88bfaabc6c, type: 3}
   m_Name: 
@@ -2163,19 +2215,26 @@ MonoBehaviour:
     cooldown:
       duration: 1
     damage: 1
-    repeatCount: 1
-    repeatDelay: 0
     repelForce: 10
     speed: 11
+    spinAutomatically: 1
     view: 13.5
+    volleyCount: 2
+    volleyRandomCount: 1
+    volleyDelay: 0
   shootAutomatically: 1
   target: {fileID: 0}
   targetAutomatically: 1
   targetBerth: 2.25
   team: 1
+  tracking:
+    cameras: []
+    lights: []
   turn:
     direction: {x: 0, y: 0, z: 0}
     speed: 13.5
+  volumes: []
+  worldCameraDistance: {x: 0, y: 0, z: 0}
   kind: 0
   mountAutomatically: 1
   mountIsUsed: 0
@@ -2290,9 +2349,6 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 18999361}
-  - {fileID: 832575519}
-  - {fileID: 330585546}
-  - {fileID: 410087041}
   - {fileID: 426952049}
   - {fileID: 1814384133}
   - {fileID: 393888366}

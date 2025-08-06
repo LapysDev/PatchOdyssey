@@ -77,15 +77,25 @@ public abstract class Entity : GameComponent /* ->> Source file must be named �
     [ReadWriteInInspector]                                  public Timeframe              cooldown;
     [ReadWriteInInspector]                                  public float                  damage;
     [ReadWriteInInspector]                                  public System.Predicate<bool> isAllowed;
-    [ReadWriteInInspector]                                  public byte                   repeatCount;
-    [ReadWriteInInspector]                                  public byte                   repeatRandomCount;
-    [ReadWriteInInspector]                                  public float                  repeatDelay;
     [ReadWriteInInspector]                                  public float                  repelForce;
     [ReadWriteInInspector]                                  public float                  speed;
+    [ReadWriteInInspector]                                  public bool                   spinAutomatically;
     [ReadWriteInInspector, UnityEngine.Range(0.0f, 360.0f)] public float                  view; // ->> in Degrees
+    [ReadWriteInInspector]                                  public byte                   volleyCount;
+    [ReadWriteInInspector]                                  public byte                   volleyRandomCount;
+    [ReadWriteInInspector]                                  public float                  volleyDelay;
   }
 
-  public enum Team          : byte { Player, Explorer = Player, Enemy, /* ->> Series of `Enemy + …` for other teams */ Nomad = Enemy + 0, Magnate = Enemy + 1 }
+  public enum Team : byte { Player, Explorer = Player, Enemy, /* ->> Series of `Enemy + …` for other teams */ Nomad = Enemy + 0, Magnate = Enemy + 1 }
+
+  public readonly record struct Tracked(UnityEngine.Behaviour tracking, UnityEngine.Vector3 distance = default);
+
+  [System.Serializable]
+  public struct TrackingInfo {
+    [ReadWriteInInspector] public /* readonly */ System.Collections.Generic.List<UnityEngine.Camera> cameras;
+    [ReadWriteInInspector] public /* readonly */ System.Collections.Generic.List<UnityEngine.Light>  lights;
+  }
+
   public enum TurnDirection : byte { Anticlockwise, Clockwise }
 
   [System.Serializable]
@@ -103,36 +113,41 @@ public abstract class Entity : GameComponent /* ->> Source file must be named �
   public const           float                                   DefeatedSwayFactor                 = 1.00f;
   public static          UnityEngine.Vector3                     MovementVelocityThreshold { get; } = UnityEngine.Vector3.one * 1.0f; // ->> Threshold velocity determining `Entity` movement
 
-  [ReadOnlyInInspector]                                 protected                UnityEngine.Camera?                     actualMainCamera    = null;
-  [ReadOnlyInInspector]                                 protected                bool                                    actuallyDefeated    = false;
-  [ReadWriteInInspector]                                public                   Entity.BounceInfo                       bounce              = new() {angle = 10.00f, force = 0.75f, speed = 5.00f, turn = Entity.TurnDirection.Clockwise};
-  [ReadWriteInInspector]                                public                   bool                                    bounceAutomatically = true;
-  [ReadOnlyInInspector, UnityEngine.SerializeField]     internal  /* readonly */ System.Collections.Generic.List<Bullet> bullets             = new(8); // ->> “Shots fired”
-  [ReadWriteInInspector]                                public                   Entity.ContactInfo                      contact             = new() {damage = 4.00f, repelForce = 2.50f};
-  [ReadWriteInInspector]                                public                   Entity.DefeatInfo                       defeat              = new() {position = UnityEngine.Vector3.zero, timeout = new(4.00)};
-  [ReadWriteInInspector]                                public                   bool                                    followAutomatically = true;   // ->> Act on `followers`/ `following` relationship
-  [ReadWriteInInspector, UnityEngine.SerializeField]    public    /* readonly */ System.Collections.Generic.List<Entity> followers           = new(1); // ->> `Entity`s `following` `this` one;                         unable to automatically update `followers[…].following`
-  [ReadWriteInInspector]                                public                   Entity?                                 following           = null;   // ->> `Entity` to go to (typically an ally) when not targeting; unable to automatically update `following   .followers`
-  [ReadWriteInInspector, UnityEngine.Range(0.0f, 1.0f)] public                   float                                   health              = 1.0f;
-  [ReadWriteInInspector]                                public    /* readonly */ float                                   healthMaximum       = 100.00f;
-  [ReadWriteInInspector]                                public                   bool                                    isAggressive        = true; // ->> Sets `target` to `Damage(…, attacker)` i.e. aggressed
-  [ReadWriteInInspector]                                public                   bool                                    isDefeated          { get => this.actuallyDefeated; set => this.actuallyDefeated = this.actuallyDefeated || value; } // ->> Cannot be revived
-  [ReadWriteInInspector]                                public                   bool                                    isInvincible        = false;
-  [ReadOnlyInInspector]                                 protected                ref readonly UnityEngine.Camera?        mainCamera          { get { this.actualMainCamera = null == this.actualMainCamera ? UnityEngine.Camera.main : this.actualMainCamera; /* --> base.camera */ return ref this.actualMainCamera; } }
-  [ReadWriteInInspector]                                public                   bool                                    moveAutomatically   = true; // ->> Go to `target`’s position
-  [ReadWriteInInspector]                                public                   Entity.MovementInfo                     movement            = new() {damping = 1.00f, direction = UnityEngine.Vector3.zero, pause = 0.00, pauseCooldown = new(0.00), pauseRandomnessFactor = 0.75, speed = 2.00f, speedFactor = 1.00f, speedRandomnessFactor = 0.30f};
-  [ReadWriteInInspector]                                public                   Entity.OutlineInfo                      outline             = new() {color = UnityEngine.Color.white, material = null};
-  [ReadWriteInInspector, UnityEngine.SerializeField]    protected                Entity.Prefollow                        prefollow           = new() {bounceAutomatically = true, isFollowing = false, isInvincible = false, localScale = UnityEngine.Vector3.one, moveAutomatically = true, movementSpeed = 2.00f, targetBerth = 2.25f};
-  [ReadOnlyInInspector]                                 protected                bool                                    prefollowIsUpdated  = false;
-  [ReadWriteInInspector]                                public                   Player.RegenInfo                        regeneration        = new() {amount = 0.00f, delay = new(0.00), interval = new(2.00)};
-  [ReadWriteInInspector]                                public                   Entity.ShadowInfo                       shadow              = new() {material = null};
-  [ReadWriteInInspector]                                public                   Entity.ShootInfo                        shoot               = new() {bulletHealth = (byte) 1u, bulletLifetime = 2.0f, bulletMaterial = null, cooldown = new(1.00), damage = 6.75f, isAllowed = static allowed => allowed, repeatCount = (byte) 0u, repeatDelay = 0.0f, repelForce = 1.0f, repeatRandomCount = (byte) 0u, speed = 3.50f, view = 21.0f};
-  [ReadWriteInInspector]                                public                   bool                                    shootAutomatically  = true; // ->> Auto-fire “friendliness pellets”
-  [ReadWriteInInspector]                                public                   Entity?                                 target              = null; // ->> `Entity` to go to (typically an enemy)
-  [ReadWriteInInspector]                                public                   bool                                    targetAutomatically = true;
-  [ReadWriteInInspector]                                public                   float                                   targetBerth         = 2.25f; // ->> Radius
-  [ReadWriteInInspector]                                public                   Entity.Team                             team                = Entity.Team.Enemy;
-  [ReadWriteInInspector]                                public                   Entity.TurnInfo                         turn                = new() {direction = UnityEngine.Vector3.zero, speed = 9.00f};
+  [ReadOnlyInInspector]                                 protected                UnityEngine.Camera?                                           actualWorldCamera   = null;
+  [ReadOnlyInInspector]                                 protected                bool                                                          actuallyDefeated    = false;
+  [ReadWriteInInspector]                                public                   Entity.BounceInfo                                             bounce              = new() {angle = 10.00f, force = 0.75f, speed = 5.00f, turn = Entity.TurnDirection.Clockwise};
+  [ReadWriteInInspector]                                public                   bool                                                          bounceAutomatically = true;
+  [ReadOnlyInInspector, UnityEngine.SerializeField]     internal  /* readonly */ System.Collections.Generic.List<Bullet>                       bullets             = new(8); // ->> “Shots fired”
+  [ReadWriteInInspector]                                public                   Entity.ContactInfo                                            contact             = new() {damage = 4.00f, repelForce = 2.50f};
+  [ReadWriteInInspector]                                public                   Entity.DefeatInfo                                             defeat              = new() {position = UnityEngine.Vector3.zero, timeout = new(4.00)};
+  [ReadWriteInInspector]                                public                   bool                                                          followAutomatically = true;   // ->> Act on `followers`/ `following` relationship
+  [ReadWriteInInspector, UnityEngine.SerializeField]    public    /* readonly */ System.Collections.Generic.List<Entity>                       followers           = new(1); // ->> `Entity`s `following` `this` one;                         unable to automatically update `followers[…].following`
+  [ReadWriteInInspector]                                public                   Entity?                                                       following           = null;   // ->> `Entity` to go to (typically an ally) when not targeting; unable to automatically update `following   .followers`
+  [ReadWriteInInspector, UnityEngine.Range(0.0f, 1.0f)] public                   float                                                         health              = 1.0f;
+  [ReadWriteInInspector]                                public    /* readonly */ float                                                         healthMaximum       = 100.00f;
+  [ReadWriteInInspector]                                public                   bool                                                          isAggressive        = true; // ->> Sets `target` to `Damage(…, attacker)` i.e. aggressed
+  [ReadWriteInInspector]                                public                   bool                                                          isDefeated          { get => this.actuallyDefeated; set => this.actuallyDefeated = this.actuallyDefeated || value; } // ->> Cannot be revived
+  [ReadWriteInInspector]                                public                   bool                                                          isInvincible        = false;
+  [ReadWriteInInspector]                                public                   bool                                                          moveAutomatically   = true; // ->> Go to `target`’s position
+  [ReadWriteInInspector]                                public                   Entity.MovementInfo                                           movement            = new() {damping = 1.00f, direction = UnityEngine.Vector3.zero, pause = 0.00, pauseCooldown = new(0.00), pauseRandomnessFactor = 0.75, speed = 2.00f, speedFactor = 1.00f, speedRandomnessFactor = 0.30f};
+  [ReadWriteInInspector]                                public                   Entity.OutlineInfo                                            outline             = new() {color = UnityEngine.Color.white, material = null};
+  [ReadWriteInInspector, UnityEngine.SerializeField]    protected                Entity.Prefollow                                              prefollow           = new() {bounceAutomatically = true, isFollowing = false, isInvincible = false, localScale = UnityEngine.Vector3.one, moveAutomatically = true, movementSpeed = 2.00f, targetBerth = 2.25f};
+  [ReadOnlyInInspector]                                 protected                bool                                                          prefollowIsUpdated  = false;
+  [ReadWriteInInspector]                                public                   Player.RegenInfo                                              regeneration        = new() {amount = 0.00f, delay = new(0.00), interval = new(2.00)};
+  [ReadWriteInInspector]                                public                   Entity.ShadowInfo                                             shadow              = new() {material = null};
+  [ReadWriteInInspector]                                public                   Entity.ShootInfo                                              shoot               = new() {bulletHealth = (byte) 1u, bulletLifetime = 2.0f, bulletMaterial = null, cooldown = new(1.00), damage = 6.75f, isAllowed = static allowed => allowed, repelForce = 1.0f, speed = 3.50f, spinAutomatically = true, view = 21.0f, volleyCount = (byte) 0u, volleyRandomCount = (byte) 0u, volleyDelay = 0.0f};
+  [ReadWriteInInspector]                                public                   bool                                                          shootAutomatically  = true; // ->> Auto-fire “friendliness pellets”
+  [ReadWriteInInspector]                                public                   Entity?                                                       target              = null; // ->> `Entity` to go to (typically an enemy)
+  [ReadWriteInInspector]                                public                   bool                                                          targetAutomatically = true;
+  [ReadWriteInInspector]                                public                   float                                                         targetBerth         = 2.25f; // ->> Radius
+  [ReadWriteInInspector]                                public                   Entity.Team                                                   team                = Entity.Team.Enemy;
+  [ReadOnlyInInspector, System.NonSerialized]           protected /* readonly */ System.Collections.Generic.List<Entity.Tracked>               tracked             = new(1);
+  [ReadWriteInInspector]                                public                   Entity.TrackingInfo                                           tracking            = new() {cameras = new(1), lights = new(1)};
+  [ReadWriteInInspector]                                public                   Entity.TurnInfo                                               turn                = new() {direction = UnityEngine.Vector3.zero, speed = 9.00f};
+  [ReadOnlyInInspector, UnityEngine.SerializeField]     protected /* readonly */ System.Collections.Generic.List<UnityEngine.Rendering.Volume> volumes             = new(1);
+  [ReadOnlyInInspector]                                 protected                ref readonly UnityEngine.Camera?                              worldCamera         { get { if (null == this.actualWorldCamera) { this.actualWorldCamera = UnityEngine.Camera.main; if (null != this.actualWorldCamera) { this.worldCameraDistance = this.actualWorldCamera.transform.position - this.transform.position; if (!this.tracking.cameras.Contains(this.actualWorldCamera)) { this.tracking.cameras.Add(this.actualWorldCamera); this.PublishTracked(); } } } return ref this.actualWorldCamera; } }
+  [ReadOnlyInInspector, UnityEngine.SerializeField]     private                  UnityEngine.Vector3                                           worldCameraDistance = UnityEngine.Vector3.zero;
+  [ReadOnlyInInspector, System.NonSerialized]           public                   UnityEngine.Rendering.VolumeComponent?                        worldVignette       = null;
 
   /* … */
   protected virtual void Awake() {
@@ -150,16 +165,16 @@ public abstract class Entity : GameComponent /* ->> Source file must be named �
     base.rigidBody.linearDamping          = this.movement.damping;
     base.rigidBody.isKinematic            = false;
     base.rigidBody.interpolation          = UnityEngine.RigidbodyInterpolation.None == base.rigidBody.interpolation ? UnityEngine.RigidbodyInterpolation.Extrapolate : base.rigidBody.interpolation;
-    base.rigidBody.includeLayers          = (UnityEngine.LayerMask) ~0x0;
+    base.rigidBody.includeLayers          = (UnityEngine.LayerMask) ~0;
     base.rigidBody.freezeRotation         = true;
-    base.rigidBody.excludeLayers          = (UnityEngine.LayerMask) 0x0;
+    base.rigidBody.excludeLayers          = (UnityEngine.LayerMask) 0;
     base.rigidBody.detectCollisions       = true;
     base.rigidBody.constraints            = UnityEngine.RigidbodyConstraints.FreezePositionY | UnityEngine.RigidbodyConstraints.FreezeRotation;
     base.rigidBody.collisionDetectionMode = UnityEngine.CollisionDetectionMode.Discrete;
     base.collider.isTrigger               = true;
-    base.collider.includeLayers           = (UnityEngine.LayerMask) ~0x0;
+    base.collider.includeLayers           = (UnityEngine.LayerMask) ~0;
     base.collider.hasModifiableContacts   = false;
-    base.collider.excludeLayers           = (UnityEngine.LayerMask) 0x0;
+    base.collider.excludeLayers           = (UnityEngine.LayerMask) 0;
 
     Entity.All.Add(this);
 
@@ -189,16 +204,20 @@ public abstract class Entity : GameComponent /* ->> Source file must be named �
     // … ->> Shadowing
     if (Assets.main.shadowAutomatically && null != Assets.main.shadowMaterial)
     if (UnityEngine.GameObject.CreatePrimitive(UnityEngine.PrimitiveType.Cylinder) is UnityEngine.GameObject shadow) {
-      UnityEngine.Bounds bounds = new(this.transform.position, UnityEngine.Vector3.one * 0.5f);
+      UnityEngine.Bounds   bounds         = new(this.transform.position, UnityEngine.Vector3.one * 0.5f);
+      UnityEngine.Renderer shadowRenderer = shadow.GetComponent<UnityEngine.Renderer>();
 
       // …
       this.transform.ForEach<UnityEngine.Renderer>(renderer => bounds.Encapsulate(renderer.bounds));
 
-      bounds.size                                                = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, bounds.size);
-      shadow.GetComponent<UnityEngine.Renderer>().sharedMaterial = Assets.main.shadowMaterial;
-      shadow.name                                                = "Shadow";
-      shadow.transform.localScale                                = (UnityEngine.Vector3.up * Game.VectorEpsilon * 2.00f) + ((UnityEngine.Vector3.forward + UnityEngine.Vector3.right) * UnityEngine.Mathf.Max(UnityEngine.Mathf.Max(bounds.size.x, bounds.size.y), bounds.size.z) * 0.75f);
-      this.shadow.material                                       = new(Assets.main.shadowMaterial);
+      bounds.size                      = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, bounds.size);
+      shadowRenderer.lightProbeUsage   = UnityEngine.Rendering.LightProbeUsage.Off;
+      shadowRenderer.receiveShadows    = false;
+      shadowRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+      shadowRenderer.sharedMaterial    = Assets.main.shadowMaterial;
+      shadow.name                      = "Shadow";
+      shadow.transform.localScale      = (UnityEngine.Vector3.up * Game.VectorEpsilon * 2.00f) + ((UnityEngine.Vector3.forward + UnityEngine.Vector3.right) * UnityEngine.Mathf.Max(UnityEngine.Mathf.Max(bounds.size.x, bounds.size.y), bounds.size.z) * 0.75f);
+      this.shadow.material             = new(Assets.main.shadowMaterial);
 
       shadow.transform.SetParent                  (this.transform, true);
       shadow.transform.SetLocalPositionAndRotation(UnityEngine.Vector3.down * Game.VectorEpsilon, UnityEngine.Quaternion.identity);
@@ -231,11 +250,37 @@ public abstract class Entity : GameComponent /* ->> Source file must be named �
     if (attacker == entity || entity == this)
     return;
 
-    if (!entity.isInvincible)                entity.regeneration.delay.Reset();
-    if (entity.outline.material is not null) entity.outline.material.color = !entity.isInvincible ? UnityEngine.Color.red : UnityEngine.Color.deepSkyBlue;
-
     entity.health = UnityEngine.Mathf.Clamp01(entity.health - (!entity.isInvincible ? amount / entity.healthMaximum : 0.0f));
     entity.target = null != attacker && entity.isAggressive ? attacker : entity.target;
+
+    if (!entity.isInvincible) {
+      // … ->> Regenerating
+      entity.regeneration.delay.Reset();
+
+      // … ->> Outlining
+      if (entity.outline.material is not null)
+      entity.outline.material.color = UnityEngine.Color.red;
+
+      // … ->> Vignette
+      if (entity is Player)
+      switch (entity.worldVignette) {
+        case UnityEngine.Rendering.HighDefinition.Vignette highDefinitionRenderVignette: {
+          highDefinitionRenderVignette.color    .value  = UnityEngine.Color.red;
+          highDefinitionRenderVignette.intensity.value *= 1.1f;
+        } break;
+
+        case UnityEngine.Rendering.Universal.Vignette universalRenderVignette: {
+          universalRenderVignette.color    .value  = UnityEngine.Color.red;
+          universalRenderVignette.intensity.value *= 1.1f;
+        } break;
+      }
+    }
+
+    else {
+      // … ->> Outlining
+      if (entity.outline.material is not null)
+      entity.outline.material.color = UnityEngine.Color.deepSkyBlue;
+    }
   }
 
   protected System.Collections.ObjectModel.ReadOnlyCollection<Entity>? FindTargets                                                                                (Entity.FindTargetsOptions options = Entity.FindTargetsOptions.Any) => this.FindTargets(this.FindTargetsFilter(), this.FindTargetsSorter(), options);
@@ -268,6 +313,11 @@ public abstract class Entity : GameComponent /* ->> Source file must be named �
 
   protected virtual System.Predicate<Entity>        FindTargetsFilter() => static entity => entity.enabled;
   protected virtual System.Converter<Entity, float> FindTargetsSorter() =>        entity => (entity.rigidBody.position - base.rigidBody.position).sqrMagnitude;
+
+  private void FixedUpdate() {
+    base.rigidBody.inertiaTensor         = UnityEngine.Vector3.forward + UnityEngine.Vector3.up;
+    base.rigidBody.inertiaTensorRotation = UnityEngine.Quaternion.identity;
+  }
 
   protected virtual void OnApplicationFocus(bool _) { /* Do nothing… */ }
   protected         void OnApplicationQuit ()       => this.OnApplicationFocus(false);
@@ -313,16 +363,49 @@ public abstract class Entity : GameComponent /* ->> Source file must be named �
     this.prefollow.isFollowing = null != this.following;
   }
 
-  public    virtual Bullet? Shoot()                                     => this.Shoot(static (bullet, index) => {}); // ->> Override-able because it is called by default
-  protected         Bullet? Shoot(System.Action<Bullet>       callback) => this.Shoot(       (bullet, index) => callback(bullet));
-  protected         Bullet? Shoot(System.Action<Bullet, ushort> callback) {
+  private void PublishTracked() {
+    UnityEngine.Vector3 position = this.transform.position;
+    bool[]              tracked  = new bool[this.tracked.Count]; // --> System.Collections.BitArray
+
+    /* … */
+    void Publish<T>(System.Collections.Generic.List<T> trackingList) where T : UnityEngine.Behaviour {
+      foreach (T tracking in trackingList) {
+        int index = this.tracked.Count;
+
+        // …
+        while (0 != index--) {
+          if (tracking == this.tracked[index].tracking)
+          break;
+        }
+
+        if (index != -1) tracked[index] = false;
+        else this.tracked.Add(new(tracking) {distance = tracking.transform.position - position});
+      }
+    }
+
+    /* … */
+    System.Array.Fill(tracked, true);
+
+    Publish(this.tracking.cameras);
+    Publish(this.tracking.lights);
+
+    for (int index = tracked.Length; 0 != index--; ) {
+      if (tracked[index])
+      this.tracked.RemoveAt(index);
+    }
+  }
+
+  public    virtual Bullet? Shoot()                                               => this.Shoot(static (bullet, index, count) => {}); // ->> Override-able because it is called by default
+  protected         Bullet? Shoot(System.Action<Bullet>                 callback) => this.Shoot(       (bullet, index, count) => callback(bullet));
+  protected         Bullet? Shoot(System.Action<Bullet, ushort>         callback) => this.Shoot(       (bullet, index, count) => callback(bullet, index));
+  protected         Bullet? Shoot(System.Action<Bullet, ushort, ushort> callback) {
     if (this.shoot.cooldown.isLooped) {
       Bullet? bullet = null;
-      ushort  count  = (ushort) (this.shoot.repeatCount + (UnityEngine.Random.value * this.shoot.repeatRandomCount));
+      ushort  count  = (ushort) (this.shoot.volleyCount + (UnityEngine.Random.value * this.shoot.volleyRandomCount));
       ushort  index  = (ushort) 1u;
 
       /* … */
-      System.Collections.IEnumerator DeployBullet(bool isRepeat) {
+      System.Collections.IEnumerator DeployBullet(bool isSuccessive) {
         if (null != this.transform) {
           UnityEngine.Vector3 shootDirection = UnityEngine.Vector3.zero == this.turn.direction ? this.transform.forward : this.turn.direction;
 
@@ -333,18 +416,32 @@ public abstract class Entity : GameComponent /* ->> Source file must be named �
           bullet.name           = "Bullet " + (this.bullets.Count + 1);
           bullet.shootDirection = shootDirection;
           bullet.user           = this;
+          bullet.volleyCount    = count;
 
-          bullet.transform.ForEach<UnityEngine.Renderer>(renderer => renderer.sharedMaterial = this.shoot.bulletMaterial ?? new UnityEngine.Material(renderer.sharedMaterial)); // ->> Invisible bullets are indeed possible
           this.bullets.Add(bullet);
+          bullet.transform.ForEach<UnityEngine.Renderer>(renderer => {
+            renderer.lightProbeUsage   = UnityEngine.Rendering.LightProbeUsage.Off;
+            renderer.receiveShadows    = false;
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.sharedMaterial    = this.shoot.bulletMaterial ?? new UnityEngine.Material(renderer.sharedMaterial); // ->> Invisible bullets are indeed possible
+          });
 
-          if (isRepeat)
-          callback(bullet, index++);
+          if (isSuccessive) {
+            bullet.volleyIndex = index;
+            callback(bullet, index, count);
+          }
+
+          #if DEBUG || DEVELOPMENT_BUILD
+            UnityEngine.Debug.DrawRay(bullet.rigidBody.position, shootDirection * Game.SceneSize, isSuccessive ? UnityEngine.Color.blue : UnityEngine.Color.red, 0.0f, false);
+          #endif
         }
 
-        if (0u != count--) {
-          yield return new UnityEngine.WaitForSecondsRealtime(this.shoot.repeatDelay);
+        if (count >= index++) {
+          yield return new UnityEngine.WaitForSecondsRealtime(this.shoot.volleyDelay);
           base.StartCoroutine(DeployBullet(true));
         }
+
+        yield break;
       }
 
       /* … */
@@ -403,7 +500,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named �
     }
 
     else {
-      UnityEngine.Vector3 transformToCameraDirection     = null != this.mainCamera ? (this.mainCamera.transform.position - this.transform.position).normalized : UnityEngine.Vector3.forward;
+      UnityEngine.Vector3 transformToCameraDirection     = null != this.worldCamera ? (this.worldCamera.transform.position - this.transform.position).normalized : UnityEngine.Vector3.forward;
       float               transformForwardToCameraFactor = UnityEngine.Mathf.Abs(UnityEngine.Vector3.Dot(transformToCameraDirection, this.transform.forward));
       float               transformRightToCameraFactor   = UnityEngine.Mathf.Abs(UnityEngine.Vector3.Dot(transformToCameraDirection, this.transform.right));
       float               transformToCameraFactors       = transformForwardToCameraFactor + transformRightToCameraFactor;
@@ -486,15 +583,15 @@ public abstract class Entity : GameComponent /* ->> Source file must be named �
       base.rigidBody.position       = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, base.rigidBody.position); // --> UnityEngine.Vector3.Slerp(base.rigidBody.position, UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, base.rigidBody.position), !this.movement.pauseCooldown.isElapsed ? UnityEngine.Time.unscaledDeltaTime * this.bounce.force : 1.0f)
     }
 
-    // … ->> Outlining
-    if (null != this.outline.material)
-    this.outline.material.color = UnityEngine.Color.LerpUnclamped(this.outline.material.color, null != this.following && null != this.following.outline.material ? this.following.outline.material.color : this.outline.color, 0.1f);
-
     // … ->> Regenerating
     if (this.regeneration.delay.isElapsed) {
       if (this.regeneration.interval.isLooped)
       this.health = UnityEngine.Mathf.Clamp01(this.health + (this.regeneration.amount / this.healthMaximum));
     } else this.regeneration.interval.Wait();
+
+    // … ->> Outlining
+    if (null != this.outline.material)
+    this.outline.material.color = UnityEngine.Color.LerpUnclamped(this.outline.material.color, null != this.following && null != this.following.outline.material ? this.following.outline.material.color : this.outline.color, 0.1f);
 
     // … ->> Moving
     this.movement.direction = Player.IsReady && this.targetAutomatically ? targetDistance.sqrMagnitude > (UnityEngine.Vector3.one * this.targetBerth).sqrMagnitude ? targetDistance.normalized : UnityEngine.Vector3.zero : this.movement.direction;
@@ -514,25 +611,26 @@ public abstract class Entity : GameComponent /* ->> Source file must be named �
     ), UnityEngine.Time.unscaledDeltaTime * this.turn.speed));
 
     // … ->> Shooting
-    if (this.shootAutomatically && null != this.target) {
-      if (this.shoot.isAllowed(this is Player || UnityEngine.Mathf.Cos(UnityEngine.Mathf.Deg2Rad * this.shoot.view) <= UnityEngine.Vector3.Dot(UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, this.transform.forward), UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, targetDistance).normalized))) {
-        if (this is Player || (this is Monster monster && monster.kind == Monster.Kind.Molem))
-        this.Shoot();
+    if (Player.IsReady && this.shootAutomatically && null != this.target) {
+      bool shootIsTargeted = this is Player || UnityEngine.Mathf.Cos(UnityEngine.Mathf.Deg2Rad * this.shoot.view) <= UnityEngine.Vector3.Dot(UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, this.transform.forward), UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, targetDistance).normalized);
+      bool shootIsAllowed  = this.shoot.isAllowed(shootIsTargeted);
 
-        #if false
-        #if DEBUG || DEVELOPMENT_BUILD
-          UnityEngine.Debug.DrawRay(this.transform.position, Game.SceneSize * this.transform.forward, UnityEngine.Color.green, 0.0f, false);
-        #endif
-        #endif
-      }
+      // …
+      if (shootIsAllowed)
+      this.Shoot();
 
       #if false
       #if DEBUG || DEVELOPMENT_BUILD
-        UnityEngine.Debug.DrawRay(this.transform.position, Game.SceneSize * (UnityEngine.Quaternion.AngleAxis(+this.shoot.view, UnityEngine.Vector3.up) * this.transform.forward), UnityEngine.Color.red, 0.0f, false);
-        UnityEngine.Debug.DrawRay(this.transform.position, Game.SceneSize * (UnityEngine.Quaternion.AngleAxis(-this.shoot.view, UnityEngine.Vector3.up) * this.transform.forward), UnityEngine.Color.red, 0.0f, false);
+        UnityEngine.Debug.DrawLine(this.transform.position, this.target.transform.position, shootIsAllowed ? UnityEngine.Color.green : shootIsTargeted ? UnityEngine.Color.orange : UnityEngine.Color.red, 0.0f, false);
+        UnityEngine.Debug.DrawRay (this.transform.position, Game.SceneSize * (UnityEngine.Quaternion.AngleAxis(+this.shoot.view, UnityEngine.Vector3.up) * this.transform.forward), UnityEngine.Color.blue, 0.0f, false);
+        UnityEngine.Debug.DrawRay (this.transform.position, Game.SceneSize * (UnityEngine.Quaternion.AngleAxis(-this.shoot.view, UnityEngine.Vector3.up) * this.transform.forward), UnityEngine.Color.blue, 0.0f, false);
       #endif
       #endif
     }
+
+    // … ->> Tracking
+    foreach (Entity.Tracked tracked in this.tracked)
+    tracked.tracking.transform.position = tracked.distance + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, this.transform.position);
 
     // … ->> Pre-follow
     this.PrefollowUpdate();
@@ -554,15 +652,23 @@ public abstract class Entity : GameComponent /* ->> Source file must be named �
     public                  UnityEngine.Vector3   shootDirection           = UnityEngine.Vector3.zero; // ->> Initial line of fire
     public   /* readonly */ double                shootTimestamp           = 0.0;
     public                  Entity                user                     = null!; // ->> Must be set
+    public                  ushort                volleyCount              = (ushort) 0u;
+    public                  ushort                volleyIndex              = (ushort) 0u;
 
     /* … */
     private void Awake() {
+      UnityEngine.Collider[] colliders = base.GetComponents<UnityEngine.Collider>();
+
+      // …
       base.rigidBody.collisionDetectionMode = UnityEngine.CollisionDetectionMode.ContinuousDynamic;
       base.rigidBody.constraints            = UnityEngine.RigidbodyConstraints.FreezePositionY | UnityEngine.RigidbodyConstraints.FreezeRotationX | UnityEngine.RigidbodyConstraints.FreezeRotationY;
-      base.rigidBody.excludeLayers          = (UnityEngine.LayerMask)  0x0;
-      base.rigidBody.includeLayers          = (UnityEngine.LayerMask) ~0x0;
+      base.rigidBody.excludeLayers          = (UnityEngine.LayerMask)  0;
+      base.rigidBody.includeLayers          = (UnityEngine.LayerMask) ~0;
       base.rigidBody.interpolation          = UnityEngine.RigidbodyInterpolation.Interpolate;
       base.rigidBody.isKinematic            = false;
+      base.collider.excludeLayers           = (UnityEngine.LayerMask) 0;
+      base.collider.hasModifiableContacts   = false;
+      base.collider.includeLayers           = (UnityEngine.LayerMask) ~0;
       base.collider.isTrigger               = true;
       this.shootTimestamp                   = Timeframe.CurrentTimestamp;
       this.explosionDetonationScale         = UnityEngine.Vector3.one * ((UnityEngine.Random.value * 2.0f) + 1.0f);
@@ -589,6 +695,9 @@ public abstract class Entity : GameComponent /* ->> Source file must be named �
         } break;
       }
 
+      for (uint index = (uint) colliders.Length; 0u != --index; )
+      UnityEngine.Object.Destroy(colliders[index]);
+
       if (null != this.user)
       this.user.bullets.Add(this);
     }
@@ -612,7 +721,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named �
       }
 
       if (collider.GetComponent<Entity>() is Entity entity) {
-        if (entity != this.user && !this.user.followers.Contains(entity)) {
+        if (entity != this.user && entity.team != this.user.team && !this.user.followers.Contains(entity)) {
           this.health -= (byte) (0u == this.health || this.isInvincible ? 0u : 1u);
           this.user.ShootDamage(entity is Monster monster && monster.isMounted ? monster.following! : entity, this.shootDirection);
         }
@@ -624,6 +733,17 @@ public abstract class Entity : GameComponent /* ->> Source file must be named �
       return;
 
       this.health = (byte) 0u;
+    }
+
+    public void Travel() {
+      if (this.isHit || null == this.user)
+      return;
+
+      base.rigidBody.AddForce    (this.shootDirection * this.user.shoot.speed, UnityEngine.ForceMode.Impulse);
+      base.rigidBody.MoveRotation(UnityEngine.Quaternion.Euler(
+        UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, base.rigidBody.rotation.eulerAngles) +                       // ->> Remove Y-axis orientation
+        UnityEngine.Vector3.Scale(UnityEngine.Vector3.up, UnityEngine.Quaternion.LookRotation(this.shootDirection, UnityEngine.Vector3.up).eulerAngles) // ->> Apply  Y-axis orientation
+      ));
     }
 
     private void Update() {
@@ -682,7 +802,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named �
 
         explosion                           = UnityEngine.GameObject.CreatePrimitive(UnityEngine.PrimitiveType.Sphere);
         explosion.name                      = (this.name + " Explosion").TrimStart();
-        explosionRenderer                   = explosion.GetComponent<UnityEngine.Renderer>() ?? explosion.AddComponent<UnityEngine.MeshRenderer>();
+        explosionRenderer                   = explosion.GetComponent<UnityEngine.Renderer>();
         explosionRenderer.receiveShadows    = false;
         explosionRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         explosionRenderer.sharedMaterials   = System.Array.ConvertAll(materials, static material => new UnityEngine.Material(material));
@@ -703,11 +823,13 @@ public abstract class Entity : GameComponent /* ->> Source file must be named �
       else
         this.explosionDuration.Reset();
 
-      /* … */
+      // …
       if (Game.IsPaused)
       return;
 
       this.lifetime -= UnityEngine.Time.unscaledDeltaTime;
+
+      if (this.user.shoot.spinAutomatically)
       base.rigidBody.MoveRotation(base.rigidBody.rotation * UnityEngine.Quaternion.AngleAxis(Entity.BulletSpinSpeed * UnityEngine.Time.unscaledDeltaTime, UnityEngine.Vector3.forward));
     }
   }

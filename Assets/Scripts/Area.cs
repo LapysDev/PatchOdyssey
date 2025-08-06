@@ -15,7 +15,7 @@ public sealed class Area : GameComponent {
 
   private void OnTriggerExit(UnityEngine.Collider collider) {
     // … ->> Lock in
-    if (collider.GetComponent<Player>() is Player player) {
+    if (collider.TryGetComponent<Player>(out Player player)) {
       UnityEngine.Bounds? areaBounds = null;
 
       // …

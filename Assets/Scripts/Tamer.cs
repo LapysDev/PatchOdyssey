@@ -21,11 +21,12 @@ public class Tamer : Entity {
     if (entity is Monster monster) {
       monster.following                = this;
       monster.isInvincible             = true;
+      // monster.shootAutomatically       = false;
       monster.team                     = base.team;
       this.mountingTransforms.Capacity = System.Math.Max(this.mountingTransforms.Capacity, this.transform.hierarchyCount);
 
       monster.transform.SetParent(this.transform, true);
-      this.followers.Add(monster);
+      base.followers.Add(monster);
       this.transform.ForEach(transform => {
         if (monster.transform == transform)
         return false;
@@ -152,17 +153,13 @@ public class Tamer : Entity {
   protected override void Update() {
     base.Update();
 
-    if (Game.IsPaused || this.isDefeated)
+    if (Game.IsPaused || base.isDefeated)
     return;
 
     // … ->> Bullet
-    foreach (Bullet bullet in this.bullets)
-    if (null != bullet && !bullet.isHit) {
-      bullet.rigidBody.AddForce    (bullet.shootDirection * this.shoot.speed, UnityEngine.ForceMode.Impulse);
-      bullet.rigidBody.MoveRotation(UnityEngine.Quaternion.Euler(
-        UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, bullet.rigidBody.rotation.eulerAngles) +                       // ->> Remove Y-axis orientation
-        UnityEngine.Vector3.Scale(UnityEngine.Vector3.up, UnityEngine.Quaternion.LookRotation(bullet.shootDirection, UnityEngine.Vector3.up).eulerAngles) // ->> Apply  Y-axis orientation
-      ));
+    foreach (Bullet bullet in base.bullets) {
+      if (null != bullet)
+      bullet.Travel();
     }
   }
 }

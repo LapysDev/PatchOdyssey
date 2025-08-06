@@ -24,23 +24,24 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
   }
 
   /* … */
-  public  static          bool                  IsReady                            = false;
+  private const           float                 VignetteIntensity                  = 0.15f;
+  private static readonly UnityEngine.Color     VignetteColor                      = UnityEngine.Color.black;
   private static readonly float                 LasooCaptureProgressThreshold      = (UnityEngine.Vector3.one * 0.25f).sqrMagnitude;
-  private const           uint                  LasooCaptureProgressPrecision      = 10u;  // --> Player.LasooCaptureProgressPrecision >= 2
+  private const           uint                  LasooCaptureProgressPrecision      = 10u; // --> Player.LasooCaptureProgressPrecision >= 2
+  private const           float                 LasooCaptureProgressAngle          = 360.0f / Player.LasooCaptureProgressPrecision;
   private const           byte                  LasooCaptureIndicatorPrecision     = 20;   // ->> Number of segments
   private const           float                 LasooCaptureIndicatorOuterRadius   = 1.5f; // --> Player.LasooCaptureIndicatorOuterRadius > Player.LasooCaptureIndicatorInnerRadius
   private static readonly UnityEngine.Vector3[] LasooCaptureIndicatorMeshVertices  = new UnityEngine.Vector3[(Player.LasooCaptureIndicatorPrecision * 2u)];
   private static readonly int                [] LasooCaptureIndicatorMeshTriangles = new int                [(Player.LasooCaptureIndicatorPrecision - 1u) * 6u];
   private const           float                 LasooCaptureIndicatorInnerRadius   = 1.0f; // --> Player.LasooCaptureIndicatorInnerRadius < Player.LasooCaptureIndicatorOuterRadius
-  private static readonly float                 LasooCaptureProgressAngle          = 360.0f / Player.LasooCaptureProgressPrecision;
+  public  static          bool                  IsReady                            = false;
 
   [UnityEngine.Header("Player")]
-  [ReadOnlyInInspector]                             public  bool                isInputing         = false; // ->> Only significant actions count
-  [ReadOnlyInInspector]                             public  bool                isLassoing         = false;
-  [ReadWriteInInspector]                            public  Player.LasooInfo    lasoo              = new() {captureDirection = UnityEngine.Vector3.zero, captureIndicator = (null, null), captureIndicatorMesh = (null, null), captureIndicatorRenderer = (null, null), captureProgress = Player.LasooCaptureProgress.Initiating, captureProgressDirection = UnityEngine.Vector3.zero, captureProgressTurn = Entity.TurnDirection.Clockwise, captureProgressTurnCount = 0u, deployReach = Lasoo.DeployReach, deploySpeed = Lasoo.DeploySpeed, retractReach = Lasoo.RetractReach, retractSpeed = Lasoo.RetractSpeed, turnSpeed = Lasoo.TurnSpeed};
-  [ReadOnlyInInspector]                             public  Lasoo?              lasooing           = null;
-  [ReadOnlyInInspector, UnityEngine.SerializeField] private UnityEngine.Vector3 mainCameraDistance = UnityEngine.Vector3.zero;
-  [ReadWriteInInspector]                            public  Timeframe           releaseWindow      = new(1.00);
+  [ReadOnlyInInspector]  public bool             isInputing    = false; // ->> Only significant actions count
+  [ReadOnlyInInspector]  public bool             isLassoing    = false;
+  [ReadWriteInInspector] public Player.LasooInfo lasoo         = new() {captureDirection = UnityEngine.Vector3.zero, captureIndicator = (null, null), captureIndicatorMesh = (null, null), captureIndicatorRenderer = (null, null), captureProgress = Player.LasooCaptureProgress.Initiating, captureProgressDirection = UnityEngine.Vector3.zero, captureProgressTurn = Entity.TurnDirection.Clockwise, captureProgressTurnCount = 0u, deployReach = Lasoo.DeployReach, deploySpeed = Lasoo.DeploySpeed, retractReach = Lasoo.RetractReach, retractSpeed = Lasoo.RetractSpeed, turnSpeed = Lasoo.TurnSpeed};
+  [ReadOnlyInInspector]  public Lasoo?           lasooing      = null;
+  [ReadWriteInInspector] public Timeframe        releaseWindow = new(1.00);
 
   /* … */
   protected override void Awake() {
@@ -48,9 +49,28 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
 
     // …
     base.collider.isTrigger  = false;
-    this.followAutomatically = false;
-    this.mainCameraDistance  = null != this.mainCamera ? this.mainCamera.transform.position - this.transform.position : UnityEngine.Vector3.zero;
-    this.shootAutomatically  = false;
+    base.followAutomatically = false;
+    base.shootAutomatically  = false;
+
+    if (null != Assets.main.volume && Assets.main.volume.profile is UnityEngine.Rendering.VolumeProfile volumeProfile)
+    switch (base.worldVignette = (
+      volumeProfile.TryGet<UnityEngine.Rendering.Universal     .Vignette>(out UnityEngine.Rendering.Universal     .Vignette _1) ? _1 as UnityEngine.Rendering.VolumeComponent :
+      volumeProfile.TryGet<UnityEngine.Rendering.HighDefinition.Vignette>(out UnityEngine.Rendering.HighDefinition.Vignette _2) ? _2 as UnityEngine.Rendering.VolumeComponent :
+      null
+    )) {
+      case UnityEngine.Rendering.HighDefinition.Vignette highDefinitionRenderVignette: {
+        highDefinitionRenderVignette.color    .overrideState = true;
+        highDefinitionRenderVignette.intensity.overrideState = true;
+      } break;
+
+      case UnityEngine.Rendering.Universal.Vignette universalRenderVignette: {
+        universalRenderVignette.color    .overrideState = true;
+        universalRenderVignette.intensity.overrideState = true;
+      } break;
+    }
+
+    // … ->> Grab the main camera and setup `Entity::tracking.cameras` early
+    ((System.Action<UnityEngine.Camera?>) (static _ => {}))(base.worldCamera);
   }
 
   protected override void Capture(Entity entity) {
@@ -62,7 +82,7 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
     UnityEngine.Transform transform = this.transform;
 
     // …
-    if (0 == this.followers.Count) {
+    if (0 == base.followers.Count) {
       if (this.lasooing is null) {
         Lasoo                  lasoo     = new UnityEngine.GameObject("Lasoo", typeof(Lasoo)).GetComponent<Lasoo>();
         UnityEngine.GameObject lasooCoil = (UnityEngine.GameObject) UnityEngine.Object.Instantiate(Assets.main.lasoo.meshPrefabrication,     UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity, lasoo    .transform);
@@ -122,10 +142,10 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
 
   protected override void OnApplicationFocus(bool focused) {
     if (!focused) {
-      if (this.lasooing is not null) // ->> Instant retraction
-        this.lasooing.reach = this.lasooing.retractReach;
+      // if (this.lasooing is not null) // ->> Instant retraction
+      //   this.lasooing.reach = this.lasooing.retractReach;
 
-      this.RetractLasoo();
+      // this.RetractLasoo();
     }
   }
 
@@ -160,33 +180,31 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
     this.lasooing = null;
   }
 
-  private void Start() => this.followAutomatically = false;
-
   protected override void Update() {
     UnityEngine.Transform transform = this.transform;
 
     // …
     base.Update();
 
-    if (Game.IsPaused || this.isDefeated)
+    if (Game.IsPaused || base.isDefeated)
     return;
 
     // … ->> Input
     Player.IsReady = Player.IsReady || this.isInputing;
     this.isInputing = false;
       // … ->> Moving
-      this.followAutomatically = false;
-      this.movement.direction  = UnityEngine.Vector3.zero;
-      this.movement.direction += Game.Keyboard.aKey.isPressed || Game.Keyboard.aKey.wasPressedThisFrame || Game.Keyboard.leftArrowKey .isPressed || Game.Keyboard.leftArrowKey .wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.A) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.LeftArrow)  || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.A) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.LeftArrow)  ? UnityEngine.Vector3.left    : UnityEngine.Vector3.zero;
-      this.movement.direction += Game.Keyboard.dKey.isPressed || Game.Keyboard.dKey.wasPressedThisFrame || Game.Keyboard.rightArrowKey.isPressed || Game.Keyboard.rightArrowKey.wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.D) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.RightArrow) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.D) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.RightArrow) ? UnityEngine.Vector3.right   : UnityEngine.Vector3.zero;
-      this.movement.direction += Game.Keyboard.sKey.isPressed || Game.Keyboard.sKey.wasPressedThisFrame || Game.Keyboard.downArrowKey .isPressed || Game.Keyboard.downArrowKey .wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.S) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.DownArrow)  || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.S) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.DownArrow)  ? UnityEngine.Vector3.back    : UnityEngine.Vector3.zero;
-      this.movement.direction += Game.Keyboard.wKey.isPressed || Game.Keyboard.wKey.wasPressedThisFrame || Game.Keyboard.upArrowKey   .isPressed || Game.Keyboard.upArrowKey   .wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.W) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.UpArrow)    || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.W) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.UpArrow)    ? UnityEngine.Vector3.forward : UnityEngine.Vector3.zero;
-      this.isInputing          = UnityEngine.Vector3.zero != this.movement.direction;
+      base.followAutomatically = false;
+      base.movement.direction  = UnityEngine.Vector3.zero;
+      base.movement.direction += Game.Keyboard.aKey.isPressed || Game.Keyboard.aKey.wasPressedThisFrame || Game.Keyboard.leftArrowKey .isPressed || Game.Keyboard.leftArrowKey .wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.A) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.LeftArrow)  || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.A) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.LeftArrow)  ? UnityEngine.Vector3.left    : UnityEngine.Vector3.zero;
+      base.movement.direction += Game.Keyboard.dKey.isPressed || Game.Keyboard.dKey.wasPressedThisFrame || Game.Keyboard.rightArrowKey.isPressed || Game.Keyboard.rightArrowKey.wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.D) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.RightArrow) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.D) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.RightArrow) ? UnityEngine.Vector3.right   : UnityEngine.Vector3.zero;
+      base.movement.direction += Game.Keyboard.sKey.isPressed || Game.Keyboard.sKey.wasPressedThisFrame || Game.Keyboard.downArrowKey .isPressed || Game.Keyboard.downArrowKey .wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.S) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.DownArrow)  || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.S) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.DownArrow)  ? UnityEngine.Vector3.back    : UnityEngine.Vector3.zero;
+      base.movement.direction += Game.Keyboard.wKey.isPressed || Game.Keyboard.wKey.wasPressedThisFrame || Game.Keyboard.upArrowKey   .isPressed || Game.Keyboard.upArrowKey   .wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.W) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.UpArrow)    || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.W) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.UpArrow)    ? UnityEngine.Vector3.forward : UnityEngine.Vector3.zero;
+      this.isInputing          = UnityEngine.Vector3.zero != base.movement.direction;
 
       // … ->> Lassoing
       if (Game.Keyboard.enterKey.wasPressedThisFrame || Game.Keyboard.tabKey.wasPressedThisFrame || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.Return) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.Tab)) {
         if (this.isLassoing) this.ResetLasoo();
-        else { this.isInputing = true; this.isLassoing = 0 == this.followers.Count && (this.lasooing is null || this.lasooing.reach == this.lasooing.retractReach); }
+        else { this.isInputing = true; this.isLassoing = 0 == base.followers.Count && (this.lasooing is null || this.lasooing.reach == this.lasooing.retractReach); }
       }
 
       // … ->> Releasing
@@ -194,9 +212,9 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
         if (!this.releaseWindow.isElapsed) {
           this.ResetLasoo();
 
-          if (0 != this.followers.Count) {
+          if (0 != base.followers.Count) {
             this.isInputing = true;
-            this.Release(this.followers[0]);
+            base.Release(base.followers[0]);
           }
         }
 
@@ -205,21 +223,21 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
 
       // … ->> Shooting
       if (Game.Keyboard.spaceKey.wasPressedThisFrame || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.Space)) {
-        if (null != this.Shoot())
+        if (null != base.Shoot())
         this.isInputing = true;
       }
 
     // … ->> Application
       // … ->> Moving/ Turning
-      this.movement.speedFactor = this.lasooing is not null ? ((1.0f - this.lasooing.reachProgress) * 0.5f) + 0.5f : 1.0f;
+      base.movement.speedFactor = this.lasooing is not null ? ((1.0f - this.lasooing.reachProgress) * 0.5f) + 0.5f : 1.0f;
 
-      if (this.isInputing || UnityEngine.Vector3.zero != this.movement.direction)
-        this.movement.pauseCooldown.Reset();
+      if (this.isInputing || UnityEngine.Vector3.zero != base.movement.direction)
+        base.movement.pauseCooldown.Reset();
 
-      else if (this.movement.pauseCooldown.isElapsed && Entity.MovementVelocityThreshold.sqrMagnitude > base.rigidBody.linearVelocity.sqrMagnitude) {
+      else if (base.movement.pauseCooldown.isElapsed && Entity.MovementVelocityThreshold.sqrMagnitude > base.rigidBody.linearVelocity.sqrMagnitude) {
         base.rigidBody.angularVelocity = UnityEngine.Vector3.zero;
         base.rigidBody.linearVelocity  = UnityEngine.Vector3.zero;
-        this.turn.direction            = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, ((this.mainCamera?.transform.position ?? (UnityEngine.Vector3.back + transform.position)) - transform.position).normalized);
+        base.turn.direction            = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, ((base.worldCamera?.transform.position ?? (UnityEngine.Vector3.back + transform.position)) - transform.position).normalized);
       }
 
       // … ->> Lassoing
@@ -343,9 +361,18 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
         }
       }
 
-    // … ->> Camera
-    if (null != this.mainCamera && UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, Entity.MovementVelocityThreshold).sqrMagnitude < UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, base.rigidBody.linearVelocity).sqrMagnitude)
-    this.mainCamera.transform.position = this.mainCameraDistance + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, transform.position);
+    // … ->> Vignette
+    switch (base.worldVignette) {
+      case UnityEngine.Rendering.HighDefinition.Vignette highDefinitionRenderVignette: {
+        highDefinitionRenderVignette.color    .value = UnityEngine.Color.LerpUnclamped(highDefinitionRenderVignette.color    .value, Player.VignetteColor,     0.1f);
+        highDefinitionRenderVignette.intensity.value = UnityEngine.Mathf.LerpUnclamped(highDefinitionRenderVignette.intensity.value, Player.VignetteIntensity, 0.1f);
+      } break;
+
+      case UnityEngine.Rendering.Universal.Vignette universalRenderVignette: {
+        universalRenderVignette.color    .value = UnityEngine.Color.LerpUnclamped(universalRenderVignette.color    .value, Player.VignetteColor,     0.1f);
+        universalRenderVignette.intensity.value = UnityEngine.Mathf.LerpUnclamped(universalRenderVignette.intensity.value, Player.VignetteIntensity, 0.1f);
+      } break;
+    }
   }
 }
   [UnityEngine.DefaultExecutionOrder(4)]
@@ -387,9 +414,9 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
       UnityEngine.Transform ropeTransform = this.rope.transform;
 
       // …
-      base.collider     .excludeLayers         = (UnityEngine.LayerMask) 0x0;
+      base.collider     .excludeLayers         = (UnityEngine.LayerMask) 0;
       base.collider     .hasModifiableContacts = false;
-      base.collider     .includeLayers         = (UnityEngine.LayerMask) ~0x0;
+      base.collider     .includeLayers         = (UnityEngine.LayerMask) ~0;
       base.collider     .isTrigger             = true;
       this.ropeColors   .Capacity              = ropeTransform.hierarchyCount;
       this.ropeMaterials.Capacity              = ropeTransform.hierarchyCount;
@@ -401,11 +428,8 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
     }
 
     private void Update() {
-      UnityEngine.Transform captureTransform = this.capture?.transform!;
-      UnityEngine.Vector3   reachSize        = UnityEngine.Vector3.one * (this.reach - this.retractReach);
-      UnityEngine.Renderer  ropeRenderer     = this.rope.GetComponent<UnityEngine.Renderer>();
-      UnityEngine.Transform ropeTransform    = this.rope.transform;
-      UnityEngine.Transform userTransform    = this.user.transform;
+      UnityEngine.Vector3   reachSize     = UnityEngine.Vector3.one * (this.reach - this.retractReach);
+      UnityEngine.Transform ropeTransform = this.rope.transform;
 
       // …
       if (Game.IsPaused)
@@ -415,13 +439,13 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
       ropeTransform.localScale = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, reachSize - UnityEngine.Vector3.one) + UnityEngine.Vector3.one;
 
       for (int index = this.ropeMaterials.Count; 0 != index--; )
-      this.ropeMaterials[index].color = UnityEngine.Color.LerpUnclamped(this.ropeColors[index], UnityEngine.Color.red, this.reachProgress * 0.675f);
+      this.ropeMaterials[index].color = UnityEngine.Color.LerpUnclamped(this.ropeColors[index], UnityEngine.Color.red, null != this.capture ? this.reachProgress * 0.675f : 0.000f);
 
       if (null != this.capture) {
-        this.reach              = UnityEngine.Vector3.Distance(captureTransform.position, userTransform.position);
-        this.reachDirection     = (captureTransform.position - userTransform.position).normalized;
-        this.transform.position = captureTransform.position;
-        this.transform.rotation = UnityEngine.Quaternion.LookRotation(this.transform.position - userTransform.position, UnityEngine.Vector3.up);
+        this.reach              = UnityEngine.Vector3.Distance(this.capture.transform.position, this.user.transform.position);
+        this.reachDirection     = (this.capture.transform.position - this.user.transform.position).normalized;
+        this.transform.position = this.capture.transform.position;
+        this.transform.rotation = UnityEngine.Quaternion.LookRotation(this.user.transform.position - this.transform.position, UnityEngine.Vector3.up);
       }
 
       else {
@@ -453,10 +477,10 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
         this.collider.center         = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, this.collider.size * -0.5f) + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, coilSize);
         this.reach                   = UnityEngine.Mathf.Clamp(this.reach + (UnityEngine.Time.unscaledDeltaTime * (!this.isDeploying() ? -this.retractSpeed : +this.deploySpeed)), this.retractReach, this.deployReach);
         this.reachDirection          = UnityEngine.Quaternion.Euler(UnityEngine.Vector3.up * UnityEngine.Time.unscaledDeltaTime * this.turnSpeed) * this.reachDirection;
-        this.transform.position      = userTransform.position + (this.reachDirection * this.reach);
-        this.transform.localRotation = UnityEngine.Quaternion.LookRotation(this.transform.localPosition - userTransform.localPosition, UnityEngine.Vector3.up);
+        this.transform.position      = this.user.transform.position + (this.reachDirection * this.reach);
+        this.transform.localRotation = UnityEngine.Quaternion.LookRotation(this.user.transform.position - this.transform.position, UnityEngine.Vector3.up);
       }
 
-      ropeTransform.LookAt(userTransform, UnityEngine.Vector3.up);
+      ropeTransform.LookAt(this.user.transform, UnityEngine.Vector3.up);
     }
   }
