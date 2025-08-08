@@ -1,7 +1,7 @@
 using PatchOdyssey;
 
 /* … */
-[UnityEngine.DefaultExecutionOrder(2)]
+[UnityEngine.DefaultExecutionOrder(3)]
 [UnityEngine.RequireComponent(typeof(UnityEngine.BoxCollider))]
 public sealed class Monster : Entity {
   public enum Kind : byte { Antillery, Borka, Molem, Sirpens, Tyrage }
@@ -36,6 +36,13 @@ public sealed class Monster : Entity {
     base.shoot.isAllowed = ShootIsAllowed;
   }
 
+  public override void Damage(Entity entity, float amount, Entity? attacker) {
+    base.Damage(entity, amount, attacker);
+
+    if (Monster.Kind.Sirpens == this.kind && attacker == this)
+    base.PassiveDamage(entity, amount * 0.10f, 0.75f, (ushort) (7u + (UnityEngine.Random.value * 3u)));
+  }
+
   protected override System.Converter<Entity, float> FindTargetsSorter() {
     System.Converter<Entity, float> comparison = base.FindTargetsSorter();
     return this.kind switch {
@@ -44,7 +51,7 @@ public sealed class Monster : Entity {
       Monster.Kind.Molem     => static entity => 1.0f / entity.health,                                                                                                            // ->> Target strongest
       Monster.Kind.Sirpens   => static entity => 1.0f * entity.health,                                                                                                            // ->> Target weakest
       Monster.Kind.Tyrage    =>        entity => comparison(entity) + ((Game.SceneSize * Game.SceneSize) / ((entity is Player ? 3.0f : 1.0f) * (entity is Tamer ? 2.0f : 1.0f))), // ->> Prioritize `Player`s, then `Tamers`
-      _                      => comparison
+      _                      =>        comparison
     };
   }
 
@@ -60,7 +67,7 @@ public sealed class Monster : Entity {
   protected override void OnTriggerEnter(UnityEngine.Collider collider) {
     base.OnTriggerEnter(collider);
 
-    if (!base.isDefeated && null == this.following && collider.GetComponent<Lasoo>() is Lasoo lasoo && null == lasoo.capture && lasoo.isDeploying()) {
+    if (!base.isDefeated && null == this.following && collider.TryGetComponent(out Lasoo lasoo) && null == lasoo.capture && lasoo.isDeploying()) {
       lasoo.capture  = this;
       this.wrestling = lasoo.user;
     }
@@ -112,12 +119,12 @@ public sealed class Monster : Entity {
               bulletMeshTransform.localScale *= 1.5f;
 
             if (bulletLayerMask != -1) {
+              base.gameObject.layer          |= bulletLayerMask;
               bullet.collider.excludeLayers  |= (UnityEngine.LayerMask)  (1 << bulletLayerMask);
               bullet.collider.includeLayers  &= (UnityEngine.LayerMask) ~(1 << bulletLayerMask);
               bullet.rigidBody.excludeLayers |= (UnityEngine.LayerMask)  (1 << bulletLayerMask);
               bullet.rigidBody.includeLayers &= (UnityEngine.LayerMask) ~(1 << bulletLayerMask);
               bulletMesh     .layer          |= bulletLayerMask;
-              this.gameObject.layer          |= bulletLayerMask;
 
               foreach (UnityEngine.Collider collider in bulletMesh.GetComponents<UnityEngine.Collider>()) {
                 collider.excludeLayers = (UnityEngine.LayerMask)  (1 << bulletLayerMask);
@@ -125,7 +132,7 @@ public sealed class Monster : Entity {
                 collider.isTrigger     = false;
               }
 
-              if ((bulletMesh.TryGetComponent<UnityEngine.Rigidbody>(out UnityEngine.Rigidbody rigidBody) ? rigidBody : bulletMesh.AddComponent<UnityEngine.Rigidbody>()) is UnityEngine.Rigidbody bulletMeshRigidBody) {
+              if ((bulletMesh.TryGetComponent(out UnityEngine.Rigidbody rigidBody) ? rigidBody : bulletMesh.AddComponent<UnityEngine.Rigidbody>()) is UnityEngine.Rigidbody bulletMeshRigidBody) {
                 bulletMeshRigidBody.Sleep(); // ->> Stack overflow triggered without this?
                 bulletMeshRigidBody.angularDamping         = 100.0f;
                 bulletMeshRigidBody.collisionDetectionMode = UnityEngine.CollisionDetectionMode.Discrete;
@@ -283,7 +290,7 @@ public sealed class Monster : Entity {
       base.bounceAutomatically = base.prefollow.bounceAutomatically;
       base.isInvincible        = base.prefollow.isInvincible;
       base.moveAutomatically   = base.prefollow.moveAutomatically;
-      base.outline.material    = this.mount.outlineMaterial;
+      base.outline.material    = this.mount.outlineMaterial ?? base.outline.material;
       this.mountIsUsed         = false;
 
       for (int index = this.mount.materials.Count; 0 != index--; ) {
@@ -319,8 +326,10 @@ public sealed class Monster : Entity {
       followingRatio         = UnityEngine.Mathf.Min((followingBounds.min - bounds.max).sqrMagnitude, (followingBounds.max - bounds.min).sqrMagnitude) / followingRatioThreshold;
 
       for (int  index    = this.mount.materials.Count;                0  != index--; )
-      for (uint subindex = (uint) this.mount.materials[index].Length; 0u != subindex--; )
-        this.mount.materials[index][subindex].color = UnityEngine.Color.Lerp(this.mount.sharedMaterials[index][subindex].color, UnityEngine.Color.white, followingRatio);
+      for (uint subindex = (uint) this.mount.materials[index].Length; 0u != subindex--; ) {
+        UnityEngine.Material material = this.mount.materials[index][subindex];
+        material.color = base.outline.material == material && null != base.following!.outline.material ? base.following!.outline.material.color : UnityEngine.Color.Lerp(this.mount.sharedMaterials[index][subindex].color, UnityEngine.Color.white, followingRatio);
+      }
     }
 
     // … ->> Wrestling

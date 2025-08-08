@@ -1,7 +1,7 @@
 using PatchOdyssey;
 
 /* … */
-[UnityEngine.DefaultExecutionOrder(5)]
+[UnityEngine.DefaultExecutionOrder(6)]
 [UnityEngine.DisallowMultipleComponent]
 public sealed class Area : GameComponent {
   [ReadWriteInInspector]                             public  string                                  areaName = string.Empty;
@@ -15,7 +15,7 @@ public sealed class Area : GameComponent {
 
   private void OnTriggerExit(UnityEngine.Collider collider) {
     // … ->> Lock in
-    if (collider.TryGetComponent<Player>(out Player player)) {
+    if (collider.TryGetComponent(out Player player)) {
       UnityEngine.Bounds? areaBounds = null;
 
       // …
@@ -36,7 +36,9 @@ public sealed class Area : GameComponent {
     }
   }
 
-  private void Update() {
+  protected override void Update() {
+    base.Update();
+
     // … ->> Lock in
     foreach (UnityEngine.Collider collider in base.colliders)
     collider.isTrigger = !this.isLocked;

@@ -1,10 +1,10 @@
 using PatchOdyssey;
 
 /* … */
-[UnityEngine.DefaultExecutionOrder(2)]
+[UnityEngine.DefaultExecutionOrder(3)]
 [UnityEngine.RequireComponent(typeof(UnityEngine.SphereCollider))]
 public class Tamer : Entity {
-  public static readonly UnityEngine.Vector3 MountingPosition = (UnityEngine.Vector3.back * 0.200f) + (UnityEngine.Vector3.up * 1.125f);
+  public static readonly UnityEngine.Vector3 MountingPosition = (UnityEngine.Vector3.back * 0.333333f) + (UnityEngine.Vector3.up * 1.125000f);
 
   [UnityEngine.Header("Tamer")]
   [ReadOnlyInInspector]  public           UnityEngine.GameObject?                                hair               =  null;
@@ -21,7 +21,6 @@ public class Tamer : Entity {
     if (entity is Monster monster) {
       monster.following                = this;
       monster.isInvincible             = true;
-      // monster.shootAutomatically       = false;
       monster.team                     = base.team;
       this.mountingTransforms.Capacity = System.Math.Max(this.mountingTransforms.Capacity, this.transform.hierarchyCount);
 
@@ -31,7 +30,7 @@ public class Tamer : Entity {
         if (monster.transform == transform)
         return false;
 
-        if (null != transform.GetComponent<UnityEngine.Renderer>() && !this.mountingTransforms.Contains(transform)) {
+        if (transform.TryGetComponent(out UnityEngine.Renderer _) && !this.mountingTransforms.Contains(transform)) {
           transform.localPosition += Tamer.MountingPosition;
           this.mountingTransforms.Add(transform);
 
@@ -45,11 +44,7 @@ public class Tamer : Entity {
     // NOTE (Lapys) ->> Other kinds of `Entity`s may entail other actions like switch activation, NPC interaction, e.t.c.
   }
 
-  protected virtual void Release(Entity entity) {
-    if (base.isDefeated)
-    return;
-
-    // …
+  public virtual void Release(Entity entity) {
     if (entity is Monster monster) {
       monster.following  = null;
       monster.isDefeated = true;
@@ -137,7 +132,7 @@ public class Tamer : Entity {
         }
 
         if      (materialsIsUpdated) renderer.sharedMaterials = materials;
-        else if (this.transform.GetComponent<UnityEngine.MeshFilter>() is UnityEngine.MeshFilter meshFilter && null != meshFilter) {
+        else if (this.transform.TryGetComponent(out UnityEngine.MeshFilter meshFilter)) {
           string name = meshFilter.name.Trim();
 
           if (

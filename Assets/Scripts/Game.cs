@@ -16,10 +16,12 @@ namespace PatchOdyssey {
   }
 
   public static class Game {
+    public  static          bool                                                                                                                  _IsPaused                                  = false;
     private static          UnityEngine.InputSystem.Keyboard?                                                                                     _Keyboard                                  = null;
+    public  static          bool                                                                                                                  IsFocused           { get; internal set; } = false;
     public  static          bool                                                                                                                  IsKeyboardAvailable { get; internal set; } = false;
     public  static          bool                                                                                                                  IsLoaded            { get; internal set; } = false;
-    public  static          bool                                                                                                                  IsPaused            { get; internal set; } = false;
+    public  static          bool                                                                                                                  IsPaused            { get => Game._IsPaused || Game.IsFocused; set => Game._IsPaused = value; }
     public  static          bool                                                                                                                  IsQuitting          { get; internal set; } = false;
     public  static          UnityEngine.InputSystem.Keyboard                                                                                      Keyboard            { get { if (!Game.IsKeyboardAvailable && UnityEngine.InputSystem.Keyboard.current is UnityEngine.InputSystem.Keyboard keyboard) { Game._Keyboard = keyboard; Game.IsKeyboardAvailable = true; } return Game._Keyboard!; } }
     public  const           byte                                                                                                                  NumberPrecision      = (byte) 5u; // ->> Maximum precision supported by Unity (or `float`s); Should be about 6.0–7.2 digits
@@ -27,6 +29,7 @@ namespace PatchOdyssey {
     private static          UnityEngine.GameObject?                                                                                               Object               = null;
     public  static readonly System.Random                                                                                                         Randomizer           = new();  // ->> Superseded (mostly) by `UnityEngine.Random`
     public  const           float                                                                                                                 SceneSize            = 100.0f; // ->> Meant for sizing objects that bound the entire visible part of the scene
+    public  static readonly string                                                                                                                SpecialTag           = "…";
     private static readonly System.Collections.Generic.Dictionary<System.Action<UnityEngine.Transform>, System.Func<UnityEngine.Transform, bool>> TransformTraversers  = new();
     public  const           float                                                                                                                 VectorEpsilon        = 0.09f; // ->> Minimal amount to prevent Z-fighting and other false positives
 
@@ -70,19 +73,26 @@ namespace PatchOdyssey {
       }
     }
 
+    public static void GetSize(this UnityEngine.RectTransform rectTransform, out UnityEngine.Vector2 size, UnityEngine.Canvas canvas = null!) {
+      for (UnityEngine.Transform transform = (UnityEngine.Transform) rectTransform; transform is not null; transform = transform.parent)
+      if (null != canvas || transform.TryGetComponent(out canvas)) {
+        size = UnityEngine.RectTransformUtility.PixelAdjustRect(rectTransform, canvas).size;
+        return;
+      }
+
+      // …
+      size = rectTransform.sizeDelta;
+
+      for (UnityEngine.Transform transform = (UnityEngine.Transform) rectTransform; transform is not null; transform = transform.parent) {
+        if (transform.TryGetComponent(out UnityEngine.UI.CanvasScaler scaler))
+        size *= scaler.scaleFactor;
+      }
+    }
+
     public static float Normalize(float value) => (float) (System.Math.Truncate(Game.NumberPrecisionScale * (double) value) / Game.NumberPrecisionScale); // --> (float) System.Math.Round((double) value, Game.NumberPrecision, System.MidpointRounding.ToZero)
 
-    public static void Quit(int code = 0x0) /* --> EXIT_SUCCESS */ {
-      if (Game.IsQuitting)
-      return;
-
-      Game.IsQuitting = true;
-      UnityEngine.Application.Quit(code);
-      #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-        UnityEditor.EditorApplication.ExitPlaymode();
-      #endif
-    }
+    public static UnityEngine.Color Opacity(in this UnityEngine.Color color, float opacity) => new(color.r, color.g, color.b, opacity);
+    public static UnityEngine.Color Opaque (in this UnityEngine.Color color)                => color.Opacity(1.0f);
 
     [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Main() {
@@ -99,25 +109,47 @@ namespace PatchOdyssey {
 
       // …
       #if UNITY_EDITOR
-        UnityEditor.EditorApplication.focusChanged      += static (bool                   focused) => Game.IsPaused   = !focused; // --> !UnityEditor.EditorApplication.isFocused;
-        UnityEditor.EditorApplication.pauseStateChanged += static (UnityEditor.PauseState state)   => Game.IsPaused   =  state switch { UnityEditor.PauseState.Paused => true, UnityEditor.PauseState.Unpaused => false, _ => UnityEditor.EditorApplication.isPaused /* --> !UnityEditor.EditorApplication.isPlaying */ };
-        UnityEditor.EditorApplication.quitting          += static ()                               => Game.IsQuitting =  true;
-        UnityEditor.EditorApplication.wantsToQuit       += static ()                               => { UnityEngine.Object.Destroy(Game.Object); return true; };
+        UnityEditor.EditorApplication.focusChanged += static (bool focused) => Game.IsFocused  = !focused; // --> !UnityEditor.EditorApplication.isFocused;
+        UnityEditor.EditorApplication.quitting     += static ()             => Game.IsQuitting =  true;
+        UnityEditor.EditorApplication.wantsToQuit  += static ()             => { UnityEngine.Object.Destroy(Game.Object); return true; };
+
+        #if false
+          UnityEditor.EditorApplication.pauseStateChanged += static (UnityEditor.PauseState state) => Game.IsPaused = state switch {
+            UnityEditor.PauseState.Paused   => true,
+            UnityEditor.PauseState.Unpaused => false,
+            _                               => UnityEditor.EditorApplication.isPaused /* --> !UnityEditor.EditorApplication.isPlaying */
+          };
+        #endif
       #endif
 
       Game.Object          = new UnityEngine.GameObject("🎮", typeof(GameBehaviour));
       Game.Object.isStatic = true;
     }
+
+    public static void Quit(int code = 0x0) /* --> EXIT_SUCCESS */ {
+      if (Game.IsQuitting)
+      return;
+
+      Game.IsQuitting = true;
+      UnityEngine.Application.Quit(code);
+      #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+        UnityEditor.EditorApplication.ExitPlaymode();
+      #endif
+    }
+
+    public static UnityEngine.Color Transparent(in this UnityEngine.Color color) => color.Opacity(0.0f);
   }
 
   [Unity.Profiling.IgnoredByDeepProfiler]
   [UnityEngine.DefaultExecutionOrder(0)]
   internal sealed class GameBehaviour : UnityEngine.MonoBehaviour {
-    private void OnApplicationFocus(bool focused) => Game.IsPaused   = !focused;
-    private void OnApplicationPause(bool paused)  => Game.IsPaused   =  paused;
+    private void OnApplicationFocus(bool focused) => Game.IsFocused  = !focused;
+    private void OnApplicationPause(bool paused)  => Game.IsFocused  =  paused;
     private void OnApplicationQuit ()             => Game.IsQuitting =  true;
     private void OnDestroy         ()             => Game.Quit(0x1); // --> EXIT_FAILURE ->> Don’t bother continuing the application/ game if `GameBehaviour` is prematurely destroyed
-    private void Start             ()             => Game.IsLoaded = true;
+    private void Start             ()             => Game.IsLoaded              = true;
+    private void Update            ()             => UnityEngine.Time.timeScale = Game.IsPaused ? 0.0f : 1.0f;
   }
 
   [UnityEngine.DisallowMultipleComponent]
@@ -126,10 +158,18 @@ namespace PatchOdyssey {
     private       UnityEngine.Collider[]              _colliders = null!;
     private       UnityEngine.Rigidbody               _rigidBody = null!;
     private       UnityEngine.Transform               _transform = null!;
-    public    new ref readonly UnityEngine.Collider   collider  { get { this._collider  ??= base.GetComponent <UnityEngine.Collider> (); /* --> base.collider */ return ref this._collider; } }
-    protected     ref readonly UnityEngine.Collider[] colliders { get { this._colliders ??= base.GetComponents<UnityEngine.Collider> ();                         return ref this._colliders; } }
-    public        ref readonly UnityEngine.Rigidbody  rigidBody { get { this._rigidBody ??= base.GetComponent <UnityEngine.Rigidbody>();                         return ref this._rigidBody; } }
-    public    new ref readonly UnityEngine.Transform  transform { get { this._transform ??= base.transform;                                                      return ref this._transform; } }
+    public    new ref readonly UnityEngine.Collider   collider  { get { if (this._collider is null && base.TryGetComponent(out UnityEngine.Collider collider)) { this._collider = collider; /* --> base.collider */ } return ref this._collider!; } }
+    protected     ref readonly UnityEngine.Collider[] colliders { get { this._colliders ??= base.GetComponents<UnityEngine.Collider>();                                                                               return ref this._colliders; } }
+    public        ref readonly UnityEngine.Rigidbody  rigidBody { get { if (this._rigidBody is null && base.TryGetComponent(out UnityEngine.Rigidbody rigidBody)) { this._rigidBody = rigidBody; }                    return ref this._rigidBody!; } }
+    public    new ref readonly UnityEngine.Transform  transform { get { this._transform ??= base.transform;                                                                                                           return ref this._transform; } }
+
+    /* … */
+    protected virtual void Update() {
+      if (Game.IsPaused && null != this.rigidBody) {
+        this.rigidBody.angularVelocity = UnityEngine.Vector3.zero;
+        this.rigidBody.linearVelocity  = UnityEngine.Vector3.zero;
+      }
+    }
   }
 
   [System.AttributeUsage(System.AttributeTargets.All, AllowMultiple = false, Inherited = false)]

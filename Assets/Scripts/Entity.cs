@@ -1,7 +1,7 @@
 using PatchOdyssey;
 
 /* â€¦ */
-[UnityEngine.DefaultExecutionOrder(1)]
+[UnityEngine.DefaultExecutionOrder(2)]
 [UnityEngine.RequireComponent(typeof(UnityEngine.Collider))]
 [UnityEngine.RequireComponent(typeof(UnityEngine.Rigidbody))]
 public abstract class Entity : GameComponent /* ->> Source file must be named â€œEntityâ€ */ {
@@ -86,9 +86,14 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     [ReadWriteInInspector]                                  public float                  volleyDelay;
   }
 
+  [System.Serializable]
+  public struct StatisticsInfo {
+    [ReadWriteInInspector] public bool health;
+  }
+
   public enum Team : byte { Player, Explorer = Player, Enemy, /* ->> Series of `Enemy + â€¦` for other teams */ Nomad = Enemy + 0, Magnate = Enemy + 1 }
 
-  public readonly record struct Tracked(UnityEngine.Behaviour tracking, UnityEngine.Vector3 distance = default);
+  public readonly record struct Tracked(UnityEngine.Behaviour tracking, UnityEngine.Vector3 distance = default); // ->> Cameras, lights, e.t.c. that follow this `Entity`
 
   [System.Serializable]
   public struct TrackingInfo {
@@ -113,41 +118,43 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
   public const           float                                   DefeatedSwayFactor                 = 1.00f;
   public static          UnityEngine.Vector3                     MovementVelocityThreshold { get; } = UnityEngine.Vector3.one * 1.0f; // ->> Threshold velocity determining `Entity` movement
 
-  [ReadOnlyInInspector]                                 protected                UnityEngine.Camera?                                           actualWorldCamera   = null;
-  [ReadOnlyInInspector]                                 protected                bool                                                          actuallyDefeated    = false;
-  [ReadWriteInInspector]                                public                   Entity.BounceInfo                                             bounce              = new() {angle = 10.00f, force = 0.75f, speed = 5.00f, turn = Entity.TurnDirection.Clockwise};
-  [ReadWriteInInspector]                                public                   bool                                                          bounceAutomatically = true;
-  [ReadOnlyInInspector, UnityEngine.SerializeField]     internal  /* readonly */ System.Collections.Generic.List<Bullet>                       bullets             = new(8); // ->> â€œShots firedâ€
-  [ReadWriteInInspector]                                public                   Entity.ContactInfo                                            contact             = new() {damage = 4.00f, repelForce = 2.50f};
-  [ReadWriteInInspector]                                public                   Entity.DefeatInfo                                             defeat              = new() {position = UnityEngine.Vector3.zero, timeout = new(4.00)};
-  [ReadWriteInInspector]                                public                   bool                                                          followAutomatically = true;   // ->> Act on `followers`/ `following` relationship
-  [ReadWriteInInspector, UnityEngine.SerializeField]    public    /* readonly */ System.Collections.Generic.List<Entity>                       followers           = new(1); // ->> `Entity`s `following` `this` one;                         unable to automatically update `followers[â€¦].following`
-  [ReadWriteInInspector]                                public                   Entity?                                                       following           = null;   // ->> `Entity` to go to (typically an ally) when not targeting; unable to automatically update `following   .followers`
-  [ReadWriteInInspector, UnityEngine.Range(0.0f, 1.0f)] public                   float                                                         health              = 1.0f;
-  [ReadWriteInInspector]                                public    /* readonly */ float                                                         healthMaximum       = 100.00f;
-  [ReadWriteInInspector]                                public                   bool                                                          isAggressive        = true; // ->> Sets `target` to `Damage(â€¦, attacker)` i.e. aggressed
-  [ReadWriteInInspector]                                public                   bool                                                          isDefeated          { get => this.actuallyDefeated; set => this.actuallyDefeated = this.actuallyDefeated || value; } // ->> Cannot be revived
-  [ReadWriteInInspector]                                public                   bool                                                          isInvincible        = false;
-  [ReadWriteInInspector]                                public                   bool                                                          moveAutomatically   = true; // ->> Go to `target`â€™s position
-  [ReadWriteInInspector]                                public                   Entity.MovementInfo                                           movement            = new() {damping = 1.00f, direction = UnityEngine.Vector3.zero, pause = 0.00, pauseCooldown = new(0.00), pauseRandomnessFactor = 0.75, speed = 2.00f, speedFactor = 1.00f, speedRandomnessFactor = 0.30f};
-  [ReadWriteInInspector]                                public                   Entity.OutlineInfo                                            outline             = new() {color = UnityEngine.Color.white, material = null};
-  [ReadWriteInInspector, UnityEngine.SerializeField]    protected                Entity.Prefollow                                              prefollow           = new() {bounceAutomatically = true, isFollowing = false, isInvincible = false, localScale = UnityEngine.Vector3.one, moveAutomatically = true, movementSpeed = 2.00f, targetBerth = 2.25f};
-  [ReadOnlyInInspector]                                 protected                bool                                                          prefollowIsUpdated  = false;
-  [ReadWriteInInspector]                                public                   Player.RegenInfo                                              regeneration        = new() {amount = 0.00f, delay = new(0.00), interval = new(2.00)};
-  [ReadWriteInInspector]                                public                   Entity.ShadowInfo                                             shadow              = new() {material = null};
-  [ReadWriteInInspector]                                public                   Entity.ShootInfo                                              shoot               = new() {bulletHealth = (byte) 1u, bulletLifetime = 2.0f, bulletMaterial = null, cooldown = new(1.00), damage = 6.75f, isAllowed = static allowed => allowed, repelForce = 1.0f, speed = 3.50f, spinAutomatically = true, view = 21.0f, volleyCount = (byte) 0u, volleyRandomCount = (byte) 0u, volleyDelay = 0.0f};
-  [ReadWriteInInspector]                                public                   bool                                                          shootAutomatically  = true; // ->> Auto-fire â€œfriendliness pelletsâ€
-  [ReadWriteInInspector]                                public                   Entity?                                                       target              = null; // ->> `Entity` to go to (typically an enemy)
-  [ReadWriteInInspector]                                public                   bool                                                          targetAutomatically = true;
-  [ReadWriteInInspector]                                public                   float                                                         targetBerth         = 2.25f; // ->> Radius
-  [ReadWriteInInspector]                                public                   Entity.Team                                                   team                = Entity.Team.Enemy;
-  [ReadOnlyInInspector, System.NonSerialized]           protected /* readonly */ System.Collections.Generic.List<Entity.Tracked>               tracked             = new(1);
-  [ReadWriteInInspector]                                public                   Entity.TrackingInfo                                           tracking            = new() {cameras = new(1), lights = new(1)};
-  [ReadWriteInInspector]                                public                   Entity.TurnInfo                                               turn                = new() {direction = UnityEngine.Vector3.zero, speed = 9.00f};
-  [ReadOnlyInInspector, UnityEngine.SerializeField]     protected /* readonly */ System.Collections.Generic.List<UnityEngine.Rendering.Volume> volumes             = new(1);
-  [ReadOnlyInInspector]                                 protected                ref readonly UnityEngine.Camera?                              worldCamera         { get { if (null == this.actualWorldCamera) { this.actualWorldCamera = UnityEngine.Camera.main; if (null != this.actualWorldCamera) { this.worldCameraDistance = this.actualWorldCamera.transform.position - this.transform.position; if (!this.tracking.cameras.Contains(this.actualWorldCamera)) { this.tracking.cameras.Add(this.actualWorldCamera); this.PublishTracked(); } } } return ref this.actualWorldCamera; } }
-  [ReadOnlyInInspector, UnityEngine.SerializeField]     private                  UnityEngine.Vector3                                           worldCameraDistance = UnityEngine.Vector3.zero;
-  [ReadOnlyInInspector, System.NonSerialized]           public                   UnityEngine.Rendering.VolumeComponent?                        worldVignette       = null;
+  [ReadOnlyInInspector]                                           protected                UnityEngine.Camera?                                           actualWorldCamera   = null;
+  [ReadOnlyInInspector]                                           protected                bool                                                          actuallyDefeated    = false;
+  [ReadWriteInInspector]                                          public                   Entity.BounceInfo                                             bounce              = new() {angle = 10.00f, force = 0.75f, speed = 5.00f, turn = Entity.TurnDirection.Clockwise};
+  [ReadWriteInInspector]                                          public                   bool                                                          bounceAutomatically = true;
+  [ReadOnlyInInspector, UnityEngine.SerializeField]               internal  /* readonly */ System.Collections.Generic.List<Bullet>                       bullets             = new(8); // ->> â€œShots firedâ€
+  [ReadWriteInInspector]                                          public                   Entity.ContactInfo                                            contact             = new() {damage = 4.00f, repelForce = 2.50f};
+  [ReadWriteInInspector]                                          public                   Entity.DefeatInfo                                             defeat              = new() {position = UnityEngine.Vector3.zero, timeout = new(4.00)};
+  [ReadWriteInInspector, UnityEngine.Tooltip("For testing only")] public                   bool                                                          defeatAutomatically = false;  // ->> Defeats the `Entity` whenever updated and `true`
+  [ReadWriteInInspector]                                          public                   bool                                                          followAutomatically = true;   // ->> Act on `followers`/ `following` relationship
+  [ReadWriteInInspector, UnityEngine.SerializeField]              public    /* readonly */ System.Collections.Generic.List<Entity>                       followers           = new(1); // ->> `Entity`s `following` `this` one;                         unable to automatically update `followers[â€¦].following`
+  [ReadWriteInInspector]                                          public                   Entity?                                                       following           = null;   // ->> `Entity` to go to (typically an ally) when not targeting; unable to automatically update `following   .followers`
+  [ReadWriteInInspector, UnityEngine.Range(0.0f, 1.0f)]           public                   float                                                         health              = 1.0f;
+  [ReadWriteInInspector]                                          public    /* readonly */ float                                                         healthMaximum       = 100.00f;
+  [ReadWriteInInspector]                                          public                   bool                                                          isAggressive        = true; // ->> Sets `target` to `Damage(â€¦, attacker)` i.e. aggressed
+  [ReadWriteInInspector]                                          public                   bool                                                          isDefeated          { get => this.actuallyDefeated; set => this.actuallyDefeated = this.actuallyDefeated || value; } // ->> Cannot be revived
+  [ReadWriteInInspector]                                          public                   bool                                                          isInvincible        = false;
+  [ReadWriteInInspector]                                          public                   bool                                                          moveAutomatically   = true; // ->> Go to `target`â€™s position
+  [ReadWriteInInspector]                                          public                   Entity.MovementInfo                                           movement            = new() {damping = 1.00f, direction = UnityEngine.Vector3.zero, pause = 0.00, pauseCooldown = new(0.00), pauseRandomnessFactor = 0.75, speed = 2.00f, speedFactor = 1.00f, speedRandomnessFactor = 0.30f};
+  [ReadWriteInInspector]                                          public                   Entity.OutlineInfo                                            outline             = new() {color = UnityEngine.Color.white, material = null};
+  [ReadWriteInInspector, UnityEngine.SerializeField]              protected                Entity.Prefollow                                              prefollow           = new() {bounceAutomatically = true, isFollowing = false, isInvincible = false, localScale = UnityEngine.Vector3.one, moveAutomatically = true, movementSpeed = 2.00f, targetBerth = 2.25f};
+  [ReadOnlyInInspector]                                           protected                bool                                                          prefollowIsUpdated  = false;
+  [ReadWriteInInspector]                                          public                   Entity.RegenInfo                                              regeneration        = new() {amount = 0.00f, delay = new(0.00), interval = new(2.00)};
+  [ReadWriteInInspector]                                          public                   Entity.ShadowInfo                                             shadow              = new() {material = null};
+  [ReadWriteInInspector]                                          public                   Entity.ShootInfo                                              shoot               = new() {bulletHealth = (byte) 1u, bulletLifetime = 2.0f, bulletMaterial = null, cooldown = new(1.00), damage = 6.75f, isAllowed = static allowed => allowed, repelForce = 1.0f, speed = 3.50f, spinAutomatically = true, view = 21.0f, volleyCount = (byte) 0u, volleyRandomCount = (byte) 0u, volleyDelay = 0.0f};
+  [ReadWriteInInspector]                                          public                   bool                                                          shootAutomatically  = true; // ->> Auto-fire â€œfriendliness pelletsâ€
+  [ReadWriteInInspector]                                          public                   Entity.StatisticsInfo                                         statistics          = new() {health = true};
+  [ReadWriteInInspector]                                          public                   Entity?                                                       target              = null; // ->> `Entity` to go to (typically an enemy)
+  [ReadWriteInInspector]                                          public                   bool                                                          targetAutomatically = true;
+  [ReadWriteInInspector]                                          public                   float                                                         targetBerth         = 2.25f; // ->> Radius
+  [ReadWriteInInspector]                                          public                   Entity.Team                                                   team                = Entity.Team.Enemy;
+  [ReadOnlyInInspector, System.NonSerialized]                     protected /* readonly */ System.Collections.Generic.List<Entity.Tracked>               tracked             = new(1);
+  [ReadWriteInInspector]                                          public                   Entity.TrackingInfo                                           tracking            = new() {cameras = new(1), lights = new(1)};
+  [ReadWriteInInspector]                                          public                   Entity.TurnInfo                                               turn                = new() {direction = UnityEngine.Vector3.zero, speed = 9.00f};
+  [ReadOnlyInInspector, UnityEngine.SerializeField]               protected /* readonly */ System.Collections.Generic.List<UnityEngine.Rendering.Volume> volumes             = new(1);
+  [ReadOnlyInInspector]                                           protected                ref readonly UnityEngine.Camera?                              worldCamera         { get { if (null == this.actualWorldCamera) { this.actualWorldCamera = UnityEngine.Camera.main; if (null != this.actualWorldCamera) { this.worldCameraDistance = this.actualWorldCamera.transform.position - this.transform.position; if (!this.tracking.cameras.Contains(this.actualWorldCamera)) { this.tracking.cameras.Add(this.actualWorldCamera); this.PublishTracked(); } } } return ref this.actualWorldCamera; } }
+  [ReadOnlyInInspector, UnityEngine.SerializeField]               private                  UnityEngine.Vector3                                           worldCameraDistance = UnityEngine.Vector3.zero;
+  [ReadOnlyInInspector, System.NonSerialized]                     public                   UnityEngine.Rendering.VolumeComponent?                        worldVignette       = null;
 
   /* â€¦ */
   protected virtual void Awake() {
@@ -231,7 +238,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     follower.team = this.team;
   }
 
-  public virtual void ContactDamage(Entity entity)                   => this.Damage(entity, this.contact.damage, this);
+  public         void ContactDamage(Entity entity)                   => this.Damage(entity, this.contact.damage, this);
   public virtual void ContactDamage(Entity entity, Entity? attacker) => this.Damage(entity, this.contact.damage, attacker);
 
   public    void ContactRepel(Entity entity) => this.ContactRepel(entity, (entity.collider.bounds.center - base.collider.bounds.center).normalized);
@@ -245,13 +252,13 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     #endif
   }
 
-  public virtual void Damage(Entity entity, float amount) => this.Damage(entity, amount, this);
+  public         void Damage(Entity entity, float amount) => this.Damage(entity, amount, this);
   public virtual void Damage(Entity entity, float amount, Entity? attacker) {
     if (attacker == entity || entity == this)
     return;
 
     entity.health = UnityEngine.Mathf.Clamp01(entity.health - (!entity.isInvincible ? amount / entity.healthMaximum : 0.0f));
-    entity.target = null != attacker && entity.isAggressive ? attacker : entity.target;
+    entity.target = null != attacker && !attacker.isDefeated && entity.isAggressive ? attacker : entity.target;
 
     if (!entity.isInvincible) {
       // â€¦ ->> Regenerating
@@ -292,7 +299,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
 
       // â€¦
       foreach (Entity entity in Entity.All)
-      if (entity != this && entity.enabled && (entity is not Monster monster || !monster.isMounted) && (
+      if (entity != this && entity.enabled && !entity.isDefeated && (entity is not Monster monster || !monster.isMounted) && (
         0x0 != (options & Entity.FindTargetsOptions.DifferentTeam) ? entity.team != this.team :
         0x0 != (options & Entity.FindTargetsOptions.SameTeam)      ? entity.team == this.team :
         true
@@ -311,7 +318,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     return null; // --> System.Collections.ObjectModel.ReadOnlyCollection<Entity>.Empty;
   }
 
-  protected virtual System.Predicate<Entity>        FindTargetsFilter() => static entity => entity.enabled;
+  protected virtual System.Predicate<Entity>        FindTargetsFilter() => static entity => entity.enabled && !entity.isDefeated;
   protected virtual System.Converter<Entity, float> FindTargetsSorter() =>        entity => (entity.rigidBody.position - base.rigidBody.position).sqrMagnitude;
 
   private void FixedUpdate() {
@@ -333,13 +340,29 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
   }
 
   protected virtual void OnTriggerEnter(UnityEngine.Collider collider) {
-    if (!this.isDefeated && collider.GetComponent<Player>() is Player player && player.team != this.team)
+    if (!this.isDefeated && collider.TryGetComponent(out Player player) && player.team != this.team)
     this.ContactDamage(player);
   }
 
   protected virtual void OnTriggerStay(UnityEngine.Collider collider) {
-    if (!this.isDefeated && collider.GetComponent<Player>() is Player player && player.team != this.team)
+    if (!this.isDefeated && collider.TryGetComponent(out Player player) && player.team != this.team)
     this.ContactRepel(player);
+  }
+
+  public         void PassiveDamage(Entity entity, float amount, float interval) => this.PassiveDamage(entity, amount, interval, ushort.MaxValue);
+  public virtual void PassiveDamage(Entity entity, float amount, float interval, ushort count) {
+    System.Collections.IEnumerator Damage() {
+      if (0u != count--) {
+        yield return new UnityEngine.WaitForSeconds(interval);
+
+        this.Damage(entity, amount, null);
+        base.StartCoroutine(Damage());
+      }
+
+      yield break;
+    }
+
+    base.StartCoroutine(Damage());
   }
 
   protected virtual void PrefollowUpdate() {
@@ -395,6 +418,11 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     }
   }
 
+  public static void Reset() {
+    for (int index = Entity.All.Count; 0 != index--; )
+    UnityEngine.Object.Destroy(Entity.All[index].gameObject); // --> â€¦.isDefeated = true
+  }
+
   public    virtual Bullet? Shoot()                                               => this.Shoot(static (bullet, index, count) => {}); // ->> Override-able because it is called by default
   protected         Bullet? Shoot(System.Action<Bullet>                 callback) => this.Shoot(       (bullet, index, count) => callback(bullet));
   protected         Bullet? Shoot(System.Action<Bullet, ushort>         callback) => this.Shoot(       (bullet, index, count) => callback(bullet, index));
@@ -437,7 +465,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
         }
 
         if (count >= index++) {
-          yield return new UnityEngine.WaitForSecondsRealtime(this.shoot.volleyDelay);
+          yield return new UnityEngine.WaitForSeconds(this.shoot.volleyDelay);
           base.StartCoroutine(DeployBullet(true));
         }
 
@@ -452,9 +480,9 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     return null;
   }
 
-  public virtual void ShootDamage(Entity entity)                                   => this.ShootDamage(entity, UnityEngine.Vector3.zero, this);
-  public virtual void ShootDamage(Entity entity, Entity? attacker)                 => this.ShootDamage(entity, UnityEngine.Vector3.zero, attacker);
-  public virtual void ShootDamage(Entity entity, in UnityEngine.Vector3 direction) => this.ShootDamage(entity, direction,                this);
+  public         void ShootDamage(Entity entity)                                   => this.ShootDamage(entity, UnityEngine.Vector3.zero, this);
+  public         void ShootDamage(Entity entity, Entity? attacker)                 => this.ShootDamage(entity, UnityEngine.Vector3.zero, attacker);
+  public         void ShootDamage(Entity entity, in UnityEngine.Vector3 direction) => this.ShootDamage(entity, direction,                this);
   public virtual void ShootDamage(Entity entity, in UnityEngine.Vector3 direction, Entity? attacker) {
     this.Damage(entity, this.shoot.damage);
 
@@ -483,16 +511,19 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     _                                  =>  UnityEngine.Vector3.zero
   };
 
-  protected virtual void Update() {
-    UnityEngine.Vector3 rotation       = base.rigidBody.rotation.eulerAngles;
-    UnityEngine.Vector3 targetDistance = null != this.target ? this.target.transform.position - this.transform.position : UnityEngine.Vector3.zero;
+  protected override void Update() {
+    UnityEngine.Vector3 targetDistance  = null != this.target ? this.target.transform.position - this.transform.position : UnityEngine.Vector3.zero;
+    UnityEngine.Vector3 targetDirection = targetDistance.normalized;
+    UnityEngine.Vector3 rotation        = base.rigidBody.rotation.eulerAngles;
 
     // â€¦
+    base.Update();
+
     if (Game.IsPaused)
     return;
 
     // â€¦ ->> Defeating
-    this.isDefeated = this.isDefeated || (this.health <= 0.0f && !this.isInvincible);
+    this.isDefeated = this.defeatAutomatically || this.isDefeated || (this.health <= 0.0f && !this.isInvincible);
 
     if (!this.isDefeated) {
       this.defeat.position = this.transform.position;
@@ -518,8 +549,18 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
       base.rigidBody.Sleep();
       this.transform.SetParent(null, true);
 
+      // â€¦
+      if (this is Tamer tamer) {
+        for (int index = this.followers.Count; 0 != index--; )
+        tamer.Release(this.followers[index]);
+      }
+
+      foreach (Bullet bullet in this.bullets)
+      bullet.health = (byte) 0u;
+
+      // â€¦
       if (this.defeat.timeout.isElapsed)
-      UnityEngine.Object.Destroy(this.gameObject);
+      UnityEngine.Object.Destroy(base.gameObject);
 
       return;
     }
@@ -535,10 +576,13 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     }
 
     else {
+      System.Collections.ObjectModel.ReadOnlyCollection<Entity> targets = this.FindTargets(Entity.FindTargetsOptions.DifferentTeam) ?? new(new System.Collections.Generic.List<Entity>(0)); // --> â€¦ ?? System.Collections.ObjectModel.ReadOnlyCollection<Entity>.Empty
+
+      // â€¦
       this.transform.localScale = this.prefollow.localScale    * 1.000f;
       this.movement.speed       = this.prefollow.movementSpeed * 1.000f;
       this.targetBerth          = this.prefollow.targetBerth   * 1.000f;
-      this.target               = this.targetAutomatically && null == this.target ? this.FindTargets(Entity.FindTargetsOptions.DifferentTeam)?[0] ?? null : this.target;
+      this.target               = this.targetAutomatically && null == this.target && 0 != targets.Count ? targets[0] : this.target;
     }
 
     // â€¦ ->> Bouncing â€” Unfortunately bounces entire `Entity` object, rather than just its visible render
@@ -548,7 +592,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
 
       // â€¦ ->> Rotation â€” Apply Z-axis orientation (cumulative)
       base.rigidBody.constraints &= ~UnityEngine.RigidbodyConstraints.FreezeRotationZ;
-      base.rigidBody.MoveRotation(UnityEngine.Quaternion.Euler(rotation + (Entity.TurnDirectionToVector3(this.bounce.turn, UnityEngine.Vector3.forward) * UnityEngine.Time.unscaledDeltaTime * this.bounce.angle * this.bounce.speed)));
+      base.rigidBody.MoveRotation(UnityEngine.Quaternion.Euler(rotation + (Entity.TurnDirectionToVector3(this.bounce.turn, UnityEngine.Vector3.forward) * UnityEngine.Time.deltaTime * this.bounce.angle * this.bounce.speed)));
 
       rotation        = base.rigidBody.rotation.eulerAngles;
       rotation        = new(rotation.x > 180.0f ? rotation.x - 360.0f : rotation.x, rotation.y > 180.0f ? rotation.y - 360.0f : rotation.y, rotation.z > 180.0f ? rotation.z - 360.0f : rotation.z);
@@ -574,13 +618,13 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
       base.rigidBody.MoveRotation(UnityEngine.Quaternion.Slerp(
         UnityEngine.Quaternion.Euler(rotation),
         UnityEngine.Quaternion.Euler(UnityEngine.Vector3.Scale(UnityEngine.Vector3.right + UnityEngine.Vector3.up, rotation)),
-        UnityEngine.Time.unscaledDeltaTime * this.bounce.speed
+        UnityEngine.Time.deltaTime * this.bounce.speed
       ));
 
       // â€¦ ->> Position
       base.rigidBody.constraints   |= UnityEngine.RigidbodyConstraints.FreezePositionY;
       base.rigidBody.linearVelocity = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, base.rigidBody.linearVelocity);
-      base.rigidBody.position       = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, base.rigidBody.position); // --> UnityEngine.Vector3.Slerp(base.rigidBody.position, UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, base.rigidBody.position), !this.movement.pauseCooldown.isElapsed ? UnityEngine.Time.unscaledDeltaTime * this.bounce.force : 1.0f)
+      base.rigidBody.position       = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, base.rigidBody.position); // --> UnityEngine.Vector3.Slerp(base.rigidBody.position, UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, base.rigidBody.position), !this.movement.pauseCooldown.isElapsed ? UnityEngine.Time.deltaTime * this.bounce.force : 1.0f)
     }
 
     // â€¦ ->> Regenerating
@@ -591,10 +635,10 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
 
     // â€¦ ->> Outlining
     if (null != this.outline.material)
-    this.outline.material.color = UnityEngine.Color.LerpUnclamped(this.outline.material.color, null != this.following && null != this.following.outline.material ? this.following.outline.material.color : this.outline.color, 0.1f);
+    this.outline.material.color = UnityEngine.Color.LerpUnclamped(this.outline.material.color, this.outline.color, 0.1f);
 
     // â€¦ ->> Moving
-    this.movement.direction = Player.IsReady && this.targetAutomatically ? targetDistance.sqrMagnitude > (UnityEngine.Vector3.one * this.targetBerth).sqrMagnitude ? targetDistance.normalized : UnityEngine.Vector3.zero : this.movement.direction;
+    this.movement.direction = Player.IsReady && this.targetAutomatically ? targetDistance.sqrMagnitude > (UnityEngine.Vector3.one * this.targetBerth).sqrMagnitude ? targetDirection : UnityEngine.Vector3.zero : this.movement.direction;
 
     if (this.moveAutomatically && UnityEngine.Vector3.zero != this.movement.direction && (this is Player || this.movement.pauseCooldown.isElapsed)) {
       base.rigidBody.AddForce(this.movement.direction * this.movement.speedFactor * ((this.movement.speed * (1.0f - this.movement.speedRandomnessFactor)) + (UnityEngine.Random.value * this.movement.speed * this.movement.speedRandomnessFactor)), UnityEngine.ForceMode.Impulse);
@@ -602,18 +646,18 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     }
 
     // â€¦ ->> Turning
-    this.turn.direction = Player.IsReady && this.targetAutomatically && UnityEngine.Vector3.zero == this.turn.direction ? targetDistance.normalized : this.turn.direction;
+    this.turn.direction = Player.IsReady && this.targetAutomatically && (this is not Player || UnityEngine.Vector3.zero == this.turn.direction) ? targetDirection : this.turn.direction;
 
     if (UnityEngine.Vector3.zero != this.turn.direction)
     base.rigidBody.MoveRotation(UnityEngine.Quaternion.Slerp(base.rigidBody.rotation, UnityEngine.Quaternion.Euler(
       UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, base.rigidBody.rotation.eulerAngles) +                       // ->> Remove Y-axis orientation
       UnityEngine.Vector3.Scale(UnityEngine.Vector3.up, UnityEngine.Quaternion.LookRotation(this.turn.direction, UnityEngine.Vector3.up).eulerAngles) // ->> Apply  Y-axis orientation
-    ), UnityEngine.Time.unscaledDeltaTime * this.turn.speed));
+    ), UnityEngine.Time.deltaTime * this.turn.speed));
 
     // â€¦ ->> Shooting
     if (Player.IsReady && this.shootAutomatically && null != this.target) {
-      bool shootIsTargeted = this is Player || UnityEngine.Mathf.Cos(UnityEngine.Mathf.Deg2Rad * this.shoot.view) <= UnityEngine.Vector3.Dot(UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, this.transform.forward), UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, targetDistance).normalized);
-      bool shootIsAllowed  = this.shoot.isAllowed(shootIsTargeted);
+      bool shootIsTargeted = this is Player || UnityEngine.Mathf.Cos(UnityEngine.Mathf.Deg2Rad * this.shoot.view) <= UnityEngine.Vector3.Dot(UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, this.transform.forward), UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, targetDirection));
+      bool shootIsAllowed  = (this is not Monster monster || monster.following is not Player || !monster.isMounted) && this.shoot.isAllowed(shootIsTargeted);
 
       // â€¦
       if (shootIsAllowed)
@@ -636,7 +680,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     this.PrefollowUpdate();
   }
 }
-  [UnityEngine.DefaultExecutionOrder(4)]
+  [UnityEngine.DefaultExecutionOrder(5)]
   [UnityEngine.RequireComponent(typeof(UnityEngine.Collider))]
   [UnityEngine.RequireComponent(typeof(UnityEngine.Rigidbody))]
   public class Bullet : GameComponent {
@@ -708,10 +752,11 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     }
 
     private void OnTriggerEnter(UnityEngine.Collider collider) {
-      if (null == this.user)
+      if (this.isHit || null == this.user)
       return;
 
-      if (collider.GetComponent<Bullet>() is Bullet bullet) {
+
+      if (collider.TryGetComponent(out Bullet bullet)) {
         if ((bullet.user != this.user && (null == bullet.user || bullet.user.team != this.user.team))) {
           this.health -= (byte) (0u == this.health || this.isInvincible ? 0u : 1u);
           /* Do nothingâ€¦ */
@@ -720,7 +765,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
         return;
       }
 
-      if (collider.GetComponent<Entity>() is Entity entity) {
+      if (collider.TryGetComponent(out Entity entity)) {
         if (entity != this.user && entity.team != this.user.team && !this.user.followers.Contains(entity)) {
           this.health -= (byte) (0u == this.health || this.isInvincible ? 0u : 1u);
           this.user.ShootDamage(entity is Monster monster && monster.isMounted ? monster.following! : entity, this.shootDirection);
@@ -729,7 +774,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
         return;
       }
 
-      if (collider.GetComponent<Area>() is not null || collider.GetComponent<Lasoo>() is not null)
+      if (collider.TryGetComponent(out Area _) || collider.TryGetComponent(out Lasoo _))
       return;
 
       this.health = (byte) 0u;
@@ -746,9 +791,12 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
       ));
     }
 
-    private void Update() {
+    protected override void Update() {
+      base.Update();
+
+      // â€¦
       if (this.lifetime <= +0.0f || null == this.user) {
-        UnityEngine.Object.Destroy(this.gameObject);
+        UnityEngine.Object.Destroy(base.gameObject);
         return;
       }
 
@@ -769,7 +817,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
             UnityEngine.Object.Destroy(material);
           }
 
-          UnityEngine.Object.Destroy(this.gameObject);
+          UnityEngine.Object.Destroy(base.gameObject);
           return;
         }
       }
@@ -796,7 +844,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
         } while (false);
 
         if (materials is null) {
-          UnityEngine.Object.Destroy(this.gameObject);
+          UnityEngine.Object.Destroy(base.gameObject);
           return;
         }
 
@@ -827,9 +875,9 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
       if (Game.IsPaused)
       return;
 
-      this.lifetime -= UnityEngine.Time.unscaledDeltaTime;
+      this.lifetime -= UnityEngine.Time.deltaTime;
 
       if (this.user.shoot.spinAutomatically)
-      base.rigidBody.MoveRotation(base.rigidBody.rotation * UnityEngine.Quaternion.AngleAxis(Entity.BulletSpinSpeed * UnityEngine.Time.unscaledDeltaTime, UnityEngine.Vector3.forward));
+      base.rigidBody.MoveRotation(base.rigidBody.rotation * UnityEngine.Quaternion.AngleAxis(Entity.BulletSpinSpeed * UnityEngine.Time.deltaTime, UnityEngine.Vector3.forward));
     }
   }
