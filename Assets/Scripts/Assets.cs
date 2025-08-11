@@ -70,21 +70,22 @@ public sealed class Assets : UnityEngine.MonoBehaviour {
   /* … */
   public static Assets main = null!;
 
-  public Assets.Bullet                 bullet               = new() {material = null, prefabrication = null!};
-  public Assets.Hairs                  hairs                = new() {materials = new(21), meshPrefabrications = new(8)};
-  public Assets.Lasoo                  lasoo                = new() {captureIndicatorMaterial = null, meshPrefabrication = null!, ropeMeshPrefabrication = null!};
-  public bool                          outlineAutomatically = true;
-  public UnityEngine.Material?         outlineMaterial      = null;
-  public Assets.Primitives             primitives           = new() {capsule = null, cube = null, cylinder = null, plane = null, quad = null, sphere = null};
-  public bool                          shadowAutomatically  = true;
-  public UnityEngine.Material?         shadowMaterial       = null;
-  public Assets.Spawnable              spawnables           = new() {monsters = new() {antilleryPrefabrication = new(1), borkaPrefabrication = new(1), molemPrefabrication = new(1), sirpensPrefabrication = new(1), tyragePrefabrication = new(1)}, tamers = new() {magnatePrefabrication = new(2), nomadPrefabrication = new(2)}};
-  public Assets.UserInterface          UI                   = new() {entities = new() {healthStatisticPrefabrication = null, shootStatisticPrefabrication = null}};
-  public UnityEngine.Rendering.Volume? volume               = null;
+  public Assets.Bullet                                         bullet               = new() {material = null, prefabrication = null!};
+  public Assets.Hairs                                          hairs                = new() {materials = new(21), meshPrefabrications = new(8)};
+  public Assets.Lasoo                                          lasoo                = new() {captureIndicatorMaterial = null, meshPrefabrication = null!, ropeMeshPrefabrication = null!};
+  public bool                                                  outlineAutomatically = true;
+  public UnityEngine.Material?                                 outlineMaterial      = null;
+  public Assets.Primitives                                     primitives           = new() {capsule = null, cube = null, cylinder = null, plane = null, quad = null, sphere = null};
+  public bool                                                  shadowAutomatically  = true;
+  public UnityEngine.Material?                                 shadowMaterial       = null;
+  public System.Collections.Generic.List<UnityEngine.Material> skinMaterials        = new(5);
+  public Assets.Spawnable                                      spawnables           = new() {monsters = new() {antilleryPrefabrication = new(1), borkaPrefabrication = new(1), molemPrefabrication = new(1), sirpensPrefabrication = new(1), tyragePrefabrication = new(1)}, tamers = new() {magnatePrefabrication = new(2), nomadPrefabrication = new(2)}};
+  public Assets.UserInterface                                  UI                   = new() {entities = new() {healthStatisticPrefabrication = null, shootStatisticPrefabrication = null}};
+  public UnityEngine.Rendering.Volume?                         volume               = null;
 
   /* … */
   private void Awake() {
-    if (Assets.main is not null && Assets.main != this) {
+    if (null != Assets.main && Assets.main != this) {
       UnityEngine.Object.DestroyImmediate(this, false);
       return;
     }

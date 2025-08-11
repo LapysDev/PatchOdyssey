@@ -7,10 +7,10 @@ public class Tamer : Entity {
   public static readonly UnityEngine.Vector3 MountingPosition = (UnityEngine.Vector3.back * 0.333333f) + (UnityEngine.Vector3.up * 1.125000f);
 
   [UnityEngine.Header("Tamer")]
-  [ReadOnlyInInspector]  public           UnityEngine.GameObject?                                hair               =  null;
   [ReadWriteInInspector] public           bool                                                   hairAutomatically  =  true;
   [ReadWriteInInspector] public  new      UnityEngine.SphereCollider                             collider           => (UnityEngine.SphereCollider) base.collider;
   [ReadOnlyInInspector]  private readonly System.Collections.Generic.List<UnityEngine.Transform> mountingTransforms =  new();
+  [ReadWriteInInspector] public           bool                                                   skinAutomatically  =  true;
 
   /* … */
   protected virtual void Capture(Entity entity) {
@@ -20,7 +20,7 @@ public class Tamer : Entity {
     // …
     if (entity is Monster monster) {
       monster.following                = this;
-      monster.isInvincible             = true;
+      monster.isInvincible             = 0 == this.followers.Count;
       monster.team                     = base.team;
       this.mountingTransforms.Capacity = System.Math.Max(this.mountingTransforms.Capacity, this.transform.hierarchyCount);
 
@@ -68,6 +68,7 @@ public class Tamer : Entity {
     UnityEngine.Material?   hairMaterial        = Random(Assets.main.hairs.materials);
     UnityEngine.Material[]  hairMaterials       = System.Array.Empty<UnityEngine.Material>();
     UnityEngine.GameObject? hairMeshFabrication = Random(Assets.main.hairs.meshPrefabrications);
+    UnityEngine.Material?   skinMaterial        = Random(Assets.main.skinMaterials);
 
     /* … */
     static T? Random<T>(System.Collections.Generic.List<T> list) where T : UnityEngine.Object {
@@ -76,7 +77,7 @@ public class Tamer : Entity {
 
       // …
       for (int subindex = index; ; ) {
-        if (list[subindex] is not null)
+        if (null != list[subindex])
         return list[subindex];
 
         subindex = (subindex + 1) % count;
@@ -86,12 +87,22 @@ public class Tamer : Entity {
       }
     }
 
-    /* … ->> Hair */
-    if (this.hairAutomatically && hairMeshFabrication is not null) {
+    /* … ->> Skin */
+    if (this.skinAutomatically && null != skinMaterial)
+    this.transform.ForEach<UnityEngine.Renderer>(renderer => {
+      string name = renderer.sharedMaterial.name.Trim();
+
+      // …
+      if (string.Equals(name, "skin", System.StringComparison.OrdinalIgnoreCase) || name.StartsWith("skin-", System.StringComparison.OrdinalIgnoreCase))
+      renderer.sharedMaterial = skinMaterial;
+    });
+
+    // … ->> Hair
+    if (this.hairAutomatically && null != hairMeshFabrication) {
       UnityEngine.Transform hairTransform = ((UnityEngine.GameObject) UnityEngine.Object.Instantiate(hairMeshFabrication, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity, this.transform)).transform;
 
       // …
-      if (hairMaterial is null) {
+      if (null == hairMaterial) {
         hairMaterial       = new(UnityEngine.Shader.Find("Standard") ?? UnityEngine.Shader.Find("Diffuse"));
         hairMaterial.name  = "human-hair";
         hairMaterial.color = Game.Randomizer.Next(5) switch {
@@ -104,7 +115,7 @@ public class Tamer : Entity {
         };
       }
 
-      hairMaterials      = Assets.main.outlineAutomatically && Assets.main.outlineMaterial is not null ? new UnityEngine.Material[] {hairMaterial, Assets.main.outlineMaterial} : new UnityEngine.Material[] {hairMaterial};
+      hairMaterials      = Assets.main.outlineAutomatically && null != Assets.main.outlineMaterial ? new UnityEngine.Material[] {hairMaterial, Assets.main.outlineMaterial} : new UnityEngine.Material[] {hairMaterial};
       hairTransform.name = "Hair";
 
       hairTransform.SetLocalPositionAndRotation(UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity);
@@ -120,7 +131,7 @@ public class Tamer : Entity {
             materialsIsUpdated = true;
           }
 
-          if (Assets.main.outlineAutomatically && Assets.main.outlineMaterial is not null) {
+          if (Assets.main.outlineAutomatically && null != Assets.main.outlineMaterial) {
             UnityEngine.Material[] submaterials = new UnityEngine.Material[materials.Length + 1];
 
             // …

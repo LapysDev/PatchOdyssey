@@ -44,43 +44,6 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
   [ReadWriteInInspector] public Timeframe        releaseWindow = new(1.00);
 
   /* … */
-  public void AttemptLasso() {
-    if (this.isLassoing)
-      this.ResetLasoo();
-
-    else {
-      this.isInputing = true;
-      this.isLassoing = 0 == base.followers.Count && (this.lasooing is null || this.lasooing.reach == this.lasooing.retractReach);
-    }
-  }
-
-  public void AttemptMoveDown (bool continuous = false) { if (!continuous) UI.main.entities.playerVerticalMovementDuration  .Finish(); base.movement.direction = UnityEngine.Vector3.back    + UnityEngine.Vector3.Scale(UnityEngine.Vector3.right,   base.movement.direction); this.isInputing = true; }
-  public void AttemptMoveLeft (bool continuous = false) { if (!continuous) UI.main.entities.playerHorizontalMovementDuration.Finish(); base.movement.direction = UnityEngine.Vector3.left    + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, base.movement.direction); this.isInputing = true; }
-  public void AttemptMoveRight(bool continuous = false) { if (!continuous) UI.main.entities.playerHorizontalMovementDuration.Finish(); base.movement.direction = UnityEngine.Vector3.right   + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, base.movement.direction); this.isInputing = true; }
-  public void AttemptMoveUp   (bool continuous = false) { if (!continuous) UI.main.entities.playerVerticalMovementDuration  .Finish(); base.movement.direction = UnityEngine.Vector3.forward + UnityEngine.Vector3.Scale(UnityEngine.Vector3.right,   base.movement.direction); this.isInputing = true; }
-
-  public void AttemptRelease() {
-    if (!this.releaseWindow.isElapsed) {
-      this.ResetLasoo();
-
-      if (0 != base.followers.Count) {
-        this.isInputing = true;
-        base.Release(base.followers[0]);
-      }
-    }
-
-    this.releaseWindow.Reset();
-  }
-
-  public void AttemptShoot() {
-    if (null != base.Shoot()) {
-      this.isInputing = true;
-
-      if (0 != base.followers.Count)
-      base.followers[0].Shoot();
-    }
-  }
-
   protected override void Awake() {
     base.Awake();
 
@@ -151,7 +114,7 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
         this.lasoo.captureIndicatorRenderer.progress                            = this.lasoo.captureIndicator.progress .GetComponent<UnityEngine.MeshRenderer>();
         this.lasoo.captureIndicatorRenderer.progress.allowOcclusionWhenDynamic  = false;
 
-        if (Assets.main.lasoo.captureIndicatorMaterial is not null) {
+        if (null != Assets.main.lasoo.captureIndicatorMaterial) {
           for (int index = ((System.Runtime.CompilerServices.ITuple) this.lasoo.captureIndicator).Length; 0 != index--; ) {
             UnityEngine.MeshRenderer lasooCaptureIndicatorRenderer = (UnityEngine.MeshRenderer) ((System.Runtime.CompilerServices.ITuple) this.lasoo.captureIndicatorRenderer)[index];
 
@@ -217,6 +180,43 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
     this.lasooing = null;
   }
 
+  public void TryLasso() {
+    if (this.isLassoing)
+      this.ResetLasoo();
+
+    else {
+      this.isInputing = true;
+      this.isLassoing = 0 == base.followers.Count && (this.lasooing is null || this.lasooing.reach == this.lasooing.retractReach);
+    }
+  }
+
+  public void TryMoveDown (bool continuous = false) { if (!continuous) UI.main.entities.playerVerticalMovementDuration  .Finish(); base.movement.direction = UnityEngine.Vector3.back    + UnityEngine.Vector3.Scale(UnityEngine.Vector3.right,   base.movement.direction); this.isInputing = true; }
+  public void TryMoveLeft (bool continuous = false) { if (!continuous) UI.main.entities.playerHorizontalMovementDuration.Finish(); base.movement.direction = UnityEngine.Vector3.left    + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, base.movement.direction); this.isInputing = true; }
+  public void TryMoveRight(bool continuous = false) { if (!continuous) UI.main.entities.playerHorizontalMovementDuration.Finish(); base.movement.direction = UnityEngine.Vector3.right   + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, base.movement.direction); this.isInputing = true; }
+  public void TryMoveUp   (bool continuous = false) { if (!continuous) UI.main.entities.playerVerticalMovementDuration  .Finish(); base.movement.direction = UnityEngine.Vector3.forward + UnityEngine.Vector3.Scale(UnityEngine.Vector3.right,   base.movement.direction); this.isInputing = true; }
+
+  public void TryRelease() {
+    if (!this.releaseWindow.isElapsed) {
+      this.ResetLasoo();
+
+      if (0 != base.followers.Count) {
+        this.isInputing = true;
+        base.Release(base.followers[0]);
+      }
+    }
+
+    this.releaseWindow.Reset();
+  }
+
+  public void TryShoot() {
+    if (base.Shoot() is not null) {
+      this.isInputing = true;
+
+      if (0 != base.followers.Count)
+      base.followers[0].Shoot();
+    }
+  }
+
   protected override void Update() {
     UnityEngine.Transform transform = this.transform;
 
@@ -239,22 +239,22 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
       base.followAutomatically = false;
       base.movement.direction  = UnityEngine.Vector3.zero;
 
-      if (Game.Keyboard.aKey.isPressed || Game.Keyboard.aKey.wasPressedThisFrame || Game.Keyboard.leftArrowKey .isPressed || Game.Keyboard.leftArrowKey .wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.A) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.LeftArrow)  || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.A) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.LeftArrow))  this.AttemptMoveLeft (false);
-      if (Game.Keyboard.dKey.isPressed || Game.Keyboard.dKey.wasPressedThisFrame || Game.Keyboard.rightArrowKey.isPressed || Game.Keyboard.rightArrowKey.wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.D) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.RightArrow) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.D) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.RightArrow)) this.AttemptMoveRight(false);
-      if (Game.Keyboard.sKey.isPressed || Game.Keyboard.sKey.wasPressedThisFrame || Game.Keyboard.downArrowKey .isPressed || Game.Keyboard.downArrowKey .wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.S) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.DownArrow)  || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.S) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.DownArrow))  this.AttemptMoveDown (false);
-      if (Game.Keyboard.wKey.isPressed || Game.Keyboard.wKey.wasPressedThisFrame || Game.Keyboard.upArrowKey   .isPressed || Game.Keyboard.upArrowKey   .wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.W) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.UpArrow)    || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.W) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.UpArrow))    this.AttemptMoveUp   (false);
+      if (Game.Keyboard.aKey.isPressed || Game.Keyboard.aKey.wasPressedThisFrame || Game.Keyboard.leftArrowKey .isPressed || Game.Keyboard.leftArrowKey .wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.A) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.LeftArrow)  || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.A) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.LeftArrow))  this.TryMoveLeft (false);
+      if (Game.Keyboard.dKey.isPressed || Game.Keyboard.dKey.wasPressedThisFrame || Game.Keyboard.rightArrowKey.isPressed || Game.Keyboard.rightArrowKey.wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.D) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.RightArrow) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.D) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.RightArrow)) this.TryMoveRight(false);
+      if (Game.Keyboard.sKey.isPressed || Game.Keyboard.sKey.wasPressedThisFrame || Game.Keyboard.downArrowKey .isPressed || Game.Keyboard.downArrowKey .wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.S) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.DownArrow)  || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.S) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.DownArrow))  this.TryMoveDown (false);
+      if (Game.Keyboard.wKey.isPressed || Game.Keyboard.wKey.wasPressedThisFrame || Game.Keyboard.upArrowKey   .isPressed || Game.Keyboard.upArrowKey   .wasPressedThisFrame || UnityEngine.Input.GetKey(UnityEngine.KeyCode.W) || UnityEngine.Input.GetKey(UnityEngine.KeyCode.UpArrow)    || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.W) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.UpArrow))    this.TryMoveUp   (false);
 
       // … ->> Lassoing
       if (Game.Keyboard.enterKey.wasPressedThisFrame || Game.Keyboard.tabKey.wasPressedThisFrame || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.Return) || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.Tab))
-      this.AttemptLasso();
+      this.TryLasso();
 
       // … ->> Releasing
       if (Game.Keyboard.shiftKey.wasReleasedThisFrame || UnityEngine.Input.GetKeyUp(UnityEngine.KeyCode.LeftShift) || UnityEngine.Input.GetKeyUp(UnityEngine.KeyCode.RightShift))
-      this.AttemptRelease();
+      this.TryRelease();
 
       // … ->> Shooting
       if (Game.Keyboard.spaceKey.wasPressedThisFrame || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.Space))
-      this.AttemptShoot();
+      this.TryShoot();
 
     // … ->> Application
       // … ->> Moving/ Turning
@@ -277,7 +277,7 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
         (float completed, float progress) lasooCaptureAngles = (360.0f, 0.0f); // ->> in Degrees
 
         // … ->> Capturing
-        if (this.lasooing!.capture is not null) {
+        if (null != this.lasooing!.capture) {
           switch (this.lasoo.captureProgress) {
             case Player.LasooCaptureProgress.Capturing: {
               foreach (ref readonly Entity.TurnDirection direction in (System.ReadOnlySpan<Entity.TurnDirection>) stackalloc[] {Entity.TurnDirection.Anticlockwise, Entity.TurnDirection.Clockwise}) {

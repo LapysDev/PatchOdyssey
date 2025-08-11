@@ -134,7 +134,7 @@ public sealed class UI : UnityEngine.MonoBehaviour {
 
   /* … */
   private void Awake() {
-    if (UI.main is not null && UI.main != this) {
+    if (null != UI.main && UI.main != this) {
       UnityEngine.Object.DestroyImmediate(this, false);
       return;
     }
@@ -235,66 +235,66 @@ public sealed class UI : UnityEngine.MonoBehaviour {
   }
 
   private void OnRectTransformDimensionsChange() {
-    if (null != UI.main)
+    if (UI.main is not null)
     UI.main.ChangeLayout(UnityEngine.Screen.height <= UnityEngine.Screen.width || UnityEngine.Screen.orientation switch { UnityEngine.ScreenOrientation.LandscapeLeft or UnityEngine.ScreenOrientation.LandscapeRight => true, _ => false } ? UI.Layout.Desktop : UI.Layout.Mobile);
   }
 
   private void Start() {
-    static void AttemptHorizontalMove(in UnityEngine.Vector3 direction) {
+    static void TryHorizontalMove(in UnityEngine.Vector3 direction) {
       UI.main.entities.playerHorizontalMovementDirection = direction;
 
-      if (UI.main.entities.playerHorizontalMovementDuration.isLooped) UI.main.StartCoroutine(AttemptHorizontalMoves());
+      if (UI.main.entities.playerHorizontalMovementDuration.isLooped) UI.main.StartCoroutine(TryHorizontalMoves());
       else                                                            UI.main.entities.playerHorizontalMovementDuration.Reset();
     }
 
-    static System.Collections.IEnumerator AttemptHorizontalMoves() {
+    static System.Collections.IEnumerator TryHorizontalMoves() {
       if (Game.IsPaused || UI.main.entities.playerHorizontalMovementDuration.isElapsed) {
         UI.main.entities.playerHorizontalMovementDirection = UnityEngine.Vector3.zero;
         yield break;
       }
 
-      if      (UI.main.entities.playerHorizontalMovementDirection == UnityEngine.Vector3.left)  UI.main.FindPlayer()?.AttemptMoveLeft (true);
-      else if (UI.main.entities.playerHorizontalMovementDirection == UnityEngine.Vector3.right) UI.main.FindPlayer()?.AttemptMoveRight(true);
+      if      (UI.main.entities.playerHorizontalMovementDirection == UnityEngine.Vector3.left)  UI.main.FindPlayer()?.TryMoveLeft (true);
+      else if (UI.main.entities.playerHorizontalMovementDirection == UnityEngine.Vector3.right) UI.main.FindPlayer()?.TryMoveRight(true);
 
       yield return new UnityEngine.WaitForSecondsRealtime(0.0f);
-      UI.main.StartCoroutine(AttemptHorizontalMoves());
+      UI.main.StartCoroutine(TryHorizontalMoves());
     }
 
-    static void AttemptVerticalMove(in UnityEngine.Vector3 direction) {
+    static void TryVerticalMove(in UnityEngine.Vector3 direction) {
       UI.main.entities.playerVerticalMovementDirection = direction;
 
-      if (UI.main.entities.playerVerticalMovementDuration.isLooped) UI.main.StartCoroutine(AttemptVerticalMoves());
+      if (UI.main.entities.playerVerticalMovementDuration.isLooped) UI.main.StartCoroutine(TryVerticalMoves());
       else                                                          UI.main.entities.playerVerticalMovementDuration.Reset();
     }
 
-    static System.Collections.IEnumerator AttemptVerticalMoves() {
+    static System.Collections.IEnumerator TryVerticalMoves() {
       if (Game.IsPaused || UI.main.entities.playerVerticalMovementDuration.isElapsed) {
         UI.main.entities.playerVerticalMovementDirection = UnityEngine.Vector3.zero;
         yield break;
       }
 
-      if      (UI.main.entities.playerVerticalMovementDirection == UnityEngine.Vector3.down) UI.main.FindPlayer()?.AttemptMoveDown(true);
-      else if (UI.main.entities.playerVerticalMovementDirection == UnityEngine.Vector3.up)   UI.main.FindPlayer()?.AttemptMoveUp  (true);
+      if      (UI.main.entities.playerVerticalMovementDirection == UnityEngine.Vector3.down) UI.main.FindPlayer()?.TryMoveDown(true);
+      else if (UI.main.entities.playerVerticalMovementDirection == UnityEngine.Vector3.up)   UI.main.FindPlayer()?.TryMoveUp  (true);
 
       yield return new UnityEngine.WaitForSecondsRealtime(0.0f);
-      UI.main.StartCoroutine(AttemptVerticalMoves());
+      UI.main.StartCoroutine(TryVerticalMoves());
     }
 
     /* … ->> Unfortunately, no pointed cursor for `UnityEngine.Cursor.SetCursor(null, UnityEngine.Vector2.zero, UnityEngine.CursorMode.Auto)` */
     foreach (UI.HeadsUpDisplay.Controls controls in UI.main.HUD.controls) {
       foreach (UnityEngine.UI.Button button in controls.home)    button.onClick.AddListener(static delegate { UI.main.ChangeActivity(UI.Activity.MainMenu); Game.IsPaused = true; Entity.Reset(); Stats.Reset(); });
-      foreach (UnityEngine.UI.Button button in controls.lasso)   button.onClick.AddListener(static delegate { UI.main.FindPlayer()?.AttemptLasso(); });
+      foreach (UnityEngine.UI.Button button in controls.lasso)   button.onClick.AddListener(static delegate { UI.main.FindPlayer()?.TryLasso(); });
       foreach (UnityEngine.UI.Button button in controls.menu)    button.onClick.AddListener(static delegate { UI.main.ChangeActivity(UI.Activity.HUD, UI.ActivityState.Pause); Game.IsPaused = true; });
-      foreach (UnityEngine.UI.Button button in controls.shoot)   button.onClick.AddListener(static delegate { UI.main.FindPlayer()?.AttemptShoot  (); });
-      foreach (UnityEngine.UI.Button button in controls.release) button.onClick.AddListener(static delegate { UI.main.FindPlayer()?.AttemptRelease(); });
+      foreach (UnityEngine.UI.Button button in controls.shoot)   button.onClick.AddListener(static delegate { UI.main.FindPlayer()?.TryShoot  (); });
+      foreach (UnityEngine.UI.Button button in controls.release) button.onClick.AddListener(static delegate { UI.main.FindPlayer()?.TryRelease(); });
       foreach (UnityEngine.UI.Button button in controls.resume)  button.onClick.AddListener(static delegate { UI.main.ChangeActivity(UI.Activity.HUD, UI.ActivityState.Play); Game.IsPaused = false; });
       foreach (UnityEngine.UI.Button button in controls.stop)    button.onClick.AddListener(static delegate { UI.main.entities.playerHorizontalMovementDuration.Finish(); UI.main.entities.playerVerticalMovementDuration.Finish(); foreach (Entity entity in Entity.All) if (entity is Player) entity.rigidBody.angularVelocity = entity.rigidBody.linearVelocity = UnityEngine.Vector3.zero; });
 
       foreach (var (buttons, listener) in new System.ValueTuple<System.Collections.Generic.List<UnityEngine.UI.Button>, UnityEngine.Events.UnityAction>[] {
-        (controls.moveDown,  static delegate { AttemptVerticalMove  (UnityEngine.Vector3.down); }),
-        (controls.moveLeft,  static delegate { AttemptHorizontalMove(UnityEngine.Vector3.left); }),
-        (controls.moveRight, static delegate { AttemptHorizontalMove(UnityEngine.Vector3.right); }),
-        (controls.moveUp,    static delegate { AttemptVerticalMove  (UnityEngine.Vector3.up); })
+        (controls.moveDown,  static delegate { TryVerticalMove  (UnityEngine.Vector3.down); }),
+        (controls.moveLeft,  static delegate { TryHorizontalMove(UnityEngine.Vector3.left); }),
+        (controls.moveRight, static delegate { TryHorizontalMove(UnityEngine.Vector3.right); }),
+        (controls.moveUp,    static delegate { TryVerticalMove  (UnityEngine.Vector3.up); })
       }) {
         foreach (UnityEngine.UI.Button button in buttons) {
           UnityEngine.EventSystems.EventTrigger.Entry buttonEvent   = new() {eventID = UnityEngine.EventSystems.EventTriggerType.PointerDown};
@@ -320,7 +320,7 @@ public sealed class UI : UnityEngine.MonoBehaviour {
         else if (marked) {
           button.interactable = false;
 
-          if (null != button.targetGraphic)
+          if (button.targetGraphic is not null)
           button.targetGraphic.color = button.targetGraphic.color.Transparent();
         }
       }
@@ -448,7 +448,7 @@ public sealed class UI : UnityEngine.MonoBehaviour {
 
       // … ->> Color
       if (background.entry != background.exit) {
-        background.exit .color = UnityEngine.Color.LerpUnclamped(UI.main.background.transitionExit.color,               UI.main.background.transitionExit .color.Transparent(), (float) UI.main.background.transition.progress);
+        background.exit .color = UnityEngine.Color.LerpUnclamped(UI.main.background.transitionExit.color, UI.main.background.transitionExit .color.Transparent(), (float) UI.main.background.transition.progress);
         background.entry.color = (
           UI.main.background.transitionEntry.backgroundIsVisible
           ? UnityEngine.Color.LerpUnclamped(UI.main.background.transitionExit.color.Transparent(), UI.main.background.transitionEntry.color,               (float) UI.main.background.transition.progress)
@@ -525,8 +525,8 @@ public sealed class UI : UnityEngine.MonoBehaviour {
     System.Array.Fill(entitiesRemove.statistics.shoot,  true);
 
     foreach (var (statistics, statisticsRemove, DiagnoseStatistic) in new System.ValueTuple<System.Collections.Generic.List<(Entity entity, UnityEngine.RectTransform graphic)>, bool[], System.Func<Entity, (UnityEngine.RectTransform? prefabrication, float value)?>>[] {
-      (UI.main.entities.statistics.health, entitiesRemove.statistics.health, static entity => entity.statistics.health ? (Assets.main.UI.entities.healthStatisticPrefabrication, (float) entity.health)                       : null),
-      (UI.main.entities.statistics.shoot,  entitiesRemove.statistics.shoot,  static entity => entity.statistics.shoot  ? (Assets.main.UI.entities.shootStatisticPrefabrication,  (float) entity.shoot.cooldown.easedProgress) : null)
+      (UI.main.entities.statistics.health, entitiesRemove.statistics.health, static entity => !entity.isInvincible && entity.statistics.health && (entity is not Monster monster || !monster.isMounted) ? (Assets.main.UI.entities.healthStatisticPrefabrication, (float) entity.health)                       : null),
+      (UI.main.entities.statistics.shoot,  entitiesRemove.statistics.shoot,  static entity => entity.statistics.shoot                                                                                   ? (Assets.main.UI.entities.shootStatisticPrefabrication,  (float) entity.shoot.cooldown.easedProgress) : null)
     }) {
       foreach (Entity entity in Entity.All) {
         UnityEngine.RectTransform? statisticPrefabrication = DiagnoseStatistic(entity)?.prefabrication;
@@ -578,7 +578,7 @@ public sealed class UI : UnityEngine.MonoBehaviour {
         graphic.SetSiblingIndex(0);
         statisticGraphic.SetSizeWithCurrentAnchors(UnityEngine.RectTransform.Axis.Horizontal, statisticGraphicWidth * statisticValue);
 
-        if (null != entity.worldCamera) {
+        if (entity.worldCamera is not null) {
           UnityEngine.Vector3 entityPosition   = entity.transform.position;
           UnityEngine.Vector2 graphicOffset    = new(0.0f, 20.0f + (UI.main.entities.statistics.shoot == statistics ? -17.5f : 0.0f)); // ->> Presumed
           UnityEngine.Vector2 graphicPosition  = entity.worldCamera.WorldToViewportPoint(new(entityPosition.x, entityPosition.y - entity.bounce.estimatedHeight, entityPosition.z));

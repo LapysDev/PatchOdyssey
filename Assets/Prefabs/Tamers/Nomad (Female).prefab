@@ -151,7 +151,7 @@ MonoBehaviour:
     bulletMaterial: {fileID: 2100000, guid: be1823ad657ffb6468b91d87dfc478c4, type: 2}
     cooldown:
       duration: 1
-    damage: 2
+    damage: 10
     repelForce: 3
     speed: 5
     spinAutomatically: 1

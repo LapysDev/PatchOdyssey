@@ -54,7 +54,7 @@ namespace PatchOdyssey {
     public static void ForEach   (this UnityEngine.Transform transform, System.Predicate<UnityEngine.Transform> iterator)                                 => transform.ForEach<UnityEngine.Transform>(iterator);
     public static void ForEach<T>(this UnityEngine.Transform transform, System.Action   <T>                     iterator) where T : UnityEngine.Component => transform.ForEach<T>                    (transform => { iterator(transform); return true; });
     public static void ForEach<T>(this UnityEngine.Transform transform, System.Predicate<T>                     iterator) where T : UnityEngine.Component {
-      if (null == transform)
+      if (transform is null)
       return;
 
       // …
@@ -64,10 +64,9 @@ namespace PatchOdyssey {
       for (System.Collections.IEnumerator enumerator = transforms.Dequeue().GetEnumerator(); ; ) {
         if (enumerator.MoveNext()) {
           UnityEngine.Transform subtransform = (UnityEngine.Transform) enumerator.Current;
-          T                     component    = subtransform.GetComponent<T>();
 
           // …
-          if (null == component || iterator(component))
+          if (!subtransform.TryGetComponent(out T component) || iterator(component))
           transforms.Enqueue(subtransform);
         } else break; // --> (enumerator as System.IDisposable)?.Dispose()
       }
@@ -75,7 +74,7 @@ namespace PatchOdyssey {
 
     public static void GetSize(this UnityEngine.RectTransform rectTransform, out UnityEngine.Vector2 size, UnityEngine.Canvas canvas = null!) {
       for (UnityEngine.Transform transform = (UnityEngine.Transform) rectTransform; transform is not null; transform = transform.parent)
-      if (null != canvas || transform.TryGetComponent(out canvas)) {
+      if (canvas is not null || transform.TryGetComponent(out canvas)) {
         size = UnityEngine.RectTransformUtility.PixelAdjustRect(rectTransform, canvas).size;
         return;
       }
@@ -105,7 +104,6 @@ namespace PatchOdyssey {
           try { Game._Keyboard = InputSystem.AddDevice<DummyKeyboard>("PatchKeyboard"); }
           catch (System.InvalidOperationException) {
             #if DEBUG || DEVELOPMENT_BUILD
-              if (null == Assets.main)
               UnityEngine.Debug.LogWarning("Missing `UnityEngine.InputSystem.Keyboard` component for `Game.Keyboard`");
             #endif
           }
@@ -114,7 +112,7 @@ namespace PatchOdyssey {
 
       #if DEBUG || DEVELOPMENT_BUILD
         if (null == Assets.main)
-        UnityEngine.Debug.LogError("Missing `Assets` component for `Assets.main`");
+        UnityEngine.Debug.LogError($"Missing `Assets` component for `Assets.main`");
 
         if (null == UI.main)
         UnityEngine.Debug.LogError("Missing `UI` component for `UI.main`");
@@ -178,7 +176,7 @@ namespace PatchOdyssey {
 
     /* … */
     protected virtual void Update() {
-      if (Game.IsPaused && null != this.rigidBody) {
+      if (Game.IsPaused && this.rigidBody is not null) {
         this.rigidBody.angularVelocity = UnityEngine.Vector3.zero;
         this.rigidBody.linearVelocity  = UnityEngine.Vector3.zero;
       }
