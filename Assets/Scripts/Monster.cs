@@ -4,14 +4,23 @@ using PatchOdyssey;
 [UnityEngine.DefaultExecutionOrder(3)]
 [UnityEngine.RequireComponent(typeof(UnityEngine.BoxCollider))]
 public sealed class Monster : Entity {
+  [System.Serializable]
+  public struct CamouflageInfo {
+    [ReadOnlyInInspector] public UnityEngine.Color          color;
+    [ReadOnlyInInspector] public UnityEngine.Color          colorPrior;
+    [ReadOnlyInInspector] public UnityEngine.MeshRenderer[] considerations;
+    [ReadOnlyInInspector] public UnityEngine.Material?      material;
+  }
+
   public enum Kind : byte { Antillery, Borka, Molem, Sirpens, Tyrage }
 
   [System.Serializable]
   internal struct MountedInfo {
-    [ReadOnlyInInspector] internal /* readonly */ System.Collections.Generic.List<UnityEngine.Material[]> materials;       // ->> Copied `UnityEngine.Material`
-    [ReadOnlyInInspector] internal                UnityEngine.Material?                                   outlineMaterial; // ->> Original
-    [ReadOnlyInInspector] internal /* readonly */ System.Collections.Generic.List<UnityEngine.Renderer>   renderers;       // ->> `UnityEngine.Renderer` using either `Monster::materials` or `Monster::sharedMaterials`
-    [ReadOnlyInInspector] internal /* readonly */ System.Collections.Generic.List<UnityEngine.Material[]> sharedMaterials; // ->> Base `UnityEngine.Material`
+    [ReadOnlyInInspector] internal                UnityEngine.Material?                                   camouflageMaterial; // ->> Original
+    [ReadOnlyInInspector] internal /* readonly */ System.Collections.Generic.List<UnityEngine.Material[]> materials;          // ->> Copied `UnityEngine.Material`
+    [ReadOnlyInInspector] internal                UnityEngine.Material?                                   outlineMaterial;    // ->> Original
+    [ReadOnlyInInspector] internal /* readonly */ System.Collections.Generic.List<UnityEngine.Renderer>   renderers;          // ->> `UnityEngine.Renderer` using either `Monster::materials` or `Monster::sharedMaterials`
+    [ReadOnlyInInspector] internal /* readonly */ System.Collections.Generic.List<UnityEngine.Material[]> sharedMaterials;    // ->> Base `UnityEngine.Material`
   }
 
   [System.Serializable]
@@ -22,18 +31,66 @@ public sealed class Monster : Entity {
 
   /* … */
   [UnityEngine.Header("Monster")]
-  [ReadWriteInInspector]                             public  Monster.Kind        kind               =  Monster.Kind.Borka;
-  [ReadWriteInInspector]                             public  bool                isMounted          => this.mountAutomatically && base.following is Tamer tamer && null != tamer && 0 != tamer.followers.Count && this == tamer.followers[0];
-  [ReadWriteInInspector]                             private Monster.MountedInfo mount              =  new() {materials = new(), outlineMaterial = null, renderers = new(), sharedMaterials = new()};
-  [ReadWriteInInspector, UnityEngine.SerializeField] private bool                mountAutomatically =  true;
-  [ReadWriteInInspector, UnityEngine.SerializeField] private bool                mountIsUsed        =  false;
-  [ReadWriteInInspector]                             public  Monster.WrestleInfo wrestle            =  new() {force = 30.000f, interval = new(1.125)};
-  [ReadWriteInInspector]                             public  Entity?             wrestling          =  null;
+  [ReadOnlyInInspector, UnityEngine.SerializeField]  internal Monster.CamouflageInfo camouflage         =  new() {color = new(0.537f, 0.678f, 0.416f, 0.500f), considerations = System.Array.Empty<UnityEngine.MeshRenderer>(), material = null};
+  [ReadWriteInInspector]                             public   Monster.Kind           kind               =  Monster.Kind.Borka;
+  [ReadWriteInInspector]                             public   bool                   isMounted          => this.mountAutomatically && base.following is Tamer tamer && null != tamer && 0 != tamer.followers.Count && this == tamer.followers[0];
+  [ReadWriteInInspector]                             private  Monster.MountedInfo    mount              =  new() {camouflageMaterial = null, materials = new(), outlineMaterial = null, renderers = new(), sharedMaterials = new()};
+  [ReadWriteInInspector, UnityEngine.SerializeField] private  bool                   mountAutomatically =  true;
+  [ReadWriteInInspector, UnityEngine.SerializeField] private  bool                   mountIsUsed        =  false;
+  [ReadWriteInInspector]                             public   Monster.WrestleInfo    wrestle            =  new() {force = 30.000f, interval = new(1.125)};
+  [ReadWriteInInspector]                             public   Entity?                wrestling          =  null;
 
   /* … */
   protected override void Awake() {
     base.Awake();
     base.shoot.isAllowed = ShootIsAllowed;
+
+    if (Monster.Kind.Sirpens == this.kind) {
+      this.transform.ForEach<UnityEngine.Renderer>(renderer => {
+        if (null != this.camouflage.material)
+        return false;
+
+        if (0 != renderer.sharedMaterials.Length) {
+          UnityEngine.Material[] rendererMaterials = renderer.sharedMaterials;
+          int                    index             = rendererMaterials.Length;
+
+          // …
+          while (0 != index--) {
+            UnityEngine.Material material = rendererMaterials[index];
+
+            // …
+            if (
+              material != base.outline.material && material != base.shadow.material &&
+              // …
+              !string.Equals(material.name, base.outline.material?.name ?? "", System.StringComparison.OrdinalIgnoreCase) &&
+              !string.Equals(material.name, base.shadow .material?.name ?? "", System.StringComparison.OrdinalIgnoreCase)
+            ) break;
+          }
+
+          if (index != -1) {
+            UnityEngine.Material[] materials = new UnityEngine.Material[rendererMaterials.Length];
+
+            // …
+            rendererMaterials.CopyTo(materials, 0);
+
+            this.camouflage.colorPrior    = materials[index].color;
+            this.camouflage.material      = materials[index] = new(materials[index]);
+            this.camouflage.material.name = "Camouflage";
+            renderer.sharedMaterials      = materials;
+          }
+        }
+
+        return true;
+      });
+
+      this.camouflage.considerations = new System.Collections.Generic.List<UnityEngine.MeshRenderer>(UnityEngine.Object.FindObjectsByType<UnityEngine.MeshRenderer>(UnityEngine.FindObjectsInactive.Exclude, UnityEngine.FindObjectsSortMode.None)).FindAll(renderer => (
+        // !renderer.gameObject.isStatic &&
+        //  renderer.isVisible           &&
+         renderer.enabled           &&
+        !renderer.forceRenderingOff &&
+        !renderer.transform.IsChildOf(this.transform)
+      )).ToArray();
+    }
   }
 
   public override void Damage(Entity entity, float amount, Entity? attacker) {
@@ -56,12 +113,17 @@ public sealed class Monster : Entity {
   }
 
   protected override void OnDestroy() {
-    base.outline.material = this.mountIsUsed ? this.mount.outlineMaterial : base.outline.material;
+    this.camouflage.material = this.mountIsUsed ? this.mount.camouflageMaterial : this.camouflage.material;
+    base.outline.material    = this.mountIsUsed ? this.mount.outlineMaterial    : base.outline   .material;
+
     base.OnDestroy();
 
     foreach (UnityEngine.Material[] materials in this.mount.materials)
     foreach (UnityEngine.Material   material  in materials)
       UnityEngine.Object.Destroy(material); // ->> Prior `base.outline.material` destroyed here
+
+    if (null != this.camouflage.material)
+    UnityEngine.Object.Destroy(this.camouflage.material);
   }
 
   protected override void OnTriggerEnter(UnityEngine.Collider collider) {
@@ -272,17 +334,22 @@ public sealed class Monster : Entity {
           UnityEngine.Material[] materials       = new UnityEngine.Material[sharedMaterials.Length];
 
           // …
-          this.mount.renderers      .Add(renderer);
-          this.mount.sharedMaterials.Add(sharedMaterials);
-
           for (uint index = (uint) sharedMaterials.Length; 0u != index--; )
-            materials[index] = base.outline.material == sharedMaterials[index] ? this.mount.outlineMaterial ??= new UnityEngine.Material(base.outline.material) : new UnityEngine.Material(sharedMaterials[index]);
+          materials[index] = (
+            sharedMaterials[index] == this.camouflage.material ? this.mount.camouflageMaterial = new UnityEngine.Material(this.camouflage.material) :
+            sharedMaterials[index] == base.outline   .material ? this.mount.outlineMaterial  ??= new UnityEngine.Material(base.outline   .material) :
+            new UnityEngine.Material(sharedMaterials[index])
+          );
 
           renderer.sharedMaterials = materials;
-          this.mount.materials.Add(materials);
+
+          this.mount.materials      .Add(materials);
+          this.mount.renderers      .Add(renderer);
+          this.mount.sharedMaterials.Add(sharedMaterials);
         });
 
-        (base.outline.material, this.mount.outlineMaterial) = (this.mount.outlineMaterial, base.outline.material);
+        (this.camouflage.material, this.mount.camouflageMaterial) = (this.mount.camouflageMaterial, this.camouflage.material);
+        (base.outline   .material, this.mount.outlineMaterial)    = (this.mount.outlineMaterial,    base.outline   .material);
       }
     }
 
@@ -290,14 +357,15 @@ public sealed class Monster : Entity {
       base.bounceAutomatically = base.prefollow.bounceAutomatically;
       base.isInvincible        = base.prefollow.isInvincible;
       base.moveAutomatically   = base.prefollow.moveAutomatically;
-      base.outline.material    = this.mount.outlineMaterial ?? base.outline.material;
+      base.outline.material    = this.mount.outlineMaterial    ?? base.outline   .material;
+      this.camouflage.material = this.mount.camouflageMaterial ?? this.camouflage.material;
       this.mountIsUsed         = false;
 
       for (int index = this.mount.materials.Count; 0 != index--; ) {
         this.mount.renderers[index].sharedMaterials = this.mount.sharedMaterials[index];
 
         foreach (UnityEngine.Material material in this.mount.materials[index])
-        UnityEngine.Object.Destroy(material); // ->> Prior `base.outline.material` destroyed here
+        UnityEngine.Object.Destroy(material); // ->> Prior `base.outline.material` (and `this.camouflage.material`) destroyed here
       }
 
       base.rigidBody.WakeUp();
@@ -318,6 +386,7 @@ public sealed class Monster : Entity {
       // …
       this.transform.SetPositionAndRotation(UnityEngine.Vector3.SlerpUnclamped(this.transform.position, base.following.transform.position, 0.65f), UnityEngine.Quaternion.SlerpUnclamped(transform.rotation, base.following.transform.rotation, 0.2f));
 
+      base.outline.color     = base.following!.outline.color;
       base.target            = base.following!.target;
       bounds         .center = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, bounds         .center);
       bounds         .size   = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, bounds         .size);
@@ -328,7 +397,10 @@ public sealed class Monster : Entity {
       for (int  index    = this.mount.materials.Count;                0  != index--; )
       for (uint subindex = (uint) this.mount.materials[index].Length; 0u != subindex--; ) {
         UnityEngine.Material material = this.mount.materials[index][subindex];
-        material.color = base.outline.material == material && null != base.following!.outline.material ? base.following!.outline.material.color : UnityEngine.Color.Lerp(this.mount.sharedMaterials[index][subindex].color, UnityEngine.Color.white, followingRatio);
+
+        // …
+        if (material != base.outline.material && material != this.camouflage.material)
+        material.color = UnityEngine.Color.Lerp(this.mount.sharedMaterials[index][subindex].color, UnityEngine.Color.white, followingRatio);
       }
     }
 
@@ -355,6 +427,46 @@ public sealed class Monster : Entity {
       base.targetAutomatically = true;
 
       this.wrestle.interval.Reset();
+    }
+
+    // … ->> Camouflaging
+    this.camouflage.color = this.camouflage.colorPrior;
+
+    if (null != this.camouflage.material) {
+      if (0u != this.camouflage.considerations.Length && !this.isMounted) {
+        const float NonPrioritized = 1.0e7f;
+        UnityEngine.Vector3 position = this.transform.position;
+
+        /* … */
+        float GetCamouflagePriority(UnityEngine.MeshRenderer consideration) {
+          float priority = NonPrioritized;
+
+          // …
+          if (null != consideration) {
+            UnityEngine.Bounds bounds = consideration.bounds;
+
+            // …
+            bounds.Expand(1.0f);
+
+            priority      = -2.0f / UnityEngine.Mathf.Max(Game.VectorEpsilon, position.y - bounds.center.y);
+            bounds.center = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, bounds.center);
+            position      = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, position);
+            priority      = bounds.Contains(position) ? priority + (-1.0f / (
+              UnityEngine.Mathf.Abs(bounds.center.x - position.x) +
+              UnityEngine.Mathf.Abs(bounds.center.y - position.y) +
+              UnityEngine.Mathf.Abs(bounds.center.z - position.z)
+            )) : NonPrioritized;
+          }
+
+          return priority;
+        }
+
+        /* … */
+        System.Array.Sort(this.camouflage.considerations, (considerationA, considerationB) => System.Math.Sign(GetCamouflagePriority(considerationA) - GetCamouflagePriority(considerationB)));
+        this.camouflage.color = this.camouflage.considerations[0].sharedMaterial.color;
+      }
+
+      this.camouflage.material.color = UnityEngine.Color.LerpUnclamped(this.camouflage.material.color, this.camouflage.color, 0.2f);
     }
 
     // … ->> Pre-follow

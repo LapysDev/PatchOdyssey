@@ -90,6 +90,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7652435743543844431}
     m_Modifications:
+    - target: {fileID: 5549208319531871872, guid: a22218637e89c394fbe9b205b4b30dd7, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5549208319531871872, guid: a22218637e89c394fbe9b205b4b30dd7, type: 3}
+      propertyPath: m_DynamicOccludee
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6040230768994108266, guid: a22218637e89c394fbe9b205b4b30dd7, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

@@ -103,9 +103,22 @@ namespace PatchOdyssey {
 
         if (InputSystem.GetDevice<DummyKeyboard>() is null) {
           try { Game._Keyboard = InputSystem.AddDevice<DummyKeyboard>("PatchKeyboard"); }
-          catch (System.InvalidOperationException) {}
+          catch (System.InvalidOperationException) {
+            #if DEBUG || DEVELOPMENT_BUILD
+              if (null == Assets.main)
+              UnityEngine.Debug.LogWarning("Missing `UnityEngine.InputSystem.Keyboard` component for `Game.Keyboard`");
+            #endif
+          }
         }
       }
+
+      #if DEBUG || DEVELOPMENT_BUILD
+        if (null == Assets.main)
+        UnityEngine.Debug.LogError("Missing `Assets` component for `Assets.main`");
+
+        if (null == UI.main)
+        UnityEngine.Debug.LogError("Missing `UI` component for `UI.main`");
+      #endif
 
       // …
       #if UNITY_EDITOR

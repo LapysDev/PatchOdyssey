@@ -41,79 +41,96 @@ public sealed class UI : UnityEngine.MonoBehaviour {
   public enum ContainerVisibility { Hidden, Visible }
 
   [System.Serializable]
-  internal /* readonly */ struct Entities {
-    [ReadOnlyInInspector]  internal System.Collections.Generic.List<(Entity entity, UnityEngine.UI.RawImage image)> healthy;
-    [ReadOnlyInInspector]  internal UnityEngine.Vector3                                                             playerHorizontalMovementDirection; // ->> Refers to the `Player`s found via `UI::FindPlayer()`
-    [ReadWriteInInspector] public   Timeframe                                                                       playerHorizontalMovementDuration;
-    [ReadOnlyInInspector]  internal UnityEngine.Vector3                                                             playerVerticalMovementDirection;
-    [ReadWriteInInspector] public   Timeframe                                                                       playerVerticalMovementDuration;
-    [ReadOnlyInInspector]  internal System.Collections.Generic.List<(Entity entity, UnityEngine.UI.RawImage image)> shootie;
+  public /* readonly */ struct Entities {
+    [System.Serializable]
+    public /* readonly */ struct StatisticsInfo {
+      [ReadOnlyInInspector] public /* readonly */ System.Collections.Generic.List<(Entity, UnityEngine.RectTransform)> health;
+      [ReadOnlyInInspector] public /* readonly */ System.Collections.Generic.List<(Entity, UnityEngine.RectTransform)> shoot;
+    }
+
+    /* … */
+    [ReadOnlyInInspector]  internal UnityEngine.Vector3        playerHorizontalMovementDirection; // ->> Refers to the `Player`s found via `UI::FindPlayer()`
+    [ReadWriteInInspector] public   Timeframe                  playerHorizontalMovementDuration;
+    [ReadOnlyInInspector]  internal UnityEngine.Vector3        playerVerticalMovementDirection;
+    [ReadWriteInInspector] public   Timeframe                  playerVerticalMovementDuration;
+    [ReadOnlyInInspector]  internal UI.Entities.StatisticsInfo statistics;
   }
 
   [System.Serializable]
   public /* readonly */ struct HeadsUpDisplay {
     [System.Serializable]
     public sealed class Containers {
+      [ReadWriteInInspector] public TMPro.TextMeshProUGUI?   area  = null;
       [ReadWriteInInspector] public UnityEngine.CanvasGroup? pause = null;
     }
 
     [System.Serializable]
     public sealed class Controls {
-      [ReadWriteInInspector] public System.Collections.Generic.List<UnityEngine.UI.Button> home      = new(1);
-      [ReadWriteInInspector] public System.Collections.Generic.List<UnityEngine.UI.Button> lasso     = new(1);
-      [ReadWriteInInspector] public System.Collections.Generic.List<UnityEngine.UI.Button> menu      = new(1);
-      [ReadWriteInInspector] public System.Collections.Generic.List<UnityEngine.UI.Button> moveDown  = new(1);
-      [ReadWriteInInspector] public System.Collections.Generic.List<UnityEngine.UI.Button> moveLeft  = new(1);
-      [ReadWriteInInspector] public System.Collections.Generic.List<UnityEngine.UI.Button> moveRight = new(1);
-      [ReadWriteInInspector] public System.Collections.Generic.List<UnityEngine.UI.Button> moveUp    = new(1);
-      [ReadWriteInInspector] public System.Collections.Generic.List<UnityEngine.UI.Button> release   = new(1);
-      [ReadWriteInInspector] public System.Collections.Generic.List<UnityEngine.UI.Button> resume    = new(1);
-      [ReadWriteInInspector] public System.Collections.Generic.List<UnityEngine.UI.Button> shoot     = new(1);
-      [ReadWriteInInspector] public System.Collections.Generic.List<UnityEngine.UI.Button> stop      = new(1);
+      [ReadWriteInInspector] public /* readonly */ System.Collections.Generic.List<UnityEngine.UI.Button> home      = new(1);
+      [ReadWriteInInspector] public /* readonly */ System.Collections.Generic.List<UnityEngine.UI.Button> lasso     = new(1);
+      [ReadWriteInInspector] public /* readonly */ System.Collections.Generic.List<UnityEngine.UI.Button> menu      = new(1);
+      [ReadWriteInInspector] public /* readonly */ System.Collections.Generic.List<UnityEngine.UI.Button> moveDown  = new(1);
+      [ReadWriteInInspector] public /* readonly */ System.Collections.Generic.List<UnityEngine.UI.Button> moveLeft  = new(1);
+      [ReadWriteInInspector] public /* readonly */ System.Collections.Generic.List<UnityEngine.UI.Button> moveRight = new(1);
+      [ReadWriteInInspector] public /* readonly */ System.Collections.Generic.List<UnityEngine.UI.Button> moveUp    = new(1);
+      [ReadWriteInInspector] public /* readonly */ System.Collections.Generic.List<UnityEngine.UI.Button> release   = new(1);
+      [ReadWriteInInspector] public /* readonly */ System.Collections.Generic.List<UnityEngine.UI.Button> resume    = new(1);
+      [ReadWriteInInspector] public /* readonly */ System.Collections.Generic.List<UnityEngine.UI.Button> shoot     = new(1);
+      [ReadWriteInInspector] public /* readonly */ System.Collections.Generic.List<UnityEngine.UI.Button> stop      = new(1);
     }
 
     /* … */
     [ReadWriteInInspector, System.NonSerialized] internal UI.HeadsUpDisplay.Containers[] containers;
     [ReadWriteInInspector, System.NonSerialized] internal UI.HeadsUpDisplay.Controls  [] controls;
-    [ReadWriteInInspector]                       public   UnityEngine.CanvasGroup?       desktop;
-    [ReadWriteInInspector]                       public   UI.HeadsUpDisplay.Containers   desktopContainers;
-    [ReadWriteInInspector]                       public   UI.HeadsUpDisplay.Controls     desktopControls;
-    [ReadWriteInInspector]                       public   UnityEngine.CanvasGroup?       mobile;
-    [ReadWriteInInspector]                       public   UI.HeadsUpDisplay.Containers   mobileContainers;
-    [ReadWriteInInspector]                       public   UI.HeadsUpDisplay.Controls     mobileControls;
+    [ReadOnlyInInspector]                        public   UnityEngine.CanvasGroup?       layout;
+    [ReadOnlyInInspector, System.NonSerialized]  public   UI.HeadsUpDisplay.Containers   layoutContainers;
+    [ReadOnlyInInspector, System.NonSerialized]  public   UI.HeadsUpDisplay.Controls     layoutControls;
+
+    [ReadWriteInInspector] public UnityEngine.CanvasGroup?     desktop;
+    [ReadWriteInInspector] public UI.HeadsUpDisplay.Containers desktopContainers;
+    [ReadWriteInInspector] public UI.HeadsUpDisplay.Controls   desktopControls;
+
+    [ReadWriteInInspector] public UnityEngine.CanvasGroup?     mobile;
+    [ReadWriteInInspector] public UI.HeadsUpDisplay.Containers mobileContainers;
+    [ReadWriteInInspector] public UI.HeadsUpDisplay.Controls   mobileControls;
   }
+
+  public enum Layout : byte { Responsive, Desktop, Mobile }
 
   /* … */
   public static UI main = null!;
 
-  [ReadOnlyInInspector]  private     UnityEngine.EventSystems.EventSystem                       _eventSystem                = null!;
-  [ReadOnlyInInspector]  private     UnityEngine.UI.GraphicRaycaster                            _graphicsRaycaster          = null!;
-  [ReadOnlyInInspector]  private     UnityEngine.RectTransform                                  _rectTransform              = null!;
-  [ReadOnlyInInspector]  private     UnityEngine.CanvasRenderer                                 _renderer                   = null!;
-  [ReadOnlyInInspector]  private     UnityEngine.UI.CanvasScaler                                _scaler                     = null!;
-  [ReadOnlyInInspector]  private     UnityEngine.Camera?                                        _worldCamera                = null;
-  [ReadWriteInInspector] public      UI.Activity                                                activity                    = UI.Activity.MainMenu;
-  [ReadWriteInInspector] public      Timeframe                                                  activityChangeDuration      = new(1.00);
-  [ReadOnlyInInspector]  private     UI.Activity?                                               activityPrior               = null;
-  [ReadWriteInInspector] public      UI.ActivityState                                           activityState               = UI.ActivityState.Any; // ->> For example: Game/ Pause menu in Heads-Up Display
-  [ReadOnlyInInspector]  private     UI.ActivityState?                                          activityStatePrior          = null;
-  [ReadWriteInInspector] public      Timeframe                                                  activityStateChangeDuration = new(0.25);
-  [ReadWriteInInspector] public      System.Collections.Generic.List<UI.ActivityTransitionInfo> activityTransitions         = new(System.Enum.GetValues(typeof(UI.Activity)).Length); // --> System.Collections.Generic.Dictionary<UI.Activity, …>
-  [ReadOnlyInInspector]  private     int                                                        applicationHeight           = -1;
-  [ReadOnlyInInspector]  private     int                                                        applicationWidth            = -1;
-  [ReadWriteInInspector] public      UI.ActivityBackground                                      background                  = new() {entry = null, exit = null, transition = new(1.5), transitionEntry = new() {color = new(0.00f, 0.00f, 0.00f, 0.00f), container = null!, material = null!, sprite = null!, texture = null!}, transitionExit = new() {color = new(0.00f, 0.00f, 0.00f, 0.00f), container = null!, material = null!, sprite = null!, texture = null!}};
-  [ReadWriteInInspector] public      UI.Buttons                                                 buttons                     = new() {play = null, quit = null};
-  [ReadWriteInInspector] public      Timeframe                                                  controlSwitchDuration       = new(0.70);
-  [ReadWriteInInspector] public      Timeframe                                                  controlSwitchInterval       = new(5.00);
-  [ReadOnlyInInspector]  private     UI.Entities                                                entities                    = new() {healthy = new(16), playerHorizontalMovementDirection = UnityEngine.Vector3.zero, playerHorizontalMovementDuration = new(2.50), playerVerticalMovementDirection = UnityEngine.Vector3.zero, playerVerticalMovementDuration = new(2.50)};
-  [ReadOnlyInInspector]  public      ref readonly UnityEngine.EventSystems.EventSystem          eventSystem                 { get { if (this._eventSystem       is null && base.TryGetComponent(out UnityEngine.EventSystems.EventSystem eventSystem))       { this._eventSystem       = eventSystem; }       return ref this._eventSystem!; } }
-  [ReadOnlyInInspector]  public      ref readonly UnityEngine.UI.GraphicRaycaster               graphicsRaycaster           { get { if (this._graphicsRaycaster is null && base.TryGetComponent(out UnityEngine.UI.GraphicRaycaster      graphicsRaycaster)) { this._graphicsRaycaster = graphicsRaycaster; } return ref this._graphicsRaycaster!; } }
-  [ReadWriteInInspector] public      UI.HeadsUpDisplay                                          HUD                         = new() {desktop = null, desktopContainers = new(), desktopControls = new(), mobile = null, mobileContainers = new(), mobileControls = new()};
-  [ReadOnlyInInspector]  private     ref readonly UnityEngine.RectTransform                     rectTransform               { get { this._rectTransform ??= (UnityEngine.RectTransform) base.transform; return ref this._rectTransform; } }
-  [ReadOnlyInInspector]  public  new ref readonly UnityEngine.CanvasRenderer                    renderer                    { get { if (this._renderer is null && base.TryGetComponent(out UnityEngine.CanvasRenderer  renderer)) { this._renderer = renderer; } return ref this._renderer!; } }
-  [ReadWriteInInspector] public      ref readonly UnityEngine.UI.CanvasScaler                   scaler                      { get { if (this._scaler   is null && base.TryGetComponent(out UnityEngine.UI.CanvasScaler scaler))   { this._scaler   = scaler; }   return ref this._scaler!; } }
-  [ReadOnlyInInspector]  private     System.Collections.Generic.List<UnityEngine.Sprite>        sprites                     = new(1);
-  [ReadOnlyInInspector]  private     ref readonly UnityEngine.Camera?                           worldCamera                 { get { this._worldCamera ??= UnityEngine.Camera.main; return ref this._worldCamera; } }
+  [ReadOnlyInInspector]  private UnityEngine.Canvas                                         _canvas                     = null!;
+  [ReadOnlyInInspector]  private UnityEngine.CanvasRenderer                                 _canvasRenderer             = null!;
+  [ReadOnlyInInspector]  private UnityEngine.UI.CanvasScaler                                _canvasScaler               = null!;
+  [ReadOnlyInInspector]  private UnityEngine.EventSystems.EventSystem                       _eventSystem                = null!;
+  [ReadOnlyInInspector]  private UnityEngine.UI.GraphicRaycaster                            _graphicsRaycaster          = null!;
+  [ReadOnlyInInspector]  private UnityEngine.RectTransform                                  _rectTransform              = null!;
+  [ReadOnlyInInspector]  private UnityEngine.Camera?                                        _worldCamera                = null;
+  [ReadWriteInInspector] public  UI.Activity                                                activity                    = UI.Activity.MainMenu;
+  [ReadWriteInInspector] public  Timeframe                                                  activityChangeDuration      = new(1.00);
+  [ReadOnlyInInspector]  private UI.Activity?                                               activityPrior               = null;
+  [ReadWriteInInspector] public  UI.ActivityState                                           activityState               = UI.ActivityState.Any; // ->> For example: Game/ Pause menu in Heads-Up Display
+  [ReadOnlyInInspector]  private UI.ActivityState?                                          activityStatePrior          = null;
+  [ReadWriteInInspector] public  Timeframe                                                  activityStateChangeDuration = new(0.25);
+  [ReadWriteInInspector] public  System.Collections.Generic.List<UI.ActivityTransitionInfo> activityTransitions         = new(System.Enum.GetValues(typeof(UI.Activity)).Length); // --> System.Collections.Generic.Dictionary<UI.Activity, …>
+  [ReadOnlyInInspector]  private int                                                        applicationHeight           = -1;
+  [ReadOnlyInInspector]  private int                                                        applicationWidth            = -1;
+  [ReadWriteInInspector] public  UI.ActivityBackground                                      background                  = new() {entry = null, exit = null, transition = new(1.5), transitionEntry = new() {color = new(0.00f, 0.00f, 0.00f, 0.00f), container = null!, material = null!, sprite = null!, texture = null!}, transitionExit = new() {color = new(0.00f, 0.00f, 0.00f, 0.00f), container = null!, material = null!, sprite = null!, texture = null!}};
+  [ReadWriteInInspector] public  UI.Buttons                                                 buttons                     = new() {play = null, quit = null};
+  [ReadOnlyInInspector]  public  ref readonly UnityEngine.Canvas                            canvas                      { get { if (this._canvas         is null && base.TryGetComponent(out UnityEngine.Canvas          canvas))         { this._canvas         = canvas; }         return ref this._canvas!; } }
+  [ReadOnlyInInspector]  public  ref readonly UnityEngine.CanvasRenderer                    canvasRenderer              { get { if (this._canvasRenderer is null && base.TryGetComponent(out UnityEngine.CanvasRenderer  canvasRenderer)) { this._canvasRenderer = canvasRenderer; } return ref this._canvasRenderer!; } }
+  [ReadWriteInInspector] public  ref readonly UnityEngine.UI.CanvasScaler                   canvasScaler                { get { if (this._canvasScaler   is null && base.TryGetComponent(out UnityEngine.UI.CanvasScaler canvasScaler))   { this._canvasScaler   = canvasScaler; }   return ref this._canvasScaler!; } }
+  [ReadWriteInInspector] public  Timeframe                                                  controlSwitchDuration       = new(0.70);
+  [ReadWriteInInspector] public  Timeframe                                                  controlSwitchInterval       = new(5.00);
+  [ReadOnlyInInspector]  public  UI.Entities                                                entities                    = new() {playerHorizontalMovementDirection = UnityEngine.Vector3.zero, playerHorizontalMovementDuration = new(2.50), playerVerticalMovementDirection = UnityEngine.Vector3.zero, playerVerticalMovementDuration = new(2.50), statistics = new() {health = new(16), shoot = new(16)}};
+  [ReadOnlyInInspector]  public  ref readonly UnityEngine.EventSystems.EventSystem          eventSystem                 { get { if (this._eventSystem       is null && base.TryGetComponent(out UnityEngine.EventSystems.EventSystem eventSystem))       { this._eventSystem       = eventSystem; }       return ref this._eventSystem!; } }
+  [ReadOnlyInInspector]  public  ref readonly UnityEngine.UI.GraphicRaycaster               graphicsRaycaster           { get { if (this._graphicsRaycaster is null && base.TryGetComponent(out UnityEngine.UI.GraphicRaycaster      graphicsRaycaster)) { this._graphicsRaycaster = graphicsRaycaster; } return ref this._graphicsRaycaster!; } }
+  [ReadWriteInInspector] public  UI.HeadsUpDisplay                                          HUD                         = new() {desktop = null, desktopContainers = new(), desktopControls = new(), layout = null, layoutContainers = new(), layoutControls = new(), mobile = null, mobileContainers = new(), mobileControls = new()};
+  [ReadOnlyInInspector]  public  UI.Layout                                                  layout                      = UI.Layout.Responsive;
+  [ReadOnlyInInspector]  private ref readonly UnityEngine.RectTransform                     rectTransform               { get { this._rectTransform ??= (UnityEngine.RectTransform) base.transform; return ref this._rectTransform; } }
+  [ReadOnlyInInspector]  private System.Collections.Generic.List<UnityEngine.Sprite>        sprites                     = new(1);
+  [ReadOnlyInInspector]  private ref readonly UnityEngine.Camera?                           worldCamera                 { get { this._worldCamera ??= UnityEngine.Camera.main; return ref this._worldCamera; } }
 
   /* … */
   private void Awake() {
@@ -165,6 +182,26 @@ public sealed class UI : UnityEngine.MonoBehaviour {
     }
   }
 
+  public void ChangeLayout(UI.Layout layout) {
+    UI.main.layout = layout;
+
+    switch (layout) {
+      case UI.Layout.Desktop: {
+        UI.main.HUD.layout           = UI.main.HUD.desktop;
+        UI.main.HUD.layoutContainers = UI.main.HUD.desktopContainers;
+        UI.main.HUD.layoutControls   = UI.main.HUD.desktopControls;
+      } break;
+
+      case UI.Layout.Mobile: {
+        UI.main.HUD.layout           = UI.main.HUD.mobile;
+        UI.main.HUD.layoutContainers = UI.main.HUD.mobileContainers;
+        UI.main.HUD.layoutControls   = UI.main.HUD.mobileControls;
+      } break;
+
+      default: break;
+    }
+  }
+
   private Player? FindPlayer() {
     if (UI.main.worldCamera is UnityEngine.Camera worldCamera) {
       System.Collections.Generic.SortedList<float, Player> players = new(1);
@@ -198,18 +235,8 @@ public sealed class UI : UnityEngine.MonoBehaviour {
   }
 
   private void OnRectTransformDimensionsChange() {
-    if (null == UI.main)
-    return;
-
-    if (UnityEngine.Screen.height <= UnityEngine.Screen.width || UnityEngine.Screen.orientation switch { UnityEngine.ScreenOrientation.LandscapeLeft or UnityEngine.ScreenOrientation.LandscapeRight => true, _ => false }) {
-      if (null != UI.main.HUD.desktop) UI.main.ChangeContainer(UI.main.HUD.desktop, UI.ContainerVisibility.Visible);
-      if (null != UI.main.HUD.mobile)  UI.main.ChangeContainer(UI.main.HUD.mobile,  UI.ContainerVisibility.Hidden);
-    }
-
-    else {
-      if (null != UI.main.HUD.desktop) UI.main.ChangeContainer(UI.main.HUD.desktop, UI.ContainerVisibility.Hidden);
-      if (null != UI.main.HUD.mobile)  UI.main.ChangeContainer(UI.main.HUD.mobile,  UI.ContainerVisibility.Visible);
-    }
+    if (null != UI.main)
+    UI.main.ChangeLayout(UnityEngine.Screen.height <= UnityEngine.Screen.width || UnityEngine.Screen.orientation switch { UnityEngine.ScreenOrientation.LandscapeLeft or UnityEngine.ScreenOrientation.LandscapeRight => true, _ => false } ? UI.Layout.Desktop : UI.Layout.Mobile);
   }
 
   private void Start() {
@@ -263,7 +290,7 @@ public sealed class UI : UnityEngine.MonoBehaviour {
       foreach (UnityEngine.UI.Button button in controls.resume)  button.onClick.AddListener(static delegate { UI.main.ChangeActivity(UI.Activity.HUD, UI.ActivityState.Play); Game.IsPaused = false; });
       foreach (UnityEngine.UI.Button button in controls.stop)    button.onClick.AddListener(static delegate { UI.main.entities.playerHorizontalMovementDuration.Finish(); UI.main.entities.playerVerticalMovementDuration.Finish(); foreach (Entity entity in Entity.All) if (entity is Player) entity.rigidBody.angularVelocity = entity.rigidBody.linearVelocity = UnityEngine.Vector3.zero; });
 
-      foreach ((System.Collections.Generic.List<UnityEngine.UI.Button> buttons, UnityEngine.Events.UnityAction listener) in new (System.Collections.Generic.List<UnityEngine.UI.Button>, UnityEngine.Events.UnityAction)[] {
+      foreach (var (buttons, listener) in new System.ValueTuple<System.Collections.Generic.List<UnityEngine.UI.Button>, UnityEngine.Events.UnityAction>[] {
         (controls.moveDown,  static delegate { AttemptVerticalMove  (UnityEngine.Vector3.down); }),
         (controls.moveLeft,  static delegate { AttemptHorizontalMove(UnityEngine.Vector3.left); }),
         (controls.moveRight, static delegate { AttemptHorizontalMove(UnityEngine.Vector3.right); }),
@@ -307,13 +334,39 @@ public sealed class UI : UnityEngine.MonoBehaviour {
     int  activityIndex          = UI.main.activityTransitions.FindIndex(static entry => UI.main.activity == entry.activity);
     bool activityIsChanged      = UI.main.activity      != UI.main.activityPrior;
     bool activityStateIsChanged = UI.main.activityState != UI.main.activityStatePrior;
+    var  entitiesRemove         = new {statistics = new {
+      health = new bool[UI.main.entities.statistics.health.Count], // --> System.Collections.BitArray
+      shoot  = new bool[UI.main.entities.statistics.shoot .Count]
+    }};
 
-    // …
+    // … ->> Layout
     if (UnityEngine.Screen.height != this.applicationHeight || UnityEngine.Screen.width != this.applicationWidth) {
       this.applicationHeight = UnityEngine.Screen.height;
       this.applicationWidth  = UnityEngine.Screen.width;
 
       this.OnRectTransformDimensionsChange();
+    }
+
+    switch (UI.main.layout) {
+      case UI.Layout.Desktop: {
+        if (null != UI.main.HUD.desktop) {
+          UI.main.ChangeContainer(UI.main.HUD.desktop, UI.ContainerVisibility.Visible);
+
+          if (null != UI.main.HUD.mobile)
+          UI.main.ChangeContainer(UI.main.HUD.mobile, UI.ContainerVisibility.Hidden);
+        }
+      } break;
+
+      case UI.Layout.Mobile: {
+        if (null != UI.main.HUD.mobile) {
+          UI.main.ChangeContainer(UI.main.HUD.mobile, UI.ContainerVisibility.Visible);
+
+          if (null != UI.main.HUD.desktop)
+          UI.main.ChangeContainer(UI.main.HUD.desktop, UI.ContainerVisibility.Hidden);
+        }
+      } break;
+
+      default: break;
     }
 
     // … ->> Control Switching
@@ -467,9 +520,76 @@ public sealed class UI : UnityEngine.MonoBehaviour {
     if (UI.Activity.HUD == UI.main.activity)
     UI.main.ChangeActivity(UI.main.activity, Game.IsPaused ? UI.ActivityState.Pause : UI.ActivityState.Play);
 
-    // …
-    foreach (Entity entity in Entity.All) {
-      UI.main.entities.healthy.Add();
+    // … ->> Statistics
+    System.Array.Fill(entitiesRemove.statistics.health, true);
+    System.Array.Fill(entitiesRemove.statistics.shoot,  true);
+
+    foreach (var (statistics, statisticsRemove, DiagnoseStatistic) in new System.ValueTuple<System.Collections.Generic.List<(Entity entity, UnityEngine.RectTransform graphic)>, bool[], System.Func<Entity, (UnityEngine.RectTransform? prefabrication, float value)?>>[] {
+      (UI.main.entities.statistics.health, entitiesRemove.statistics.health, static entity => entity.statistics.health ? (Assets.main.UI.entities.healthStatisticPrefabrication, (float) entity.health)                       : null),
+      (UI.main.entities.statistics.shoot,  entitiesRemove.statistics.shoot,  static entity => entity.statistics.shoot  ? (Assets.main.UI.entities.shootStatisticPrefabrication,  (float) entity.shoot.cooldown.easedProgress) : null)
+    }) {
+      foreach (Entity entity in Entity.All) {
+        UnityEngine.RectTransform? statisticPrefabrication = DiagnoseStatistic(entity)?.prefabrication;
+        bool                       statisticAutomatically  = !entity.isDefeated && null != statisticPrefabrication;
+        int                        index                   = statistics.Count;
+
+        // …
+        while (0 != index--) {
+          if (entity == statistics[index].entity)
+          break;
+        }
+
+        if (index != -1) {
+          statisticsRemove[index] = !statisticAutomatically;
+          continue;
+        }
+
+        if (statisticAutomatically) {
+          UnityEngine.RectTransform statisticGraphic = (UnityEngine.RectTransform) ((UnityEngine.GameObject) UnityEngine.Object.Instantiate(statisticPrefabrication!.gameObject, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity)).transform;
+
+          // …
+          statistics.Add((entity, statisticGraphic));
+          statisticGraphic.SetParent(UI.main.rectTransform, false);
+        }
+      }
+
+      for (int index = statisticsRemove.Length; 0 != index--; )
+      if (statisticsRemove[index]) {
+        UnityEngine.Object.Destroy(statistics[index].graphic.gameObject);
+        statistics.RemoveAt(index);
+      }
+
+      // …
+      foreach ((Entity entity, UnityEngine.RectTransform graphic) in statistics) {
+        (UnityEngine.RectTransform? statisticPrefabrication, float statisticValue) = ((UnityEngine.RectTransform?, float)) DiagnoseStatistic(entity)!;
+        System.Collections.IEnumerator enumerator            = graphic.GetEnumerator();
+        UnityEngine.RectTransform      statisticGraphic      = enumerator.MoveNext() ? (UnityEngine.RectTransform) enumerator.Current : graphic;
+        float                          statisticGraphicWidth = statisticPrefabrication?.rect.width ?? 100.0f; // ->> Presumed
+
+        // …
+        graphic.localScale = (UnityEngine.Vector3.forward + UnityEngine.Vector3.up) + (UnityEngine.Vector3.right * (entity is Player ? 1.00f : 0.45f));
+
+        if (graphic != statisticGraphic) {
+          statisticGraphicWidth = graphic.rect.width;
+          graphic.SetSizeWithCurrentAnchors(UnityEngine.RectTransform.Axis.Horizontal, statisticGraphicWidth);
+        }
+
+        graphic.SetParent      (UI.main.HUD.layout!.transform, false);
+        graphic.SetSiblingIndex(0);
+        statisticGraphic.SetSizeWithCurrentAnchors(UnityEngine.RectTransform.Axis.Horizontal, statisticGraphicWidth * statisticValue);
+
+        if (null != entity.worldCamera) {
+          UnityEngine.Vector3 entityPosition   = entity.transform.position;
+          UnityEngine.Vector2 graphicOffset    = new(0.0f, 20.0f + (UI.main.entities.statistics.shoot == statistics ? -17.5f : 0.0f)); // ->> Presumed
+          UnityEngine.Vector2 graphicPosition  = entity.worldCamera.WorldToViewportPoint(new(entityPosition.x, entityPosition.y - entity.bounce.estimatedHeight, entityPosition.z));
+          UnityEngine.Vector2 graphicPrecision = new(50.0f, 30.0f);
+
+          // …
+          graphicPosition          = (UnityEngine.Vector2.Scale(graphicPosition, UI.main.rectTransform.sizeDelta) - (UI.main.rectTransform.sizeDelta * 0.5f)) / UI.main.canvas.scaleFactor;
+          graphicPosition          = new(graphicPrecision.x * UnityEngine.Mathf.Round(graphicPosition.x / graphicPrecision.x), graphicPrecision.y * UnityEngine.Mathf.Round(graphicPosition.y / graphicPrecision.y));
+          graphic.anchoredPosition = UnityEngine.Vector2.LerpUnclamped(graphic.anchoredPosition, graphicOffset + graphicPosition, 0.1f);
+        }
+      }
     }
   }
 }

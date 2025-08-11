@@ -1,0 +1,241 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3431602055539459973
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2254885636913627643}
+  - component: {fileID: 7019423881011327315}
+  - component: {fileID: 226481862303819851}
+  - component: {fileID: 8641841338375574318}
+  m_Layer: 0
+  m_Name: Nomad (Female)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2254885636913627643
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3431602055539459973}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5628854167550012860}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+--- !u!135 &7019423881011327315
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3431602055539459973}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 1
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!54 &226481862303819851
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3431602055539459973}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 7
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 116
+  m_CollisionDetection: 0
+--- !u!114 &8641841338375574318
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3431602055539459973}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a44444aaeb495bb4281196d02839b777, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bounce:
+    angle: 5
+    force: 0.75
+    speed: 5
+    turn: 0
+  bounceAutomatically: 1
+  bullets: []
+  contact:
+    damage: 4
+    repelForce: 2.5
+  defeat:
+    position: {x: 0, y: 0, z: 0}
+    timeout:
+      duration: 3
+  defeatAutomatically: 0
+  followAutomatically: 1
+  followers: []
+  following: {fileID: 0}
+  health: 1
+  healthMaximum: 45
+  isAggressive: 1
+  isInvincible: 0
+  moveAutomatically: 1
+  movement:
+    damping: 7
+    direction: {x: 0, y: 0, z: 0}
+    pause: 0.3
+    pauseRandomnessFactor: 0.75
+    speed: 7
+    speedFactor: 1
+    speedRandomnessFactor: 0.5
+  outline:
+    color: {r: 1, g: 1, b: 1, a: 1}
+    material: {fileID: 0}
+  prefollow:
+    bounceAutomatically: 0
+    isFollowing: 0
+    isInvincible: 0
+    localScale: {x: 0, y: 0, z: 0}
+    moveAutomatically: 0
+    movementSpeed: 0
+    targetBerth: 0
+  regeneration:
+    amount: 0
+    delay:
+      duration: 0
+    interval:
+      duration: 2
+  shadow:
+    material: {fileID: 0}
+  shoot:
+    bulletHealth: 1
+    bulletLifetime: 2
+    bulletMaterial: {fileID: 2100000, guid: be1823ad657ffb6468b91d87dfc478c4, type: 2}
+    cooldown:
+      duration: 1
+    damage: 2
+    repelForce: 3
+    speed: 5
+    spinAutomatically: 1
+    view: 21
+    volleyCount: 0
+    volleyRandomCount: 1
+    volleyDelay: 0.75
+  shootAutomatically: 1
+  statistics:
+    health: 1
+    shoot: 1
+  target: {fileID: 0}
+  targetAutomatically: 1
+  targetBerth: 4.5
+  team: 2
+  tracking:
+    cameras: []
+    lights: []
+  turn:
+    direction: {x: 0, y: 0, z: 0}
+    speed: 9
+  volumes: []
+  worldCameraDistance: {x: 0, y: 0, z: 0}
+  hair: {fileID: 0}
+  hairAutomatically: 1
+--- !u!1001 &3013992193662110676
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 2254885636913627643}
+    m_Modifications:
+    - target: {fileID: 7480035760675776104, guid: 699b986731a3ff14aaf63b3d5b7729d0, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7480035760675776104, guid: 699b986731a3ff14aaf63b3d5b7729d0, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7480035760675776104, guid: 699b986731a3ff14aaf63b3d5b7729d0, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7480035760675776104, guid: 699b986731a3ff14aaf63b3d5b7729d0, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7480035760675776104, guid: 699b986731a3ff14aaf63b3d5b7729d0, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7480035760675776104, guid: 699b986731a3ff14aaf63b3d5b7729d0, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7480035760675776104, guid: 699b986731a3ff14aaf63b3d5b7729d0, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7480035760675776104, guid: 699b986731a3ff14aaf63b3d5b7729d0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7480035760675776104, guid: 699b986731a3ff14aaf63b3d5b7729d0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7480035760675776104, guid: 699b986731a3ff14aaf63b3d5b7729d0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7819863346177129682, guid: 699b986731a3ff14aaf63b3d5b7729d0, type: 3}
+      propertyPath: m_Name
+      value: Mesh
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 699b986731a3ff14aaf63b3d5b7729d0, type: 3}
+--- !u!4 &5628854167550012860 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7480035760675776104, guid: 699b986731a3ff14aaf63b3d5b7729d0, type: 3}
+  m_PrefabInstance: {fileID: 3013992193662110676}
+  m_PrefabAsset: {fileID: 0}

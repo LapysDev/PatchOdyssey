@@ -54,10 +54,10 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
     }
   }
 
-  public void AttemptMoveDown (bool continuous = false) { if (!continuous) UI.main.playerVerticalDuration  .Finish(); base.movement.direction = UnityEngine.Vector3.back    + UnityEngine.Vector3.Scale(UnityEngine.Vector3.right,   base.movement.direction); this.isInputing = true; }
-  public void AttemptMoveLeft (bool continuous = false) { if (!continuous) UI.main.playerHorizontalDuration.Finish(); base.movement.direction = UnityEngine.Vector3.left    + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, base.movement.direction); this.isInputing = true; }
-  public void AttemptMoveRight(bool continuous = false) { if (!continuous) UI.main.playerHorizontalDuration.Finish(); base.movement.direction = UnityEngine.Vector3.right   + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, base.movement.direction); this.isInputing = true; }
-  public void AttemptMoveUp   (bool continuous = false) { if (!continuous) UI.main.playerVerticalDuration  .Finish(); base.movement.direction = UnityEngine.Vector3.forward + UnityEngine.Vector3.Scale(UnityEngine.Vector3.right,   base.movement.direction); this.isInputing = true; }
+  public void AttemptMoveDown (bool continuous = false) { if (!continuous) UI.main.entities.playerVerticalMovementDuration  .Finish(); base.movement.direction = UnityEngine.Vector3.back    + UnityEngine.Vector3.Scale(UnityEngine.Vector3.right,   base.movement.direction); this.isInputing = true; }
+  public void AttemptMoveLeft (bool continuous = false) { if (!continuous) UI.main.entities.playerHorizontalMovementDuration.Finish(); base.movement.direction = UnityEngine.Vector3.left    + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, base.movement.direction); this.isInputing = true; }
+  public void AttemptMoveRight(bool continuous = false) { if (!continuous) UI.main.entities.playerHorizontalMovementDuration.Finish(); base.movement.direction = UnityEngine.Vector3.right   + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, base.movement.direction); this.isInputing = true; }
+  public void AttemptMoveUp   (bool continuous = false) { if (!continuous) UI.main.entities.playerVerticalMovementDuration  .Finish(); base.movement.direction = UnityEngine.Vector3.forward + UnityEngine.Vector3.Scale(UnityEngine.Vector3.right,   base.movement.direction); this.isInputing = true; }
 
   public void AttemptRelease() {
     if (!this.releaseWindow.isElapsed) {
@@ -120,11 +120,11 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
 
     // …
     if (0 == base.followers.Count) {
-      if (this.lasooing is null) {
-        Lasoo                  lasoo     = new UnityEngine.GameObject("Lasoo", typeof(Lasoo)).GetComponent<Lasoo>();
+      if (this.lasooing is null && new UnityEngine.GameObject("Lasoo", typeof(Lasoo)).TryGetComponent(out Lasoo lasoo)) {
         UnityEngine.GameObject lasooCoil = (UnityEngine.GameObject) UnityEngine.Object.Instantiate(Assets.main.lasoo.meshPrefabrication,     UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity, lasoo    .transform);
         UnityEngine.GameObject lasooRope = (UnityEngine.GameObject) UnityEngine.Object.Instantiate(Assets.main.lasoo.ropeMeshPrefabrication, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity, lasooCoil.transform);
 
+        // …
         lasoo.user                                                              = this;
         lasoo.turnSpeed                                                         = this.lasoo.turnSpeed;
         lasoo.rope                                                              = lasooRope;
@@ -179,10 +179,10 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
 
   protected override void OnApplicationFocus(bool focused) {
     if (!focused) {
-      // if (this.lasooing is not null) // ->> Instant retraction
-      //   this.lasooing.reach = this.lasooing.retractReach;
+      if (this.lasooing is not null) // ->> Immediate retraction
+        this.lasooing.reach = this.lasooing.retractReach;
 
-      // this.RetractLasoo();
+      this.RetractLasoo();
     }
   }
 

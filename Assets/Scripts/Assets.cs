@@ -1,3 +1,6 @@
+using PatchOdyssey;
+
+/* … */
 [UnityEngine.DefaultExecutionOrder(0)]
 [UnityEngine.DisallowMultipleComponent]
 public sealed class Assets : UnityEngine.MonoBehaviour {
@@ -34,17 +37,18 @@ public sealed class Assets : UnityEngine.MonoBehaviour {
   public /* readonly */ struct Spawnable {
     [System.Serializable]
     public /* readonly */ struct Monsters {
-      public /* readonly */ System.Collections.Generic.List<UnityEngine.GameObject> antilleryPrefabrication;
-      public /* readonly */ System.Collections.Generic.List<UnityEngine.GameObject> borkaPrefabrication;
-      public /* readonly */ System.Collections.Generic.List<UnityEngine.GameObject> molemPrefabrication;
-      public /* readonly */ System.Collections.Generic.List<UnityEngine.GameObject> sirpensPrefabrication;
-      public /* readonly */ System.Collections.Generic.List<UnityEngine.GameObject> tyragePrefabrication;
+      public /* readonly */ System.Collections.Generic.List<Monster> antilleryPrefabrication;
+      public /* readonly */ System.Collections.Generic.List<Monster> borkaPrefabrication;
+      public /* readonly */ System.Collections.Generic.List<Monster> molemPrefabrication;
+      public /* readonly */ System.Collections.Generic.List<Monster> sirpensPrefabrication;
+      public /* readonly */ System.Collections.Generic.List<Monster> tyragePrefabrication;
     }
 
     [System.Serializable]
     public /* readonly */ struct Tamers {
-      public /* readonly */ System.Collections.Generic.List<UnityEngine.GameObject> magnatePrefabrication;
-      public /* readonly */ System.Collections.Generic.List<UnityEngine.GameObject> nomadPrefabrication;
+      public /* readonly */ System.Collections.Generic.List<Tamer> explorerPrefabrication;
+      public /* readonly */ System.Collections.Generic.List<Tamer> magnatePrefabrication;
+      public /* readonly */ System.Collections.Generic.List<Tamer> nomadPrefabrication;
     }
 
     /* … */
@@ -53,15 +57,20 @@ public sealed class Assets : UnityEngine.MonoBehaviour {
   }
 
   [System.Serializable]
-  public /* readonly */ struct UI {
-    public /* readonly */ UnityEngine.UI.RawImage ammobar;
-    public /* readonly */ UnityEngine.UI.RawImage healthbar;
+  public /* readonly */ struct UserInterface {
+    [System.Serializable]
+    public /* readonly */ struct Entities {
+      public UnityEngine.RectTransform? healthStatisticPrefabrication;
+      public UnityEngine.RectTransform? shootStatisticPrefabrication;
+    }
+
+    public /* readonly */ Assets.UserInterface.Entities entities;
   }
 
   /* … */
   public static Assets main = null!;
 
-  public Assets.Bullet                 bullet               = new() {material  = null,    prefabrication      = null!};
+  public Assets.Bullet                 bullet               = new() {material = null, prefabrication = null!};
   public Assets.Hairs                  hairs                = new() {materials = new(21), meshPrefabrications = new(8)};
   public Assets.Lasoo                  lasoo                = new() {captureIndicatorMaterial = null, meshPrefabrication = null!, ropeMeshPrefabrication = null!};
   public bool                          outlineAutomatically = true;
@@ -70,7 +79,7 @@ public sealed class Assets : UnityEngine.MonoBehaviour {
   public bool                          shadowAutomatically  = true;
   public UnityEngine.Material?         shadowMaterial       = null;
   public Assets.Spawnable              spawnables           = new() {monsters = new() {antilleryPrefabrication = new(1), borkaPrefabrication = new(1), molemPrefabrication = new(1), sirpensPrefabrication = new(1), tyragePrefabrication = new(1)}, tamers = new() {magnatePrefabrication = new(2), nomadPrefabrication = new(2)}};
-  public Assets.UI                     ui                   = new() {ammobar = null, healthbar = null};
+  public Assets.UserInterface          UI                   = new() {entities = new() {healthStatisticPrefabrication = null, shootStatisticPrefabrication = null}};
   public UnityEngine.Rendering.Volume? volume               = null;
 
   /* … */
