@@ -120,7 +120,6 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
   public const           float                                   DefeatedSwayFactor                 = 1.00f;
   public static          UnityEngine.Vector3                     MovementVelocityThreshold { get; } = UnityEngine.Vector3.one * 1.0f; // ->> Threshold velocity determining `Entity` movement
 
-  [ReadOnlyInInspector]                                           protected                UnityEngine.Camera?                                           actualWorldCamera   = null;
   [ReadOnlyInInspector]                                           protected                bool                                                          actuallyDefeated    = false;
   [ReadWriteInInspector]                                          public                   Entity.BounceInfo                                             bounce              = new() {angle = 10.00f, estimatedHeight = 0.00f, force = 0.75f, speed = 5.00f, turn = Entity.TurnDirection.Clockwise};
   [ReadWriteInInspector]                                          public                   bool                                                          bounceAutomatically = true;
@@ -142,6 +141,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
   [ReadWriteInInspector, UnityEngine.SerializeField]              protected                Entity.Prefollow                                              prefollow           = new() {bounceAutomatically = true, isFollowing = false, isInvincible = false, localScale = UnityEngine.Vector3.one, moveAutomatically = true, movementSpeed = 2.00f, targetBerth = 2.25f};
   [ReadOnlyInInspector]                                           protected                bool                                                          prefollowIsUpdated  = false;
   [ReadWriteInInspector]                                          public                   Entity.RegenInfo                                              regeneration        = new() {amount = 0.00f, delay = new(0.00), interval = new(2.00)};
+  [ReadWriteInInspector]                                          public                   uint                                                          score               = 10u;
   [ReadWriteInInspector]                                          public                   Entity.ShadowInfo                                             shadow              = new() {material = null};
   [ReadWriteInInspector]                                          public                   Entity.ShootInfo                                              shoot               = new() {bulletHealth = (byte) 1u, bulletLifetime = 2.0f, bulletMaterial = null, cooldown = new(1.00, Timeframe.EaseOutSine), damage = 6.75f, isAllowed = static allowed => allowed, repelForce = 1.0f, speed = 3.50f, spinAutomatically = true, view = 21.0f, volleyCount = (byte) 0u, volleyRandomCount = (byte) 0u, volleyDelay = 0.0f};
   [ReadWriteInInspector]                                          public                   bool                                                          shootAutomatically  = true; // ->> Auto-fire â€œfriendliness pelletsâ€
@@ -154,8 +154,6 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
   [ReadWriteInInspector]                                          public                   Entity.TrackingInfo                                           tracking            = new() {cameras = new(1), lights = new(1)};
   [ReadWriteInInspector]                                          public                   Entity.TurnInfo                                               turn                = new() {direction = UnityEngine.Vector3.zero, speed = 9.00f};
   [ReadOnlyInInspector, UnityEngine.SerializeField]               protected /* readonly */ System.Collections.Generic.List<UnityEngine.Rendering.Volume> volumes             = new(1);
-  [ReadOnlyInInspector]                                           public                   ref readonly UnityEngine.Camera?                              worldCamera         { get { if (this.actualWorldCamera is null) { this.actualWorldCamera = UnityEngine.Camera.main; if (this.actualWorldCamera is not null) { this.worldCameraDistance = this.actualWorldCamera.transform.position - this.transform.position; if (!this.tracking.cameras.Contains(this.actualWorldCamera)) { this.tracking.cameras.Add(this.actualWorldCamera); this.PublishTracked(); } } } return ref this.actualWorldCamera; } }
-  [ReadOnlyInInspector, UnityEngine.SerializeField]               private                  UnityEngine.Vector3                                           worldCameraDistance = UnityEngine.Vector3.zero;
   [ReadOnlyInInspector, System.NonSerialized]                     public                   UnityEngine.Rendering.VolumeComponent?                        worldVignette       = null;
 
   /* â€¦ */
@@ -170,6 +168,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     this.prefollow.bounceAutomatically    = this.bounceAutomatically;
     this.movement.pauseCooldown.duration  = this.movement.pause;
     this.defeat.timeout.easing            = Timeframe.EaseInOutQuintic;
+    this.defeat.position                  = this.transform.localPosition;
     base.rigidBody.useGravity             = false;
     base.rigidBody.linearDamping          = this.movement.damping;
     base.rigidBody.isKinematic            = false;
@@ -188,6 +187,9 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     // â€¦ ->> Moving
     this.movement.pauseCooldown.Reset();
     this.movement.pauseCooldown.Wait (UnityEngine.Random.value * (this.movement.pause + this.movement.pauseRandomnessFactor));
+
+    // â€¦ ->> Shooting
+    this.shoot.cooldown.Reset();
 
     // â€¦ ->> Outlining
     if (Assets.main.outlineAutomatically && null != Assets.main.outlineMaterial) {
@@ -389,7 +391,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     this.prefollow.isFollowing = null != this.following;
   }
 
-  private void PublishTracked() {
+  protected void PublishTracked() {
     UnityEngine.Vector3 position      = this.transform.position;
     bool[]              trackedRemove = new bool[this.tracked.Count]; // --> System.Collections.BitArray
 
@@ -534,7 +536,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     }
 
     else {
-      UnityEngine.Vector3 transformToCameraDirection     = this.worldCamera is not null ? (this.worldCamera.transform.position - this.transform.position).normalized : UnityEngine.Vector3.forward;
+      UnityEngine.Vector3 transformToCameraDirection     = base.worldCamera is not null ? (base.worldCamera.transform.position - this.transform.position).normalized : UnityEngine.Vector3.forward;
       float               transformForwardToCameraFactor = UnityEngine.Mathf.Abs(UnityEngine.Vector3.Dot(transformToCameraDirection, this.transform.forward));
       float               transformRightToCameraFactor   = UnityEngine.Mathf.Abs(UnityEngine.Vector3.Dot(transformToCameraDirection, this.transform.right));
       float               transformToCameraFactors       = transformForwardToCameraFactor + transformRightToCameraFactor;

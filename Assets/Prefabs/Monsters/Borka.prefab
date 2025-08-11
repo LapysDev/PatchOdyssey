@@ -143,6 +143,7 @@ MonoBehaviour:
       duration: 0
     interval:
       duration: 2
+  score: 50
   shadow:
     material: {fileID: 0}
   shoot:
@@ -174,7 +175,11 @@ MonoBehaviour:
     direction: {x: 0, y: 0, z: 0}
     speed: 13.5
   volumes: []
-  worldCameraDistance: {x: 0, y: 0, z: 0}
+  camouflage:
+    color: {r: 0.537, g: 0.678, b: 0.416, a: 0.5}
+    colorPrior: {r: 0, g: 0, b: 0, a: 0}
+    considerations: []
+    material: {fileID: 0}
   kind: 1
   mountAutomatically: 1
   mountIsUsed: 0

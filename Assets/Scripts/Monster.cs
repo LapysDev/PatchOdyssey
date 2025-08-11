@@ -463,7 +463,7 @@ public sealed class Monster : Entity {
 
         /* … */
         System.Array.Sort(this.camouflage.considerations, (considerationA, considerationB) => System.Math.Sign(GetCamouflagePriority(considerationA) - GetCamouflagePriority(considerationB)));
-        this.camouflage.color = this.camouflage.considerations[0].sharedMaterial.color;
+        this.camouflage.color = UnityEngine.Color.LerpUnclamped(this.camouflage.colorPrior, this.camouflage.considerations[0].sharedMaterial.color, 0.675f);
       }
 
       this.camouflage.material.color = UnityEngine.Color.LerpUnclamped(this.camouflage.material.color, this.camouflage.color, 0.2f);

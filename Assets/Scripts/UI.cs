@@ -60,8 +60,12 @@ public sealed class UI : UnityEngine.MonoBehaviour {
   public /* readonly */ struct HeadsUpDisplay {
     [System.Serializable]
     public sealed class Containers {
-      [ReadWriteInInspector] public TMPro.TextMeshProUGUI?   area  = null;
-      [ReadWriteInInspector] public UnityEngine.CanvasGroup? pause = null;
+      [ReadWriteInInspector] public TMPro.TextMeshProUGUI?   area     = null;
+      [ReadWriteInInspector] public UnityEngine.CanvasGroup? chat     = null;
+      [ReadWriteInInspector] public TMPro.TextMeshProUGUI?   chatName = null;
+      [ReadWriteInInspector] public TMPro.TextMeshProUGUI?   chatText = null;
+      [ReadWriteInInspector] public UnityEngine.CanvasGroup? pause    = null;
+      [ReadWriteInInspector] public TMPro.TextMeshProUGUI?   score    = null;
     }
 
     [System.Serializable]
@@ -128,7 +132,8 @@ public sealed class UI : UnityEngine.MonoBehaviour {
   [ReadOnlyInInspector]  public  ref readonly UnityEngine.UI.GraphicRaycaster               graphicsRaycaster           { get { if (this._graphicsRaycaster is null && base.TryGetComponent(out UnityEngine.UI.GraphicRaycaster      graphicsRaycaster)) { this._graphicsRaycaster = graphicsRaycaster; } return ref this._graphicsRaycaster!; } }
   [ReadWriteInInspector] public  UI.HeadsUpDisplay                                          HUD                         = new() {desktop = null, desktopContainers = new(), desktopControls = new(), layout = null, layoutContainers = new(), layoutControls = new(), mobile = null, mobileContainers = new(), mobileControls = new()};
   [ReadOnlyInInspector]  public  UI.Layout                                                  layout                      = UI.Layout.Responsive;
-  [ReadOnlyInInspector]  private ref readonly UnityEngine.RectTransform                     rectTransform               { get { this._rectTransform ??= (UnityEngine.RectTransform) base.transform; return ref this._rectTransform; } }
+  [ReadOnlyInInspector]  public  ref readonly UnityEngine.RectTransform                     rectTransform               { get { this._rectTransform ??= (UnityEngine.RectTransform) base.transform; return ref this._rectTransform; } }
+  [ReadOnlyInInspector]  public  Timeframe                                                  scoreTimer                  = new(2.00, Timeframe.EaseInOut);
   [ReadOnlyInInspector]  private System.Collections.Generic.List<UnityEngine.Sprite>        sprites                     = new(1);
   [ReadOnlyInInspector]  private ref readonly UnityEngine.Camera?                           worldCamera                 { get { this._worldCamera ??= UnityEngine.Camera.main; return ref this._worldCamera; } }
 
@@ -165,8 +170,8 @@ public sealed class UI : UnityEngine.MonoBehaviour {
     }
   }
 
-  private void ChangeContainer(UnityEngine.CanvasGroup container, UI.ContainerVisibility visibility) => UI.main.ChangeContainer(container, visibility, new(0.0));
-  private void ChangeContainer(UnityEngine.CanvasGroup container, UI.ContainerVisibility visibility, in Timeframe transition) {
+  public void ChangeContainer(UnityEngine.CanvasGroup container, UI.ContainerVisibility visibility) => UI.main.ChangeContainer(container, visibility, new(0.0));
+  public void ChangeContainer(UnityEngine.CanvasGroup container, UI.ContainerVisibility visibility, in Timeframe transition) {
     switch (visibility) {
       case UI.ContainerVisibility.Hidden: {
         container.alpha          = 1.0f - (float) transition.progress;
@@ -443,7 +448,7 @@ public sealed class UI : UnityEngine.MonoBehaviour {
 
       for (int index = UI.main.activityTransitions.Count; 0 != index--; ) {
         if (activityIndex != index)
-        UI.main.ChangeContainer(UI.main.activityTransitions[index].container, UI.ContainerVisibility.Hidden, UI.main.activityChangeDuration);
+        UI.main.ChangeContainer(UI.main.activityTransitions[index].container, UI.ContainerVisibility.Hidden, null != UI.main.activityPrior ? UI.main.activityChangeDuration : new(0.0));
       }
 
       // … ->> Color
@@ -519,6 +524,16 @@ public sealed class UI : UnityEngine.MonoBehaviour {
     // … ->> Activity
     if (UI.Activity.HUD == UI.main.activity)
     UI.main.ChangeActivity(UI.main.activity, Game.IsPaused ? UI.ActivityState.Pause : UI.ActivityState.Play);
+
+    // … ->> Score
+    foreach (UI.HeadsUpDisplay.Containers containers in UI.main.HUD.containers) {
+      if (null != containers.score)
+      containers.score.text = ((ulong) ((double) Stats.ScorePrior + (((double) Stats.Score - Stats.ScorePrior) * UI.main.scoreTimer.easedProgress))).ToString(
+        UI.main.HUD.desktopContainers == containers ? "D6" :
+        UI.main.HUD.mobileContainers  == containers ? "D5" :
+        "D0"
+      );
+    }
 
     // … ->> Statistics
     System.Array.Fill(entitiesRemove.statistics.health, true);

@@ -143,6 +143,7 @@ MonoBehaviour:
       duration: 0
     interval:
       duration: 2
+  score: 100
   shadow:
     material: {fileID: 0}
   shoot:
@@ -174,9 +175,8 @@ MonoBehaviour:
     direction: {x: 0, y: 0, z: 0}
     speed: 9
   volumes: []
-  worldCameraDistance: {x: 0, y: 0, z: 0}
-  hair: {fileID: 0}
   hairAutomatically: 1
+  skinAutomatically: 1
 --- !u!1001 &5139759551294146940
 PrefabInstance:
   m_ObjectHideFlags: 0

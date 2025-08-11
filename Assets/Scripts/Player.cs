@@ -37,6 +37,7 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
   public  static          bool                  IsReady                            = false;
 
   [UnityEngine.Header("Player")]
+  [ReadOnlyInInspector]  public bool             isChatting    = false;
   [ReadOnlyInInspector]  public bool             isInputing    = false; // ->> Only significant actions count
   [ReadOnlyInInspector]  public bool             isLassoing    = false;
   [ReadWriteInInspector] public Player.LasooInfo lasoo         = new() {captureDirection = UnityEngine.Vector3.zero, captureIndicator = (null, null), captureIndicatorMesh = (null, null), captureIndicatorRenderer = (null, null), captureProgress = Player.LasooCaptureProgress.Initiating, captureProgressDirection = UnityEngine.Vector3.zero, captureProgressTurn = Entity.TurnDirection.Clockwise, captureProgressTurnCount = 0u, deployReach = Lasoo.DeployReach, deploySpeed = Lasoo.DeploySpeed, retractReach = Lasoo.RetractReach, retractSpeed = Lasoo.RetractSpeed, turnSpeed = Lasoo.TurnSpeed};
@@ -51,6 +52,12 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
     base.collider.isTrigger  = false;
     base.followAutomatically = false;
     base.shootAutomatically  = false;
+
+    // …
+    if (base.worldCamera is not null && !this.tracking.cameras.Contains(base.worldCamera)) {
+      base.tracking.cameras.Add(base.worldCamera);
+      base.PublishTracked();
+    }
 
     if (null != Assets.main.volume && Assets.main.volume.profile is UnityEngine.Rendering.VolumeProfile volumeProfile)
     switch (base.worldVignette = (
@@ -68,9 +75,6 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
         universalRenderVignette.intensity.overrideState = true;
       } break;
     }
-
-    // … ->> Grab the main camera and setup `Entity::tracking.cameras` early
-    ((System.Action<UnityEngine.Camera?>) (static _ => {}))(base.worldCamera);
   }
 
   protected override void Capture(Entity entity) {
@@ -235,6 +239,10 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
     // … ->> Input
     Player.IsReady = Player.IsReady || this.isInputing;
     this.isInputing = false;
+      // … ->> Chatting
+      this.isChatting = Game.Keyboard.eKey.wasReleasedThisFrame || UnityEngine.Input.GetKeyUp(UnityEngine.KeyCode.E);
+      this.isInputing = this.isInputing || this.isChatting;
+
       // … ->> Moving
       base.followAutomatically = false;
       base.movement.direction  = UnityEngine.Vector3.zero;

@@ -7,17 +7,20 @@ public sealed class Area : GameComponent {
   public static Timeframe EntryTransition = new(2.0, Timeframe.EaseIn);
   public static Timeframe ExitTransition  = new(1.0, Timeframe.EaseOut);
 
-  [ReadWriteInInspector]                            public           bool                                    alternativeAutomatically = true;
-  [ReadWriteInInspector]                            public           string                                  areaName                 = string.Empty;
-  [ReadOnlyInInspector, UnityEngine.SerializeField] private          bool                                    isLocked                 = false;
-  [ReadWriteInInspector]                            public           bool                                    respawnAutomatically     = false;
-  [ReadOnlyInInspector, UnityEngine.SerializeField] private          uint                                    spawnCount               = 0u;
-  [ReadWriteInInspector]                            public           float                                   spawnDelay               = 1.0f;
-  [ReadWriteInInspector]                            public           System.Collections.Generic.List<Entity> spawnPrefabrications     = new();
-  [ReadWriteInInspector]                            private readonly System.Collections.Generic.List<Entity> spawns                   = new();
+  [ReadWriteInInspector]                            public           bool                                                                        alternativeAutomatically = true;
+  [ReadWriteInInspector]                            public           string                                                                      areaName                 = string.Empty;
+  [ReadOnlyInInspector, UnityEngine.SerializeField] private          bool                                                                        isLocked                 = false;
+  [ReadWriteInInspector]                            public           bool                                                                        respawnAutomatically     = false;
+  [ReadOnlyInInspector, UnityEngine.SerializeField] private          uint                                                                        spawnCount               = 0u;
+  [ReadWriteInInspector]                            public           float                                                                       spawnDelay               = 1.0f;
+  [ReadWriteInInspector]                            public           System.Collections.Generic.List<Entity>                                     spawnPrefabrications     = new();
+  [ReadWriteInInspector]                            private readonly System.Collections.Generic.List<(Entity entity, UnityEngine.Vector3, uint)> spawns                   = new();
 
   /* … ->> Must be hollow to work? */
-  private void Awake() => this.spawns.Capacity = this.spawnPrefabrications.Count;
+  private void Awake() {
+    this.areaName        = string.IsNullOrEmpty(this.areaName) ? base.name : this.areaName;
+    this.spawns.Capacity = this.spawnPrefabrications.Count;
+  }
 
   private void OnTriggerEnter(UnityEngine.Collider collider) {
     if (collider.TryGetComponent(out Player _)) {
@@ -69,10 +72,8 @@ public sealed class Area : GameComponent {
     // … ->> Spawning
     if (this.isLocked) {
       System.Collections.IEnumerator DeployEntity() {
-        if (this.spawnCount == this.spawnPrefabrications.Count) {
-          UnityEditor.EditorApplication.isPaused = true;
-          yield break;
-        }
+        if (this.spawnCount == this.spawnPrefabrications.Count)
+        yield break;
 
         /* … */
         Entity              entity;
@@ -112,7 +113,7 @@ public sealed class Area : GameComponent {
         }
 
         entity = UnityEngine.Object.Instantiate(spawnPrefabrication, spawnPosition, UnityEngine.Quaternion.identity).GetComponent<Entity>();
-        this.spawns.Add(entity);
+        this.spawns.Add((entity, entity.defeat.position, entity.score + (uint) (UnityEngine.Random.value * entity.score * 0.2f)));
 
         if (entity is Tamer tamer && UnityEngine.Random.value > 0.2f) {
           Monster monster;
@@ -150,10 +151,61 @@ public sealed class Area : GameComponent {
         this.isLocked = false;
 
         for (int index = this.spawns.Count; 0 != index--; ) {
-          if (Entity.Team.Player != this.spawns[index].team)
-          this.isLocked = true;
+          (Entity entity, UnityEngine.Vector3 defeatPosition, uint score) = this.spawns[index];
 
-          if (null == this.spawns[index])
+          // …
+          if (null != entity) {
+            this.isLocked      = this.isLocked || Entity.Team.Player != entity.team;
+            this.spawns[index] = (entity, entity.defeat.position, score);
+
+            continue;
+          }
+
+          // … ->> Render score above defeated `entity`
+          if (null != Assets.main.primitives.text && 0u != score) {
+            TMPro.TextMeshProUGUI     scoreText          = UnityEngine.Object.Instantiate(Assets.main.primitives.text, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity, UI.main.HUD.layout!.transform).GetComponent<TMPro.TextMeshProUGUI>();
+            UnityEngine.Vector2       scoreTextPosition  = (UnityEngine.Vector2.Scale(this.worldCamera!.WorldToViewportPoint(defeatPosition), UI.main.rectTransform.sizeDelta) - (UI.main.rectTransform.sizeDelta * 0.5f)) / UI.main.canvas.scaleFactor;
+            UnityEngine.RectTransform scoreTextTransform = (UnityEngine.RectTransform) scoreText.transform;
+
+            /* … */
+            System.Collections.IEnumerator DestroyScoreText() {
+              yield return new UnityEngine.WaitForSecondsRealtime((float) UI.main.scoreTimer.duration);
+              UnityEngine.Object.Destroy(scoreText.gameObject);
+            }
+
+            /* … */
+            scoreText.CrossFadeAlpha(0.25f, (float) UI.main.scoreTimer.duration * 0.75f, true);
+            scoreText.transform.SetSiblingIndex(0);
+
+            scoreTextTransform.anchorMin        = new(0.5f, 0.5f);
+            scoreTextTransform.anchorMax        = new(0.5f, 0.5f);
+            scoreTextTransform.anchoredPosition = scoreTextPosition;
+            scoreText.text                      = score.ToString();
+            scoreText.richText                  = false;
+            scoreText.overrideColorTags         = true;
+            scoreText.overflowMode              = TMPro.TextOverflowModes.Overflow;
+            scoreText.outlineWidth              = 1.5f;
+            scoreText.outlineColor              = new((byte) 0u, (byte) 0u, (byte) 0u, (byte) 127u);
+            scoreText.maskable                  = false;
+            scoreText.margin                    = UnityEngine.Vector4.zero;
+            scoreText.isOrthographic            = true;
+            scoreText.extraPadding              = false;
+            scoreText.enableVertexGradient      = false;
+            scoreText.color                     = UnityEngine.Color.white;
+            scoreText.autoSizeTextContainer     = true;
+            scoreText.alignment                 = TMPro.TextAlignmentOptions.Center | TMPro.TextAlignmentOptions.Midline;
+
+            base.StartCoroutine(DestroyScoreText());
+
+            #if DEBUG || DEVELOPMENT_BUILD
+              UnityEngine.Debug.DrawRay(defeatPosition, UnityEngine.Vector3.forward, UnityEngine.Color.cyan,    2.0f, false);
+              UnityEngine.Debug.DrawRay(defeatPosition, UnityEngine.Vector3.right,   UnityEngine.Color.magenta, 2.0f, false);
+              UnityEngine.Debug.DrawRay(defeatPosition, UnityEngine.Vector3.up,      UnityEngine.Color.yellow,  2.0f, false);
+            #endif
+          }
+
+          // …
+          Stats.Score += score;
           this.spawns.RemoveAt(index);
         }
       }
@@ -161,8 +213,8 @@ public sealed class Area : GameComponent {
       // …
       if (!this.isLocked) {
         for (int index = this.spawns.Count; 0 != index--; )
-        if (this.spawns[index] is not Monster monster || !monster.isMounted) {
-          UnityEngine.Object.Destroy(this.spawns[index]);
+        if (this.spawns[index].entity is not Monster monster || !monster.isMounted) {
+          this.spawns[index].entity.isDefeated = true;
           this.spawns.RemoveAt(index);
         }
 

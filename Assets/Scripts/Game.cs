@@ -165,14 +165,17 @@ namespace PatchOdyssey {
 
   [UnityEngine.DisallowMultipleComponent]
   public abstract class GameComponent : UnityEngine.MonoBehaviour {
-    private       UnityEngine.Collider                _collider  = null!;
-    private       UnityEngine.Collider[]              _colliders = null!;
-    private       UnityEngine.Rigidbody               _rigidBody = null!;
-    private       UnityEngine.Transform               _transform = null!;
-    public    new ref readonly UnityEngine.Collider   collider  { get { if (this._collider is null && base.TryGetComponent(out UnityEngine.Collider collider)) { this._collider = collider; /* --> base.collider */ } return ref this._collider!; } }
-    protected     ref readonly UnityEngine.Collider[] colliders { get { this._colliders ??= base.GetComponents<UnityEngine.Collider>();                                                                               return ref this._colliders; } }
-    public        ref readonly UnityEngine.Rigidbody  rigidBody { get { if (this._rigidBody is null && base.TryGetComponent(out UnityEngine.Rigidbody rigidBody)) { this._rigidBody = rigidBody; }                    return ref this._rigidBody!; } }
-    public    new ref readonly UnityEngine.Transform  transform { get { this._transform ??= base.transform;                                                                                                           return ref this._transform; } }
+    private       UnityEngine.Collider                _collider           = null!;
+    private       UnityEngine.Collider[]              _colliders          = null!;
+    private       UnityEngine.Rigidbody               _rigidBody          = null!;
+    private       UnityEngine.Transform               _transform          = null!;
+    protected     UnityEngine.Camera?                 actualWorldCamera   = null;
+    public    new ref readonly UnityEngine.Collider   collider            { get { if (this._collider is null && base.TryGetComponent(out UnityEngine.Collider collider)) { this._collider = collider; /* --> base.collider */ } return ref this._collider!; } }
+    public        ref readonly UnityEngine.Collider[] colliders           { get { this._colliders ??= base.GetComponents<UnityEngine.Collider>();                                                                               return ref this._colliders; } }
+    public        ref readonly UnityEngine.Rigidbody  rigidBody           { get { if (this._rigidBody is null && base.TryGetComponent(out UnityEngine.Rigidbody rigidBody)) { this._rigidBody = rigidBody; }                    return ref this._rigidBody!; } }
+    public    new ref readonly UnityEngine.Transform  transform           { get { this._transform ??= base.transform;                                                                                                           return ref this._transform; } }
+    public        ref readonly UnityEngine.Camera?    worldCamera         { get { if (this.actualWorldCamera is null) { this.actualWorldCamera = UnityEngine.Camera.main; if (this.actualWorldCamera is not null) { this.worldCameraDistance = this.actualWorldCamera.transform.position - this.transform.position; } } return ref this.actualWorldCamera; } }
+    protected     UnityEngine.Vector3                 worldCameraDistance = UnityEngine.Vector3.zero;
 
     /* … */
     protected virtual void Update() {
