@@ -76,6 +76,7 @@ public sealed class Assets : UnityEngine.MonoBehaviour {
   public Assets.Lasoo                                          lasoo                = new() {captureIndicatorMaterial = null, meshPrefabrication = null!, ropeMeshPrefabrication = null!};
   public bool                                                  outlineAutomatically = true;
   public UnityEngine.Material?                                 outlineMaterial      = null;
+  public Player                                                playerPrefabrication = null!;
   public Assets.Primitives                                     primitives           = new() {capsule = null, cube = null, cylinder = null, plane = null, quad = null, sphere = null, text = null};
   public bool                                                  shadowAutomatically  = true;
   public UnityEngine.Material?                                 shadowMaterial       = null;

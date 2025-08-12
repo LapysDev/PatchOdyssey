@@ -375,7 +375,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     return;
 
     // â€¦
-    this.movement.pauseCooldown.duration = this.movement.pauseCooldown.isLooped ? this.movement.pause + (UnityEngine.Random.value * this.movement.pauseRandomnessFactor * (UnityEngine.Random.value < 0.5 ? +1.0 : -1.0)) : this.movement.pauseCooldown.duration;
+    this.movement.pauseCooldown.duration = (this is not Player ? this.movement.pauseCooldown.isLooped : this.movement.pauseCooldown.isElapsed) ? this.movement.pause + (UnityEngine.Random.value * this.movement.pauseRandomnessFactor * (UnityEngine.Random.value < 0.5 ? +1.0 : -1.0)) : this.movement.pauseCooldown.duration;
     this.prefollowIsUpdated              = false;
 
     if (null == this.following || this.prefollow.isFollowing != (null != this.following)) {

@@ -11,6 +11,7 @@ public sealed class Area : GameComponent {
   [ReadWriteInInspector]                            public           string                                                                      areaName                 = string.Empty;
   [ReadOnlyInInspector, UnityEngine.SerializeField] private          bool                                                                        isLocked                 = false;
   [ReadWriteInInspector]                            public           bool                                                                        respawnAutomatically     = false;
+  [ReadWriteInInspector]                            public           bool                                                                        scoreAutomatically       = true;
   [ReadOnlyInInspector, UnityEngine.SerializeField] private          uint                                                                        spawnCount               = 0u;
   [ReadWriteInInspector]                            public           float                                                                       spawnDelay               = 1.0f;
   [ReadWriteInInspector]                            public           System.Collections.Generic.List<Entity>                                     spawnPrefabrications     = new();
@@ -18,7 +19,7 @@ public sealed class Area : GameComponent {
 
   /* … ->> Must be hollow to work? */
   private void Awake() {
-    this.areaName        = string.IsNullOrEmpty(this.areaName) ? base.name : this.areaName;
+    this.areaName        = string.IsNullOrWhiteSpace(this.areaName) ? base.name : this.areaName;
     this.spawns.Capacity = this.spawnPrefabrications.Count;
   }
 
@@ -162,50 +163,53 @@ public sealed class Area : GameComponent {
           }
 
           // … ->> Render score above defeated `entity`
-          if (null != Assets.main.primitives.text && 0u != score) {
-            TMPro.TextMeshProUGUI     scoreText          = UnityEngine.Object.Instantiate(Assets.main.primitives.text, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity, UI.main.HUD.layout!.transform).GetComponent<TMPro.TextMeshProUGUI>();
-            UnityEngine.Vector2       scoreTextPosition  = (UnityEngine.Vector2.Scale(this.worldCamera!.WorldToViewportPoint(defeatPosition), UI.main.rectTransform.sizeDelta) - (UI.main.rectTransform.sizeDelta * 0.5f)) / UI.main.canvas.scaleFactor;
-            UnityEngine.RectTransform scoreTextTransform = (UnityEngine.RectTransform) scoreText.transform;
+          if (this.scoreAutomatically) {
+            if (null != Assets.main.primitives.text && 0u != score) {
+              TMPro.TextMeshProUGUI     scoreText          = UnityEngine.Object.Instantiate(Assets.main.primitives.text, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity, UI.main.HUD.layout!.transform).GetComponent<TMPro.TextMeshProUGUI>();
+              UnityEngine.Vector2       scoreTextPosition  = (UnityEngine.Vector2.Scale(this.worldCamera!.WorldToViewportPoint(defeatPosition), UI.main.rectTransform.sizeDelta) - (UI.main.rectTransform.sizeDelta * 0.5f)) / UI.main.canvas.scaleFactor;
+              UnityEngine.RectTransform scoreTextTransform = (UnityEngine.RectTransform) scoreText.transform;
 
-            /* … */
-            System.Collections.IEnumerator DestroyScoreText() {
-              yield return new UnityEngine.WaitForSecondsRealtime((float) UI.main.scoreTimer.duration);
-              UnityEngine.Object.Destroy(scoreText.gameObject);
+              /* … */
+              System.Collections.IEnumerator DestroyScoreText() {
+                yield return new UnityEngine.WaitForSecondsRealtime((float) UI.main.scoreTimer.duration);
+                UnityEngine.Object.Destroy(scoreText.gameObject);
+              }
+
+              /* … */
+              scoreText.CrossFadeAlpha(0.25f, (float) UI.main.scoreTimer.duration * 0.75f, true);
+              scoreText.transform.SetSiblingIndex(0);
+
+              scoreTextTransform.anchorMin        = new(0.5f, 0.5f);
+              scoreTextTransform.anchorMax        = new(0.5f, 0.5f);
+              scoreTextTransform.anchoredPosition = scoreTextPosition;
+              scoreText.text                      = score.ToString();
+              scoreText.richText                  = false;
+              scoreText.overrideColorTags         = true;
+              scoreText.overflowMode              = TMPro.TextOverflowModes.Truncate;
+              scoreText.outlineWidth              = 1.5f;
+              scoreText.outlineColor              = new((byte) 0u, (byte) 0u, (byte) 0u, (byte) 127u);
+              scoreText.maskable                  = false;
+              scoreText.margin                    = UnityEngine.Vector4.zero;
+              scoreText.isOrthographic            = true;
+              scoreText.extraPadding              = false;
+              scoreText.enableVertexGradient      = false;
+              scoreText.color                     = UnityEngine.Color.white;
+              scoreText.autoSizeTextContainer     = true;
+              scoreText.alignment                 = TMPro.TextAlignmentOptions.Center | TMPro.TextAlignmentOptions.Midline;
+
+              base.StartCoroutine(DestroyScoreText());
+
+              #if DEBUG || DEVELOPMENT_BUILD
+                UnityEngine.Debug.DrawRay(defeatPosition, UnityEngine.Vector3.forward, UnityEngine.Color.cyan,    2.0f, false);
+                UnityEngine.Debug.DrawRay(defeatPosition, UnityEngine.Vector3.right,   UnityEngine.Color.magenta, 2.0f, false);
+                UnityEngine.Debug.DrawRay(defeatPosition, UnityEngine.Vector3.up,      UnityEngine.Color.yellow,  2.0f, false);
+              #endif
             }
 
-            /* … */
-            scoreText.CrossFadeAlpha(0.25f, (float) UI.main.scoreTimer.duration * 0.75f, true);
-            scoreText.transform.SetSiblingIndex(0);
-
-            scoreTextTransform.anchorMin        = new(0.5f, 0.5f);
-            scoreTextTransform.anchorMax        = new(0.5f, 0.5f);
-            scoreTextTransform.anchoredPosition = scoreTextPosition;
-            scoreText.text                      = score.ToString();
-            scoreText.richText                  = false;
-            scoreText.overrideColorTags         = true;
-            scoreText.overflowMode              = TMPro.TextOverflowModes.Overflow;
-            scoreText.outlineWidth              = 1.5f;
-            scoreText.outlineColor              = new((byte) 0u, (byte) 0u, (byte) 0u, (byte) 127u);
-            scoreText.maskable                  = false;
-            scoreText.margin                    = UnityEngine.Vector4.zero;
-            scoreText.isOrthographic            = true;
-            scoreText.extraPadding              = false;
-            scoreText.enableVertexGradient      = false;
-            scoreText.color                     = UnityEngine.Color.white;
-            scoreText.autoSizeTextContainer     = true;
-            scoreText.alignment                 = TMPro.TextAlignmentOptions.Center | TMPro.TextAlignmentOptions.Midline;
-
-            base.StartCoroutine(DestroyScoreText());
-
-            #if DEBUG || DEVELOPMENT_BUILD
-              UnityEngine.Debug.DrawRay(defeatPosition, UnityEngine.Vector3.forward, UnityEngine.Color.cyan,    2.0f, false);
-              UnityEngine.Debug.DrawRay(defeatPosition, UnityEngine.Vector3.right,   UnityEngine.Color.magenta, 2.0f, false);
-              UnityEngine.Debug.DrawRay(defeatPosition, UnityEngine.Vector3.up,      UnityEngine.Color.yellow,  2.0f, false);
-            #endif
+            Stats.Score += score;
           }
 
           // …
-          Stats.Score += score;
           this.spawns.RemoveAt(index);
         }
       }

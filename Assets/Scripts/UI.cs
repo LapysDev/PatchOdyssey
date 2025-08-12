@@ -34,6 +34,7 @@ public sealed class UI : UnityEngine.MonoBehaviour {
 
   [System.Serializable]
   public /* readonly */ struct Buttons {
+    [ReadWriteInInspector] public UnityEngine.UI.Button? chat;
     [ReadWriteInInspector] public UnityEngine.UI.Button? play;
     [ReadWriteInInspector] public UnityEngine.UI.Button? quit;
   }
@@ -331,8 +332,9 @@ public sealed class UI : UnityEngine.MonoBehaviour {
       }
     }
 
-    if (null != UI.main.buttons.quit)
-    UI.main.buttons.quit.onClick.AddListener(static delegate { Game.Quit(); });
+    if (null != UI.main.buttons.chat) UI.main.buttons.chat.onClick.AddListener(static delegate { if (null != NPC.Chatting && null != NPC.Chatting.interacting) NPC.Chatting.interacting.isChatting = true; });
+    if (null != UI.main.buttons.play) UI.main.buttons.play.onClick.AddListener(static delegate { UI.main.ChangeActivity(UI.Activity.HUD); UnityEngine.Object.Instantiate(Assets.main.playerPrefabrication, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity); });
+    if (null != UI.main.buttons.quit) UI.main.buttons.quit.onClick.AddListener(static delegate { Game.Quit(); });
   }
 
   private void Update() {
@@ -603,6 +605,8 @@ public sealed class UI : UnityEngine.MonoBehaviour {
           graphicPosition          = (UnityEngine.Vector2.Scale(graphicPosition, UI.main.rectTransform.sizeDelta) - (UI.main.rectTransform.sizeDelta * 0.5f)) / UI.main.canvas.scaleFactor;
           graphicPosition          = new(graphicPrecision.x * UnityEngine.Mathf.Round(graphicPosition.x / graphicPrecision.x), graphicPrecision.y * UnityEngine.Mathf.Round(graphicPosition.y / graphicPrecision.y));
           graphic.anchoredPosition = UnityEngine.Vector2.LerpUnclamped(graphic.anchoredPosition, graphicOffset + graphicPosition, 0.1f);
+          graphic.anchorMax        = new(0.5f, 0.5f);
+          graphic.anchorMin        = new(0.5f, 0.5f);
         }
       }
     }

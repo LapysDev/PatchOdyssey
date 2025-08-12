@@ -37,12 +37,13 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
   public  static          bool                  IsReady                            = false;
 
   [UnityEngine.Header("Player")]
-  [ReadOnlyInInspector]  public bool             isChatting    = false;
-  [ReadOnlyInInspector]  public bool             isInputing    = false; // ->> Only significant actions count
-  [ReadOnlyInInspector]  public bool             isLassoing    = false;
-  [ReadWriteInInspector] public Player.LasooInfo lasoo         = new() {captureDirection = UnityEngine.Vector3.zero, captureIndicator = (null, null), captureIndicatorMesh = (null, null), captureIndicatorRenderer = (null, null), captureProgress = Player.LasooCaptureProgress.Initiating, captureProgressDirection = UnityEngine.Vector3.zero, captureProgressTurn = Entity.TurnDirection.Clockwise, captureProgressTurnCount = 0u, deployReach = Lasoo.DeployReach, deploySpeed = Lasoo.DeploySpeed, retractReach = Lasoo.RetractReach, retractSpeed = Lasoo.RetractSpeed, turnSpeed = Lasoo.TurnSpeed};
-  [ReadOnlyInInspector]  public Lasoo?           lasooing      = null;
-  [ReadWriteInInspector] public Timeframe        releaseWindow = new(1.00);
+  [ReadOnlyInInspector]  public bool             isChatting         = false;
+  [ReadOnlyInInspector]  public bool             isInputing         = false; // ->> Only significant actions count
+  [ReadOnlyInInspector]  public bool             isLassoing         = false;
+  [ReadWriteInInspector] public Player.LasooInfo lasoo              = new() {captureDirection = UnityEngine.Vector3.zero, captureIndicator = (null, null), captureIndicatorMesh = (null, null), captureIndicatorRenderer = (null, null), captureProgress = Player.LasooCaptureProgress.Initiating, captureProgressDirection = UnityEngine.Vector3.zero, captureProgressTurn = Entity.TurnDirection.Clockwise, captureProgressTurnCount = 0u, deployReach = Lasoo.DeployReach, deploySpeed = Lasoo.DeploySpeed, retractReach = Lasoo.RetractReach, retractSpeed = Lasoo.RetractSpeed, turnSpeed = Lasoo.TurnSpeed};
+  [ReadOnlyInInspector]  public bool             lasooAutomatically = true;
+  [ReadOnlyInInspector]  public Lasoo?           lasooing           = null;
+  [ReadWriteInInspector] public Timeframe        releaseWindow      = new(1.00);
 
   /* … */
   protected override void Awake() {
@@ -144,6 +145,8 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
     return false;
   }
 
+  private void LateUpdate() => this.isChatting = false;
+
   protected override void OnApplicationFocus(bool focused) {
     if (!focused) {
       if (this.lasooing is not null) // ->> Immediate retraction
@@ -188,7 +191,7 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
     if (this.isLassoing)
       this.ResetLasoo();
 
-    else {
+    else if (this.lasooAutomatically) {
       this.isInputing = true;
       this.isLassoing = 0 == base.followers.Count && (this.lasooing is null || this.lasooing.reach == this.lasooing.retractReach);
     }
@@ -240,7 +243,7 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
     Player.IsReady = Player.IsReady || this.isInputing;
     this.isInputing = false;
       // … ->> Chatting
-      this.isChatting = Game.Keyboard.eKey.wasReleasedThisFrame || UnityEngine.Input.GetKeyUp(UnityEngine.KeyCode.E);
+      this.isChatting = this.isChatting || Game.Keyboard.eKey.wasReleasedThisFrame || UnityEngine.Input.GetKeyUp(UnityEngine.KeyCode.E);
       this.isInputing = this.isInputing || this.isChatting;
 
       // … ->> Moving
@@ -511,13 +514,13 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
           return true;
         });
 
-        coilSize                     = coilBounds?.size ?? coilSize;
-        this.collider.size           = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, reachSize)                  + coilSize;
-        this.collider.center         = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, this.collider.size * -0.5f) + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, coilSize);
-        this.reach                   = UnityEngine.Mathf.Clamp(this.reach + (UnityEngine.Time.deltaTime * (!this.isDeploying() ? -this.retractSpeed : +this.deploySpeed)), this.retractReach, this.deployReach);
-        this.reachDirection          = UnityEngine.Quaternion.Euler(UnityEngine.Vector3.up * UnityEngine.Time.deltaTime * this.turnSpeed) * this.reachDirection;
-        this.transform.position      = this.user.transform.position + (this.reachDirection * this.reach);
-        this.transform.localRotation = UnityEngine.Quaternion.LookRotation(this.user.transform.position - this.transform.position, UnityEngine.Vector3.up);
+        coilSize                = coilBounds?.size ?? coilSize;
+        this.collider.size      = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, reachSize)                  + coilSize;
+        this.collider.center    = UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, this.collider.size * -0.5f) + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward, coilSize);
+        this.reach              = UnityEngine.Mathf.Clamp(this.reach + (UnityEngine.Time.deltaTime * (!this.isDeploying() ? -this.retractSpeed : +this.deploySpeed)), this.retractReach, this.deployReach);
+        this.reachDirection     = UnityEngine.Quaternion.Euler(UnityEngine.Vector3.up * UnityEngine.Time.deltaTime * this.turnSpeed) * this.reachDirection;
+        this.transform.position = this.user.transform.position + (this.reachDirection * this.reach);
+        this.transform.rotation = UnityEngine.Quaternion.LookRotation(this.transform.position - this.user.transform.position, UnityEngine.Vector3.up);
       }
 
       ropeTransform.LookAt(this.user.transform, UnityEngine.Vector3.up);
