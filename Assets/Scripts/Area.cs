@@ -9,7 +9,9 @@ public sealed class Area : GameComponent {
 
   [ReadWriteInInspector]                            public           bool                                                                        alternativeAutomatically = true;
   [ReadWriteInInspector]                            public           string                                                                      areaName                 = string.Empty;
+  [ReadWriteInInspector]                            public           bool                                                                        invincibleAutomatically  = false;
   [ReadOnlyInInspector, UnityEngine.SerializeField] private          bool                                                                        isLocked                 = false;
+  [ReadOnlyInInspector]                             private readonly System.Collections.Generic.List<(Entity entity, bool isInvincible)>         locked                   = new();
   [ReadWriteInInspector]                            public           bool                                                                        respawnAutomatically     = false;
   [ReadWriteInInspector]                            public           bool                                                                        scoreAutomatically       = true;
   [ReadOnlyInInspector, UnityEngine.SerializeField] private          uint                                                                        spawnCount               = 0u;
@@ -51,8 +53,14 @@ public sealed class Area : GameComponent {
       }
 
       // … ->> Lock in
-      if (areaBounds?.Contains(player.transform.position) ?? false)
-      this.isLocked = 0 != this.spawnPrefabrications.Count;
+      if (areaBounds?.Contains(player.transform.position) ?? false) {
+        this.isLocked = 0 != this.spawnPrefabrications.Count;
+
+        if (this.invincibleAutomatically) {
+          this.locked.Add((player, player.isInvincible));
+          player.isInvincible = true;
+        }
+      }
     }
   }
 
@@ -216,12 +224,16 @@ public sealed class Area : GameComponent {
 
       // …
       if (!this.isLocked) {
+        foreach ((Entity entity, bool isInvincible) in this.locked)
+        entity.isInvincible = isInvincible;
+
         for (int index = this.spawns.Count; 0 != index--; )
         if (this.spawns[index].entity is not Monster monster || !monster.isMounted) {
           this.spawns[index].entity.isDefeated = true;
           this.spawns.RemoveAt(index);
         }
 
+        this.locked.Clear();
         this.spawns.Clear();
       }
     }

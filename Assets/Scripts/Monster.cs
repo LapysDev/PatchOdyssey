@@ -86,9 +86,10 @@ public sealed class Monster : Entity {
       this.camouflage.considerations = new System.Collections.Generic.List<UnityEngine.MeshRenderer>(UnityEngine.Object.FindObjectsByType<UnityEngine.MeshRenderer>(UnityEngine.FindObjectsInactive.Exclude, UnityEngine.FindObjectsSortMode.None)).FindAll(renderer => (
         // !renderer.gameObject.isStatic &&
         //  renderer.isVisible           &&
-         renderer.enabled           &&
-        !renderer.forceRenderingOff &&
-        !renderer.transform.IsChildOf(this.transform)
+         renderer.enabled                             &&
+        !renderer.forceRenderingOff                   &&
+        !renderer.transform.IsChildOf(this.transform) &&
+         System.Array.Exists(renderer.sharedMaterials, static material => null != material)
       )).ToArray();
     }
   }

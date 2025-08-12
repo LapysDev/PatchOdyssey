@@ -332,7 +332,7 @@ public sealed class UI : UnityEngine.MonoBehaviour {
       }
     }
 
-    if (null != UI.main.buttons.chat) UI.main.buttons.chat.onClick.AddListener(static delegate { if (null != NPC.Chatting && null != NPC.Chatting.interacting) NPC.Chatting.interacting.isChatting = true; });
+    if (null != UI.main.buttons.chat) UI.main.buttons.chat.onClick.AddListener(static delegate { if (null != NPC.Chatting) { if (null != NPC.Chatting.interacting) NPC.Chatting.interacting.isChatting = true; else if (null != NPC.Chatting.monologuing) NPC.Chatting.monologuing.isChatting = true; } });
     if (null != UI.main.buttons.play) UI.main.buttons.play.onClick.AddListener(static delegate { UI.main.ChangeActivity(UI.Activity.HUD); UnityEngine.Object.Instantiate(Assets.main.playerPrefabrication, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity); });
     if (null != UI.main.buttons.quit) UI.main.buttons.quit.onClick.AddListener(static delegate { Game.Quit(); });
   }

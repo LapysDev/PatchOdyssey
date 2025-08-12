@@ -20,19 +20,43 @@ public sealed class NPC : GameComponent {
   public static uint      Count               = 0u;
   public static Timeframe MonologueTransition = new(0.5);
 
-  [ReadWriteInInspector] public string                                  birthName         = string.Empty;
-  [ReadOnlyInInspector]  public Player?                                 interacting       = null;
-  [ReadWriteInInspector] public System.Collections.Generic.List<string> monologue         = new(1);
-  [ReadOnlyInInspector]  public uint                                    monologueCount    = 0u;
-  [ReadOnlyInInspector]  public Player?                                 monologuing       = null;
-  [ReadOnlyInInspector]  public NPC.Premonologue                        premonologue      = new() {isAggressive = false, isInvincible = false, moveAutomatically = false, statisticsHealth = false, statisticsShoot = false};
-  [ReadOnlyInInspector]  public bool                                    turnAutomatically = false;
-  [ReadOnlyInInspector]  public UnityEngine.Vector3                     turnDirection     = UnityEngine.Vector3.back;
+  [ReadWriteInInspector] public string                                  birthName             = string.Empty;
+  [ReadWriteInInspector] public UnityEngine.Material                    hairMaterial          = null!;
+  [ReadOnlyInInspector]  public bool                                    interactAutomatically = false;
+  [ReadOnlyInInspector]  public Player?                                 interacting           = null;
+  [ReadWriteInInspector] public System.Collections.Generic.List<string> monologue             = new(1);
+  [ReadOnlyInInspector]  public uint                                    monologueCount        = 0u;
+  [ReadOnlyInInspector]  public Player?                                 monologuing           = null;
+  [ReadOnlyInInspector]  public NPC.Premonologue                        premonologue          = new() {isAggressive = false, isInvincible = false, moveAutomatically = false, statisticsHealth = false, statisticsShoot = false};
+  [ReadWriteInInspector] public UnityEngine.Material                    skinMaterial          = null!;
+  [ReadWriteInInspector] public bool                                    turnAutomatically     = false;
+  [ReadWriteInInspector] public bool                                    turnBack              = false;
+  [ReadOnlyInInspector]  public UnityEngine.Vector3                     turnDirection         = UnityEngine.Vector3.back;
 
   /* … */
   private void Awake() {
     this.birthName     = string.IsNullOrWhiteSpace(this.birthName) ? base.name : this.birthName;
     this.turnDirection = this.transform.forward;
+
+    // … ->> Skin
+    if (null != this.skinMaterial)
+    this.transform.ForEach<UnityEngine.Renderer>(renderer => {
+      string name = renderer.sharedMaterial.name.Trim();
+
+      // …
+      if (string.Equals(name, "skin", System.StringComparison.OrdinalIgnoreCase) || name.StartsWith("skin-", System.StringComparison.OrdinalIgnoreCase))
+      renderer.sharedMaterial = this.skinMaterial;
+    });
+
+    // … ->> Hair
+    if (null != this.hairMaterial)
+    this.transform.ForEach<UnityEngine.Renderer>(renderer => {
+      string name = renderer.sharedMaterial.name.Trim();
+
+      // …
+      if (name.Contains("hair", System.StringComparison.OrdinalIgnoreCase))
+      renderer.sharedMaterial = this.hairMaterial;
+    });
   }
 
   private bool InteractsWith(Player player) {
@@ -49,8 +73,10 @@ public sealed class NPC : GameComponent {
     return false;
   }
 
-  private void OnDisable() => --NPC.Count;
-  private void OnEnable () => ++NPC.Count;
+  private void OnDisable     ()                              => --NPC.Count;
+  private void OnEnable      ()                              => ++NPC.Count;
+  private void OnTriggerEnter(UnityEngine.Collider collider) => this.interactAutomatically = collider.TryGetComponent(out Player _);
+  private void OnTriggerExit (UnityEngine.Collider collider) => this.interactAutomatically = false;
 
   private void TryChat() {
     UnityEngine.Debug.Log("HELLO WORLD");
@@ -61,15 +87,16 @@ public sealed class NPC : GameComponent {
 
   protected override void Update() {
     bool                isLooking       = false;
-    UnityEngine.Vector3 targetDirection = this.turnDirection;
+    UnityEngine.Vector3 targetDirection = null != this.monologuing ? (this.monologuing.transform.position - this.transform.position).normalized : this.turnDirection;
 
     // …
     base.Update();
 
     // … ->> Chatting
+    NPC.Chatting     = null != NPC.Chatting && null == NPC.Chatting.monologuing ? null : NPC.Chatting;
     this.interacting = this.monologuing;
 
-    if (0 != this.monologue.Count && null == this.monologuing) {
+    if (this.interactAutomatically && 0 != this.monologue.Count && null == this.monologuing) {
       System.Collections.Generic.List<Entity> entities = Entity.All.FindAll(static entity => entity is Player);
 
       // …
@@ -98,6 +125,9 @@ public sealed class NPC : GameComponent {
             this.premonologue.lasooAutomatically = player.lasooAutomatically;
             this.premonologue.statisticsHealth   = player.statistics.health;
             this.premonologue.statisticsShoot    = player.statistics.shoot;
+
+            foreach (NPC npc in UnityEngine.Object.FindObjectsByType<NPC>(UnityEngine.FindObjectsInactive.Exclude, UnityEngine.FindObjectsSortMode.None))
+            npc.interactAutomatically = false;
           }
 
           break;
@@ -127,8 +157,11 @@ public sealed class NPC : GameComponent {
     }
 
     // … ->> Looking
-    if (this == NPC.Chatting || this.turnAutomatically)
+    if (this.turnAutomatically && this == NPC.Chatting && UnityEngine.Vector3.zero != targetDirection)
     this.transform.localRotation = UnityEngine.Quaternion.SlerpUnclamped(this.transform.localRotation, UnityEngine.Quaternion.Euler(UnityEngine.Vector3.Scale(UnityEngine.Vector3.up, UnityEngine.Quaternion.LookRotation(targetDirection, UnityEngine.Vector3.up).eulerAngles)), 0.15f);
+
+    else if (this.turnBack)
+    this.transform.localRotation = UnityEngine.Quaternion.LookRotation(this.turnDirection);
 
     // … ->> Monologuing
     if (null != this.monologuing) {
@@ -162,7 +195,9 @@ public sealed class NPC : GameComponent {
         target.lasooAutomatically = false;
         target.statistics.health  = false;
         target.statistics.shoot   = false;
-        target.shoot.cooldown.Reset();
+
+        target.movement.pauseCooldown.Reset();
+        target.shoot.cooldown        .Reset();
 
         foreach (UI.HeadsUpDisplay.Containers containers in UI.main.HUD.containers) {
           if (null != containers.chat)     { UI.main.ChangeContainer(containers.chat, UI.ContainerVisibility.Visible, NPC.ChatTransition); }

@@ -114,7 +114,7 @@ MonoBehaviour:
   followers: []
   following: {fileID: 0}
   health: 1
-  healthMaximum: 65
+  healthMaximum: 85
   isAggressive: 1
   isInvincible: 0
   moveAutomatically: 1
