@@ -49,12 +49,20 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -6694379564556567327, guid: 7d84577ab2e3d8d42ba9b526a6eeba70, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -6694379564556567327, guid: 7d84577ab2e3d8d42ba9b526a6eeba70, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: bcc2080c2bddc7743b6444a7e0838c01, type: 2}
     - target: {fileID: -5570528051927094391, guid: 7d84577ab2e3d8d42ba9b526a6eeba70, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: -5163838154764212669, guid: 7d84577ab2e3d8d42ba9b526a6eeba70, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: -5163838154764212669, guid: 7d84577ab2e3d8d42ba9b526a6eeba70, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -69,6 +77,10 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: -3188892688128277277, guid: 7d84577ab2e3d8d42ba9b526a6eeba70, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -3188892688128277277, guid: 7d84577ab2e3d8d42ba9b526a6eeba70, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: bcc2080c2bddc7743b6444a7e0838c01, type: 2}
@@ -79,6 +91,10 @@ PrefabInstance:
     - target: {fileID: -164481825537149297, guid: 7d84577ab2e3d8d42ba9b526a6eeba70, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 175419690104215714, guid: 7d84577ab2e3d8d42ba9b526a6eeba70, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 175419690104215714, guid: 7d84577ab2e3d8d42ba9b526a6eeba70, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -97,9 +113,17 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 2000707720150073061, guid: 7d84577ab2e3d8d42ba9b526a6eeba70, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2000707720150073061, guid: 7d84577ab2e3d8d42ba9b526a6eeba70, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: bcc2080c2bddc7743b6444a7e0838c01, type: 2}
+    - target: {fileID: 2588707615383765998, guid: 7d84577ab2e3d8d42ba9b526a6eeba70, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 2588707615383765998, guid: 7d84577ab2e3d8d42ba9b526a6eeba70, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 

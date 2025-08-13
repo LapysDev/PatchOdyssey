@@ -9,6 +9,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -9203386998397244453, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -9203386998397244453, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: cf60b6168440b05479897c8da398b0cc, type: 2}
@@ -53,6 +57,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8445289788843372603, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -8445289788843372603, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: cf60b6168440b05479897c8da398b0cc, type: 2}
@@ -65,6 +73,10 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: -5163838154764212669, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -5163838154764212669, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: bcc2080c2bddc7743b6444a7e0838c01, type: 2}
@@ -73,9 +85,17 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: -3794759724128619463, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -3794759724128619463, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: cf60b6168440b05479897c8da398b0cc, type: 2}
+    - target: {fileID: -3188892688128277277, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: -3188892688128277277, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
@@ -93,6 +113,10 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 1011500193106859542, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1011500193106859542, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: cf60b6168440b05479897c8da398b0cc, type: 2}
@@ -105,6 +129,10 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 2000707720150073061, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2000707720150073061, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: bcc2080c2bddc7743b6444a7e0838c01, type: 2}
@@ -113,9 +141,17 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 2405546050588674777, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405546050588674777, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: cf60b6168440b05479897c8da398b0cc, type: 2}
+    - target: {fileID: 2588707615383765998, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 2588707615383765998, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
@@ -123,6 +159,10 @@ PrefabInstance:
     - target: {fileID: 2593329124396815399, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 3305725907230709068, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 3305725907230709068, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -147,6 +187,10 @@ PrefabInstance:
     - target: {fileID: 8088289315720404792, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 8702760728458886819, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8702760728458886819, guid: 17d958e2be773af42ac4da749a754d9a, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'

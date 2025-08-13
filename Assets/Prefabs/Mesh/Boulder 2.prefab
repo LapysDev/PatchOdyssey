@@ -48,13 +48,29 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -8256625322350666478, guid: 1c1c8050bb9cb814480ae13e2d9b83a9, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -6626198784742867558, guid: 1c1c8050bb9cb814480ae13e2d9b83a9, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -5875693443932927909, guid: 1c1c8050bb9cb814480ae13e2d9b83a9, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -4871390245447158932, guid: 1c1c8050bb9cb814480ae13e2d9b83a9, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: -4871390245447158932, guid: 1c1c8050bb9cb814480ae13e2d9b83a9, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: c1fd3c79ff521a84e8486206d8923e23, type: 2}
     - target: {fileID: 919132149155446097, guid: 1c1c8050bb9cb814480ae13e2d9b83a9, type: 3}
       propertyPath: m_Name
-      value: boulder-2
+      value: Boulder 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

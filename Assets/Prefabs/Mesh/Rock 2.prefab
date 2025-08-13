@@ -57,6 +57,10 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 6378358387506287701, guid: aa2e0d048a4e85847b5db3de5b23008a, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6378358387506287701, guid: aa2e0d048a4e85847b5db3de5b23008a, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: d16aa3cf08ede704094375b0a84ea9a6, type: 2}

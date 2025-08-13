@@ -22,6 +22,7 @@ public class Tamer : Entity {
       monster.following                = this;
       monster.isInvincible             = 0 == base.followers.Count;
       monster.shoot.bulletMaterial     = base.shoot.bulletMaterial ?? monster.shoot.bulletMaterial;
+      monster.shoot.bulletMaterial     = null == monster.shoot.bulletMaterial ? null : new(monster.shoot.bulletMaterial);
       monster.team                     = base.team;
       this.mountingTransforms.Capacity = System.Math.Max(this.mountingTransforms.Capacity, this.transform.hierarchyCount);
 

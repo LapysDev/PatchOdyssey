@@ -13,8 +13,6 @@ GameObject:
   - component: {fileID: 6253301921640161445}
   - component: {fileID: 8377371949072122181}
   - component: {fileID: 1197050139535042684}
-  - component: {fileID: 2184036285967410635}
-  - component: {fileID: 5763163775097789920}
   - component: {fileID: 6429503216768930061}
   m_Layer: 0
   m_Name: Area
@@ -122,59 +120,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 10, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: -5.5}
---- !u!33 &2184036285967410635
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4473851231283805849}
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &5763163775097789920
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4473851231283805849}
-  m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 0
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 2
-  m_LightProbeUsage: 0
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: e3799106553724144a16512bacdfc7dd, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 0
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!114 &6429503216768930061
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -189,9 +134,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   alternativeAutomatically: 1
   areaName: Area
+  invincibleAutomatically: 0
   isLocked: 0
   respawnAutomatically: 0
+  scoreAutomatically: 1
   spawnCount: 0
   spawnDelay: 1
-  spawnPrefabrications:
-  - {fileID: 2753632606039037620, guid: 08e473289642b2d44b020f3224d600eb, type: 3}
+  spawnPrefabrications: []

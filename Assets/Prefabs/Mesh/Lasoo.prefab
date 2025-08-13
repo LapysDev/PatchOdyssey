@@ -69,12 +69,20 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1418520550353037394, guid: af6d6e2ee6023774a94f5e183e0931ba, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1418520550353037394, guid: af6d6e2ee6023774a94f5e183e0931ba, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 863cd866095116d4290be177766fac1e, type: 2}
     - target: {fileID: 2379413452180256911, guid: af6d6e2ee6023774a94f5e183e0931ba, type: 3}
       propertyPath: m_CastShadows
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2379413452180256911, guid: af6d6e2ee6023774a94f5e183e0931ba, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 2379413452180256911, guid: af6d6e2ee6023774a94f5e183e0931ba, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'

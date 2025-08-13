@@ -862,7 +862,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
         explosionRenderer                   = explosion.GetComponent<UnityEngine.Renderer>();
         explosionRenderer.receiveShadows    = false;
         explosionRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        explosionRenderer.sharedMaterials   = System.Array.ConvertAll(materials, static material => new UnityEngine.Material(material));
+        explosionRenderer.sharedMaterials   = System.Array.ConvertAll(materials, static material => null == material ? null : new UnityEngine.Material(material));
         this.explosion                      = explosionRenderer;
         this.isHit                          = true;
 

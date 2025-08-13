@@ -49,24 +49,44 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8256625322350666478, guid: 852e30386f0731b49b388f569e82011e, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -8256625322350666478, guid: 852e30386f0731b49b388f569e82011e, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: d16aa3cf08ede704094375b0a84ea9a6, type: 2}
+    - target: {fileID: -6626198784742867558, guid: 852e30386f0731b49b388f569e82011e, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: -6626198784742867558, guid: 852e30386f0731b49b388f569e82011e, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: ece97c32480c50f498deaf90d7982ac1, type: 2}
     - target: {fileID: -5875693443932927909, guid: 852e30386f0731b49b388f569e82011e, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -5875693443932927909, guid: 852e30386f0731b49b388f569e82011e, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: c1fd3c79ff521a84e8486206d8923e23, type: 2}
+    - target: {fileID: -4871390245447158932, guid: 852e30386f0731b49b388f569e82011e, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: -4871390245447158932, guid: 852e30386f0731b49b388f569e82011e, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: d16aa3cf08ede704094375b0a84ea9a6, type: 2}
     - target: {fileID: 919132149155446097, guid: 852e30386f0731b49b388f569e82011e, type: 3}
       propertyPath: m_Name
-      value: boulder-4
+      value: Boulder 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1421965470661633142, guid: 852e30386f0731b49b388f569e82011e, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1421965470661633142, guid: 852e30386f0731b49b388f569e82011e, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'

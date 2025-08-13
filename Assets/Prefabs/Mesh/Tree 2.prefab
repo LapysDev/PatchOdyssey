@@ -49,9 +49,17 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8146620865683674078, guid: ed36465f5fe2b254dbc706aab5525be1, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -8146620865683674078, guid: ed36465f5fe2b254dbc706aab5525be1, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: cf60b6168440b05479897c8da398b0cc, type: 2}
+    - target: {fileID: -5196748582661604261, guid: ed36465f5fe2b254dbc706aab5525be1, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: -5196748582661604261, guid: ed36465f5fe2b254dbc706aab5525be1, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
@@ -59,6 +67,10 @@ PrefabInstance:
     - target: {fileID: -4801096204507048508, guid: ed36465f5fe2b254dbc706aab5525be1, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: -3188892688128277277, guid: ed36465f5fe2b254dbc706aab5525be1, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: -3188892688128277277, guid: ed36465f5fe2b254dbc706aab5525be1, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -89,12 +101,20 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 3305725907230709068, guid: ed36465f5fe2b254dbc706aab5525be1, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3305725907230709068, guid: ed36465f5fe2b254dbc706aab5525be1, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: cf60b6168440b05479897c8da398b0cc, type: 2}
     - target: {fileID: 6096265256483064825, guid: ed36465f5fe2b254dbc706aab5525be1, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 8953666557718133917, guid: ed36465f5fe2b254dbc706aab5525be1, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8953666557718133917, guid: ed36465f5fe2b254dbc706aab5525be1, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'

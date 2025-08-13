@@ -15,10 +15,11 @@ public sealed class NPC : GameComponent {
   }
 
   /* … */
-  public static NPC?      Chatting            = null;
-  public static Timeframe ChatTransition      = new(1.0);
-  public static uint      Count               = 0u;
-  public static Timeframe MonologueTransition = new(0.5);
+  public  static NPC?      Chatting            = null;
+  public  static Timeframe ChatTransition      = new(1.0);
+  public  static uint      Count               = 0u;
+  // private static bool      IsInteracting       = false;
+  public  static Timeframe MonologueTransition = new(0.5);
 
   [ReadWriteInInspector] public string                                  birthName             = string.Empty;
   [ReadWriteInInspector] public UnityEngine.Material                    hairMaterial          = null!;
@@ -85,6 +86,8 @@ public sealed class NPC : GameComponent {
     this.monologuing.isChatting = true;
   }
 
+  private void LateUpdate() => NPC.Chatting = null;
+
   protected override void Update() {
     bool                isLooking       = false;
     UnityEngine.Vector3 targetDirection = null != this.monologuing ? (this.monologuing.transform.position - this.transform.position).normalized : this.turnDirection;
@@ -93,7 +96,7 @@ public sealed class NPC : GameComponent {
     base.Update();
 
     // … ->> Chatting
-    NPC.Chatting     = null != NPC.Chatting && null == NPC.Chatting.monologuing ? null : NPC.Chatting;
+    NPC.Chatting     = null == NPC.Chatting && null != this.monologuing ? this : NPC.Chatting;
     this.interacting = this.monologuing;
 
     if (this.interactAutomatically && 0 != this.monologue.Count && null == this.monologuing) {
@@ -110,7 +113,7 @@ public sealed class NPC : GameComponent {
         isLooking       = true;
 
         if (this.InteractsWith(player)) {
-          NPC.Chatting     = null == NPC.Chatting     ? this   : NPC.Chatting;
+          NPC.Chatting     = null == NPC.Chatting ? this : NPC.Chatting;
           this.interacting = null == this.interacting ? player : this.interacting;
 
           if (player.isChatting) {
