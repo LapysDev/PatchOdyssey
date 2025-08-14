@@ -18,7 +18,7 @@ public sealed class UI : UnityEngine.MonoBehaviour {
     [ReadOnlyInInspector, UnityEngine.SerializeField] internal UI.ActivityTransitionInfo       transitionExit;
   }
 
-  public enum ActivityState : byte { Any, Credits, End, Main, Options, Pause, Play, Statistics }
+  public enum ActivityState : byte { Any, Credits, End, Gameover, Main, Options, Pause, Play, Statistics, Win }
 
   [System.Serializable]
   public sealed class ActivityTransitionInfo {
@@ -61,12 +61,15 @@ public sealed class UI : UnityEngine.MonoBehaviour {
   public /* readonly */ struct HeadsUpDisplay {
     [System.Serializable]
     public sealed class Containers {
-      [ReadWriteInInspector] public TMPro.TextMeshProUGUI?   area     = null;
-      [ReadWriteInInspector] public UnityEngine.CanvasGroup? chat     = null;
-      [ReadWriteInInspector] public TMPro.TextMeshProUGUI?   chatName = null;
-      [ReadWriteInInspector] public TMPro.TextMeshProUGUI?   chatText = null;
-      [ReadWriteInInspector] public UnityEngine.CanvasGroup? pause    = null;
-      [ReadWriteInInspector] public TMPro.TextMeshProUGUI?   score    = null;
+      [ReadWriteInInspector]                                 public TMPro.TextMeshProUGUI?   area     = null;
+      [ReadWriteInInspector]                                 public UnityEngine.CanvasGroup? chat     = null;
+      [ReadWriteInInspector]                                 public TMPro.TextMeshProUGUI?   chatName = null;
+      [ReadWriteInInspector]                                 public TMPro.TextMeshProUGUI?   chatText = null;
+      [ReadWriteInInspector, RenameInInspector("Game Over")] public UnityEngine.CanvasGroup? gameover = null; // --> [UnityEngine.InspectorName("Game Over")]
+      [ReadWriteInInspector]                                 public UnityEngine.CanvasGroup? pause    = null;
+      [ReadWriteInInspector]                                 public TMPro.TextMeshProUGUI?   score    = null;
+      [ReadWriteInInspector]                                 public UnityEngine.CanvasGroup? win      = null;
+      [ReadWriteInInspector]                                 public TMPro.TextMeshProUGUI?   winText  = null;
     }
 
     [System.Serializable]
@@ -288,7 +291,7 @@ public sealed class UI : UnityEngine.MonoBehaviour {
 
     /* … ->> Unfortunately, no pointed cursor for `UnityEngine.Cursor.SetCursor(null, UnityEngine.Vector2.zero, UnityEngine.CursorMode.Auto)` */
     foreach (UI.HeadsUpDisplay.Controls controls in UI.main.HUD.controls) {
-      foreach (UnityEngine.UI.Button button in controls.home)    button.onClick.AddListener(static delegate { UI.main.ChangeActivity(UI.Activity.MainMenu); Game.IsPaused = true; Entity.Reset(); Stats.Reset(); });
+      foreach (UnityEngine.UI.Button button in controls.home)    button.onClick.AddListener(static delegate { Area.Reset(); Entity.Reset(); Stats.Reset(); UI.main.ChangeActivity(UI.Activity.MainMenu); Game.IsPaused = true; });
       foreach (UnityEngine.UI.Button button in controls.lasso)   button.onClick.AddListener(static delegate { UI.main.FindPlayer()?.TryLasso(); });
       foreach (UnityEngine.UI.Button button in controls.menu)    button.onClick.AddListener(static delegate { UI.main.ChangeActivity(UI.Activity.HUD, UI.ActivityState.Pause); Game.IsPaused = true; });
       foreach (UnityEngine.UI.Button button in controls.shoot)   button.onClick.AddListener(static delegate { UI.main.FindPlayer()?.TryShoot  (); });
@@ -333,8 +336,27 @@ public sealed class UI : UnityEngine.MonoBehaviour {
     }
 
     if (null != UI.main.buttons.chat) UI.main.buttons.chat.onClick.AddListener(static delegate { foreach (Entity entity in Entity.All) { if (entity is Player player) player.isChatting = true; } });
-    if (null != UI.main.buttons.play) UI.main.buttons.play.onClick.AddListener(static delegate { UI.main.ChangeActivity(UI.Activity.HUD); UnityEngine.Object.Instantiate(Assets.main.playerPrefabrication, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity); });
+    if (null != UI.main.buttons.play) UI.main.buttons.play.onClick.AddListener(static delegate { System.Collections.IEnumerator DeployPlayer() { yield return new UnityEngine.WaitForEndOfFrame(); UnityEngine.Object.Instantiate(Assets.main.playerPrefabrication, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity); } Entity.Reset(true); UI.main.ChangeActivity(UI.Activity.HUD); UI.main.StartCoroutine(DeployPlayer()); Game.IsPaused = false; });
     if (null != UI.main.buttons.quit) UI.main.buttons.quit.onClick.AddListener(static delegate { Game.Quit(); });
+  }
+
+  public void TryChangeActivityToWin() {
+    if (null != UI.main.HUD.layoutContainers!.win) {
+      foreach (Entity entity in Entity.All) {
+        if (entity is Player)
+        entity.isInvincible = true;
+      }
+
+      if (0 != UI.main.HUD.layoutControls!.home.Count)
+      UI.main.HUD.layoutControls!.home[0].onClick.Invoke();
+
+      foreach (UI.HeadsUpDisplay.Containers containers in UI.main.HUD.containers) {
+        if (null != containers.winText)
+        containers.winText.text = "Thank you, Explorer!\nYour Quest is over\nWe present you a new Odyssey\n\nScore: " + Stats.Score;
+      }
+
+      UI.main.ChangeActivity(UI.Activity.HUD, UI.ActivityState.Win);
+    }
   }
 
   private void Update() {
@@ -503,28 +525,41 @@ public sealed class UI : UnityEngine.MonoBehaviour {
 
         foreach (UI.HeadsUpDisplay.Containers containers in UI.main.HUD.containers)
         switch (UI.main.activityState) {
+          case UI.ActivityState.Gameover: {
+            if (null != containers.gameover) UI.main.ChangeContainer(containers.gameover, UI.ContainerVisibility.Visible, UI.main.activityStateChangeDuration);
+            if (null != containers.pause)    UI.main.ChangeContainer(containers.pause,    UI.ContainerVisibility.Hidden,  new(0.0));
+            if (null != containers.win)      UI.main.ChangeContainer(containers.win,      UI.ContainerVisibility.Hidden,  new(0.0));
+          } break;
+
           case UI.ActivityState.Pause: {
-            if (null != containers.pause)
-            UI.main.ChangeContainer(containers.pause, UI.ContainerVisibility.Visible, UI.main.activityStateChangeDuration);
+            if (null != containers.gameover) UI.main.ChangeContainer(containers.gameover, UI.ContainerVisibility.Hidden,  new(0.0));
+            if (null != containers.pause)    UI.main.ChangeContainer(containers.pause,    UI.ContainerVisibility.Visible, UI.main.activityStateChangeDuration);
+            if (null != containers.win)      UI.main.ChangeContainer(containers.win,      UI.ContainerVisibility.Hidden,  new(0.0));
           } break;
 
           case UI.ActivityState.Play:
           default: {
-            if (null != containers.pause)
-            UI.main.ChangeContainer(containers.pause, UI.ContainerVisibility.Hidden, UI.main.activityStateChangeDuration);
+            if (null != containers.gameover) UI.main.ChangeContainer(containers.gameover, UI.ContainerVisibility.Hidden, new(0.0));
+            if (null != containers.pause)    UI.main.ChangeContainer(containers.pause,    UI.ContainerVisibility.Hidden, new(0.0));
+            if (null != containers.win)      UI.main.ChangeContainer(containers.win,      UI.ContainerVisibility.Hidden, new(0.0));
+          } break;
+
+          case UI.ActivityState.Win: {
+            if (null != containers.gameover) UI.main.ChangeContainer(containers.gameover, UI.ContainerVisibility.Hidden,  new(0.0));
+            if (null != containers.pause)    UI.main.ChangeContainer(containers.pause,    UI.ContainerVisibility.Hidden,  new(0.0));
+            if (null != containers.win)      UI.main.ChangeContainer(containers.win,      UI.ContainerVisibility.Visible, UI.main.activityStateChangeDuration);
           } break;
         }
       } break;
 
-      case UI.Activity.MainMenu: break;
-
+      case UI.Activity.MainMenu:
       default: break;
     }
 
     UI.main.activityStatePrior = UI.main.activityState;
 
     // … ->> Activity
-    if (UI.Activity.HUD == UI.main.activity)
+    if (UI.Activity.HUD == UI.main.activity && UI.main.activityState switch { UI.ActivityState.Gameover or UI.ActivityState.Win => false, _ => true })
     UI.main.ChangeActivity(UI.main.activity, Game.IsPaused ? UI.ActivityState.Pause : UI.ActivityState.Play);
 
     // … ->> Score
@@ -597,13 +632,16 @@ public sealed class UI : UnityEngine.MonoBehaviour {
 
         if (entity.worldCamera is not null) {
           UnityEngine.Vector3 entityPosition   = entity.transform.position;
+          UnityEngine.Vector2 graphicExtents   = UnityEngine.RectTransformUtility.PixelAdjustRect(graphic, UI.main.canvas).size * 0.5f;
           UnityEngine.Vector2 graphicOffset    = new(0.0f, 20.0f + (UI.main.entities.statistics.shoot == statistics ? -17.5f : 0.0f)); // ->> Presumed
           UnityEngine.Vector2 graphicPosition  = entity.worldCamera.WorldToViewportPoint(new(entityPosition.x, entityPosition.y - entity.bounce.estimatedHeight, entityPosition.z));
-          UnityEngine.Vector2 graphicPrecision = new(50.0f, 30.0f);
+          UnityEngine.Vector2 graphicPrecision = new(1.0f, 1.0f); // ->> Previously `new(50.0f, 30.0f)`
+          UnityEngine.Vector2 uiExtents        = new UnityEngine.Vector2(this.applicationWidth, this.applicationHeight) * 0.5f;
 
           // …
           graphicPosition          = (UnityEngine.Vector2.Scale(graphicPosition, UI.main.rectTransform.sizeDelta) - (UI.main.rectTransform.sizeDelta * 0.5f)) / UI.main.canvas.scaleFactor;
-          graphicPosition          = new(graphicPrecision.x * UnityEngine.Mathf.Round(graphicPosition.x / graphicPrecision.x), graphicPrecision.y * UnityEngine.Mathf.Round(graphicPosition.y / graphicPrecision.y));
+          graphicPosition          = new(graphicPrecision.x * UnityEngine.Mathf.Round(graphicPosition.x / graphicPrecision.x), graphicPrecision.y * UnityEngine.Mathf.Round(graphicPosition.y / graphicPrecision.y)); // ->> Snap between positions
+          graphicPosition          = new(uiExtents.x < graphicExtents.x + UnityEngine.Mathf.Abs(graphicPosition.x) ? (uiExtents.x - (/* graphic.localScale.x * */ graphicExtents.x * 2.0f)) * UnityEngine.Mathf.Sign(graphicPosition.x) : graphicPosition.x, uiExtents.y < graphicExtents.y + UnityEngine.Mathf.Abs(graphicPosition.y) ? (uiExtents.y - (/* graphic.localScale.y * */ graphicExtents.y * 2.0f)) * UnityEngine.Mathf.Sign(graphicPosition.y) : graphicPosition.y); // ->> Prevent bounds clipping
           graphic.anchoredPosition = UnityEngine.Vector2.LerpUnclamped(graphic.anchoredPosition, graphicOffset + graphicPosition, 0.1f);
           graphic.anchorMax        = new(0.5f, 0.5f);
           graphic.anchorMin        = new(0.5f, 0.5f);

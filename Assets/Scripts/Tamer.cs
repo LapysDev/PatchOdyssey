@@ -18,7 +18,7 @@ public class Tamer : Entity {
     return;
 
     // …
-    if (entity is Monster monster) {
+    if (entity is Monster monster && Monster.Kind.Tyrage != monster.kind) {
       monster.following                = this;
       monster.isInvincible             = 0 == base.followers.Count;
       monster.shoot.bulletMaterial     = base.shoot.bulletMaterial ?? monster.shoot.bulletMaterial;
@@ -41,6 +41,11 @@ public class Tamer : Entity {
 
         return true;
       });
+
+      if (null != base.audioClips.capturing) {
+        base.audioSource.pitch = (UnityEngine.Random.value * 2.0f) + 1.0f;
+        base.audioSource.PlayOneShot(base.audioClips.capturing, 0.2f);
+      }
     }
 
     // NOTE (Lapys) ->> Other kinds of `Entity`s may entail other actions like switch activation, NPC interaction, e.t.c.

@@ -6,6 +6,17 @@ using PatchOdyssey;
 [UnityEngine.RequireComponent(typeof(UnityEngine.Rigidbody))]
 public abstract class Entity : GameComponent /* ->> Source file must be named â€œEntityâ€ */ {
   [System.Serializable]
+  public struct AudioClipInfo {
+    [ReadWriteInInspector] public UnityEngine.AudioClip? capturing;
+    [ReadWriteInInspector] public UnityEngine.AudioClip? defeating;
+    [ReadWriteInInspector] public UnityEngine.AudioClip? introducing;
+    [ReadWriteInInspector] public UnityEngine.AudioClip? lasooing;
+    [ReadWriteInInspector] public UnityEngine.AudioClip? moving;
+    [ReadWriteInInspector] public UnityEngine.AudioClip? shooting;
+    [ReadWriteInInspector] public UnityEngine.AudioClip? wrestling;
+  }
+
+  [System.Serializable]
   public struct BounceInfo {
     [ReadWriteInInspector] public float                angle; // ->> in Degrees --> 0.0f <= |bounce.angle| <= ~180.0f
     [ReadOnlyInInspector]  public float                estimatedHeight { get; internal set; }
@@ -95,7 +106,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
 
   public enum Team : byte { Player, Explorer = Player, Enemy, /* ->> Series of `Enemy + â€¦` for other teams */ Nomad = Enemy + 1, Magnate = Enemy + 2 }
 
-  public readonly record struct Tracked(UnityEngine.Behaviour tracking, UnityEngine.Vector3 distance = default); // ->> Cameras, lights, e.t.c. that follow this `Entity`
+  public readonly record struct Tracked(UnityEngine.Behaviour tracking, UnityEngine.Vector3 distance = default, UnityEngine.Vector3 origin = default); // ->> Cameras, lights, e.t.c. that follow this `Entity`
 
   [System.Serializable]
   public struct TrackingInfo {
@@ -120,6 +131,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
   public const           float                                   DefeatedSwayFactor                 = 1.00f;
   public static          UnityEngine.Vector3                     MovementVelocityThreshold { get; } = UnityEngine.Vector3.one * 1.0f; // ->> Threshold velocity determining `Entity` movement
 
+  [ReadWriteInInspector]                                          public                   Entity.AudioClipInfo                                          audioClips          = new() { /* â€¦ = null */ };
   [ReadOnlyInInspector]                                           protected                bool                                                          actuallyDefeated    = false;
   [ReadWriteInInspector]                                          public                   Entity.BounceInfo                                             bounce              = new() {angle = 10.00f, estimatedHeight = 0.00f, force = 0.75f, speed = 5.00f, turn = Entity.TurnDirection.Clockwise};
   [ReadWriteInInspector]                                          public                   bool                                                          bounceAutomatically = true;
@@ -238,6 +250,12 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     // â€¦ ->> Following
     foreach (Entity follower in this.followers)
     follower.team = this.team;
+
+    // â€¦
+    if (null != this.audioClips.introducing) {
+      base.audioSource.pitch = (UnityEngine.Random.value * 2.0f) + 1.0f;
+      base.audioSource.PlayOneShot(this.audioClips.introducing, 0.2f);
+    }
   }
 
   public         void ContactDamage(Entity entity)                   => this.Damage(entity, this.contact.damage, this);
@@ -339,6 +357,16 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     if (null != this.outline.material)     UnityEngine.Object.Destroy(this.outline.material);
     if (null != this.shoot.bulletMaterial) UnityEngine.Object.Destroy(this.shoot.bulletMaterial);
     if (null != this.following)            this.following.followers.Remove(this);
+
+    foreach (Entity.Tracked tracked in this.tracked) {
+      if (null != tracked.tracking)
+      tracked.tracking.transform.position = tracked.origin;
+    }
+
+    if (null != this.audioClips.defeating) {
+      base.audioSource.pitch = (UnityEngine.Random.value * 2.0f) + 1.0f;
+      base.audioSource.PlayOneShot(this.audioClips.defeating, 0.2f);
+    }
   }
 
   private void OnDisable() => Entity.All.Remove(this);
@@ -407,7 +435,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
         }
 
         if (index != -1) trackedRemove[index] = false;
-        else this.tracked.Add(new(tracking) {distance = tracking.transform.position - position});
+        else this.tracked.Add(new(tracking) {distance = tracking.transform.position - position, origin = tracking.transform.position});
       }
     }
 
@@ -423,9 +451,14 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     }
   }
 
-  public static void Reset() {
-    for (int index = Entity.All.Count; 0 != index--; )
-    UnityEngine.Object.Destroy(Entity.All[index].gameObject); // --> â€¦.isDefeated = true
+  public static void Reset(bool strict = false) {
+    for (int index = Entity.All.Count; 0 != index--; ) {
+      Entity entity = Entity.All[index];
+
+      // â€¦
+      if (strict || !entity.isInvincible)
+      UnityEngine.Object.Destroy(entity.gameObject); // --> â€¦.isDefeated = true
+    }
   }
 
   public    virtual Bullet? Shoot()                                               => this.Shoot(static (bullet, index, count) => {}); // ->> Override-able because it is called by default
@@ -462,6 +495,11 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
           if (isSuccessive) {
             bullet.volleyIndex = index;
             callback(bullet, index, count);
+          }
+
+          if (null != this.audioClips.shooting) {
+            base.audioSource.pitch = (UnityEngine.Random.value * 2.0f) + 1.0f;
+            base.audioSource.PlayOneShot(this.audioClips.shooting, 0.2f);
           }
 
           #if DEBUG || DEVELOPMENT_BUILD
@@ -528,7 +566,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     return;
 
     // â€¦ ->> Defeating
-    this.isDefeated = this.defeatAutomatically || this.isDefeated || (this.health <= 0.0f && !this.isInvincible);
+    this.isDefeated = this.isDefeated || ((this.defeatAutomatically || this.health <= 0.0f) && !this.isInvincible);
 
     if (!this.isDefeated) {
       this.defeat.position = this.transform.position;
@@ -650,6 +688,11 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     if (this.moveAutomatically && UnityEngine.Vector3.zero != this.movement.direction && (this is Player || this.movement.pauseCooldown.isElapsed)) {
       base.rigidBody.AddForce(this.movement.direction * this.movement.speedFactor * ((this.movement.speed * (1.0f - this.movement.speedRandomnessFactor)) + (UnityEngine.Random.value * this.movement.speed * this.movement.speedRandomnessFactor)), UnityEngine.ForceMode.Impulse);
       this.turn.direction = this.movement.direction;
+
+      if (null != this.audioClips.moving && !base.audioSource.isPlaying) {
+        base.audioSource.pitch = (UnityEngine.Random.value * 2.0f) + 1.0f;
+        base.audioSource.PlayOneShot(this.audioClips.moving, 0.2f);
+      }
     }
 
     // â€¦ ->> Turning
@@ -683,7 +726,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     this.PublishTracked();
 
     foreach (Entity.Tracked tracked in this.tracked)
-    tracked.tracking.transform.position = tracked.distance + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, this.transform.position);
+    tracked.tracking.transform.position = tracked.distance + UnityEngine.Vector3.Scale(UnityEngine.Vector3.forward + UnityEngine.Vector3.right, this.rigidBody.position);
 
     // â€¦ ->> Pre-follow
     this.PrefollowUpdate();

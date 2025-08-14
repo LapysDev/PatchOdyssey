@@ -164,18 +164,21 @@ namespace PatchOdyssey {
   }
 
   [UnityEngine.DisallowMultipleComponent]
+  [UnityEngine.RequireComponent(typeof(UnityEngine.AudioSource))]
   public abstract class GameComponent : UnityEngine.MonoBehaviour {
-    private       UnityEngine.Collider                _collider           = null!;
-    private       UnityEngine.Collider[]              _colliders          = null!;
-    private       UnityEngine.Rigidbody               _rigidBody          = null!;
-    private       UnityEngine.Transform               _transform          = null!;
-    protected     UnityEngine.Camera?                 actualWorldCamera   = null;
-    public    new ref readonly UnityEngine.Collider   collider            { get { if (this._collider is null && base.TryGetComponent(out UnityEngine.Collider collider)) { this._collider = collider; /* --> base.collider */ } return ref this._collider!; } }
-    public        ref readonly UnityEngine.Collider[] colliders           { get { this._colliders ??= base.GetComponents<UnityEngine.Collider>();                                                                               return ref this._colliders; } }
-    public        ref readonly UnityEngine.Rigidbody  rigidBody           { get { if (this._rigidBody is null && base.TryGetComponent(out UnityEngine.Rigidbody rigidBody)) { this._rigidBody = rigidBody; }                    return ref this._rigidBody!; } }
-    public    new ref readonly UnityEngine.Transform  transform           { get { this._transform ??= base.transform;                                                                                                           return ref this._transform; } }
-    public        ref readonly UnityEngine.Camera?    worldCamera         { get { if (this.actualWorldCamera is null) { this.actualWorldCamera = UnityEngine.Camera.main; if (this.actualWorldCamera is not null) { this.worldCameraDistance = this.actualWorldCamera.transform.position - this.transform.position; } } return ref this.actualWorldCamera; } }
-    protected     UnityEngine.Vector3                 worldCameraDistance = UnityEngine.Vector3.zero;
+    private       UnityEngine.AudioSource              _audioSource              = null!;
+    private       UnityEngine.Collider                 _collider           = null!;
+    private       UnityEngine.Collider[]               _colliders          = null!;
+    private       UnityEngine.Rigidbody                _rigidBody          = null!;
+    private       UnityEngine.Transform                _transform          = null!;
+    protected     UnityEngine.Camera?                  actualWorldCamera   = null;
+    public        ref readonly UnityEngine.AudioSource audioSource         { get { if (this._audioSource is null && base.TryGetComponent(out UnityEngine.AudioSource audioSource)) { this._audioSource = audioSource; /* --> base.audio */ }    return ref this._audioSource!; } }
+    public    new ref readonly UnityEngine.Collider    collider            { get { if (this._collider    is null && base.TryGetComponent(out UnityEngine.Collider    collider))    { this._collider    = collider;    /* --> base.collider */ } return ref this._collider!; } }
+    public        ref readonly UnityEngine.Collider[]  colliders           { get { this._colliders ??= base.GetComponents<UnityEngine.Collider>();                                                                                  return ref this._colliders; } }
+    public        ref readonly UnityEngine.Rigidbody   rigidBody           { get { if (this._rigidBody is null && base.TryGetComponent(out UnityEngine.Rigidbody rigidBody)) { this._rigidBody = rigidBody; }                       return ref this._rigidBody!; } }
+    public    new ref readonly UnityEngine.Transform   transform           { get { this._transform ??= base.transform;                                                                                                              return ref this._transform; } }
+    public        ref readonly UnityEngine.Camera?     worldCamera         { get { if (this.actualWorldCamera is null) { this.actualWorldCamera = UnityEngine.Camera.main; if (this.actualWorldCamera is not null) { this.worldCameraDistance = this.actualWorldCamera.transform.position - this.transform.position; } } return ref this.actualWorldCamera; } }
+    protected     UnityEngine.Vector3                  worldCameraDistance = UnityEngine.Vector3.zero;
 
     /* … */
     protected virtual void Update() {
@@ -191,6 +194,12 @@ namespace PatchOdyssey {
 
   [System.AttributeUsage(System.AttributeTargets.All, AllowMultiple = false, Inherited = false)]
   public sealed class ReadWriteInInspectorAttribute : UnityEngine.PropertyAttribute {}
+
+  [System.AttributeUsage(System.AttributeTargets.All, AllowMultiple = false, Inherited = false)]
+  public sealed class RenameInInspectorAttribute : UnityEngine.PropertyAttribute {
+    public string name = string.Empty;
+    public RenameInInspectorAttribute(string name) => this.name = name;
+  }
 
   [System.Serializable]
   public struct Timeframe {
@@ -263,6 +272,17 @@ namespace PatchOdyssey {
     public class ReadOnlyInInspectorDrawer : UnityEditor.PropertyDrawer {
       public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent         label) => UnityEditor.EditorGUI.GetPropertyHeight(property, label, true);
       public override void  OnGUI            (UnityEngine.Rect               position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) { UnityEngine.GUI.enabled = false; using (new UnityEditor.EditorGUI.DisabledScope(true)) { UnityEditor.EditorGUI.PropertyField(position, property, label, true); } UnityEngine.GUI.enabled = true; }
+    }
+
+    [UnityEditor.CustomPropertyDrawer(typeof(RenameInInspectorAttribute))]
+    public class RenameInInspectorDrawer : UnityEditor.PropertyDrawer {
+      public override float GetPropertyHeight(UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) => base.GetPropertyHeight(property, label);
+      public override void  OnGUI            (UnityEngine.Rect position, UnityEditor.SerializedProperty property, UnityEngine.GUIContent label) {
+        RenameInInspectorAttribute attribute = (RenameInInspectorAttribute) base.attribute;
+
+        label.text = attribute.name;
+        UnityEditor.EditorGUI.PropertyField(position, property, label, true);
+      }
     }
 
     [UnityEditor.CustomPropertyDrawer(typeof(Timeframe))]

@@ -137,6 +137,11 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
         this.lasoo.captureIndicator.completed.transform.SetParent(lasoo.transform,                                 false);
         this.lasoo.captureIndicator.progress .transform.SetParent(this.lasoo.captureIndicator.completed.transform, false);
         lasoo.transform                                .SetParent(transform,                                       false);
+
+        if (null != base.audioClips.lasooing) {
+          base.audioSource.pitch = (UnityEngine.Random.value * 2.0f) + 1.0f;
+          base.audioSource.PlayOneShot(base.audioClips.lasooing, 0.2f);
+        }
       }
 
       return true;
@@ -157,8 +162,25 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
   }
 
   protected override void OnDestroy() {
+    uint count = 0u;
+
+    // …
     base.OnDestroy();
     this.RetractLasoo();
+
+    if (!Game.IsQuitting && !base.isInvincible) {
+      foreach (Entity entity in Entity.All)
+      count += entity is Player ? 1u : 0u;
+
+      if (null != UI.main.HUD.layoutContainers!.gameover && count <= 1u) {
+        Area.Reset();
+        Entity.Reset();
+        Stats.Reset();
+
+        UI.main.ChangeActivity(UI.main.activity, UI.ActivityState.Gameover);
+        Game.IsPaused = true;
+      }
+    }
   }
 
   public void ResetLasoo() {
@@ -242,6 +264,24 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
     // … ->> Input
     Player.IsReady = Player.IsReady || this.isInputing;
     this.isInputing = false;
+      // … ->> Defeating
+      #if DEBUG || DEVELOPMENT_BUILD
+        if (Game.Keyboard.jKey.wasPressedThisFrame || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.J))
+        base.defeatAutomatically = true;
+      #endif
+
+      // … ->> Health
+      #if DEBUG || DEVELOPMENT_BUILD
+        if (Game.Keyboard.iKey.wasPressedThisFrame || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.I))
+        base.isInvincible = !base.isInvincible;
+      #endif
+
+      // … ->> Winning
+      #if DEBUG || DEVELOPMENT_BUILD
+        if (Game.Keyboard.kKey.wasPressedThisFrame || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.K))
+        UI.main.TryChangeActivityToWin();
+      #endif
+
       // … ->> Chatting
       this.isChatting = this.isChatting || Game.Keyboard.eKey.wasReleasedThisFrame || UnityEngine.Input.GetKeyUp(UnityEngine.KeyCode.E);
       this.isInputing = this.isInputing || this.isChatting;

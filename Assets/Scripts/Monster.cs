@@ -89,7 +89,8 @@ public sealed class Monster : Entity {
          renderer.enabled                             &&
         !renderer.forceRenderingOff                   &&
         !renderer.transform.IsChildOf(this.transform) &&
-         System.Array.Exists(renderer.sharedMaterials, static material => null != material)
+         System.Array.Exists(renderer.sharedMaterials, static material => null != material) &&
+         (renderer.transform.position - this.transform.position).sqrMagnitude < (UnityEngine.Vector3.one * 15.0f).sqrMagnitude
       )).ToArray();
     }
   }
@@ -130,7 +131,7 @@ public sealed class Monster : Entity {
   protected override void OnTriggerEnter(UnityEngine.Collider collider) {
     base.OnTriggerEnter(collider);
 
-    if (!base.isDefeated && null == this.following && collider.TryGetComponent(out Lasoo lasoo) && null == lasoo.capture && lasoo.isDeploying()) {
+    if (Monster.Kind.Tyrage != this.kind && !base.isDefeated && null == base.following && collider.TryGetComponent(out Lasoo lasoo) && null == lasoo.capture && lasoo.isDeploying()) {
       lasoo.capture  = this;
       this.wrestling = lasoo.user;
     }
@@ -300,11 +301,13 @@ public sealed class Monster : Entity {
           bullet.rigidBody.AddForce(base.shoot.speed * (bullet.shootDirection + volleySpreadDirection).normalized, UnityEngine.ForceMode.Impulse);
         } break;
 
-        case Monster.Kind.Molem:  /* Do nothing… */   break;
-        case Monster.Kind.Tyrage: /* Do something… */ break;
+        case Monster.Kind.Molem:
+          /* Do nothing… */
+          break;
 
         case Monster.Kind.Antillery:
         case Monster.Kind.Sirpens:
+        case Monster.Kind.Tyrage:
         default:
           bullet.Travel();
           break;
@@ -415,8 +418,14 @@ public sealed class Monster : Entity {
       base.targetAutomatically = false;
 
       if (this.wrestling is Player player) {
-        if (this.wrestle.interval.isLooped) // ->> Pulled toward
-        base.rigidBody.AddForce(-targetDistance * (UnityEngine.Random.value * this.wrestle.force), UnityEngine.ForceMode.Impulse);
+        if (this.wrestle.interval.isLooped) /* ->> Pulled toward */ {
+          base.rigidBody.AddForce(-targetDistance * (UnityEngine.Random.value * this.wrestle.force), UnityEngine.ForceMode.Impulse);
+
+          if (null != base.audioClips.wrestling) {
+            base.audioSource.pitch = (UnityEngine.Random.value * 2.0f) + 1.0f;
+            base.audioSource.PlayOneShot(base.audioClips.wrestling, 0.2f);
+          }
+        }
 
         if (player.lasooing!.reachProgress >= 1.0f)
         player.ResetLasoo(); // ->> Lasoo stretched too far

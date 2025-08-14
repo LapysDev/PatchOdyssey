@@ -4,31 +4,39 @@ using PatchOdyssey;
 [UnityEngine.DefaultExecutionOrder(6)]
 [UnityEngine.DisallowMultipleComponent]
 public sealed class Area : GameComponent {
-  public static Timeframe EntryTransition = new(2.0, Timeframe.EaseIn);
-  public static Timeframe ExitTransition  = new(1.0, Timeframe.EaseOut);
+  public static readonly System.Collections.Generic.List<Area> All             = new(8); // --> UnityEngine.Object.FindObjectsByType<Area>(UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None)
+  public static          Timeframe                             EntryTransition = new(2.0, Timeframe.EaseIn);
+  public static          Timeframe                             ExitTransition  = new(1.0, Timeframe.EaseOut);
 
   [ReadWriteInInspector]                            public           bool                                                                        alternativeAutomatically = true;
   [ReadWriteInInspector]                            public           string                                                                      areaName                 = string.Empty;
   [ReadWriteInInspector]                            public           bool                                                                        invincibleAutomatically  = false;
   [ReadOnlyInInspector, UnityEngine.SerializeField] private          bool                                                                        isLocked                 = false;
+  [ReadOnlyInInspector]                             public           bool                                                                        isReset                  = false;
   [ReadOnlyInInspector]                             private readonly System.Collections.Generic.List<(Entity entity, bool isInvincible)>         locked                   = new();
+  [ReadWriteInInspector]                            public           UnityEngine.Events.UnityEvent                                               onComplete               = new();
   [ReadWriteInInspector]                            public           bool                                                                        respawnAutomatically     = false;
   [ReadWriteInInspector]                            public           bool                                                                        scoreAutomatically       = true;
   [ReadOnlyInInspector, UnityEngine.SerializeField] private          uint                                                                        spawnCount               = 0u;
   [ReadWriteInInspector]                            public           float                                                                       spawnDelay               = 1.0f;
   [ReadWriteInInspector]                            public           System.Collections.Generic.List<Entity>                                     spawnPrefabrications     = new();
   [ReadWriteInInspector]                            private readonly System.Collections.Generic.List<(Entity entity, UnityEngine.Vector3, uint)> spawns                   = new();
+  [ReadWriteInInspector]                            public           System.Collections.Generic.List<Entity.Team>                                spawnTeams               = new();
 
   /* … ->> Must be hollow to work? */
   private void Awake() {
     this.areaName        = string.IsNullOrWhiteSpace(this.areaName) ? base.name : this.areaName;
     this.spawns.Capacity = this.spawnPrefabrications.Count;
+
+    Area.All.Add(this);
   }
 
   private void OnTriggerEnter(UnityEngine.Collider collider) {
     if (collider.TryGetComponent(out Player _)) {
       Area.EntryTransition.Reset();
       Area.ExitTransition .Reset();
+
+      this.isReset = false;
 
       if (UI.main.HUD.layoutContainers.area is not null)
       UI.main.HUD.layoutContainers.area.text = this.areaName;
@@ -53,6 +61,8 @@ public sealed class Area : GameComponent {
       }
 
       // … ->> Lock in
+      areaBounds?.Expand(1.0f + (player.movement.speed * UnityEngine.Mathf.Max(1.0f, player.movement.speedFactor))); // ->> ╮( ˘ ､˘ )╭
+
       if (areaBounds?.Contains(player.transform.position) ?? false) {
         this.isLocked = 0 != this.spawnPrefabrications.Count;
 
@@ -63,6 +73,10 @@ public sealed class Area : GameComponent {
       }
     }
   }
+
+  private        void OnDestroy() => Area.All.Remove(this);
+  public  static void Reset    () { foreach (Area area in Area.All) { area.isReset = true; area.Respawn(); area.spawns.Clear(); } }
+  private        void Respawn  () => this.spawnCount = 0u;
 
   protected override void Update() {
     base.Update();
@@ -81,14 +95,15 @@ public sealed class Area : GameComponent {
     // … ->> Spawning
     if (this.isLocked) {
       System.Collections.IEnumerator DeployEntity() {
-        if (this.spawnCount == this.spawnPrefabrications.Count)
+        if (this.isReset || this.spawnCount == this.spawnPrefabrications.Count)
         yield break;
 
         /* … */
         Entity              entity;
         UnityEngine.Bounds  spawnBounds         = new(this.transform.position, UnityEngine.Vector3.one);
         UnityEngine.Vector3 spawnPosition       = UnityEngine.Vector3.zero;
-        Entity              spawnPrefabrication = this.spawnPrefabrications[(int) this.spawnCount++];
+        Entity              spawnPrefabrication = this.spawnPrefabrications[(int) this.spawnCount];
+        Entity.Team         spawnTeam           = this.spawnCount < this.spawnTeams.Count ? this.spawnTeams[(int) this.spawnCount] : spawnPrefabrication.team;
 
         // …
         for (bool isBounded = false; !isBounded; spawnBounds.Expand(1.0f)) {
@@ -121,7 +136,10 @@ public sealed class Area : GameComponent {
           } break;
         }
 
-        entity = UnityEngine.Object.Instantiate(spawnPrefabrication, spawnPosition, UnityEngine.Quaternion.identity).GetComponent<Entity>();
+        entity      = UnityEngine.Object.Instantiate(spawnPrefabrication, spawnPosition, UnityEngine.Quaternion.identity).GetComponent<Entity>();
+        entity.team = spawnTeam;
+        this.spawnCount++;
+
         this.spawns.Add((entity, entity.defeat.position, entity.score + (uint) (UnityEngine.Random.value * entity.score * 0.2f)));
 
         if (entity is Tamer tamer && UnityEngine.Random.value > 0.2f) {
@@ -130,8 +148,7 @@ public sealed class Area : GameComponent {
             Assets.main.spawnables.monsters.antilleryPrefabrication.Count +
             Assets.main.spawnables.monsters.borkaPrefabrication    .Count +
             Assets.main.spawnables.monsters.molemPrefabrication    .Count +
-            Assets.main.spawnables.monsters.sirpensPrefabrication  .Count +
-            Assets.main.spawnables.monsters.tyragePrefabrication   .Count
+            Assets.main.spawnables.monsters.sirpensPrefabrication  .Count
           );
 
           // …
@@ -139,7 +156,6 @@ public sealed class Area : GameComponent {
           monsters.AddRange(Assets.main.spawnables.monsters.borkaPrefabrication);
           monsters.AddRange(Assets.main.spawnables.monsters.molemPrefabrication);
           monsters.AddRange(Assets.main.spawnables.monsters.sirpensPrefabrication);
-          monsters.AddRange(Assets.main.spawnables.monsters.tyragePrefabrication);
 
           monster           = UnityEngine.Object.Instantiate(monsters[Game.Randomizer.Next(monsters.Count)], -spawnPosition, UnityEngine.Quaternion.identity, entity.transform).GetComponent<Monster>();
           monster.following = tamer;
@@ -153,8 +169,10 @@ public sealed class Area : GameComponent {
       }
 
       /* … */
-      if (0u == this.spawnCount)
+      if (0u == this.spawnCount) {
+        if (!this.isReset)
         base.StartCoroutine(DeployEntity());
+      }
 
       else if (this.spawnCount == this.spawnPrefabrications.Count) {
         this.isLocked = false;
@@ -235,10 +253,12 @@ public sealed class Area : GameComponent {
 
         this.locked.Clear();
         this.spawns.Clear();
+
+        this.onComplete.Invoke();
       }
     }
 
     else if (this.respawnAutomatically)
-      this.spawnCount = 0u;
+      this.Respawn();
   }
 }
