@@ -18,21 +18,22 @@ public sealed class NPC : GameComponent {
   public  static NPC?      Chatting            = null;
   public  static Timeframe ChatTransition      = new(1.0);
   public  static uint      Count               = 0u;
-  // private static bool      IsInteracting       = false;
-  public  static Timeframe MonologueTransition = new(0.5);
+  public  static Timeframe MonologueTransition = new(1.5);
 
-  [ReadWriteInInspector] public string                                  birthName             = string.Empty;
-  [ReadWriteInInspector] public UnityEngine.Material                    hairMaterial          = null!;
-  [ReadOnlyInInspector]  public bool                                    interactAutomatically = false;
-  [ReadOnlyInInspector]  public Player?                                 interacting           = null;
-  [ReadWriteInInspector] public System.Collections.Generic.List<string> monologue             = new(1);
-  [ReadOnlyInInspector]  public uint                                    monologueCount        = 0u;
-  [ReadOnlyInInspector]  public Player?                                 monologuing           = null;
-  [ReadOnlyInInspector]  public NPC.Premonologue                        premonologue          = new() {isAggressive = false, isInvincible = false, moveAutomatically = false, statisticsHealth = false, statisticsShoot = false};
-  [ReadWriteInInspector] public UnityEngine.Material                    skinMaterial          = null!;
-  [ReadWriteInInspector] public bool                                    turnAutomatically     = false;
-  [ReadWriteInInspector] public bool                                    turnBack              = false;
-  [ReadOnlyInInspector]  public UnityEngine.Vector3                     turnDirection         = UnityEngine.Vector3.back;
+  [ReadWriteInInspector]                                public string                                  birthName             = string.Empty;
+  [ReadWriteInInspector]                                public UnityEngine.Material                    hairMaterial          = null!;
+  [ReadOnlyInInspector]                                 public bool                                    interactAutomatically = false;
+  [ReadOnlyInInspector]                                 public Player?                                 interacting           = null;
+  [ReadWriteInInspector]                                public System.Collections.Generic.List<string> monologue             = new(1);
+  [ReadWriteInInspector]                                public UnityEngine.AudioClip?                  monologueAudioClip    = null;
+  [ReadWriteInInspector, UnityEngine.Range(0.0f, 2.4f)] public float                                   monologueAudioPitch   = 1.0f;
+  [ReadOnlyInInspector]                                 public uint                                    monologueCount        = 0u;
+  [ReadOnlyInInspector]                                 public Player?                                 monologuing           = null;
+  [ReadOnlyInInspector]                                 public NPC.Premonologue                        premonologue          = new() {isAggressive = false, isInvincible = false, moveAutomatically = false, statisticsHealth = false, statisticsShoot = false};
+  [ReadWriteInInspector]                                public UnityEngine.Material                    skinMaterial          = null!;
+  [ReadWriteInInspector]                                public bool                                    turnAutomatically     = false;
+  [ReadWriteInInspector]                                public bool                                    turnBack              = false;
+  [ReadOnlyInInspector]                                 public UnityEngine.Vector3                     turnDirection         = UnityEngine.Vector3.back;
 
   /* … */
   private void Awake() {
@@ -187,6 +188,11 @@ public sealed class NPC : GameComponent {
           if (null != containers.chat)
           UI.main.ChangeContainer(containers.chat, UI.ContainerVisibility.Hidden);
         }
+
+        if (!NPC.MonologueTransition.isElapsed && null != this.monologueAudioClip) {
+          base.audioSource.pitch = (UnityEngine.Random.value * this.monologueAudioPitch) + (UnityEngine.Mathf.Abs(this.monologueAudioPitch) * 0.5f);
+          base.audioSource.PlayOneShot(this.monologueAudioClip, 0.3f);
+        }
       }
 
       else {
@@ -206,6 +212,11 @@ public sealed class NPC : GameComponent {
           if (null != containers.chat)     { UI.main.ChangeContainer(containers.chat, UI.ContainerVisibility.Visible, NPC.ChatTransition); }
           if (null != containers.chatName) { containers.chatName.text = this.birthName; }
           if (null != containers.chatText) { containers.chatText.text = chatMonologue; containers.chatText.color = UnityEngine.Color.Lerp(containers.chatText.color.Transparent(), containers.chatText.color.Opaque(), (float) NPC.MonologueTransition.progress * 3.333333f); }
+        }
+
+        if (!NPC.MonologueTransition.isElapsed && null != this.monologueAudioClip && (!base.audioSource.isPlaying || UnityEngine.Random.value < 0.2f)) {
+          base.audioSource.pitch = (UnityEngine.Random.value * this.monologueAudioPitch) + (UnityEngine.Mathf.Abs(this.monologueAudioPitch) * 0.5f);
+          base.audioSource.PlayOneShot(this.monologueAudioClip, 0.3f);
         }
 
         // … ->> Next line of monologue

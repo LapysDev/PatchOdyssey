@@ -362,11 +362,6 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
       if (null != tracked.tracking)
       tracked.tracking.transform.position = tracked.origin;
     }
-
-    if (null != this.audioClips.defeating) {
-      base.audioSource.pitch = (UnityEngine.Random.value * 2.0f) + 1.0f;
-      base.audioSource.PlayOneShot(this.audioClips.defeating, 0.2f);
-    }
   }
 
   private void OnDisable() => Entity.All.Remove(this);
@@ -580,6 +575,12 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
       float               transformToCameraFactors       = transformForwardToCameraFactor + transformRightToCameraFactor;
       float               swayForce                      = (float) this.defeat.timeout.elapsed / Entity.DefeatedSwayDuration;
       UnityEngine.Vector3 swayDirection                  = Entity.TurnDirectionToVector3(0 == (((uint) swayForce) & 1) ? Entity.TurnDirection.Anticlockwise : Entity.TurnDirection.Clockwise, UnityEngine.Vector3.right);
+
+      // â€¦
+      if (null != this.audioClips.defeating && !base.audioSource.isPlaying && !base.rigidBody.IsSleeping()) {
+        base.audioSource.pitch = (UnityEngine.Random.value * 2.0f) + 1.0f;
+        base.audioSource.PlayOneShot(this.audioClips.defeating, 0.2f);
+      }
 
       // â€¦ ->> Shrink, sink, and sway
       this.transform.position   = this.defeat.position + (swayDirection * ((swayForce - (uint) swayForce) - 0.5f) * Entity.DefeatedSwayFactor) + (UnityEngine.Vector3.up * -Entity.DefeatedSinkHeight * (float) this.defeat.timeout.easedProgress);

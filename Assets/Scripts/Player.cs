@@ -24,17 +24,18 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
   }
 
   /* … */
-  private const           float                 VignetteIntensity                  = 0.15f;
-  private static readonly UnityEngine.Color     VignetteColor                      = UnityEngine.Color.black;
-  private static readonly float                 LasooCaptureProgressThreshold      = (UnityEngine.Vector3.one * 0.25f).sqrMagnitude;
-  private const           uint                  LasooCaptureProgressPrecision      = 10u; // --> Player.LasooCaptureProgressPrecision >= 2
-  private const           float                 LasooCaptureProgressAngle          = 360.0f / Player.LasooCaptureProgressPrecision;
-  private const           byte                  LasooCaptureIndicatorPrecision     = 20;   // ->> Number of segments
-  private const           float                 LasooCaptureIndicatorOuterRadius   = 1.5f; // --> Player.LasooCaptureIndicatorOuterRadius > Player.LasooCaptureIndicatorInnerRadius
-  private static readonly UnityEngine.Vector3[] LasooCaptureIndicatorMeshVertices  = new UnityEngine.Vector3[(Player.LasooCaptureIndicatorPrecision * 2u)];
-  private static readonly int                [] LasooCaptureIndicatorMeshTriangles = new int                [(Player.LasooCaptureIndicatorPrecision - 1u) * 6u];
-  private const           float                 LasooCaptureIndicatorInnerRadius   = 1.0f; // --> Player.LasooCaptureIndicatorInnerRadius < Player.LasooCaptureIndicatorOuterRadius
-  public  static          bool                  IsReady                            = false;
+  private const           float                      VignetteIntensity                  = 0.15f;
+  private static readonly UnityEngine.Color          VignetteColor                      = UnityEngine.Color.black;
+  private static readonly float                      LasooCaptureProgressThreshold      = (UnityEngine.Vector3.one * 0.25f).sqrMagnitude;
+  private const           uint                       LasooCaptureProgressPrecision      = 10u; // --> Player.LasooCaptureProgressPrecision >= 2
+  private const           float                      LasooCaptureProgressAngle          = 360.0f / Player.LasooCaptureProgressPrecision;
+  private const           byte                       LasooCaptureIndicatorPrecision     = 20;   // ->> Number of segments
+  private const           float                      LasooCaptureIndicatorOuterRadius   = 1.5f; // --> Player.LasooCaptureIndicatorOuterRadius > Player.LasooCaptureIndicatorInnerRadius
+  private static readonly UnityEngine.Vector3[]      LasooCaptureIndicatorMeshVertices  = new UnityEngine.Vector3[(Player.LasooCaptureIndicatorPrecision * 2u)];
+  private static readonly int                []      LasooCaptureIndicatorMeshTriangles = new int                [(Player.LasooCaptureIndicatorPrecision - 1u) * 6u];
+  private const           float                      LasooCaptureIndicatorInnerRadius   = 1.0f; // --> Player.LasooCaptureIndicatorInnerRadius < Player.LasooCaptureIndicatorOuterRadius
+  public  static          bool                       IsReady                            = false;
+  private static          UnityEngine.AudioListener? AudioListener                      = null;
 
   [UnityEngine.Header("Player")]
   [ReadOnlyInInspector]  public bool             isChatting         = false;
@@ -43,7 +44,8 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
   [ReadWriteInInspector] public Player.LasooInfo lasoo              = new() {captureDirection = UnityEngine.Vector3.zero, captureIndicator = (null, null), captureIndicatorMesh = (null, null), captureIndicatorRenderer = (null, null), captureProgress = Player.LasooCaptureProgress.Initiating, captureProgressDirection = UnityEngine.Vector3.zero, captureProgressTurn = Entity.TurnDirection.Clockwise, captureProgressTurnCount = 0u, deployReach = Lasoo.DeployReach, deploySpeed = Lasoo.DeploySpeed, retractReach = Lasoo.RetractReach, retractSpeed = Lasoo.RetractSpeed, turnSpeed = Lasoo.TurnSpeed};
   [ReadOnlyInInspector]  public bool             lasooAutomatically = true;
   [ReadOnlyInInspector]  public Lasoo?           lasooing           = null;
-  [ReadWriteInInspector] public Timeframe        releaseWindow      = new(1.00);
+  [ReadOnlyInInspector]  public Timeframe        listenCooldown     = new(0.1);
+  [ReadWriteInInspector] public Timeframe        releaseWindow      = new(1.0);
 
   /* … */
   protected override void Awake() {
@@ -53,6 +55,8 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
     base.collider.isTrigger  = false;
     base.followAutomatically = false;
     base.shootAutomatically  = false;
+
+    this.listenCooldown.Reset();
 
     // …
     if (base.worldCamera is not null && !this.tracking.cameras.Contains(base.worldCamera)) {
@@ -81,6 +85,8 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
   protected override void Capture(Entity entity) {
     base.Capture   (entity);
     this.ResetLasoo();
+
+    entity.shoot.cooldown.duration *= 0.65;
   }
 
   public bool DeployLasoo() {
@@ -163,6 +169,15 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
 
   protected override void OnDestroy() {
     uint count = 0u;
+
+    // … ->> Audio
+    if (Player.AudioListener == this) {
+      UnityEngine.Object.DestroyImmediate(Player.AudioListener, false);
+      Player.AudioListener = null;
+    }
+
+    if (!base.worldCamera!.TryGetComponent(out UnityEngine.AudioListener _) && !Entity.All.Exists(static entity => entity.TryGetComponent(out UnityEngine.AudioListener _)))
+    base.worldCamera!.gameObject.AddComponent<UnityEngine.AudioListener>();
 
     // …
     base.OnDestroy();
@@ -260,6 +275,18 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
 
     if (Game.IsPaused || base.isDefeated)
     return;
+
+    // … ->> Audio
+    if (this.listenCooldown.isElapsed && UI.Activity.HUD == UI.main.activity && UI.ActivityState.Play == UI.main.activityState) {
+      if (base.worldCamera!.TryGetComponent(out UnityEngine.AudioListener worldCameraAudioListener))
+      UnityEngine.Object.Destroy(worldCameraAudioListener);
+
+      if (null == Player.AudioListener)
+      Player.AudioListener = base.gameObject.AddComponent<UnityEngine.AudioListener>();
+    }
+
+    else if (!base.worldCamera!.TryGetComponent(out UnityEngine.AudioListener worldCameraAudioListener))
+      base.worldCamera!.gameObject.AddComponent<UnityEngine.AudioListener>();
 
     // … ->> Input
     Player.IsReady = Player.IsReady || this.isInputing;

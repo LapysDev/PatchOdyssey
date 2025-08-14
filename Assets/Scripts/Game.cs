@@ -45,6 +45,26 @@ namespace PatchOdyssey {
       return false;
     }
 
+    public static void DebugBounds(in UnityEngine.Bounds bounds) => Game.DebugBounds(bounds, UnityEngine.Color.white, 0.0f, true);
+    public static void DebugBounds(in UnityEngine.Bounds bounds, in UnityEngine.Color color, float delay, bool depthTest) {
+      #if DEBUG || DEVELOPMENT_BUILD
+        System.ReadOnlySpan<UnityEngine.Vector3> vertices = stackalloc UnityEngine.Vector3[] {new(bounds.min.x, bounds.min.y, bounds.min.z), new(bounds.max.x, bounds.min.y, bounds.min.z), new(bounds.max.x, bounds.min.y, bounds.max.z), new(bounds.min.x, bounds.min.y, bounds.max.z), new(bounds.min.x, bounds.max.y, bounds.min.z), new(bounds.max.x, bounds.max.y, bounds.min.z), new(bounds.max.x, bounds.max.y, bounds.max.z), new(bounds.min.x, bounds.max.y, bounds.max.z)};
+
+        UnityEngine.Debug.DrawLine(vertices[0], vertices[1], color, delay, depthTest);
+        UnityEngine.Debug.DrawLine(vertices[0], vertices[4], color, delay, depthTest);
+        UnityEngine.Debug.DrawLine(vertices[1], vertices[2], color, delay, depthTest);
+        UnityEngine.Debug.DrawLine(vertices[1], vertices[5], color, delay, depthTest);
+        UnityEngine.Debug.DrawLine(vertices[2], vertices[3], color, delay, depthTest);
+        UnityEngine.Debug.DrawLine(vertices[2], vertices[6], color, delay, depthTest);
+        UnityEngine.Debug.DrawLine(vertices[3], vertices[0], color, delay, depthTest);
+        UnityEngine.Debug.DrawLine(vertices[3], vertices[7], color, delay, depthTest);
+        UnityEngine.Debug.DrawLine(vertices[4], vertices[5], color, delay, depthTest);
+        UnityEngine.Debug.DrawLine(vertices[5], vertices[6], color, delay, depthTest);
+        UnityEngine.Debug.DrawLine(vertices[6], vertices[7], color, delay, depthTest);
+        UnityEngine.Debug.DrawLine(vertices[7], vertices[4], color, delay, depthTest);
+      #endif
+    }
+
     public static void Encapsulate(this UnityEngine.Bounds bounds, in UnityEngine.Bounds encapsulated) {
       bounds.Encapsulate(encapsulated.center - encapsulated.extents);
       bounds.Encapsulate(encapsulated.center + encapsulated.extents);

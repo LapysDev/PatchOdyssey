@@ -49,21 +49,18 @@ public sealed class Area : GameComponent {
 
       // …
       foreach (UnityEngine.Collider subcollider in base.colliders) {
-        UnityEngine.Bounds colliderBounds = subcollider.bounds;
-
-        // …
         if (areaBounds is UnityEngine.Bounds bounds) {
-          bounds.Encapsulate(colliderBounds.center - colliderBounds.extents);
-          bounds.Encapsulate(colliderBounds.center + colliderBounds.extents);
-
+          bounds.Encapsulate(subcollider.bounds);
           areaBounds = bounds;
-        } else areaBounds = colliderBounds;
+        } else areaBounds = subcollider.bounds;
       }
 
       // … ->> Lock in
+      Game.DebugBounds((UnityEngine.Bounds) areaBounds!, UnityEngine.Color.blue, 10.0f, false);
       areaBounds?.Expand(1.0f + (player.movement.speed * UnityEngine.Mathf.Max(1.0f, player.movement.speedFactor))); // ->> ╮( ˘ ､˘ )╭
 
       if (areaBounds?.Contains(player.transform.position) ?? false) {
+        Game.DebugBounds((UnityEngine.Bounds) areaBounds!, UnityEngine.Color.green, 10.0f, false);
         this.isLocked = 0 != this.spawnPrefabrications.Count;
 
         if (this.invincibleAutomatically) {

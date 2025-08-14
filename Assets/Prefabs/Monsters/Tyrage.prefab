@@ -265,7 +265,7 @@ MonoBehaviour:
     view: 21
     volleyCount: 0
     volleyRandomCount: 3
-    volleyDelay: 1
+    volleyDelay: 1.5
   shootAutomatically: 1
   statistics:
     health: 1

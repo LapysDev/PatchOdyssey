@@ -129,6 +129,7 @@ public sealed class UI : UnityEngine.MonoBehaviour {
   [ReadOnlyInInspector]  public  ref readonly UnityEngine.Canvas                            canvas                      { get { if (this._canvas         is null && base.TryGetComponent(out UnityEngine.Canvas          canvas))         { this._canvas         = canvas; }         return ref this._canvas!; } }
   [ReadOnlyInInspector]  public  ref readonly UnityEngine.CanvasRenderer                    canvasRenderer              { get { if (this._canvasRenderer is null && base.TryGetComponent(out UnityEngine.CanvasRenderer  canvasRenderer)) { this._canvasRenderer = canvasRenderer; } return ref this._canvasRenderer!; } }
   [ReadWriteInInspector] public  ref readonly UnityEngine.UI.CanvasScaler                   canvasScaler                { get { if (this._canvasScaler   is null && base.TryGetComponent(out UnityEngine.UI.CanvasScaler canvasScaler))   { this._canvasScaler   = canvasScaler; }   return ref this._canvasScaler!; } }
+  [ReadWriteInInspector] public  UnityEngine.AudioClip?                                     clickAudioClip              = null;
   [ReadWriteInInspector] public  Timeframe                                                  controlSwitchDuration       = new(0.70);
   [ReadWriteInInspector] public  Timeframe                                                  controlSwitchInterval       = new(5.00);
   [ReadOnlyInInspector]  public  UI.Entities                                                entities                    = new() {playerHorizontalMovementDirection = UnityEngine.Vector3.zero, playerHorizontalMovementDuration = new(2.50), playerVerticalMovementDirection = UnityEngine.Vector3.zero, playerVerticalMovementDuration = new(2.50), statistics = new() {health = new(16), shoot = new(16)}};
@@ -248,6 +249,11 @@ public sealed class UI : UnityEngine.MonoBehaviour {
     UI.main.ChangeLayout(UnityEngine.Screen.height <= UnityEngine.Screen.width || UnityEngine.Screen.orientation switch { UnityEngine.ScreenOrientation.LandscapeLeft or UnityEngine.ScreenOrientation.LandscapeRight => true, _ => false } ? UI.Layout.Desktop : UI.Layout.Mobile);
   }
 
+  private void PlayClickSound() {
+    if (null != this.clickAudioClip && base.TryGetComponent(out UnityEngine.AudioSource audioSource))
+    audioSource.PlayOneShot(this.clickAudioClip, 0.5f);
+  }
+
   private void Start() {
     static void TryHorizontalMove(in UnityEngine.Vector3 direction) {
       UI.main.entities.playerHorizontalMovementDirection = direction;
@@ -291,12 +297,12 @@ public sealed class UI : UnityEngine.MonoBehaviour {
 
     /* … ->> Unfortunately, no pointed cursor for `UnityEngine.Cursor.SetCursor(null, UnityEngine.Vector2.zero, UnityEngine.CursorMode.Auto)` */
     foreach (UI.HeadsUpDisplay.Controls controls in UI.main.HUD.controls) {
-      foreach (UnityEngine.UI.Button button in controls.home)    button.onClick.AddListener(static delegate { Area.Reset(); Entity.Reset(); Stats.Reset(); UI.main.ChangeActivity(UI.Activity.MainMenu); Game.IsPaused = true; });
+      foreach (UnityEngine.UI.Button button in controls.home)    button.onClick.AddListener(static delegate { UI.main.PlayClickSound(); UI.main.ChangeActivity(UI.Activity.MainMenu); Area.Reset(); Entity.Reset(); Stats.Reset(); Game.IsPaused = true; });
       foreach (UnityEngine.UI.Button button in controls.lasso)   button.onClick.AddListener(static delegate { UI.main.FindPlayer()?.TryLasso(); });
-      foreach (UnityEngine.UI.Button button in controls.menu)    button.onClick.AddListener(static delegate { UI.main.ChangeActivity(UI.Activity.HUD, UI.ActivityState.Pause); Game.IsPaused = true; });
+      foreach (UnityEngine.UI.Button button in controls.menu)    button.onClick.AddListener(static delegate { UI.main.PlayClickSound(); UI.main.ChangeActivity(UI.Activity.HUD, UI.ActivityState.Pause); Game.IsPaused = true; });
       foreach (UnityEngine.UI.Button button in controls.shoot)   button.onClick.AddListener(static delegate { UI.main.FindPlayer()?.TryShoot  (); });
       foreach (UnityEngine.UI.Button button in controls.release) button.onClick.AddListener(static delegate { UI.main.FindPlayer()?.TryRelease(); });
-      foreach (UnityEngine.UI.Button button in controls.resume)  button.onClick.AddListener(static delegate { UI.main.ChangeActivity(UI.Activity.HUD, UI.ActivityState.Play); Game.IsPaused = false; });
+      foreach (UnityEngine.UI.Button button in controls.resume)  button.onClick.AddListener(static delegate { UI.main.PlayClickSound(); UI.main.ChangeActivity(UI.Activity.HUD, UI.ActivityState.Play); Game.IsPaused = false; });
       foreach (UnityEngine.UI.Button button in controls.stop)    button.onClick.AddListener(static delegate { UI.main.entities.playerHorizontalMovementDuration.Finish(); UI.main.entities.playerVerticalMovementDuration.Finish(); foreach (Entity entity in Entity.All) if (entity is Player) entity.rigidBody.angularVelocity = entity.rigidBody.linearVelocity = UnityEngine.Vector3.zero; });
 
       foreach (var (buttons, listener) in new System.ValueTuple<System.Collections.Generic.List<UnityEngine.UI.Button>, UnityEngine.Events.UnityAction>[] {
@@ -335,8 +341,8 @@ public sealed class UI : UnityEngine.MonoBehaviour {
       }
     }
 
-    if (null != UI.main.buttons.chat) UI.main.buttons.chat.onClick.AddListener(static delegate { foreach (Entity entity in Entity.All) { if (entity is Player player) player.isChatting = true; } });
-    if (null != UI.main.buttons.play) UI.main.buttons.play.onClick.AddListener(static delegate { System.Collections.IEnumerator DeployPlayer() { yield return new UnityEngine.WaitForEndOfFrame(); UnityEngine.Object.Instantiate(Assets.main.playerPrefabrication, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity); } Entity.Reset(true); UI.main.ChangeActivity(UI.Activity.HUD); UI.main.StartCoroutine(DeployPlayer()); Game.IsPaused = false; });
+    if (null != UI.main.buttons.chat) UI.main.buttons.chat.onClick.AddListener(static delegate { UI.main.PlayClickSound(); foreach (Entity entity in Entity.All) { if (entity is Player player) player.isChatting = true; } });
+    if (null != UI.main.buttons.play) UI.main.buttons.play.onClick.AddListener(static delegate { UI.main.PlayClickSound(); System.Collections.IEnumerator DeployPlayer() { yield return new UnityEngine.WaitForEndOfFrame(); UnityEngine.Object.Instantiate(Assets.main.playerPrefabrication, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity); } Entity.Reset(true); UI.main.ChangeActivity(UI.Activity.HUD); UI.main.StartCoroutine(DeployPlayer()); Game.IsPaused = false; });
     if (null != UI.main.buttons.quit) UI.main.buttons.quit.onClick.AddListener(static delegate { Game.Quit(); });
   }
 
@@ -580,6 +586,7 @@ public sealed class UI : UnityEngine.MonoBehaviour {
       (UI.main.entities.statistics.health, entitiesRemove.statistics.health, static entity => !entity.isInvincible && entity.statistics.health && (entity is not Monster monster || !monster.isMounted) ? (Assets.main.UI.entities.healthStatisticPrefabrication, (float) entity.health)                       : null),
       (UI.main.entities.statistics.shoot,  entitiesRemove.statistics.shoot,  static entity => entity.statistics.shoot                                                                                   ? (Assets.main.UI.entities.shootStatisticPrefabrication,  (float) entity.shoot.cooldown.easedProgress) : null)
     }) {
+      if (UI.Activity.HUD == UI.main.activity)
       foreach (Entity entity in Entity.All) {
         UnityEngine.RectTransform? statisticPrefabrication = DiagnoseStatistic(entity)?.prefabrication;
         bool                       statisticAutomatically  = !entity.isDefeated && null != statisticPrefabrication;
@@ -612,6 +619,7 @@ public sealed class UI : UnityEngine.MonoBehaviour {
       }
 
       // …
+      if (UI.Activity.HUD == UI.main.activity)
       foreach ((Entity entity, UnityEngine.RectTransform graphic) in statistics) {
         (UnityEngine.RectTransform? statisticPrefabrication, float statisticValue) = ((UnityEngine.RectTransform?, float)) DiagnoseStatistic(entity)!;
         System.Collections.IEnumerator enumerator            = graphic.GetEnumerator();
