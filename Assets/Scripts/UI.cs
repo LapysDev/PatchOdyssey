@@ -33,6 +33,13 @@ public sealed class UI : UnityEngine.MonoBehaviour {
   }
 
   [System.Serializable]
+  public /* readonly */ struct AudioClipInfo {
+    [ReadWriteInInspector] public UnityEngine.AudioClip? click;
+    [ReadWriteInInspector] public UnityEngine.AudioClip? menu;
+    [ReadWriteInInspector] public UnityEngine.AudioClip? victory;
+  }
+
+  [System.Serializable]
   public /* readonly */ struct Buttons {
     [ReadWriteInInspector] public UnityEngine.UI.Button? chat;
     [ReadWriteInInspector] public UnityEngine.UI.Button? play;
@@ -124,15 +131,15 @@ public sealed class UI : UnityEngine.MonoBehaviour {
   [ReadWriteInInspector] public  System.Collections.Generic.List<UI.ActivityTransitionInfo> activityTransitions         = new(System.Enum.GetValues(typeof(UI.Activity)).Length); // --> System.Collections.Generic.Dictionary<UI.Activity, …>
   [ReadOnlyInInspector]  private int                                                        applicationHeight           = -1;
   [ReadOnlyInInspector]  private int                                                        applicationWidth            = -1;
+  [ReadWriteInInspector] public  UI.AudioClipInfo                                           audioClips                  = new();
   [ReadWriteInInspector] public  UI.ActivityBackground                                      background                  = new() {entry = null, exit = null, transition = new(1.5), transitionEntry = new() {color = new(0.00f, 0.00f, 0.00f, 0.00f), container = null!, material = null!, sprite = null!, texture = null!}, transitionExit = new() {color = new(0.00f, 0.00f, 0.00f, 0.00f), container = null!, material = null!, sprite = null!, texture = null!}};
   [ReadWriteInInspector] public  UI.Buttons                                                 buttons                     = new() {play = null, quit = null};
   [ReadOnlyInInspector]  public  ref readonly UnityEngine.Canvas                            canvas                      { get { if (this._canvas         is null && base.TryGetComponent(out UnityEngine.Canvas          canvas))         { this._canvas         = canvas; }         return ref this._canvas!; } }
   [ReadOnlyInInspector]  public  ref readonly UnityEngine.CanvasRenderer                    canvasRenderer              { get { if (this._canvasRenderer is null && base.TryGetComponent(out UnityEngine.CanvasRenderer  canvasRenderer)) { this._canvasRenderer = canvasRenderer; } return ref this._canvasRenderer!; } }
   [ReadWriteInInspector] public  ref readonly UnityEngine.UI.CanvasScaler                   canvasScaler                { get { if (this._canvasScaler   is null && base.TryGetComponent(out UnityEngine.UI.CanvasScaler canvasScaler))   { this._canvasScaler   = canvasScaler; }   return ref this._canvasScaler!; } }
-  [ReadWriteInInspector] public  UnityEngine.AudioClip?                                     clickAudioClip              = null;
   [ReadWriteInInspector] public  Timeframe                                                  controlSwitchDuration       = new(0.70);
   [ReadWriteInInspector] public  Timeframe                                                  controlSwitchInterval       = new(5.00);
-  [ReadOnlyInInspector]  public  UI.Entities                                                entities                    = new() {playerHorizontalMovementDirection = UnityEngine.Vector3.zero, playerHorizontalMovementDuration = new(2.50), playerVerticalMovementDirection = UnityEngine.Vector3.zero, playerVerticalMovementDuration = new(2.50), statistics = new() {health = new(16), shoot = new(16)}};
+  [ReadOnlyInInspector]  public  UI.Entities                                                entities                    = new() {playerHorizontalMovementDirection = UnityEngine.Vector3.zero, playerHorizontalMovementDuration = new(1.0), playerVerticalMovementDirection = UnityEngine.Vector3.zero, playerVerticalMovementDuration = new(1.0), statistics = new() {health = new(16), shoot = new(16)}};
   [ReadOnlyInInspector]  public  ref readonly UnityEngine.EventSystems.EventSystem          eventSystem                 { get { if (this._eventSystem       is null && base.TryGetComponent(out UnityEngine.EventSystems.EventSystem eventSystem))       { this._eventSystem       = eventSystem; }       return ref this._eventSystem!; } }
   [ReadOnlyInInspector]  public  ref readonly UnityEngine.UI.GraphicRaycaster               graphicsRaycaster           { get { if (this._graphicsRaycaster is null && base.TryGetComponent(out UnityEngine.UI.GraphicRaycaster      graphicsRaycaster)) { this._graphicsRaycaster = graphicsRaycaster; } return ref this._graphicsRaycaster!; } }
   [ReadWriteInInspector] public  UI.HeadsUpDisplay                                          HUD                         = new() {desktop = null, desktopContainers = new(), desktopControls = new(), layout = null, layoutContainers = new(), layoutControls = new(), mobile = null, mobileContainers = new(), mobileControls = new()};
@@ -246,12 +253,12 @@ public sealed class UI : UnityEngine.MonoBehaviour {
 
   private void OnRectTransformDimensionsChange() {
     if (UI.main is not null)
-    UI.main.ChangeLayout(UnityEngine.Screen.height <= UnityEngine.Screen.width || UnityEngine.Screen.orientation switch { UnityEngine.ScreenOrientation.LandscapeLeft or UnityEngine.ScreenOrientation.LandscapeRight => true, _ => false } ? UI.Layout.Desktop : UI.Layout.Mobile);
+    UI.main.ChangeLayout(UnityEngine.Screen.height <= UnityEngine.Screen.width ? UI.Layout.Desktop : UI.Layout.Mobile);
   }
 
   private void PlayClickSound() {
-    if (null != this.clickAudioClip && base.TryGetComponent(out UnityEngine.AudioSource audioSource))
-    audioSource.PlayOneShot(this.clickAudioClip, 0.5f);
+    if (null != this.audioClips.click && base.TryGetComponent(out UnityEngine.AudioSource audioSource))
+    audioSource.PlayOneShot(this.audioClips.click, 0.5f);
   }
 
   private void Start() {
@@ -297,12 +304,12 @@ public sealed class UI : UnityEngine.MonoBehaviour {
 
     /* … ->> Unfortunately, no pointed cursor for `UnityEngine.Cursor.SetCursor(null, UnityEngine.Vector2.zero, UnityEngine.CursorMode.Auto)` */
     foreach (UI.HeadsUpDisplay.Controls controls in UI.main.HUD.controls) {
-      foreach (UnityEngine.UI.Button button in controls.home)    button.onClick.AddListener(static delegate { UI.main.PlayClickSound(); UI.main.ChangeActivity(UI.Activity.MainMenu); Area.Reset(); Entity.Reset(); Stats.Reset(); Game.IsPaused = true; });
+      foreach (UnityEngine.UI.Button button in controls.home)    button.onClick.AddListener(static delegate { Area.AudioSource?.Stop(); Area.Reset(); Entity.Reset(); Stats.Reset(); UI.main.PlayClickSound(); UI.main.ChangeActivity(UI.Activity.MainMenu); Area.AudioSource = null; Game.IsPaused = true; if (UI.main.TryGetComponent(out UnityEngine.AudioSource uiAudioSource)) { uiAudioSource.clip = UI.main.audioClips.menu; uiAudioSource.Play(); } });
       foreach (UnityEngine.UI.Button button in controls.lasso)   button.onClick.AddListener(static delegate { UI.main.FindPlayer()?.TryLasso(); });
-      foreach (UnityEngine.UI.Button button in controls.menu)    button.onClick.AddListener(static delegate { UI.main.PlayClickSound(); UI.main.ChangeActivity(UI.Activity.HUD, UI.ActivityState.Pause); Game.IsPaused = true; });
+      foreach (UnityEngine.UI.Button button in controls.menu)    button.onClick.AddListener(static delegate { UI.main.ChangeActivity(UI.Activity.HUD, UI.ActivityState.Pause); UI.main.PlayClickSound(); Game.IsPaused = true; });
       foreach (UnityEngine.UI.Button button in controls.shoot)   button.onClick.AddListener(static delegate { UI.main.FindPlayer()?.TryShoot  (); });
       foreach (UnityEngine.UI.Button button in controls.release) button.onClick.AddListener(static delegate { UI.main.FindPlayer()?.TryRelease(); });
-      foreach (UnityEngine.UI.Button button in controls.resume)  button.onClick.AddListener(static delegate { UI.main.PlayClickSound(); UI.main.ChangeActivity(UI.Activity.HUD, UI.ActivityState.Play); Game.IsPaused = false; });
+      foreach (UnityEngine.UI.Button button in controls.resume)  button.onClick.AddListener(static delegate { UI.main.ChangeActivity(UI.Activity.HUD, UI.ActivityState.Play); UI.main.PlayClickSound(); Game.IsPaused = false; });
       foreach (UnityEngine.UI.Button button in controls.stop)    button.onClick.AddListener(static delegate { UI.main.entities.playerHorizontalMovementDuration.Finish(); UI.main.entities.playerVerticalMovementDuration.Finish(); foreach (Entity entity in Entity.All) if (entity is Player) entity.rigidBody.angularVelocity = entity.rigidBody.linearVelocity = UnityEngine.Vector3.zero; });
 
       foreach (var (buttons, listener) in new System.ValueTuple<System.Collections.Generic.List<UnityEngine.UI.Button>, UnityEngine.Events.UnityAction>[] {
@@ -310,16 +317,24 @@ public sealed class UI : UnityEngine.MonoBehaviour {
         (controls.moveLeft,  static delegate { TryHorizontalMove(UnityEngine.Vector3.left); }),
         (controls.moveRight, static delegate { TryHorizontalMove(UnityEngine.Vector3.right); }),
         (controls.moveUp,    static delegate { TryVerticalMove  (UnityEngine.Vector3.up); })
-      }) {
-        foreach (UnityEngine.UI.Button button in buttons) {
-          UnityEngine.EventSystems.EventTrigger.Entry buttonEvent   = new() {eventID = UnityEngine.EventSystems.EventTriggerType.PointerDown};
-          UnityEngine.EventSystems.EventTrigger       buttonTrigger = button.GetComponent<UnityEngine.EventSystems.EventTrigger>() ?? button.gameObject.AddComponent<UnityEngine.EventSystems.EventTrigger>();
+      }) foreach (UnityEngine.UI.Button button in buttons) {
+        UnityEngine.EventSystems.EventTrigger buttonTrigger = default!;
+        var                                   buttonEvents  = new {
+          hold    = new UnityEngine.EventSystems.EventTrigger.Entry() {eventID = UnityEngine.EventSystems.EventTriggerType.PointerDown},
+          release = new UnityEngine.EventSystems.EventTrigger.Entry() {eventID = UnityEngine.EventSystems.EventTriggerType.PointerUp}
+        };
 
-          // …
-          button.onClick      .AddListener(listener);
-          buttonEvent.callback.AddListener((UnityEngine.EventSystems.BaseEventData buttonEventData) => listener());
-          buttonTrigger.triggers.Add(buttonEvent);
-        }
+        // …
+        buttonTrigger = button.TryGetComponent(out buttonTrigger) ? buttonTrigger : button.gameObject.AddComponent<UnityEngine.EventSystems.EventTrigger>();
+
+        #if false
+          buttonEvents.release.callback.AddListener(static (UnityEngine.EventSystems.BaseEventData buttonEventData) => { UI.main.entities.playerHorizontalMovementDuration.Finish(); UI.main.entities.playerVerticalMovementDuration  .Finish(); });
+        #endif
+
+        button.onClick            .AddListener(listener);
+        buttonEvents.hold.callback.AddListener((UnityEngine.EventSystems.BaseEventData buttonEventData) => listener());
+        buttonTrigger.triggers.Add(buttonEvents.hold);
+        buttonTrigger.triggers.Add(buttonEvents.release);
       }
     }
 
@@ -342,8 +357,31 @@ public sealed class UI : UnityEngine.MonoBehaviour {
     }
 
     if (null != UI.main.buttons.chat) UI.main.buttons.chat.onClick.AddListener(static delegate { UI.main.PlayClickSound(); foreach (Entity entity in Entity.All) { if (entity is Player player) player.isChatting = true; } });
-    if (null != UI.main.buttons.play) UI.main.buttons.play.onClick.AddListener(static delegate { UI.main.PlayClickSound(); System.Collections.IEnumerator DeployPlayer() { yield return new UnityEngine.WaitForEndOfFrame(); UnityEngine.Object.Instantiate(Assets.main.playerPrefabrication, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity); } Entity.Reset(true); UI.main.ChangeActivity(UI.Activity.HUD); UI.main.StartCoroutine(DeployPlayer()); Game.IsPaused = false; });
     if (null != UI.main.buttons.quit) UI.main.buttons.quit.onClick.AddListener(static delegate { Game.Quit(); });
+
+    if (null != UI.main.buttons.play)
+    UI.main.buttons.play.onClick.AddListener(static delegate {
+      System.Collections.IEnumerator DeployPlayer() {
+        yield return new UnityEngine.WaitForEndOfFrame();
+        UnityEngine.Object.Instantiate(Assets.main.playerPrefabrication, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity);
+      }
+
+      Entity.Reset(true);
+      UI.main.ChangeActivity(UI.Activity.HUD);
+      UI.main.PlayClickSound();
+      UI.main.StartCoroutine(DeployPlayer());
+
+      Game.IsPaused = false;
+
+      if (UI.main.TryGetComponent(out UnityEngine.AudioSource uiAudioSource))
+      uiAudioSource.Stop();
+    });
+
+    // …
+    if (UI.main.TryGetComponent(out UnityEngine.AudioSource uiAudioSource)) {
+      uiAudioSource.clip = UI.main.audioClips.menu;
+      uiAudioSource.Play();
+    }
   }
 
   public void TryChangeActivityToWin() {
@@ -353,15 +391,23 @@ public sealed class UI : UnityEngine.MonoBehaviour {
         entity.isInvincible = true;
       }
 
-      if (0 != UI.main.HUD.layoutControls!.home.Count)
-      UI.main.HUD.layoutControls!.home[0].onClick.Invoke();
-
       foreach (UI.HeadsUpDisplay.Containers containers in UI.main.HUD.containers) {
         if (null != containers.winText)
         containers.winText.text = "Thank you, Explorer!\nYour Quest is over\nWe present you a new Odyssey\n\nScore: " + Stats.Score;
       }
 
+      if (0 != UI.main.HUD.layoutControls!.home.Count)
+        UI.main.HUD.layoutControls!.home[0].onClick.Invoke();
+
+      Area.AudioSource?.Stop();
       UI.main.ChangeActivity(UI.Activity.HUD, UI.ActivityState.Win);
+
+      if (UI.main.TryGetComponent(out UnityEngine.AudioSource uiAudioSource)) {
+        uiAudioSource.clip = UI.main.audioClips.victory;
+        uiAudioSource.Play();
+      }
+
+      Area.AudioSource = null;
     }
   }
 
@@ -655,6 +701,12 @@ public sealed class UI : UnityEngine.MonoBehaviour {
           graphic.anchorMin        = new(0.5f, 0.5f);
         }
       }
+    }
+
+    // … ->> Input
+    if (Game.Keyboard.f11Key.wasPressedThisFrame || UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.F11)) {
+      UnityEngine.Screen.fullScreen     = !UnityEngine.Screen.fullScreen;
+      UnityEngine.Screen.fullScreenMode = UnityEngine.FullScreenMode.FullScreenWindow;
     }
   }
 }

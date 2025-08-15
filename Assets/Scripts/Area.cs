@@ -5,11 +5,13 @@ using PatchOdyssey;
 [UnityEngine.DisallowMultipleComponent]
 public sealed class Area : GameComponent {
   public static readonly System.Collections.Generic.List<Area> All             = new(8); // --> UnityEngine.Object.FindObjectsByType<Area>(UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None)
+  public static          UnityEngine.AudioSource?              AudioSource     = null;
   public static          Timeframe                             EntryTransition = new(2.0, Timeframe.EaseIn);
   public static          Timeframe                             ExitTransition  = new(1.0, Timeframe.EaseOut);
 
   [ReadWriteInInspector]                            public           bool                                                                        alternativeAutomatically = true;
   [ReadWriteInInspector]                            public           string                                                                      areaName                 = string.Empty;
+  [ReadWriteInInspector]                            public           UnityEngine.AudioClip?                                                      audioClip                = null;
   [ReadWriteInInspector]                            public           bool                                                                        invincibleAutomatically  = false;
   [ReadOnlyInInspector, UnityEngine.SerializeField] private          bool                                                                        isLocked                 = false;
   [ReadOnlyInInspector]                             public           bool                                                                        isReset                  = false;
@@ -40,6 +42,17 @@ public sealed class Area : GameComponent {
 
       if (UI.main.HUD.layoutContainers.area is not null)
       UI.main.HUD.layoutContainers.area.text = this.areaName;
+
+      if (null != this.audioClip) {
+        Area.AudioSource      = base.audioSource;
+        base.audioSource.loop = true;
+
+        if (base.audioSource.clip != this.audioClip)
+        base.audioSource.clip = this.audioClip;
+
+        if (!base.audioSource.isPlaying)
+        base.audioSource.Play();
+      }
     }
   }
 
@@ -71,12 +84,33 @@ public sealed class Area : GameComponent {
     }
   }
 
-  private        void OnDestroy() => Area.All.Remove(this);
-  public  static void Reset    () { foreach (Area area in Area.All) { area.isReset = true; area.Respawn(); area.spawns.Clear(); } }
-  private        void Respawn  () => this.spawnCount = 0u;
+  private void OnDestroy() => Area.All.Remove(this);
+
+  public static void Reset() {
+    if (null != Area.AudioSource)
+    Area.AudioSource.Stop();
+
+    foreach (Area area in Area.All) {
+      area.isReset = true;
+
+      area.Respawn();
+      area.spawns.Clear();
+    }
+
+    Area.AudioSource = null;
+  }
+
+  private void Respawn() => this.spawnCount = 0u;
+  public  void Unclip () => this.audioClip  = null;
 
   protected override void Update() {
     base.Update();
+
+    base.audioSource!.pitch  = Game.IsPaused ? 0.95f : 1.00f;
+    base.audioSource!.volume = UnityEngine.Mathf.LerpUnclamped(base.audioSource!.volume, Area.AudioSource != base.audioSource ? 0.00f : Game.IsPaused ? 0.65f : 0.75f, 0.10f);
+
+    if (Area.AudioSource != base.audioSource && base.audioSource!.isPlaying && base.audioSource!.volume <= 0.10f)
+    base.audioSource!.Stop();
 
     // … ->> Area
     if (!Area.EntryTransition.isElapsed)

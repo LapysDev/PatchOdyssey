@@ -176,8 +176,10 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
       Player.AudioListener = null;
     }
 
-    if (!base.worldCamera!.TryGetComponent(out UnityEngine.AudioListener _) && !Entity.All.Exists(static entity => entity.TryGetComponent(out UnityEngine.AudioListener _)))
-    base.worldCamera!.gameObject.AddComponent<UnityEngine.AudioListener>();
+    if (null != base.worldCamera) {
+      if (!base.worldCamera.TryGetComponent(out UnityEngine.AudioListener _) && !Entity.All.Exists(static entity => entity.TryGetComponent(out UnityEngine.AudioListener _)))
+      base.worldCamera.gameObject.AddComponent<UnityEngine.AudioListener>();
+    }
 
     // …
     base.OnDestroy();
@@ -256,8 +258,12 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
     if (base.Shoot() is not null) {
       this.isInputing = true;
 
-      if (0 != base.followers.Count)
-      base.followers[0].Shoot();
+      if (0 != base.followers.Count) {
+        static void DeployBullet(Bullet bullet) => bullet.isInvincible = true;
+
+        if (base.followers[0].Shoot(DeployBullet) is Bullet bullet)
+        DeployBullet(bullet);
+      }
     }
   }
 

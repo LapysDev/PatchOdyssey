@@ -257,14 +257,14 @@ MonoBehaviour:
     bulletLifetime: 5
     bulletMaterial: {fileID: 2100000, guid: ab6f445f8b2bc064fae66c4f959736cd, type: 2}
     cooldown:
-      duration: 1.2
+      duration: 2
     damage: 7.5
     repelForce: 2
     speed: 7
     spinAutomatically: 1
     view: 21
     volleyCount: 0
-    volleyRandomCount: 3
+    volleyRandomCount: 4
     volleyDelay: 1.5
   shootAutomatically: 1
   statistics:

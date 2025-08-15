@@ -296,13 +296,13 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
       if (entity is Player)
       switch (entity.worldVignette) {
         case UnityEngine.Rendering.HighDefinition.Vignette highDefinitionRenderVignette: {
-          highDefinitionRenderVignette.color    .value  = UnityEngine.Color.red;
-          highDefinitionRenderVignette.intensity.value *= 1.1f;
+          highDefinitionRenderVignette.color    .value = UnityEngine.Color.red;
+          highDefinitionRenderVignette.intensity.value = UnityEngine.Mathf.Min(0.3f, highDefinitionRenderVignette.intensity.value * 1.1f);
         } break;
 
         case UnityEngine.Rendering.Universal.Vignette universalRenderVignette: {
-          universalRenderVignette.color    .value  = UnityEngine.Color.red;
-          universalRenderVignette.intensity.value *= 1.1f;
+          universalRenderVignette.color    .value = UnityEngine.Color.red;
+          universalRenderVignette.intensity.value = UnityEngine.Mathf.Min(0.3f, universalRenderVignette.intensity.value * 1.1f);
         } break;
       }
     }
@@ -456,10 +456,10 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
     }
   }
 
-  public    virtual Bullet? Shoot()                                               => this.Shoot(static (bullet, index, count) => {}); // ->> Override-able because it is called by default
-  protected         Bullet? Shoot(System.Action<Bullet>                 callback) => this.Shoot(       (bullet, index, count) => callback(bullet));
-  protected         Bullet? Shoot(System.Action<Bullet, ushort>         callback) => this.Shoot(       (bullet, index, count) => callback(bullet, index));
-  protected         Bullet? Shoot(System.Action<Bullet, ushort, ushort> callback) {
+  public virtual Bullet? Shoot()                                               => this.Shoot(static (bullet, index, count) => {}); // ->> Override-able because it is called by default
+  public         Bullet? Shoot(System.Action<Bullet>                 callback) => this.Shoot(       (bullet, index, count) => callback(bullet));
+  public         Bullet? Shoot(System.Action<Bullet, ushort>         callback) => this.Shoot(       (bullet, index, count) => callback(bullet, index));
+  public         Bullet? Shoot(System.Action<Bullet, ushort, ushort> callback) {
     if (this.shoot.cooldown.isLooped) {
       Bullet? bullet = null;
       ushort  count  = (ushort) (this.shoot.volleyCount + (UnityEngine.Random.value * this.shoot.volleyRandomCount));
