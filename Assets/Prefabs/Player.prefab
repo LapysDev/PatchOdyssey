@@ -154,7 +154,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 3952887469523922605}
+  - {fileID: 6997313852134431904}
   - {fileID: 633824411876376000}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
@@ -419,9 +419,11 @@ MonoBehaviour:
     turnSpeed: 135
   lasooAutomatically: 1
   lasooing: {fileID: 0}
+  listenCooldown:
+    duration: 0.1
   releaseWindow:
     duration: 1
---- !u!1001 &482797280791001498
+--- !u!1001 &1061587261637724207
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -429,277 +431,265 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7352732437283913876}
     m_Modifications:
-    - target: {fileID: 573290025038151551, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 505898558378481325, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_MotionVectors
       value: 2
       objectReference: {fileID: 0}
-    - target: {fileID: 573290025038151551, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 505898558378481325, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 864704748704317891, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 671859111445392137, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_MotionVectors
       value: 2
       objectReference: {fileID: 0}
-    - target: {fileID: 864704748704317891, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 671859111445392137, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1155422344797033336, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 815361250042654090, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_MotionVectors
       value: 2
       objectReference: {fileID: 0}
-    - target: {fileID: 1155422344797033336, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 815361250042654090, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1781908366599201629, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 945905909353311466, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_MotionVectors
       value: 2
       objectReference: {fileID: 0}
-    - target: {fileID: 1781908366599201629, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 945905909353311466, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2159801838721261936, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 1041241280567704755, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_MotionVectors
       value: 2
       objectReference: {fileID: 0}
-    - target: {fileID: 2159801838721261936, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 1041241280567704755, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3477150251966786091, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 1412081257230022228, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_MotionVectors
       value: 2
       objectReference: {fileID: 0}
-    - target: {fileID: 3477150251966786091, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 1412081257230022228, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3488116683078539063, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3488116683078539063, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3488116683078539063, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3488116683078539063, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3488116683078539063, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3488116683078539063, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3488116683078539063, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3488116683078539063, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3488116683078539063, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3488116683078539063, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4079314385444490689, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 1641391603048133585, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_MotionVectors
       value: 2
       objectReference: {fileID: 0}
-    - target: {fileID: 4079314385444490689, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 1641391603048133585, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4188999081541982340, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 1995941415315547608, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_MotionVectors
       value: 2
       objectReference: {fileID: 0}
-    - target: {fileID: 4188999081541982340, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 1995941415315547608, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4261415737009294733, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 2353476308437127002, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2353476308437127002, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_DynamicOccludee
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2546586403682268239, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2546586403682268239, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_DynamicOccludee
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2689860884058614857, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2689860884058614857, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_DynamicOccludee
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2948313088829613594, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2948313088829613594, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_DynamicOccludee
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3637211131028686459, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3637211131028686459, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_DynamicOccludee
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3803184448878868253, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3803184448878868253, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_DynamicOccludee
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3849481379418770909, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3849481379418770909, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_DynamicOccludee
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4229415637398048060, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4229415637398048060, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_DynamicOccludee
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4480213238051017706, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4480213238051017706, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_DynamicOccludee
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4769769321988514504, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4769769321988514504, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_DynamicOccludee
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5148225217132765413, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5148225217132765413, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_DynamicOccludee
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5746686828576248000, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5746686828576248000, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_DynamicOccludee
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6037281846029730427, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6037281846029730427, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_DynamicOccludee
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6357969437923310791, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6357969437923310791, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_DynamicOccludee
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6939867702074840785, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_MotionVectors
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6939867702074840785, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_DynamicOccludee
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7271941972115050037, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_Name
       value: Mesh
       objectReference: {fileID: 0}
-    - target: {fileID: 4577886339063190889, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 7343936960578607932, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_MotionVectors
       value: 2
       objectReference: {fileID: 0}
-    - target: {fileID: 4577886339063190889, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 7343936960578607932, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4934737504705619552, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 7445599633525853817, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_MotionVectors
       value: 2
       objectReference: {fileID: 0}
-    - target: {fileID: 4934737504705619552, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 7445599633525853817, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5264658823450669161, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 8037207906967021971, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_MotionVectors
       value: 2
       objectReference: {fileID: 0}
-    - target: {fileID: 5264658823450669161, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
+    - target: {fileID: 8037207906967021971, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
       propertyPath: m_DynamicOccludee
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5498912552869410284, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_MotionVectors
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5498912552869410284, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_DynamicOccludee
+    - target: {fileID: 8043692943466009743, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5889455782464651019, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_MotionVectors
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5889455782464651019, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_DynamicOccludee
+    - target: {fileID: 8043692943466009743, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5974095071017660242, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_MotionVectors
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5974095071017660242, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_DynamicOccludee
+    - target: {fileID: 8043692943466009743, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_LocalPosition.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 6095632015945641522, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_MotionVectors
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 6095632015945641522, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_DynamicOccludee
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6240401338469378225, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_MotionVectors
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 6240401338469378225, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_DynamicOccludee
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6240401338469378225, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_Materials.Array.size
+    - target: {fileID: 8043692943466009743, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_LocalRotation.w
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 6240401338469378225, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: 'm_Materials.Array.data[1]'
-      value: 
-      objectReference: {fileID: 2100000, guid: 76a4f0befcaf3004f85864702663de6f, type: 2}
-    - target: {fileID: 6399025422739248405, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_MotionVectors
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 6399025422739248405, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_DynamicOccludee
+    - target: {fileID: 8043692943466009743, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7053865767876530258, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_MotionVectors
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 7053865767876530258, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_DynamicOccludee
+    - target: {fileID: 8043692943466009743, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_LocalRotation.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7311964136207732356, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_MotionVectors
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 7311964136207732356, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_DynamicOccludee
+    - target: {fileID: 8043692943466009743, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_LocalRotation.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7684457433412243045, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_MotionVectors
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 7684457433412243045, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_DynamicOccludee
+    - target: {fileID: 8043692943466009743, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7684457433412243045, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
-      value: 
-      objectReference: {fileID: 2100000, guid: 6efa95a4c5b95ec4e8cfe183018c06bf, type: 2}
-    - target: {fileID: 7714410672287642789, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_MotionVectors
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 7714410672287642789, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_DynamicOccludee
+    - target: {fileID: 8043692943466009743, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7904186754722612675, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_MotionVectors
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 7904186754722612675, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_DynamicOccludee
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8584481681082934690, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_MotionVectors
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 8584481681082934690, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_DynamicOccludee
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8835210905434271729, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_MotionVectors
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 8835210905434271729, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_DynamicOccludee
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8980174832679991287, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_MotionVectors
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 8980174832679991287, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_DynamicOccludee
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9178773107730042082, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_MotionVectors
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 9178773107730042082, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-      propertyPath: m_DynamicOccludee
+    - target: {fileID: 8043692943466009743, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
---- !u!4 &3952887469523922605 stripped
+  m_SourcePrefab: {fileID: 100100000, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+--- !u!4 &6997313852134431904 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 3488116683078539063, guid: c3c8f68ec84cb8e499db00099116480b, type: 3}
-  m_PrefabInstance: {fileID: 482797280791001498}
+  m_CorrespondingSourceObject: {fileID: 8043692943466009743, guid: d9d1cc3c90507de4fb40b698d0e32aff, type: 3}
+  m_PrefabInstance: {fileID: 1061587261637724207}
   m_PrefabAsset: {fileID: 0}
