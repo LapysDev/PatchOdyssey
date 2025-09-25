@@ -22,9 +22,9 @@ Your very own look into **Patch Odyssey**&rsquo;s inner workings
 
 | Platform | &#x1F3AE;      |
 | -------- | -------------- |
-| Android  | &hellip;       |
-| Linux    | &hellip;       |
-| Windows  | &hellip;       |
+| Android  | [ZIP archive](https://drive.google.com/file/d/1pttwAbX0s325WJoWzmZDIn5oD7Vxy7IP/view?usp=sharing) |
+| Linux    | &hellip;                                                                                          |
+| Windows  | [ZIP archive](https://drive.google.com/file/d/1snLc-K7VSbR_AcBgfC4VGrDGPcgdYaTi/view?usp=sharing) |
 
 ## Credits
 ### Assets &amp; Scripting
