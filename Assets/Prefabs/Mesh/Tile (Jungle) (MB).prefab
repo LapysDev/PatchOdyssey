@@ -70,7 +70,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 1b0440feb07c54f4c91ce8923b6fc2f7, type: 2}
     - target: {fileID: 919132149155446097, guid: 8ee8abc4cb462424aabe1a8270e70704, type: 3}
       propertyPath: m_Name
-      value: Tile (Jungle)
+      value: Tile (Jungle) (MB)
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 8ee8abc4cb462424aabe1a8270e70704, type: 3}
       propertyPath: m_StaticEditorFlags

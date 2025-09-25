@@ -29,7 +29,7 @@ namespace PatchOdyssey {
 
       // …
       if (0u == transformCount) {
-        UnityEditor.EditorUtility.DisplayDialog(name, "Please select one or more GameObject assets.", "OK");
+        UnityEditor.EditorUtility.DisplayDialog(name, "Select one or more GameObject assets to rotate", "OK");
         return;
       }
 

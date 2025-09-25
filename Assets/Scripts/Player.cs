@@ -259,7 +259,7 @@ public sealed class Player : Tamer /* ->> Source file must be named “Player”
       this.isInputing = true;
 
       if (0 != base.followers.Count) {
-        static void DeployBullet(Bullet bullet) => bullet.isInvincible = true;
+        static void DeployBullet(Bullet bullet) {} //=> bullet.isInvincible = true;
 
         if (base.followers[0].Shoot(DeployBullet) is Bullet bullet)
         DeployBullet(bullet);
