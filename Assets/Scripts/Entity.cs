@@ -827,7 +827,7 @@ public abstract class Entity : GameComponent /* ->> Source file must be named â€
         return;
       }
 
-      if (collider.TryGetComponent(out Area _) || collider.TryGetComponent(out Lasoo _))
+      if (collider.TryGetComponent(out Area _) || collider.TryGetComponent(out Lasoo _) || collider.TryGetComponent(out NPC _) || collider.TryGetComponent(out UnityEngine.Rendering.Volume _))
       return;
 
       this.health = (byte) 0u;
