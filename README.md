@@ -5,7 +5,7 @@ Inspired by [Patch Quest](https://www.polygon.com/reviews/23630629/patch-quest-r
 <img alt="🍃 logo" src="Assets/UI/Patch Odyssey (Logo).png" title="Patch Odyssey"/>
 <div align=right style="text-align: right"><sub>Your journey begins here &mdash; are you ready?</sub></div>
 </br>
-<center align=center style="text-align: center"><a href=#game><button style="background-color: #007F00; border: none; border-radius: 3px; cursor: pointer; font-size: larger; padding: 1% 2%; text-transform: uppercase"><b>Let’s Go! &#x1F343;&#xFE0E;</b></button></a></center>
+<center align=center style="text-align: center"><a href=https://lapysdev.github.io/PatchOdyssey/Builds/Web><button style="background-color: #007F00; border: none; border-radius: 3px; cursor: pointer; font-size: larger; padding: 1% 2%; text-transform: uppercase"><b>Let’s Go! &#x1F343;&#xFE0E;</b></button></a></center>
 
 ## Code
 Clone/ download the [Git](https://git-scm.com) <abbr title=repository>repo.</abbr> files into your chosen file directory, then
