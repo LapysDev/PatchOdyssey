@@ -1,0 +1,15 @@
+{
+    "name": "Patch Odyssey",
+    "short_name": "Patch Odyssey",
+    "start_url": "index.html",
+    "display": "fullscreen",
+    "background_color": "#00000F",
+    "theme_color": "#000",
+    "description": "Patch Odyssey — Capture monsters and tame the mysterious island of Patchlantis",
+    "icons": [{
+      "src": "TemplateData/icons/unity-logo-dark.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }]
+  }
