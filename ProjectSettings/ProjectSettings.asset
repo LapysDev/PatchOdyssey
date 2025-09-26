@@ -14,7 +14,7 @@ PlayerSettings:
   accelerometerFrequency: 60
   companyName: LapysDev
   productName: Patch Odyssey
-  defaultCursor: {fileID: 2800000, guid: bdb64f24a18441b47a5c3ed8a073ad36, type: 3}
+  defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0, g: 0, b: 0.05882353, a: 1}
   m_ShowUnitySplashScreen: 1
