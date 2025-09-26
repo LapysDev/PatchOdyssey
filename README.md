@@ -10,7 +10,7 @@ Inspired by [Patch Quest](https://www.polygon.com/reviews/23630629/patch-quest-r
 ## Code
 Clone/ download the [Git](https://git-scm.com) <abbr title=repository>repo.</abbr> files into your chosen file directory, then
 </br>
-Open the folder location as a Project with the [Unity Hub](https://unity.com/unity-hub).
+Open the folder location as a Project with the [Unity Hub](https://unity.com/unity-hub) (for Windows).
 <br/> </br>
 &nbsp;&nbsp;&nbsp;&nbsp; *voila~!* &#x2728;
 </br> </br>
@@ -20,11 +20,12 @@ Your very own look into **Patch Odyssey**&rsquo;s inner workings
 
 ## Game
 
-| Platform | &#x1F3AE;      |
-| -------- | -------------- |
-| Android  | [ZIP archive](https://drive.google.com/file/d/1pttwAbX0s325WJoWzmZDIn5oD7Vxy7IP/view?usp=sharing) |
-| Linux    | &hellip;                                                                                          |
-| Windows  | [ZIP archive](https://drive.google.com/file/d/1snLc-K7VSbR_AcBgfC4VGrDGPcgdYaTi/view?usp=sharing) |
+| Platform | &#x1F3AE;                                                                                                                               |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Android  | [APK package](https://drive.google.com/file/d/1DTPWvNRBjh81ly-9MAAQHRYkHecL27QM/view?usp=sharing) <br/> <sub> Patch Odyssey.apk </sub>  |
+| Linux    | &hellip;                                                                                                                                |
+| macOS    | [APP bundle](https://drive.google.com/drive/folders/1cD1-Bcf-SG6ME73hqXs_aOZVBRusXrRy?usp=sharing) <br/> <sub> Patch Odyssey.app </sub> |
+| Windows  | [ZIP archive](https://drive.google.com/file/d/1snLc-K7VSbR_AcBgfC4VGrDGPcgdYaTi/view?usp=sharing)  <br/> <sub> Patch Odyssey.exe </sub> |
 
 ## Credits
 ### Assets &amp; Scripting
